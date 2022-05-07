@@ -1,0 +1,148 @@
+---
+    # export some parameters to make scripting easier
+    seqcfg:
+      - firstframe: ${first-frame}
+      - lastframe: $eval{ ${first-frame} + ${num-frames} - 1 }
+      - numframes: ${num-frames}
+      - srcmesh: ${seq-prefix}${src-dir}/${src-mesh}
+      - srctex: ${seq-prefix}${src-dir}/${src-tex}
+
+
+    # step 1, generate the group of frame structure
+    gengof:
+      - input: ${seq-prefix}${src-dir}/${src-mesh}
+      - output: ${src-dir}.gof
+      - startFrame: ${first-frame}
+      - frameCount: ${num-frames}
+
+
+    # step 2, simplify each frame in the input
+    simplify:
+      - input: ${seq-prefix}${src-dir}/${src-mesh}
+      - qt: ${src-texcoord-bits}
+
+      # output
+      - decimated: ${src-dir}_r${pp}/${src-mesh}_decimated.obj
+      - reference: ${src-dir}_r${pp}/${src-mesh}_reference.obj
+      - mapped:    ${src-dir}_r${pp}/${src-mesh}_mapped.obj
+
+      # decimation ratio
+      - target: ${pp}
+      - cctcount: 8
+
+
+    # step 2, generate isochart for each frame of each simplified mesh
+    uvatlas:
+      - input:  ${src-dir}_r${pp}/${src-mesh}_decimated.obj
+      - output: ${src-dir}_r${pp}/${src-mesh}_decimated_tex.obj
+      - width:  $eval{ 1 << ${src-texcoord-bits} - 1 }
+      - height: $eval{ 1 << ${src-texcoord-bits} - 1 }
+
+      - quality: QUALITY
+      - gutter: $eval{ 1 << (${src-texcoord-bits} - 8) }
+
+
+    # step 4a, subdivision and fitting (intra frames)
+    fitsubdiv_intra:
+      # input
+      - target: ${src-dir}_r${pp}/${src-mesh}_reference.obj
+      - source: ${src-dir}_r${pp}/${src-mesh}_decimated_tex.obj
+      - mapped: ${src-dir}_r${pp}/${src-mesh}_mapped.obj
+
+      # output
+      - base:    ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
+      - subdiv:  ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+      - nsubdiv: ${src-dir}_r${pp}_ai/${src-mesh}_nsubdiv.obj
+
+      # iteration count depends upon decimation level:
+      #   { 0.03: 3, 0.06: 3, 0.12: 2, 0.24: 2, 0.36: 2, 0.48: 1, 1.0: 0 }
+      - it: '$eval{ ${pp} < 0.9 ? 3 : ${pp} < 0.42 ? 2 : ${pp} < 1.0 ? 1 : 0 }'
+
+      - sdeform: 1
+      - forceNormalDisp: 0
+      - unifyVertices: 1
+      - deformNormalThres: -2.0
+      - deformNNCount: 1
+      - deformFlipThres: -2.0
+      - useInitialGeom: 1
+      - smoothMotion: 0
+      - smoothMethod: 1
+
+
+    # step 4a, subdivision and fitting (for inter frames)
+    fitsubdiv_inter:
+      # outputs
+      - base:    ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
+      - subdiv:  ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
+      - nsubdiv: ${src-dir}_r${pp}_ld/${src-mesh}_nsubdiv.obj
+
+      # inputs (without mapping)
+      -
+        - !conditional '!${fitsubdiv_with_mapping}'
+        # current frame
+        - target: ${src-dir}_r${pp}/${src-mesh}_reference.obj
+
+        # these are for the previous frame
+        - source:  ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
+        - subdiv0: ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
+
+      # inputs (with mapping)
+      -
+        - !conditional '${fitsubdiv_with_mapping}'
+        # current frame index
+        - mtarget: ${seq-prefix}${src-dir}/${src-mesh}
+
+        # these use the reference frame index
+        - target: ${src-dir}_r${pp}/${src-mesh}_reference.obj
+        - source: ${src-dir}_r${pp}/${src-mesh}_decimated_tex.obj
+        - mapped: ${src-dir}_r${pp}/${src-mesh}_mapped.obj
+
+      # iteration count depends upon decimation level:
+      #   { 0.03: 3, 0.06: 3, 0.12: 2, 0.24: 2, 0.36: 2, 0.48: 1, 1.0: 0 }
+      - it: '$eval{ ${pp} < 0.9 ? 3 : ${pp} < 0.42 ? 2 : ${pp} < 1.0 ? 1 : 0 }'
+
+      - sdeform: 1
+      - forceNormalDisp: 0
+      - deformFlipThres: -0.5
+      - useInitialGeom: 1
+      - smoothMotion: 0
+      - smoothMethod: 1
+
+      -
+        - !conditional '!${fitsubdiv_with_mapping}'
+        - unifyVertices: 0
+        - deformNNCount: 512
+        - deformNormalThresh: 0.8660254
+
+      -
+        - !conditional '${fitsubdiv_with_mapping}'
+        - unifyVertices: 1
+        - deformNNCount: 1
+        - deformNormalThresh: -2.0
+
+
+    # step 4c, mode decision, choose between intra and inter frame
+    fitsubdiv_choose:
+      - maxAllowedD2PSNRLoss: 1.0
+
+      - ai-base:    ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
+      - ai-subdiv:  ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+      - ai-nsubdiv: ${src-dir}_r${pp}_ai/${src-mesh}_nsubdiv.obj
+
+      # if the ld result is worse by epsilon than ai, replace
+      # the ld files with the ai files
+      - ld-base:    ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
+      - ld-subdiv:  ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
+      - ld-nsubdiv: ${src-dir}_r${pp}_ld/${src-mesh}_nsubdiv.obj
+
+    mmetric:
+      - firstframe: ${first-frame}
+      - lastframe: $eval{ ${first-frame} + ${num-frames} - 1 }
+      - srcmesh: ${seq-prefix}${src-dir}/${src-mesh}
+      - srctex: ${seq-prefix}${src-dir}/${src-tex}
+      - srcgeombits: ${src-geom-bits}
+      - srcminpos: ${src-min-pos}
+      - srcmaxpos: ${src-max-pos}
+      - srctexcoordbits: ${src-texcoord-bits}
+      - srcmaxbblen: ${src-max-bb-len}
+      - gridsize: 1024

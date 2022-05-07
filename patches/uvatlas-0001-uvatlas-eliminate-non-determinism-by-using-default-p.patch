@@ -1,0 +1,58 @@
+From 7dd3bea4c1bd612856c86c1a9992789400885c99 Mon Sep 17 00:00:00 2001
+From: David Flynn <davidflynn@apple.com>
+Date: Sat, 7 May 2022 02:32:10 +0200
+Subject: [PATCH] uvatlas: eliminate non-determinism by using default prng seed
+
+Random perturbations by CIsochartMesh::OptimizeVertexStretchAroundCenter
+are supposed to be consistent though seeding the prng:
+
+> // As the decription in [SSGH01], randomly moving vertex will have
+> // more chance to find the optimal position. To make consistent
+> // results, srand with a specified value 2
+> srand(2);
+
+However, it then goes on to use a different prng to that which it has
+seeded:
+
+> m_IsochartEngine.UniformRand(2.f * XM_PI);
+
+The isochartengine prng is seeded by an std::random_device, breaking
+any consistency across invocations.
+
+Consistency is resorted by seeding the prng with its default constant.
+---
+ UVAtlas/isochart/UVAtlasRepacker.cpp | 3 +--
+ UVAtlas/isochart/isochartengine.cpp  | 3 +--
+ 2 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/UVAtlas/isochart/UVAtlasRepacker.cpp b/UVAtlas/isochart/UVAtlasRepacker.cpp
+index 81da820..23bab73 100644
+--- a/UVAtlas/isochart/UVAtlasRepacker.cpp
++++ b/UVAtlas/isochart/UVAtlasRepacker.cpp
+@@ -125,8 +125,7 @@ CUVAtlasRepacker::CUVAtlasRepacker(std::vector<UVAtlasVertex>* pvVertexArray,
+     m_pOurChartNumber(pChartNumber),
+     m_pOurIterationTimes(pIterationTimes)
+ {
+-    std::random_device randomDevice;
+-    m_randomEngine.seed(randomDevice());
++    m_randomEngine.seed();
+ }
+ 
+ /***************************************************************************\
+diff --git a/UVAtlas/isochart/isochartengine.cpp b/UVAtlas/isochart/isochartengine.cpp
+index 43416b9..9767bd3 100644
+--- a/UVAtlas/isochart/isochartengine.cpp
++++ b/UVAtlas/isochart/isochartengine.cpp
+@@ -44,8 +44,7 @@ CIsochartEngine::CIsochartEngine() :
+ #endif
+     m_dwOptions(ISOCHARTOPTION::DEFAULT)
+ {
+-    std::random_device randomDevice;
+-    m_randomEngine.seed(randomDevice());
++    m_randomEngine.seed();
+ }
+ 
+ CIsochartEngine::~CIsochartEngine()
+-- 
+2.32.0 (Apple Git-131)
+

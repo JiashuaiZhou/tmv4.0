@@ -1,0 +1,27 @@
+.DS_Store
+
+# Suggested "out-of-tree" build directory
+build/
+
+# Some tools expect this build generated file to be in
+# the root of the source tree.
+compile_commands.json
+
+# Annoyances from in-tree builds
+CMakeFiles
+CMakeScripts
+CMakeCache.txt
+*.cmake
+
+# Projects / metadata from various IDEs
+.idea
+.vscode
+
+# Xcode
+*.pbxuser
+xcuserdata
+DerivedData
+
+# A directory for developers to put anything
+data/
+

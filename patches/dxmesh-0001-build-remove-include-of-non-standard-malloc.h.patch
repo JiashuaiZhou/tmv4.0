@@ -1,0 +1,27 @@
+From 35574955d07d0545ca2ced2eb2f1c3e5c04c6834 Mon Sep 17 00:00:00 2001
+From: David Flynn <davidflynn@apple.com>
+Date: Sat, 7 May 2022 02:23:53 +0200
+Subject: [PATCH 1/2] build: remove include of non-standard malloc.h
+
+This header is not available on all platforms.  Even when it is, there
+is no guarantee as to its contents.
+---
+ DirectXMesh/DirectXMeshP.h | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/DirectXMesh/DirectXMeshP.h b/DirectXMesh/DirectXMeshP.h
+index 2bfdc27..7ebe0a2 100644
+--- a/DirectXMesh/DirectXMeshP.h
++++ b/DirectXMesh/DirectXMeshP.h
+@@ -132,8 +132,6 @@
+ 
+ #include "DirectXMesh.h"
+ 
+-#include <malloc.h>
+-
+ #include "scoped.h"
+ 
+ #ifndef XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM
+-- 
+2.32.0 (Apple Git-131)
+

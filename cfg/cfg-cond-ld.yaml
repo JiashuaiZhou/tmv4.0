@@ -1,0 +1,104 @@
+---
+categories:
+  ld:
+    # the list of tools to generate configurations for
+    tools: [ seqcfg, gengof, simplify, uvatlas, fitsubdiv_intra, fitsubdiv_inter, fitsubdiv_choose, encoder, decoder, mmetric ]
+
+    encoder:
+      - mode: 0
+
+      # input / sequence configuration
+      - imesh: ${seq-prefix}${src-dir}/${src-mesh}
+      - itex:  ${seq-prefix}${src-dir}/${src-tex}
+      - fstart: ${first-frame}
+      - fcount: ${num-frames}
+      - gdepth: ${src-geom-bits}
+      - tdepth: ${src-texcoord-bits}
+
+      # output
+      - compressed: ${src-dir}.vmesh
+
+      # preprocessed data
+      - base:      ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
+      - subdiv:    ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
+      - gofstruct: ${src-dir}_r${pp}_ld/${src-dir}.gof
+
+      # common options
+      - invorient: 0
+      - tqp: 10
+      - gofmax: 32
+      - dqb: 0.3333,0.3333,0.3333
+
+      # the following defaults are overridden for some sequences and rates
+      - unifvertices: 0
+      - texwidth: 2048
+      - texheight: 2048
+
+      # configuration for HM
+      - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ld-main10.cfg
+      - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ld.cfg
+
+      # colourspace conversion
+      - cscencconfig: ${cfg-prefix}/hdrconvert/bgr444toyuv420.cfg
+      - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
+
+    decoder:
+      - mode: 1
+      - compressed: ${src-dir}.vmesh
+      # Specifying the first output frame number helps align src/dec filenames
+      - fstart: ${first-frame}
+      - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
+
+    # sequences to code in this condition, and their overridden options/vars
+    sequences:
+      levi:
+        fitsubdiv_with_mapping: 1
+        pp: { r1: 0.03, r2: 0.12, r3: 0.12, r4: 0.24, r5: 0.48 }
+        encoder:
+          - it: { r1: 3, r2: 2, r3: 2, r4: 2, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 11, r5: 12 }
+          - tvqp: { r1: 38, r2: 39, r3: 34, r4: 32, r5: 30 }
+          - dqp: { r1: "34,46,46", r2: "32,44,44", r3: "30,42,42", r4: "24,36,36", r5: "28,40,40" }
+          - texwidth: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
+          - texheight: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
+        # r5 in the CfP submission uses all-intra config (not just no inter)
+        r5:
+          encoder:
+            - base:   ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
+            - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+            - gofstruct: ""
+            - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg
+            - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg
+
+      mitch:
+        fitsubdiv_with_mapping: 1
+        pp: { r1: 0.06, r2: 0.06, r3: 0.06, r4: 1.00, r5: 1.00 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - tvqp: { r1: 39, r2: 37, r3: 41, r4: 42, r5: 38 }
+          - dqp: { r1: "32,44,44", r2: "30,42,42", r3: "24,36,36", r4: "34,46,46", r5: "32,44,44" }
+          - texwidth: { r3: 4096, r4: 4096, r5: 4096 }
+          - texheight: { r3: 4096, r4: 4096, r5: 4096 }
+          - unifvertices: { r4: 1, r5: 1 }
+
+      soldier:
+        fitsubdiv_with_mapping: 0
+        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.06, r5: 0.06 }
+        encoder:
+          - it: 3
+          - gqp: 10
+          - tvqp: { r1: 36, r2: 34, r3: 33, r4: 30, r5: 26 }
+          - dqp: { r1: "37,49,49", r2: "27,39,39", r3: "22,34,34", r4: "22,34,34", r5: "21,33,33" }
+
+      thomas:
+        fitsubdiv_with_mapping: 1
+        pp: { r1: 0.06, r2: 0.06, r3: 0.06, r4: 1.00, r5: 1.00 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - tvqp: { r1: 36, r2: 34, r3: 38, r4: 38, r5: 34 }
+          - dqp: { r1: "30,42,42", r2: "28,40,40", r3: "22,34,34", r4: "34,46,46", r5: "34,46,46" }
+          - texwidth: { r3: 4096, r4: 4096, r5: 4096 }
+          - texheight: { r3: 4096, r4: 4096, r5: 4096 }
+          - unifvertices: { r4: 1, r5: 1 }

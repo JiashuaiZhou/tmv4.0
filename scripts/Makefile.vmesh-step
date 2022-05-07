@@ -1,0 +1,250 @@
+# This makefile governs the processing of a vmesh job step for a single
+# test point
+
+##
+# Bash is required for interpretation of shell embedded shell scripts
+SHELL := bash
+
+##
+# Prety output unless verbose requested
+quiet = $(if $(V)$(VERBOSE),,@$(if $1,$(info $1)))
+quiet_GENGOF   =$(call quiet,$(quiet_txt_GENGOF))
+quiet_SIMPLIFY =$(call quiet,$(quiet_txt_SIMPLIFY))
+quiet_UVATLAS  =$(call quiet,$(quiet_txt_UVATLAS))
+quiet_FITSUBDIV=$(call quiet,$(quiet_txt_FITSUBDIV))
+quiet_ENC      =$(call quiet,$(quiet_txt_ENC))
+quiet_DEC      =$(call quiet,$(quiet_txt_DEC))
+quiet_METRIC   =$(call quiet,$(quiet_txt_METRIC))
+quiet_txt_GENGOF   =$(empty)  [gengof]  $@
+quiet_txt_SIMPLIFY =$(empty)  [decimx]  $@
+quiet_txt_UVATLAS  =$(empty)  [uvatls]  $@ #<- $<
+quiet_txt_FITSUBDIV=$(empty)  [fsbdiv]  $@ #<- $<
+quiet_txt_ENC      =$(empty)  [encode]  $@
+quiet_txt_DEC      =$(empty)  [decode]  $@
+quiet_txt_METRIC   =$(empty)  [metric]  $@
+tee_VERBOSE=$(if $(V)$(VERBOSE),| tee,>)
+
+##
+# write output to logs (and stdout if verbose)
+# delete the output error log file if it is empty
+#  $1 prefix for log file
+log_output = 2> "$1.err" $(if $V$(VERBOSE),| tee,>) "$1.log"
+remove_errlog_if_empty = [[ -s "$1.err" ]] || rm "$1.err"
+
+##
+# vpath <file> : function to search for <file> in $(VPATH).
+# Expands to the full path of <file>
+vpath=$(firstword $(wildcard $1 $(addsuffix /$1,$(subst :, ,$(VPATH)))))
+
+##
+# extract a single parameter from a config file
+#  $1: parameter name
+#  $2: filename to open
+define read_cfg_param
+$(if $(wildcard $2),$(shell \
+	IFS=":$$IFS"; \
+	while read ARG VAL; do \
+		[[ $$ARG != $1 ]] && continue ; \
+		echo "$$VAL"; done < "$2"))
+endef
+
+##
+# extract all parameters from a config file
+#  $1: prefix to apply to variables
+#  $2: filename to open
+define import_cfg
+$(eval params := $(shell \
+	IFS=":$$IFS"; \
+	while read ARG VAL; do \
+		[[ $$ARG =~ ^" "*# ]] && continue ; \
+		echo "$$ARG"; done < "$2"))
+$(foreach param,${params},\
+	$(eval $1${param}:=$(call read_cfg_param,${param},$2)))
+endef
+
+
+##
+# avoid deleting expensive files
+.SECONDARY:
+
+##
+# the default target
+.PHONY: all
+all: $(outputs) ;
+
+##
+# remove files
+.PHONY: clean
+clean:
+	$(quiet_CLN)rm -f $(outputs)
+
+##
+# simplify meshes; run once per frame
+#  - read input sequence name
+$(info $(call import_cfg,,$(call vpath,seqcfg.cfg)))
+frames := $(shell seq ${firstframe} ${lastframe})
+
+# $1 -- the dependency to add
+# $2 -- the frame number
+define simplify_depends
+var:=$(shell printf $1 $2)
+$${var}: FRAMENUM=$2
+all: $${var}
+endef
+
+define fitsubdiv_depends
+var:=$(shell printf $1 $2)
+$${var}: FRAMENUM=$2
+dep:=$(shell printf $3 $2)
+$${var}: $${dep}
+dep:=$(shell printf $4 $2)
+$${var}: $${dep}
+all: $${var}
+endef
+
+output := $(call read_cfg_param,output,$(call vpath,gengof.cfg))
+all: ${output}
+
+output := $(call read_cfg_param,decimated,$(call vpath,simplify.cfg))
+$(foreach frame,${frames},$(eval $(call simplify_depends,${output},${frame})))
+
+output := $(call read_cfg_param,output,$(call vpath,uvatlas.cfg))
+$(foreach frame,${frames},$(eval $(call simplify_depends,${output},${frame})))
+
+output := $(call read_cfg_param,base,$(call vpath,fitsubdiv_intra.cfg))
+tgt := $(call read_cfg_param,target,$(call vpath,fitsubdiv_intra.cfg))
+src := $(call read_cfg_param,source,$(call vpath,fitsubdiv_intra.cfg))
+$(foreach frame,${frames},$(eval $(call fitsubdiv_depends,${output},${frame},${tgt},${src})))
+
+## the encoded/decoded sequence
+output := $(call read_cfg_param,compressed,$(call vpath,encoder.cfg))
+#src1 := $(call read_cfg_param,base,$(call vpath,encflags.cfg))
+#src2 := $(call read_cfg_param,subdiv,$(call vpath,encflags.cfg))
+all: ${output}
+all: ${output}.decoded.stamp
+all: ${output}.vmesh.decoded.ibsm_mmetric.csv
+all: ${output}.vmesh.decoded.pcc_mmetric.csv
+
+# for order-only dependencies on directory names
+.SECONDEXPANSION:
+
+# make a directory
+%/.:
+	@mkdir -p "$(@D)"
+
+##
+# generating md5 sums
+%.md5: %
+	$(quiet_MD5)md5sum '$<' > '$@'
+
+##
+# generate initial GOF; runs over an entire sequence
+%.gof: gengof.cfg
+	$(quiet_GENGOF)$(PRELOAD)$(GENGOF) \
+		$(foreach cfg,$(call vpath,gengof.cfg),-c "${cfg}") \
+	$(call log_output,$@)
+	@$(call remove_errlog_if_empty,$@)
+
+##
+# simplify/decimate mesh
+%_decimated.obj: simplify.cfg | $$(@D)/.
+	$(quiet_SIMPLIFY)$(PRELOAD)$(SIMPLIFY) \
+		$(foreach cfg,$(call vpath,simplify.cfg),-c "${cfg}") \
+		--fnum=${FRAMENUM} \
+	$(call log_output,$@)
+	@$(call remove_errlog_if_empty,$@)
+
+##
+# compute isochart
+%_decimated_tex.obj: %_decimated.obj | $$(@D)/.
+	$(quiet_UVATLAS)$(PRELOAD)$(UVATLAS) \
+		$(foreach cfg,$(call vpath,uvatlas.cfg),-c "${cfg}") \
+		--fnum=${FRAMENUM} \
+	$(call log_output,$@)
+	@$(call remove_errlog_if_empty,$@)
+
+##
+# fitsubdiv
+%_base.obj: | $$(@D)/.
+	$(quiet_FITSUBDIV)$(PRELOAD)$(FITSUBDIV) \
+		$(foreach cfg,$(call vpath,fitsubdiv_intra.cfg),-c "${cfg}") \
+		--fnum=${FRAMENUM} \
+	$(call log_output,$@)
+	@$(call remove_errlog_if_empty,$@)
+
+##
+# encode
+%.vmesh: | $$(@D)/.
+	$(quiet_ENC)$(PRELOAD)$(VMC) $(foreach cfg,$(call vpath,encflags.cfg),-c "${cfg}") \
+		--recmesh=$@.%04d_encoded.obj \
+		--rectex=$@.%04d_encoded.png \
+		--recmat=$@.%04d_encoded.mtl \
+		$(ENCFLAGS) \
+	$(call log_output,$@)
+	@$(call remove_errlog_if_empty,$@)
+
+##
+# decode
+%.vmesh.decoded.stamp: %.vmesh
+	$(quiet_DEC)$(PRELOAD)$(VMC) $(foreach cfg,$(call vpath,decflags.cfg),-c "${cfg}") \
+		--compressed=$< \
+		--decmesh=$*.vmesh.%04d_decoded.obj \
+		--dectex=$*.vmesh.%04d_decoded.png \
+		--decmat=$*.vmesh.%04d_decoded.mtl \
+		$(DECFLAGS) \
+	$(call log_output,$*.vmesh.decoded)
+	@$(call remove_errlog_if_empty,$*.vmesh.decoded)
+	touch $@
+
+##
+# mesh ibsm metric
+$(info $(call import_cfg,,$(call vpath,mmetric.cfg)))
+%.vmesh.decoded.ibsm_mmetric.csv: %.vmesh.decoded.stamp
+	$(quiet_METRIC)$(PRELOAD)$(MMETRIC) \
+	sequence --firstFrame ${firstframe} --lastFrame ${lastframe} END \
+	dequantize --inputModel "${srcmesh}" \
+		--outputModel ID:deqRef --useFixedPoint \
+		--qp ${srcgeombits} --minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
+		--qt ${srctexcoordbits} --minUv "0 0" --maxUv "1.0 1.0" END \
+	dequantize --inputModel "$*.vmesh.%04d_decoded.obj" \
+		--outputModel ID:deqDis --useFixedPoint \
+		--qp ${srcgeombits} --minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
+		--qt 0 --minUv "0 0" --maxUv "1.0 1.0" END \
+	compare --mode ibsm \
+		--inputModelA ID:deqRef --inputMapA ${srctex} \
+		--inputModelB ID:deqDis --inputMapB "$*.vmesh.%04d_decoded.png" \
+		--outputCsv "$@" \
+	$(call log_output,$@)
+	@$(call remove_errlog_if_empty,$@)
+
+##
+# mesh pcc_metric
+$(info $(call import_cfg,,$(call vpath,mmetric.cfg)))
+%.vmesh.decoded.pcc_mmetric.csv: %.vmesh.decoded.stamp
+	$(quiet_METRIC)$(PRELOAD)$(MMETRIC) \
+	sequence --firstFrame ${firstframe} --lastFrame ${lastframe} END \
+	dequantize --inputModel "${srcmesh}" \
+		--outputModel ID:deqRef --useFixedPoint \
+		--qp ${srcgeombits} --minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
+		--qt ${srctexcoordbits} --minUv "0 0" --maxUv "1.0 1.0" END \
+	reindex --sort oriented -i ID:deqRef -o ID:ref_reordered END \
+	sample --mode grid --gridSize ${gridsize} --hideProgress \
+		--useNormal --useFixedPoint \
+		--minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
+		--bilinear -i ID:ref_reordered \
+		-m ${srctex} -o ID:pcRef END \
+	dequantize --inputModel "$*.vmesh.%04d_decoded.obj" \
+		--outputModel ID:deqDis --useFixedPoint \
+		--qp ${srcgeombits} --minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
+		--qt 0 --minUv "0 0" --maxUv "1.0 1.0" END \
+	reindex --sort oriented -i ID:deqDis -o ID:ref_reordered END \
+	sample --mode grid --gridSize ${gridsize} --hideProgress \
+		--useNormal --useFixedPoint \
+		--minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
+		--bilinear -i ID:ref_reordered \
+		-m "$*.vmesh.%04d_decoded.png"  -o ID:pcDis END \
+	compare --mode pcc --resolution ${srcmaxbblen} \
+		--inputModelA ID:pcRef --inputModelB ID:pcDis \
+		--outputCsv "$@" \
+	$(call log_output,$@)
+	@$(call remove_errlog_if_empty,$@)

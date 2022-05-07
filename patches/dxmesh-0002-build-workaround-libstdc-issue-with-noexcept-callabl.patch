@@ -1,0 +1,54 @@
+From b35af19fe5c1b2978de5d68ed8c0437b9ccc2a87 Mon Sep 17 00:00:00 2001
+From: David Flynn <davidflynn@apple.com>
+Date: Sat, 7 May 2022 02:25:12 +0200
+Subject: [PATCH 2/2] build: workaround libstdc++ issue with noexcept callable
+ in call_once
+
+libstdc++ takes issue with the callable being noexcept.
+---
+ DirectXMesh/DirectXMeshOptimizeLRU.cpp | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/DirectXMesh/DirectXMeshOptimizeLRU.cpp b/DirectXMesh/DirectXMeshOptimizeLRU.cpp
+index b2a76a3..abf7ccf 100644
+--- a/DirectXMesh/DirectXMeshOptimizeLRU.cpp
++++ b/DirectXMesh/DirectXMeshOptimizeLRU.cpp
+@@ -521,7 +521,7 @@ HRESULT DirectX::OptimizeFacesLRU(
+ #ifdef WIN32
+     InitOnceExecuteOnce(&s_initOnce, ComputeVertexScores, nullptr, nullptr);
+ #else
+-    std::call_once(s_initOnce, ComputeVertexScores);
++    std::call_once(s_initOnce, &ComputeVertexScores);
+ #endif
+ 
+     return OptimizeFacesImpl<uint16_t>(indices, static_cast<uint32_t>(nFaces * 3), faceRemap, lruCacheSize, 0);
+@@ -546,7 +546,7 @@ HRESULT DirectX::OptimizeFacesLRU(
+ #ifdef WIN32
+     InitOnceExecuteOnce(&s_initOnce, ComputeVertexScores, nullptr, nullptr);
+ #else
+-    std::call_once(s_initOnce, ComputeVertexScores);
++    std::call_once(s_initOnce, &ComputeVertexScores);
+ #endif
+ 
+     return OptimizeFacesImpl<uint32_t>(indices, static_cast<uint32_t>(nFaces * 3), faceRemap, lruCacheSize, 0);
+@@ -574,7 +574,7 @@ HRESULT DirectX::OptimizeFacesLRUEx(
+ #ifdef WIN32
+     InitOnceExecuteOnce(&s_initOnce, ComputeVertexScores, nullptr, nullptr);
+ #else
+-    std::call_once(s_initOnce, ComputeVertexScores);
++    std::call_once(s_initOnce, &ComputeVertexScores);
+ #endif
+ 
+     auto subsets = ComputeSubsets(attributes, nFaces);
+@@ -627,7 +627,7 @@ HRESULT DirectX::OptimizeFacesLRUEx(
+ #ifdef WIN32
+     InitOnceExecuteOnce(&s_initOnce, ComputeVertexScores, nullptr, nullptr);
+ #else
+-    std::call_once(s_initOnce, ComputeVertexScores);
++    std::call_once(s_initOnce, &ComputeVertexScores);
+ #endif
+ 
+     auto subsets = ComputeSubsets(attributes, nFaces);
+-- 
+2.32.0 (Apple Git-131)
+

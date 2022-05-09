@@ -21,6 +21,11 @@ endif()
 
 # directx-mesh unconditionally includes install targets that need dxheaders'
 set(DXHEADERS_INSTALL TRUE)
+
+# directx-mesh unconditionally sets BUILD_TOOLS to TRUE, which then affects
+# other dependencies that use the same variable.  The tools aren't required.
+set (BUILD_TOOLS FALSE)
+
 add_subdirectory(dependencies/draco)
 add_subdirectory(dependencies/directx-headers)
 add_subdirectory(dependencies/directx-math)

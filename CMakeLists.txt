@@ -13,22 +13,15 @@ SET(CMAKE_PROJECT_INCLUDE_BEFORE ${CMAKE_SOURCE_DIR}/scripts/fix-policy.cmake)
 # will satisfy find_library without modifying the submodule
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/scripts/fakepkg)
 
-# Set directX path
-if (WIN32)
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/build/dependencies/directx-mesh)    
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/build/dependencies/directx-headers)
-    SET( BUILD_TOOLS OFF )
-endif()
-
 # Code in directx dependencies may use SAL annotations.
 # On non-win32 platforms, these are not defined.  Instead provide a SAL2 stub
 if (NOT WIN32)
     include_directories(dependencies/sal)
 endif()
 
-SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib )
-SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib )
-SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin )
+SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
 
 # directx-mesh unconditionally includes install targets that need dxheaders'
 set(DXHEADERS_INSTALL TRUE)

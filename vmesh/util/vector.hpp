@@ -39,6 +39,9 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <istream>
+#include <ostream>
+#include <vector>
 
 namespace vmesh {
 

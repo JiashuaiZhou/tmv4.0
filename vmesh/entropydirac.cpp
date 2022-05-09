@@ -35,7 +35,7 @@
 
 #include "vmesh/entropydirac.hpp"
 
-#include <exception>
+#include <stdexcept>
 
 namespace vmesh {
 namespace dirac {

@@ -57,8 +57,6 @@ add_custom_command(
 #source_group (cpp FILES ${PROJECT_CPP_FILES})
 
 include_directories(
-    "${PROJECT_BINARY_DIR}"
-    "${PROJECT_SOURCE_DIR}"
     "${PROJECT_SOURCE_DIR}/dependencies"
 )
 
@@ -81,6 +79,10 @@ add_library(vmesh STATIC
     "util/verbose.hpp"
     "error.hpp"
     "version.cpp"
+)
+target_include_directories(vmesh
+    PRIVATE "${PROJECT_BINARY_DIR}"
+    PUBLIC  "${PROJECT_SOURCE_DIR}"
 )
 
 add_library(po STATIC

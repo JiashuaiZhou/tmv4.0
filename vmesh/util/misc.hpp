@@ -60,11 +60,39 @@ Clamp(const T& v, const T& lo, const T& hi)
 }
 
 //============================================================================
-
+// Round @x up to next power of two.
+//
 inline uint32_t
-nextPowerOfTwo(uint32_t x)
+ceilpow2(uint32_t x)
 {
-  return x == 1 ? 1 : 1 << (32 - __builtin_clz(x - 1));
+  x--;
+  x = x | (x >> 1);
+  x = x | (x >> 2);
+  x = x | (x >> 4);
+  x = x | (x >> 8);
+  x = x | (x >> 16);
+  return x + 1;
+}
+
+//---------------------------------------------------------------------------
+// Population count -- return the number of bits set in @x.
+//
+inline int
+popcnt(uint32_t x)
+{
+  x = x - ((x >> 1) & 0x55555555u);
+  x = (x & 0x33333333u) + ((x >> 2) & 0x33333333u);
+  return ((x + (x >> 4) & 0xF0F0F0Fu) * 0x1010101u) >> 24;
+}
+
+//---------------------------------------------------------------------------
+// Compute \left\floor \text{log}_2(x) \right\floor.
+// NB: ilog2(0) = -1.
+inline int
+ilog2(uint32_t x)
+{
+  x = ceilpow2(x + 1) - 1;
+  return popcnt(x) - 1;
 }
 
 //============================================================================

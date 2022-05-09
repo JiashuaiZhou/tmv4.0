@@ -36,6 +36,7 @@
 #pragma once
 
 #include "vmesh/entropy.hpp"
+#include "vmesh/util/misc.hpp"
 #include "vmesh/util/vector.hpp"
 
 namespace vmesh {
@@ -65,7 +66,7 @@ struct VMCMotionACContext {
       if (!value) {
         continue;
       }
-      const auto log2Delta = 32 - __builtin_clz(uint32_t(value));
+      const auto log2Delta = 1 + ilog2(uint32_t(value));
       bits += ((log2Delta << 1) + 1) << 10;
     }
     return bits;

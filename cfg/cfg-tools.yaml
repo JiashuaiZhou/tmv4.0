@@ -113,13 +113,13 @@ tools:
         - !conditional '!${fitsubdiv_with_mapping}'
         - unifyVertices: 0
         - deformNNCount: 512
-        - deformNormalThresh: 0.8660254
+        - deformNormalThres: 0.8660254
 
       -
         - !conditional '${fitsubdiv_with_mapping}'
         - unifyVertices: 1
         - deformNNCount: 1
-        - deformNormalThresh: -2.0
+        - deformNormalThres: -2.0
 
 
     # step 4c, mode decision, choose between intra and inter frame

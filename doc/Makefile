@@ -4,7 +4,10 @@ all: mpeg-vmesh-sw-manual.pdf
 MD_SRC=\
 	README.about.md \
 	README.build.md \
-	README.options.md \
+	README.options.gengof.md \
+	README.options.simplify.md \
+	README.options.uvatlas.md \
+	README.options.vmc.md \
 	README.usage.md \
 	$(NULL)
 

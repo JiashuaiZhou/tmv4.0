@@ -9,6 +9,11 @@ categories:
       # preprocessed data
       - base:   ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
       - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+      # if pp not set, or no decimation, use input sequence
+      -
+        - !conditional 'not defined ${pp} or ${pp} == 1.0'
+        - base:   ${seq-prefix}${src-dir}/${src-mesh}
+        - subdiv: ${seq-prefix}${src-dir}/${src-mesh}
 
       # configuration for HM
       - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg
@@ -53,7 +58,7 @@ categories:
           - texheight: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
 
       longdress:
-        pp: { r1: 0.03, r2: 0.06, r3: 0.36, r4: 0.48 }
+        pp: { r1: 0.03, r2: 0.06, r3: 0.36, r4: 0.48, r5: 1.00 }
         encoder:
           - it: { r1: 3, r2: 3, r3: 0, r4: 0, r5: 0 }
           - gqp: 10
@@ -72,7 +77,7 @@ categories:
           - texheight: { r3: 4096, r4: 4096, r5: 4096 }
 
       soldier:
-        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.48 }
+        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.48, r5: 1.00 }
         encoder:
           - it: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
           - gqp: 10

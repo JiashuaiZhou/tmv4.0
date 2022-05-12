@@ -19,6 +19,9 @@ tools:
 
     # step 2, simplify each frame in the input
     simplify:
+      # only export configuration if there is any decimation
+      - !conditional 'defined ${pp} and ${pp} < 1.0'
+
       - input: ${seq-prefix}${src-dir}/${src-mesh}
       - qt: ${src-texcoord-bits}
 
@@ -34,6 +37,9 @@ tools:
 
     # step 2, generate isochart for each frame of each simplified mesh
     uvatlas:
+      # only export configuration if there is any decimation
+      - !conditional 'defined ${pp} and ${pp} < 1.0'
+
       - input:  ${src-dir}_r${pp}/${src-mesh}_decimated.obj
       - output: ${src-dir}_r${pp}/${src-mesh}_decimated_tex.obj
       - width:  $eval{ 1 << ${src-texcoord-bits} - 1 }
@@ -45,6 +51,9 @@ tools:
 
     # step 4a, subdivision and fitting (intra frames)
     fitsubdiv_intra:
+      # only export configuration if there is any decimation
+      - !conditional 'defined ${pp} and ${pp} < 1.0'
+
       # input
       - target: ${src-dir}_r${pp}/${src-mesh}_reference.obj
       - source: ${src-dir}_r${pp}/${src-mesh}_decimated_tex.obj
@@ -72,6 +81,9 @@ tools:
 
     # step 4a, subdivision and fitting (for inter frames)
     fitsubdiv_inter:
+      # only export configuration if there is any decimation
+      - !conditional 'defined ${pp} and ${pp} < 1.0'
+
       # outputs
       - base:    ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
       - subdiv:  ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
@@ -124,6 +136,10 @@ tools:
 
     # step 4c, mode decision, choose between intra and inter frame
     fitsubdiv_choose:
+      # only export configuration if there is any decimation
+      # NB: when pp=1.0, encoder uses the sequence gof file
+      - !conditional 'defined ${pp} and ${pp} < 1.0'
+
       - maxAllowedD2PSNRLoss: 1.0
 
       - ai-base:    ${src-dir}_r${pp}_ai/${src-mesh}_base.obj

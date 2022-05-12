@@ -68,8 +68,15 @@ namespace {
 struct Parameters {
   bool verbose;
 
-  // frame number for expansion in input/output filenames
+  ///
+  // Frame number.
+  // Used in the expansion of input/output filenames.
   int fnum;
+
+  ///
+  // Reference frame number.
+  // Used in the expansion of input filenames.
+  int fnumRef;
 
   std::string targetMeshPath;
   std::string sourceMeshPath;
@@ -148,7 +155,9 @@ try {
   ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("Input/Output"))
-  ("fnum",     params.fnum, {}, "Frame number for %d expansion")
+  ("fnum",     params.fnum, {},    "Frame number for %d expansion")
+  ("rnum",     params.fnumRef, -1, "Reference frame number for %d expansion")
+
   ("source,i", params.sourceMeshPath,  {}, "Source mesh")
   ("target",   params.targetMeshPath,  {}, "Target mesh")
   ("mtarget",  params.targetModifierMeshPath, {}, "Target modifier mesh")
@@ -263,10 +272,33 @@ try {
   if (err.is_errored)
     return false;
 
+  // If --rnum is not set, default to --fnum
+  if (params.fnumRef < 0)
+    params.fnumRef = params.fnum;
+
+  // expand path names
+  // if mtarget is specified, target is reference frame
+  // otherwise,               target is current frame
+  params.targetMeshPath = expandNum(params.targetMeshPath,
+    params.targetModifierMeshPath.empty() ? params.fnum : params.fnumRef);
+
+  params.targetModifierMeshPath =
+    expandNum(params.targetModifierMeshPath, params.fnum);
+
+  // reference frames use fnumRef
+  params.sourceMeshPath = expandNum(params.sourceMeshPath, params.fnumRef);
+  params.mappedMeshPath = expandNum(params.mappedMeshPath, params.fnumRef);
+  params.subdiv0MeshPath = expandNum(params.subdiv0MeshPath, params.fnumRef);
+
+  // output file names use fnum
+  params.baseMeshPath = expandNum(params.baseMeshPath, params.fnum);
+  params.nsubdivMeshPath = expandNum(params.nsubdivMeshPath, params.fnum);
+  params.subdivMeshPath = expandNum(params.subdivMeshPath, params.fnum);
+
   // Dump the complete derived configuration
   cout << "+ Configuration parameters\n";
   po::dumpCfg(cout, opts, "Input/Output", 4);
-  po::dumpCfg(cout, opts, "Gof", 4);
+  po::dumpCfg(cout, opts, "Subdiv", 4);
   cout << endl;
 
   return true;
@@ -846,21 +878,25 @@ LoadInputMeshes(
   vout << "Loading Meshes... ";
 
   if (1) {
-    const auto& name = vmesh::expandNum(params.targetMeshPath, params.fnum);
+    // if mtarget is specified, target is reference frame
+    // otherwise,               target is current frame
+    auto tgtFnum = params.targetModifierMeshPath.empty()
+        ? params.fnum : params.fnumRef;
+    const auto& name = vmesh::expandNum(params.targetMeshPath, tgtFnum);
     if (!target.loadFromOBJ(name)) {
       cerr << "Error: can't load target mesh " << name << endl;
       return false;
     }
   }
   if (1) {
-    const auto& name = vmesh::expandNum(params.sourceMeshPath, params.fnum);
+    const auto& name = vmesh::expandNum(params.sourceMeshPath, params.fnumRef);
     if (!source.loadFromOBJ(name)) {
       cerr << "Error: can't load source mesh " << name << endl;
       return false;
     }
   }
   if (!params.mappedMeshPath.empty()) {
-    const auto& name = vmesh::expandNum(params.mappedMeshPath, params.fnum);
+    const auto& name = vmesh::expandNum(params.mappedMeshPath, params.fnumRef);
     if (!mapped.loadFromOBJ(name)) {
       cerr << "Error: can't load mapped mesh " << name << endl;
       return false;
@@ -868,7 +904,7 @@ LoadInputMeshes(
   }
   if (!params.targetModifierMeshPath.empty()) {
     const auto& name =
-      vmesh::expandNum(params.targetModifierMeshPath, params.fnum);
+      vmesh::expandNum(params.targetModifierMeshPath, params.fnumRef);
     if (!mtarget.loadFromOBJ(name)) {
       cerr << "Error: can't load target modifier mesh " << name << endl;
       return false;

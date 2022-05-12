@@ -53,6 +53,20 @@ Path to the generated subdivided and deformed normal mesh in OBJ format. The
 generated mesh is obtained by applying 1D displacements to the subdivided base
 mesh along the normals to the surface.
 
+### `--fnum=INT-VALUE`
+Frame number, used to expand `%d` format specifies in file names for:
+
+- `base`, `subdiv`, `nsubdiv`, `mtarget`, and
+- `target` unless `mtarget` is set.
+
+### `--rnum=INT-VALUE`
+Reference frame number, used to expand `%d` format specifies in file names in:
+
+- `source`, `mapped`, `subdiv0`, and
+- `target` if `mtarget` is set.
+
+Defaults to `fnum` if not set.
+
 
 Subdivision parameters
 ----------------------

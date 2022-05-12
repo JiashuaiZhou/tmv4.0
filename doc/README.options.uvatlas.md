@@ -21,6 +21,10 @@ Path to the input mesh in OBJ format.
 ### `--output=FILE`, `-o`
 Path to the generated mesh with texture coordinates in OBJ format.
 
+### `--fnum=INT-VALUE`
+Frame number, used to expand `%d` format specifies in `input` and `output`
+file names.
+
 
 Iso chart
 ---------

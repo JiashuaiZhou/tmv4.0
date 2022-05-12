@@ -7,13 +7,13 @@ set -e
 shopt -s nullglob
 
 script_dir="$(dirname $0)"
-src_cfg_dir=""
-outdir="./"
+src_cfg_dir="$script_dir/../cfg"
+outdir="."
 
 while (( $# )); do
 	case $1 in
 	--outdir=*) outdir="${1#--outdir=}" ;;
-	--cfgdir=*) src_cfg_dir="${1#--cfgdir=}/" ;;
+	--cfgdir=*) src_cfg_dir="${1#--cfgdir=}" ;;
 	--) shift; break ;;
 	--help|*)
 		echo -e "usage:\n $0\n" \
@@ -25,8 +25,11 @@ done
 
 extra_args=("$@")
 
+# add trailing slash to src_cfg_dir if not empty
+src_cfg_dir="${src_cfg_dir}${src_cfg_dir:+/}"
+
 # load site configuration if present
-sitecfg="${src_cfg_dir:-.}/cfg-site.yaml"
+sitecfg="${src_cfg_dir:-}cfg-site.yaml"
 [[ -f $sitecfg ]] || sitecfg=
 
 ##

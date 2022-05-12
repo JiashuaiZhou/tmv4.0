@@ -110,7 +110,7 @@ try {
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
-    err.warn() << "Unhandled argument ignored: " << arg << "\n";
+    err.warn() << "Unhandled argument ignored: " << arg << '\n';
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -184,7 +184,7 @@ RemoveSmallConnectedComponents(
   vout << "Input mesh: " << ccCount0 << "CC " << pointCount << "V "
        << triangleCount << "T\n";
   vout << "Cleaned up mesh: " << ccCounter << "CC " << mesh.pointCount()
-       << "V " << mesh.triangleCount() << "T"
+       << "V " << mesh.triangleCount() << 'T'
        << "\t Removed " << (ccCount0 - ccCounter) << "CC "
        << (pointCount - mesh.pointCount()) << "V "
        << (triangleCount - mesh.triangleCount()) << "T\n";

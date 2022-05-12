@@ -641,26 +641,26 @@ public:
         !_disp.empty() && _disp.size() == _coord.size();
       for (int32_t pointIndex = 0; pointIndex < ptCount; ++pointIndex) {
         const auto& pt = point(pointIndex);
-        fout << "v " << T1(pt.x()) << " " << T1(pt.y()) << " " << T1(pt.z());
+        fout << "v " << T1(pt.x()) << ' ' << T1(pt.y()) << ' ' << T1(pt.z());
         if (hasColours) {
           const auto& c = colour(pointIndex);
-          fout << " " << T1(c.x()) << " " << T1(c.y()) << " " << T1(c.z());
+          fout << ' ' << T1(c.x()) << ' ' << T1(c.y()) << ' ' << T1(c.z());
         }
         if (hasDisplacements) {
           const auto& d = displacement(pointIndex);
-          fout << " " << T1(d.x()) << " " << T1(d.y()) << " " << T1(d.z());
+          fout << ' ' << T1(d.x()) << ' ' << T1(d.y()) << ' ' << T1(d.z());
         }
         fout << '\n';
       }
 
       for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
         const auto& uv = texCoord(uvIndex) * uvScale;
-        fout << "vt " << T1(uv.x()) << " " << T1(uv.y()) << '\n';
+        fout << "vt " << T1(uv.x()) << ' ' << T1(uv.y()) << '\n';
       }
 
       for (int32_t nIndex = 0; nIndex < nCount; ++nIndex) {
         const auto& n = normal(nIndex);
-        fout << "vn " << T1(n.x()) << " " << T1(n.y()) << " " << T1(n.z())
+        fout << "vn " << T1(n.x()) << ' ' << T1(n.y()) << ' ' << T1(n.z())
              << '\n';
       }
 
@@ -673,7 +673,7 @@ public:
           const auto k = (tri.z() + 1);
 
           assert(i != j && i != k && j != k);
-          fout << "f " << i << " " << j << " " << k << '\n';
+          fout << "f " << i << ' ' << j << ' ' << k << '\n';
         }
       } else if (nTriCount && tcTriCount == 0) {
         for (int32_t triangleIndex = 0; triangleIndex < triCount;
@@ -690,7 +690,7 @@ public:
 
           assert(i0 != j0 && i0 != k0 && j0 != k0);
           assert(i1 != j1 && i1 != k1 && j1 != k1);
-          fout << "f " << i0 << "//" << i1 << " " << j0 << "//" << j1 << " "
+          fout << "f " << i0 << "//" << i1 << ' ' << j0 << "//" << j1 << ' '
                << k0 << "//" << k1 << '\n';
         }
       } else if (tcTriCount && nTriCount == 0) {
@@ -708,8 +708,8 @@ public:
 
           assert(i0 != j0 && i0 != k0 && j0 != k0);
           assert(i1 != j1 && i1 != k1 && j1 != k1);
-          fout << "f " << i0 << "/" << i1 << " " << j0 << "/" << j1 << " "
-               << k0 << "/" << k1 << '\n';
+          fout << "f " << i0 << '/' << i1 << ' ' << j0 << '/' << j1 << ' '
+               << k0 << '/' << k1 << '\n';
         }
       } else {
         for (int32_t triangleIndex = 0; triangleIndex < triCount;
@@ -732,8 +732,8 @@ public:
           assert(i0 != j0 && i0 != k0 && j0 != k0);
           assert(i1 != j1 && i1 != k1 && j1 != k1);
           assert(i2 != j2 && i2 != k2 && j2 != k2);
-          fout << "f " << i0 << "/" << i1 << "/" << i2 << " " << j0 << "/"
-               << j1 << "/" << j2 << " " << k0 << "/" << k1 << "/" << k2
+          fout << "f " << i0 << '/' << i1 << '/' << i2 << ' ' << j0 << '/'
+               << j1 << '/' << j2 << ' ' << k0 << '/' << k1 << '/' << k2
                << '\n';
         }
       }

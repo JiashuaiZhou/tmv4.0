@@ -352,7 +352,7 @@ VMCDecoder::decompressDisplacementsVideo(
   const auto width = _dispVideo.width();
   const auto height = _dispVideo.height();
   fnameCompressDisp << "GOF_" << _gofInfo.index << "_disp_dec.h265";
-  fnameDispDec << "GOF_" << _gofInfo.index << "_disp_" << width << "x"
+  fnameDispDec << "GOF_" << _gofInfo.index << "_disp_" << width << 'x'
                << height << "_dec.yuv";
   uint32_t byteCountDispVideo = 0;
   bitstream.read(byteCountDispVideo, _byteCounter);
@@ -366,9 +366,9 @@ VMCDecoder::decompressDisplacementsVideo(
   file.close();
   _byteCounter += byteCountDispVideo;
   std::stringstream cmd;
-  cmd << params.geometryVideoDecoderPath << " ";
-  cmd << "--BitstreamFile=" << fnameCompressDisp.str() << " ";
-  cmd << "--ReconFile=" << fnameDispDec.str() << " ";
+  cmd << params.geometryVideoDecoderPath << ' ';
+  cmd << "--BitstreamFile=" << fnameCompressDisp.str() << ' ';
+  cmd << "--ReconFile=" << fnameDispDec.str() << ' ';
   std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
   _dispVideo.load(fnameDispDec.str());
@@ -395,7 +395,7 @@ VMCDecoder::decompressTextureVideo(
   std::stringstream fnameCompressTexture;
   fnameCompressTexture << "GOF_" << _gofInfo.index << "_texture_dec.h265";
   std::stringstream fnameTextureYUV420Dec;
-  fnameTextureYUV420Dec << "GOF_" << _gofInfo.index << "_tex_" << width << "x"
+  fnameTextureYUV420Dec << "GOF_" << _gofInfo.index << "_tex_" << width << 'x'
                         << height << "_420_" << _sps.textureVideoBitDepth
                         << "bit_dec.yuv";
   uint32_t byteCountTexVideo = 0;
@@ -410,22 +410,23 @@ VMCDecoder::decompressTextureVideo(
   file.close();
   _byteCounter += byteCountTexVideo;
   std::stringstream cmd;
-  cmd << params.textureVideoDecoderPath << " ";
-  cmd << "--BitstreamFile=" << fnameCompressTexture.str() << " ";
-  cmd << "--ReconFile=" << fnameTextureYUV420Dec.str() << " ";
+  cmd << params.textureVideoDecoderPath << ' ';
+  cmd << "--BitstreamFile=" << fnameCompressTexture.str() << ' ';
+  cmd << "--ReconFile=" << fnameTextureYUV420Dec.str() << ' ';
   std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
 
   std::stringstream fnameTextureBGR444Dec;
-  fnameTextureBGR444Dec << "GOF_" << _gofInfo.index << "_tex_" << width << "x"
+  fnameTextureBGR444Dec << "GOF_" << _gofInfo.index << "_tex_" << width << 'x'
                         << height << "_444_rec.bgrp";
   cmd.str("");
-  cmd << params.textureVideoHDRToolPath << " -f "
-      << params.textureVideoHDRToolDecConfig << " -p SourceFile=\""
-      << fnameTextureYUV420Dec.str() << "\""
-      << " -p SourceWidth=" << width << " -p SourceHeight=" << height
-      << " -p NumberOfFrames=" << frameCount << " -p OutputFile=\""
-      << fnameTextureBGR444Dec.str() << "\""
+  cmd << params.textureVideoHDRToolPath
+      << " -f " << params.textureVideoHDRToolDecConfig
+      << " -p SourceFile=\"" << fnameTextureYUV420Dec.str() << '"'
+      << " -p SourceWidth=" << width
+      << " -p SourceHeight=" << height
+      << " -p NumberOfFrames=" << frameCount
+      << " -p OutputFile=\"" << fnameTextureBGR444Dec.str() << '"'
       << " -p SourceBitDepthCmp0=" << _sps.textureVideoBitDepth
       << " -p SourceBitDepthCmp1=" << _sps.textureVideoBitDepth
       << " -p SourceBitDepthCmp2=" << _sps.textureVideoBitDepth << '\n';

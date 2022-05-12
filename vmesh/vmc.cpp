@@ -247,7 +247,7 @@ try {
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
-    err.warn() << "Unhandled argument ignored: " << arg << "\n";
+    err.warn() << "Unhandled argument ignored: " << arg << '\n';
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -504,7 +504,7 @@ loadGroupOfFrames(
   const auto startFrame = gofInfo.startFrameIndex;
   const auto frameCount = gofInfo.frameCount;
   const auto lastFrame = startFrame + frameCount - 1;
-  vout << "Loading group of frames (" << startFrame << "-" << lastFrame
+  vout << "Loading group of frames (" << startFrame << '-' << lastFrame
        << ") ";
 
   gof.resize(frameCount);
@@ -516,7 +516,7 @@ loadGroupOfFrames(
     const auto nameSuvdivMesh = expandNum(params.subdivMeshPath, f);
     const auto findex = f - startFrame;
     auto& frame = gof.frames[findex];
-    vout << "." << std::flush;
+    vout << '.' << std::flush;
 
     if (
       !frame.input.loadFromOBJ(nameInputMesh)
@@ -577,7 +577,7 @@ loadGroupOfFrames(
     }
   }
 
-  cout << "\n";
+  cout << '\n';
   return 0;
 }
 

@@ -90,7 +90,7 @@ try {
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
-    err.warn() << "Unhandled argument ignored: " << arg << "\n";
+    err.warn() << "Unhandled argument ignored: " << arg << '\n';
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -202,7 +202,7 @@ main(int argc, char* argv[])
       frameIndex0 = frameIndex1;
       mesh0 = mesh1;
     } else {
-      cout << interFrameCount++ << " " << frameIndex0 << " -> " << frameIndex1
+      cout << interFrameCount++ << ' ' << frameIndex0 << " -> " << frameIndex1
            << '\n';
     }
     predStructure[f] = Vec3<int32_t>(frameIndex1, frameIndex0, 0);
@@ -227,7 +227,7 @@ main(int argc, char* argv[])
       const auto end = startFrameIndexGOF + framesInGOF;
       assert(start >= params.startFrame);
       assert(end <= params.startFrame + params.frameCount);
-      cout << "GOf[" << counterGOF << "] " << start << " -> " << end << " "
+      cout << "GOf[" << counterGOF << "] " << start << " -> " << end << ' '
            << framesInGOF << '\n';
       for (int32_t t = start; t < end; ++t) {
         predStructure[t - params.startFrame][2] = counterGOF;
@@ -244,7 +244,7 @@ main(int argc, char* argv[])
     const auto end = startFrameIndexGOF + framesInGOF;
     assert(start >= params.startFrame);
     assert(end <= params.startFrame + params.frameCount);
-    cout << "GOf[" << counterGOF << "] " << start << " -> " << end << " "
+    cout << "GOf[" << counterGOF << "] " << start << " -> " << end << ' '
          << framesInGOF << '\n';
     for (int32_t t = start; t < end; ++t) {
       predStructure[t - params.startFrame][2] = counterGOF;
@@ -254,7 +254,7 @@ main(int argc, char* argv[])
 
   for (int32_t t = 0; t < params.frameCount; ++t) {
     const auto& pred = predStructure[t];
-    fout << pred[0] << " " << pred[1] << " " << pred[2] << '\n';
+    fout << pred[0] << ' ' << pred[1] << ' ' << pred[2] << '\n';
   }
 
   return 0;

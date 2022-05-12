@@ -61,6 +61,7 @@ struct VMCDecoderParameters {
   bool normalizeUV;
 
   // output
+  std::string intermediateFilesPathPrefix = {};
   bool keepIntermediateFiles;
 };
 

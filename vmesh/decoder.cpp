@@ -270,10 +270,11 @@ VMCDecoder::decompressBaseMesh(
   auto& qpositions = frame.qpositions;
   if (frameInfo.type == FrameType::INTRA) {
     std::stringstream cbaseFileName, dbaseFileName;
-    cbaseFileName << "gof_" << _gofInfo.index << "_fr_" << frameIndex
+    cbaseFileName << params.intermediateFilesPathPrefix << "gof_"
+                  << _gofInfo.index << "_fr_" << frameIndex
                   << "_cbase_dec.drc";
-    dbaseFileName << "gof_" << _gofInfo.index << "_fr_" << frameIndex
-                  << "_dbase.obj";
+    dbaseFileName << params.intermediateFilesPathPrefix << "gof_"
+                  << _gofInfo.index << "_fr_" << frameIndex << "_dbase.obj";
     auto bitstreamByteCount0 = _byteCounter;
     uint32_t byteCountBaseMesh = 0;
     bitstream.read(byteCountBaseMesh, _byteCounter);
@@ -351,9 +352,11 @@ VMCDecoder::decompressDisplacementsVideo(
   std::stringstream fnameCompressDisp, fnameDispDec;
   const auto width = _dispVideo.width();
   const auto height = _dispVideo.height();
-  fnameCompressDisp << "GOF_" << _gofInfo.index << "_disp_dec.h265";
-  fnameDispDec << "GOF_" << _gofInfo.index << "_disp_" << width << "x"
-               << height << "_dec.yuv";
+  fnameCompressDisp << params.intermediateFilesPathPrefix << "GOF_"
+                    << _gofInfo.index << "_disp_dec.h265";
+  fnameDispDec << params.intermediateFilesPathPrefix << "GOF_"
+               << _gofInfo.index << "_disp_" << width << "x" << height
+               << "_dec.yuv";
   uint32_t byteCountDispVideo = 0;
   bitstream.read(byteCountDispVideo, _byteCounter);
   std::ofstream file(fnameCompressDisp.str(), std::ios::binary);
@@ -393,10 +396,12 @@ VMCDecoder::decompressTextureVideo(
   const auto height = _sps.heightTexVideo;
   const auto frameCount = _sps.frameCount;
   std::stringstream fnameCompressTexture;
-  fnameCompressTexture << "GOF_" << _gofInfo.index << "_texture_dec.h265";
+  fnameCompressTexture << params.intermediateFilesPathPrefix << "GOF_"
+                       << _gofInfo.index << "_texture_dec.h265";
   std::stringstream fnameTextureYUV420Dec;
-  fnameTextureYUV420Dec << "GOF_" << _gofInfo.index << "_tex_" << width << "x"
-                        << height << "_420_" << _sps.textureVideoBitDepth
+  fnameTextureYUV420Dec << params.intermediateFilesPathPrefix << "GOF_"
+                        << _gofInfo.index << "_tex_" << width << "x" << height
+                        << "_420_" << _sps.textureVideoBitDepth
                         << "bit_dec.yuv";
   uint32_t byteCountTexVideo = 0;
   bitstream.read(byteCountTexVideo, _byteCounter);
@@ -417,8 +422,9 @@ VMCDecoder::decompressTextureVideo(
   system(cmd.str().c_str());
 
   std::stringstream fnameTextureBGR444Dec;
-  fnameTextureBGR444Dec << "GOF_" << _gofInfo.index << "_tex_" << width << "x"
-                        << height << "_444_rec.bgrp";
+  fnameTextureBGR444Dec << params.intermediateFilesPathPrefix << "GOF_"
+                        << _gofInfo.index << "_tex_" << width << "x" << height
+                        << "_444_rec.bgrp";
   cmd.str("");
   cmd << params.textureVideoHDRToolPath << " -f "
       << params.textureVideoHDRToolDecConfig << " -p SourceFile=\""
@@ -443,7 +449,7 @@ VMCDecoder::decompressTextureVideo(
   }
   fileTextureVideoDec.close();
 
-  if (params.keepIntermediateFiles) {
+  if (!params.keepIntermediateFiles) {
     std::remove(fnameCompressTexture.str().c_str());
     std::remove(fnameTextureYUV420Dec.str().c_str());
     std::remove(fnameTextureBGR444Dec.str().c_str());

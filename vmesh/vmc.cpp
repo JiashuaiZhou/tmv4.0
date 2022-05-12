@@ -118,6 +118,9 @@ try {
   ("rectex",  params.reconstructedTexturePath, {},
    "Reconstructed texture")
 
+  ("intermediateFilesPathPrefix", params.encParams.intermediateFilesPathPrefix, {},
+   "Intermediate files path prefix")
+
   ("keep",    params.encParams.keepIntermediateFiles, false,
    "Keep intermediate files")
 
@@ -130,6 +133,9 @@ try {
 
   ("dectex",  params.decodedTexturePath, {},
    "Decoded texture")
+
+  ("intermediateFilesPathPrefix", params.decParams.intermediateFilesPathPrefix, {},
+   "Intermediate files path prefix")
 
   ("keep",    params.decParams.keepIntermediateFiles, false,
    "Keep intermediate files")

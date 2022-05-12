@@ -111,13 +111,15 @@ VMCEncoder::compressDisplacementsVideo(
   const auto width = _dispVideo.width();
   const auto height = _dispVideo.height();
   const auto frameCount = _dispVideo.frameCount();
-  fnameDisp << "GOF_" << _gofInfo.index << "_disp_" << width << "x" << height
-            << ".yuv";
-  fnameDispRec << "GOF_" << _gofInfo.index << "_disp_" << width << "x"
-               << height << "_rec.yuv";
+  fnameDisp << params.intermediateFilesPathPrefix << "GOF_" << _gofInfo.index
+            << "_disp_" << width << "x" << height << ".yuv";
+  fnameDispRec << params.intermediateFilesPathPrefix << "GOF_"
+               << _gofInfo.index << "_disp_" << width << "x" << height
+               << "_rec.yuv";
   _dispVideo.save(fnameDisp.str());
   std::stringstream fnameCompressDisp;
-  fnameCompressDisp << "GOF_" << _gofInfo.index << "_disp.h265";
+  fnameCompressDisp << params.intermediateFilesPathPrefix << "GOF_"
+                    << _gofInfo.index << "_disp.h265";
   std::stringstream cmd;
   cmd << params.geometryVideoEncoderPath << " ";
   cmd << "-c " << params.geometryVideoEncoderConfig << " ";
@@ -140,7 +142,7 @@ VMCEncoder::compressDisplacementsVideo(
   bitstream.append(fnameCompressDisp.str(), true);
   _dispVideo.load(fnameDispRec.str());
 
-  if (params.keepIntermediateFiles) {
+  if (!params.keepIntermediateFiles) {
     std::remove(fnameDisp.str().c_str());
     std::remove(fnameCompressDisp.str().c_str());
     std::remove(fnameDispRec.str().c_str());
@@ -161,10 +163,12 @@ VMCEncoder::compressTextureVideo(
   const auto height = params.textureHeight;
   const auto frameCount = gof.frameCount();
   std::stringstream fnameTextureBGR444, fnameTextureBGR444Rec;
-  fnameTextureBGR444 << "GOF_" << _gofInfo.index << "_tex_" << width << "x"
-                     << height << "_444.bgrp";
-  fnameTextureBGR444Rec << "GOF_" << _gofInfo.index << "_tex_" << width << "x"
-                        << height << "_444_rec.bgrp";
+  fnameTextureBGR444 << params.intermediateFilesPathPrefix << "GOF_"
+                     << _gofInfo.index << "_tex_" << width << "x" << height
+                     << "_444.bgrp";
+  fnameTextureBGR444Rec << params.intermediateFilesPathPrefix << "GOF_"
+                        << _gofInfo.index << "_tex_" << width << "x" << height
+                        << "_444_rec.bgrp";
 
   std::ofstream fileTextureVideo(fnameTextureBGR444.str());
   if (!fileTextureVideo.is_open()) {
@@ -179,11 +183,12 @@ VMCEncoder::compressTextureVideo(
   fileTextureVideo.close();
 
   std::stringstream fnameTextureYUV420, fnameTextureYUV420Rec;
-  fnameTextureYUV420 << "GOF_" << _gofInfo.index << "_tex_" << width << "x"
-                     << height << "_420_" << params.textureVideoBitDepth
-                     << "bit.yuv";
-  fnameTextureYUV420Rec << "GOF_" << _gofInfo.index << "_tex_" << width << "x"
-                        << height << "_420_" << params.textureVideoBitDepth
+  fnameTextureYUV420 << params.intermediateFilesPathPrefix << "GOF_"
+                     << _gofInfo.index << "_tex_" << width << "x" << height
+                     << "_420_" << params.textureVideoBitDepth << "bit.yuv";
+  fnameTextureYUV420Rec << params.intermediateFilesPathPrefix << "GOF_"
+                        << _gofInfo.index << "_tex_" << width << "x" << height
+                        << "_420_" << params.textureVideoBitDepth
                         << "bit_rec.yuv";
 
   std::stringstream cmd;
@@ -201,7 +206,8 @@ VMCEncoder::compressTextureVideo(
   system(cmd.str().c_str());
 
   std::stringstream fnameCompressTexture;
-  fnameCompressTexture << "GOF_" << _gofInfo.index << "_texture.h265";
+  fnameCompressTexture << params.intermediateFilesPathPrefix << "GOF_"
+                       << _gofInfo.index << "_texture.h265";
 
   cmd.str("");
   cmd << params.textureVideoEncoderPath << " ";
@@ -252,7 +258,7 @@ VMCEncoder::compressTextureVideo(
   }
   fileTextureVideoRec.close();
 
-  if (params.keepIntermediateFiles) {
+  if (!params.keepIntermediateFiles) {
     std::remove(fnameTextureBGR444.str().c_str());
     std::remove(fnameTextureBGR444Rec.str().c_str());
     std::remove(fnameTextureYUV420.str().c_str());
@@ -281,11 +287,13 @@ VMCEncoder::computeDracoMapping(
     base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
   }
   std::stringstream mappingFileName, cmappingFileName, rmappingFileName;
-  mappingFileName << "gof_" << _gofInfo.index << "_fr_" << frameIndex
-                  << "_mapping.obj";
-  cmappingFileName << "gof_" << _gofInfo.index << "_fr_" << frameIndex
+  mappingFileName << params.intermediateFilesPathPrefix << "gof_"
+                  << _gofInfo.index << "_fr_" << frameIndex << "_mapping.obj";
+  cmappingFileName << params.intermediateFilesPathPrefix << "gof_"
+                   << _gofInfo.index << "_fr_" << frameIndex
                    << "_cmapping.drc";
-  rmappingFileName << "gof_" << _gofInfo.index << "_fr_" << frameIndex
+  rmappingFileName << params.intermediateFilesPathPrefix << "gof_"
+                   << _gofInfo.index << "_fr_" << frameIndex
                    << "_rmapping.obj";
 
   base.saveToOBJ<int64_t>(mappingFileName.str());
@@ -303,7 +311,7 @@ VMCEncoder::computeDracoMapping(
   system(cmdDec.str().c_str());
   base.loadFromOBJ(rmappingFileName.str());
 
-  if (params.keepIntermediateFiles) {
+  if (!params.keepIntermediateFiles) {
     std::remove(mappingFileName.str().c_str());
     std::remove(cmappingFileName.str().c_str());
     std::remove(rmappingFileName.str().c_str());
@@ -498,12 +506,12 @@ VMCEncoder::compressBaseMesh(
     }
 
     std::stringstream qbaseFileName, cbaseFileName, rbaseFileName;
-    qbaseFileName << "gof_" << _gofInfo.index << "_fr_" << frameIndex
-                  << "_qbase.obj";
-    cbaseFileName << "gof_" << _gofInfo.index << "_fr_" << frameIndex
-                  << "_cbase.drc";
-    rbaseFileName << "gof_" << _gofInfo.index << "_fr_" << frameIndex
-                  << "_rbase.obj";
+    qbaseFileName << params.intermediateFilesPathPrefix << "gof_"
+                  << _gofInfo.index << "_fr_" << frameIndex << "_qbase.obj";
+    cbaseFileName << params.intermediateFilesPathPrefix << "gof_"
+                  << _gofInfo.index << "_fr_" << frameIndex << "_cbase.drc";
+    rbaseFileName << params.intermediateFilesPathPrefix << "gof_"
+                  << _gofInfo.index << "_fr_" << frameIndex << "_rbase.obj";
     base.saveToOBJ<int64_t>(qbaseFileName.str());
 
     std::stringstream cmdEnc;
@@ -524,7 +532,7 @@ VMCEncoder::compressBaseMesh(
     system(cmdDec.str().c_str());
     base.loadFromOBJ(rbaseFileName.str());
 
-    if (params.keepIntermediateFiles) {
+    if (!params.keepIntermediateFiles) {
       std::remove(qbaseFileName.str().c_str());
       std::remove(cbaseFileName.str().c_str());
       std::remove(rbaseFileName.str().c_str());

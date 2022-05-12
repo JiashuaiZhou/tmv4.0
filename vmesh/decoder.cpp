@@ -433,16 +433,16 @@ VMCDecoder::decompressTextureVideo(
   std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
 
-  std::ifstream fileTextureVideoDec(fnameTextureBGR444Dec.str());
-  if (!fileTextureVideoDec.is_open()) {
+  std::ifstream textureVideoBgr(fnameTextureBGR444Dec.str(), std::ios::binary);
+  if (!textureVideoBgr.is_open()) {
     return -1;
   }
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     auto& outTexture = gof.frame(frameIndex).outputTexture;
     outTexture.resize(width, height);
-    outTexture.load(fileTextureVideoDec);
+    outTexture.load(textureVideoBgr);
   }
-  fileTextureVideoDec.close();
+  textureVideoBgr.close();
 
   if (!params.keepIntermediateFiles) {
     std::remove(fnameCompressTexture.str().c_str());

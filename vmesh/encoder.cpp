@@ -166,7 +166,7 @@ VMCEncoder::compressTextureVideo(
   fnameTextureBGR444Rec << "GOF_" << _gofInfo.index << "_tex_" << width << 'x'
                         << height << "_444_rec.bgrp";
 
-  std::ofstream fileTextureVideo(fnameTextureBGR444.str());
+  std::ofstream fileTextureVideo(fnameTextureBGR444.str(), std::ios::binary);
   if (!fileTextureVideo.is_open()) {
     return -1;
   }
@@ -242,17 +242,17 @@ VMCEncoder::compressTextureVideo(
   std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
 
-  std::ifstream fileTextureVideoRec(fnameTextureBGR444Rec.str());
-  if (!fileTextureVideoRec.is_open()) {
+  std::ifstream textureVideoRec(fnameTextureBGR444Rec.str(), std::ios::binary);
+  if (!textureVideoRec.is_open()) {
     return -1;
   }
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     auto& outTexture = gof.frame(frameIndex).outputTexture;
     assert(outTexture.width() == width);
     assert(outTexture.height() == height);
-    outTexture.load(fileTextureVideoRec);
+    outTexture.load(textureVideoRec);
   }
-  fileTextureVideoRec.close();
+  textureVideoRec.close();
 
   if (!params.keepIntermediateFiles) {
     std::remove(fnameTextureBGR444.str().c_str());

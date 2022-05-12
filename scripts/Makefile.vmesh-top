@@ -1,0 +1,25 @@
+# The directory that contains this makefile
+scriptdir := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
+
+# By default, assume that these tools are on the path
+export GENGOF ?= gengof
+export SIMPLIFY ?= simplify
+export UUVATLAS ?= uvatlas
+export FITSUBDIV ?= fitsubdiv
+export VMC ?= vmc
+export MMETRIC ?= mm
+export OBJSUM ?= $(scriptdir)/objsum
+
+# The list of directories to build according to the gen-cfg structure
+# assuming that $(CURDIR) is the root of the experiment
+dirs = $(wildcard */*/*/)
+
+.PHONY: all
+all: $(dirs)
+
+.PHONY: $(dirs)
+$(dirs):
+	-$(MAKE) -f $(scriptdir)/Makefile.vmesh-step -C $@ $(MAKECMDGOALS)
+
+# Parallel dispatch to each job directory
+%:: $(dirs)

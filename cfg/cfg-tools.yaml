@@ -136,6 +136,10 @@ tools:
       - ld-subdiv:  ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
       - ld-nsubdiv: ${src-dir}_r${pp}_ld/${src-mesh}_nsubdiv.obj
 
+      # the GoF to generate from the mode decisions
+      - ld-gof: ${src-dir}_r${pp}_ld/${src-dir}.gof
+
+
     mmetric:
       - firstframe: ${first-frame}
       - lastframe: $eval{ ${first-frame} + ${num-frames} - 1 }

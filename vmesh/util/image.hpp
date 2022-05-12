@@ -671,7 +671,7 @@ SparseLinearPadding(
     }
     double error = std::sqrt(rtr / toPaddPixelCount);
     int32_t it = 0;
-    //    std::cout << it << " -> " << error << std::endl;
+    //    std::cout << it << " -> " << error << '\n';
     for (; it < itCount && error > maxError; ++it) {
       q = A * p;
       double pAp = 0.0;
@@ -693,7 +693,7 @@ SparseLinearPadding(
       }
       rtr = r1tr1;
       error = std::sqrt(r1tr1 / toPaddPixelCount);
-      //      std::cout << it << " -> " << error << std::endl;
+      //      std::cout << it << " -> " << error << '\n';
     }
     const auto maxValue = std::numeric_limits<T1>::max();
     auto& plane = input.plane(dim);

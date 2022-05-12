@@ -183,7 +183,7 @@ try {
   std::cout << "+ Configuration parameters\n";
   po::dumpCfg(std::cout, opts, "Input/Output", 4);
   po::dumpCfg(std::cout, opts, "Isochart", 4);
-  std::cout << std::endl;
+  std::cout << '\n';
 
   return true;
 }

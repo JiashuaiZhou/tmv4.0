@@ -985,7 +985,7 @@ PrintProgress(double progress)
   }
   std::cout << "] " << int(progress * 100.0) << " %\r";
   std::cout.flush();
-  std::cout << std::endl;
+  std::cout << '\n';
 }
 
 //============================================================================

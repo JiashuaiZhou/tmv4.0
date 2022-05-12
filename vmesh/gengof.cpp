@@ -111,7 +111,7 @@ try {
   cout << "+ Configuration parameters\n";
   po::dumpCfg(cout, opts, "Input/Output", 4);
   po::dumpCfg(cout, opts, "Gof", 4);
-  cout << endl;
+  cout << '\n';
 
   return true;
 }
@@ -126,20 +126,20 @@ catch (df::program_options_lite::ParseFailure& e) {
 int
 main(int argc, char* argv[])
 {
-  cout << "MPEG VMESH version " << ::vmesh::version << endl;
+  cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
   if (!parseParameters(argc, argv, params))
     return 1;
 
   if (params.frameCount < 1) {
-    cerr << "Error: frameCount < 1" << endl;
+    cerr << "Error: frameCount < 1\n";
     return 1;
   }
 
   std::ofstream fout(params.outputPath);
   if (!fout.is_open()) {
-    cerr << "Error: can't create output file " << params.outputPath << endl;
+    cerr << "Error: can't create output file " << params.outputPath << '\n';
     return 1;
   }
 
@@ -203,7 +203,7 @@ main(int argc, char* argv[])
       mesh0 = mesh1;
     } else {
       cout << interFrameCount++ << " " << frameIndex0 << " -> " << frameIndex1
-           << endl;
+           << '\n';
     }
     predStructure[f] = Vec3<int32_t>(frameIndex1, frameIndex0, 0);
   }
@@ -228,7 +228,7 @@ main(int argc, char* argv[])
       assert(start >= params.startFrame);
       assert(end <= params.startFrame + params.frameCount);
       cout << "GOf[" << counterGOF << "] " << start << " -> " << end << " "
-           << framesInGOF << endl;
+           << framesInGOF << '\n';
       for (int32_t t = start; t < end; ++t) {
         predStructure[t - params.startFrame][2] = counterGOF;
       }
@@ -245,7 +245,7 @@ main(int argc, char* argv[])
     assert(start >= params.startFrame);
     assert(end <= params.startFrame + params.frameCount);
     cout << "GOf[" << counterGOF << "] " << start << " -> " << end << " "
-         << framesInGOF << endl;
+         << framesInGOF << '\n';
     for (int32_t t = start; t < end; ++t) {
       predStructure[t - params.startFrame][2] = counterGOF;
     }
@@ -254,7 +254,7 @@ main(int argc, char* argv[])
 
   for (int32_t t = 0; t < params.frameCount; ++t) {
     const auto& pred = predStructure[t];
-    fout << pred[0] << " " << pred[1] << " " << pred[2] << endl;
+    fout << pred[0] << " " << pred[1] << " " << pred[2] << '\n';
   }
 
   return 0;

@@ -737,9 +737,9 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const Mat3<T>& mat)
   {
-    os << mat[0][0] << " " << mat[0][1] << " " << mat[0][2] << std::endl
-       << mat[1][0] << " " << mat[1][1] << " " << mat[1][2] << std::endl
-       << mat[2][0] << " " << mat[2][1] << " " << mat[2][2] << std::endl;
+    os << mat[0][0] << " " << mat[0][1] << " " << mat[0][2] << '\n'
+       << mat[1][0] << " " << mat[1][1] << " " << mat[1][2] << '\n'
+       << mat[2][0] << " " << mat[2][1] << " " << mat[2][2] << '\n';
     return os;
   }
 
@@ -939,7 +939,7 @@ public:
       for (int32_t x = 0; x < mat.columnCount(); ++x) {
         os << r[x] << " ";
       }
-      os << ";" << std::endl;
+      os << ";\n";
     }
     return os;
   }

@@ -533,14 +533,14 @@ struct Material {
   {
     std::ofstream fout(fileName);
     if (fout.is_open()) {
-      fout << "newmtl " << name << std::endl;
-      fout << "Ka " << ambiant << std::endl;
-      fout << "Kd " << diffuse << std::endl;
-      fout << "Ks " << specular << std::endl;
-      fout << "Tr " << transparency << std::endl;
-      fout << "illum " << illumination << std::endl;
-      fout << "Ns " << specularExponent << std::endl;
-      fout << "map_Kd " << texture << std::endl;
+      fout << "newmtl " << name << '\n';
+      fout << "Ka " << ambiant << '\n';
+      fout << "Kd " << diffuse << '\n';
+      fout << "Ks " << specular << '\n';
+      fout << "Tr " << transparency << '\n';
+      fout << "illum " << illumination << '\n';
+      fout << "Ns " << specularExponent << '\n';
+      fout << "map_Kd " << texture << '\n';
       fout.close();
       return true;
     }
@@ -626,14 +626,14 @@ public:
 
       assert(nTriCount == 0 || nTriCount == triCount);
       assert(tcTriCount == 0 || tcTriCount == triCount);
-      fout << "####" << std::endl;
-      fout << "# Coord:     " << ptCount << std::endl;
-      fout << "# Normals:   " << nCount << std::endl;
-      fout << "# TexCoord:  " << tcCount << std::endl;
-      fout << "# Triangles: " << triCount << std::endl;
-      fout << "####" << std::endl;
+      fout << "####\n";
+      fout << "# Coord:     " << ptCount << '\n';
+      fout << "# Normals:   " << nCount << '\n';
+      fout << "# TexCoord:  " << tcCount << '\n';
+      fout << "# Triangles: " << triCount << '\n';
+      fout << "####\n";
       if (!_mtllib.empty()) {
-        fout << "mtllib " << _mtllib << std::endl;
+        fout << "mtllib " << _mtllib << '\n';
       }
       const auto hasColours =
         !_colour.empty() && _colour.size() == _coord.size();
@@ -650,18 +650,18 @@ public:
           const auto& d = displacement(pointIndex);
           fout << " " << T1(d.x()) << " " << T1(d.y()) << " " << T1(d.z());
         }
-        fout << std::endl;
+        fout << '\n';
       }
 
       for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
         const auto& uv = texCoord(uvIndex) * uvScale;
-        fout << "vt " << T1(uv.x()) << " " << T1(uv.y()) << std::endl;
+        fout << "vt " << T1(uv.x()) << " " << T1(uv.y()) << '\n';
       }
 
       for (int32_t nIndex = 0; nIndex < nCount; ++nIndex) {
         const auto& n = normal(nIndex);
         fout << "vn " << T1(n.x()) << " " << T1(n.y()) << " " << T1(n.z())
-             << std::endl;
+             << '\n';
       }
 
       if (tcTriCount == 0 && nTriCount == 0) {
@@ -673,7 +673,7 @@ public:
           const auto k = (tri.z() + 1);
 
           assert(i != j && i != k && j != k);
-          fout << "f " << i << " " << j << " " << k << std::endl;
+          fout << "f " << i << " " << j << " " << k << '\n';
         }
       } else if (nTriCount && tcTriCount == 0) {
         for (int32_t triangleIndex = 0; triangleIndex < triCount;
@@ -691,7 +691,7 @@ public:
           assert(i0 != j0 && i0 != k0 && j0 != k0);
           assert(i1 != j1 && i1 != k1 && j1 != k1);
           fout << "f " << i0 << "//" << i1 << " " << j0 << "//" << j1 << " "
-               << k0 << "//" << k1 << std::endl;
+               << k0 << "//" << k1 << '\n';
         }
       } else if (tcTriCount && nTriCount == 0) {
         for (int32_t triangleIndex = 0; triangleIndex < triCount;
@@ -709,7 +709,7 @@ public:
           assert(i0 != j0 && i0 != k0 && j0 != k0);
           assert(i1 != j1 && i1 != k1 && j1 != k1);
           fout << "f " << i0 << "/" << i1 << " " << j0 << "/" << j1 << " "
-               << k0 << "/" << k1 << std::endl;
+               << k0 << "/" << k1 << '\n';
         }
       } else {
         for (int32_t triangleIndex = 0; triangleIndex < triCount;
@@ -734,7 +734,7 @@ public:
           assert(i2 != j2 && i2 != k2 && j2 != k2);
           fout << "f " << i0 << "/" << i1 << "/" << i2 << " " << j0 << "/"
                << j1 << "/" << j2 << " " << k0 << "/" << k1 << "/" << k2
-               << std::endl;
+               << '\n';
         }
       }
       fout.close();
@@ -2170,7 +2170,7 @@ FitMidPointSubdivision(
       rtr += r[i] * r[i];
     }
     T error = std::sqrt(rtr / vertexCount0);
-    //    std::cout << "0 -> " << error << std::endl;
+    //    std::cout << "0 -> " << error << '\n';
 
     int32_t it = 0;
     for (; it < itCount && error > maxError; ++it) {
@@ -2203,7 +2203,7 @@ FitMidPointSubdivision(
       }
       rtr = r1tr1;
       error = std::sqrt(rtr / vertexCount0);
-      //      std::cout << it << " -> "<< error << std::endl;
+      //      std::cout << it << " -> "<< error << '\n';
     }
     for (int32_t i = 0; i < vertexCount0; ++i) {
       Vec3<T>& point = baseMesh.point(i);

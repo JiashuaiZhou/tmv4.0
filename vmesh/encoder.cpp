@@ -135,7 +135,7 @@ VMCEncoder::compressDisplacementsVideo(
   cmd << "--ReconFile=" << fnameDispRec.str() << " ";
   cmd << "--InternalBitDepth=" << params.geometryVideoBitDepth << " ";
   cmd << "--InternalBitDepthC=" << params.geometryVideoBitDepth << " ";
-  std::cout << cmd.str() << '\n';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
   bitstream.append(fnameCompressDisp.str(), true);
   _dispVideo.load(fnameDispRec.str());
@@ -196,8 +196,8 @@ VMCEncoder::compressTextureVideo(
       << " -p OutputBitDepthCmp0=" << params.textureVideoBitDepth
       << " -p OutputBitDepthCmp1=" << params.textureVideoBitDepth
       << " -p OutputBitDepthCmp2=" << params.textureVideoBitDepth
-      << " -p LogFile=\"\"" << std::endl;
-  std::cout << cmd.str() << '\n';
+      << " -p LogFile=\"\"" << '\n';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
 
   std::stringstream fnameCompressTexture;
@@ -222,7 +222,7 @@ VMCEncoder::compressTextureVideo(
   cmd << "--InternalBitDepthC=10 ";
   cmd << "--QP=" << params.textureVideoQP;
 
-  std::cout << cmd.str() << '\n';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
   bitstream.append(fnameCompressTexture.str(), true);
 
@@ -236,8 +236,8 @@ VMCEncoder::compressTextureVideo(
       << " -p SourceBitDepthCmp0=" << params.textureVideoBitDepth
       << " -p SourceBitDepthCmp1=" << params.textureVideoBitDepth
       << " -p SourceBitDepthCmp2=" << params.textureVideoBitDepth
-      << " -p LogFile=\"\"" << std::endl;
-  std::cout << cmd.str() << '\n';
+      << " -p LogFile=\"\"" << '\n';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
 
   std::ifstream fileTextureVideoRec(fnameTextureBGR444Rec.str());
@@ -295,11 +295,13 @@ VMCEncoder::computeDracoMapping(
   cmdEnc << params.geometryMeshEncoderPath << " -cl 10"
          << " -i " << mappingFileName.str() << " -o "
          << cmappingFileName.str();
+  std::cout.flush();
   system(cmdEnc.str().c_str());
+
   std::stringstream cmdDec;
   cmdDec << params.geometryMeshDecoderPath << " -i " << cmappingFileName.str()
          << " -o " << rmappingFileName.str();
-
+  std::cout.flush();
   system(cmdDec.str().c_str());
   base.loadFromOBJ(rmappingFileName.str());
 
@@ -510,7 +512,7 @@ VMCEncoder::compressBaseMesh(
     cmdEnc << params.geometryMeshEncoderPath << " -i " << qbaseFileName.str()
            << " -o " << cbaseFileName.str() << " -qp " << params.qpPosition
            << " -qt " << params.qpTexCoord << " -qn -1 -qg -1 -cl 10 ";
-    std::cout << cmdEnc.str() << '\n';
+    std::cout << cmdEnc.str() << std::endl;
     system(cmdEnc.str().c_str());
 
     auto bitstreamByteCount0 = bitstream.size();
@@ -520,7 +522,7 @@ VMCEncoder::compressBaseMesh(
     std::stringstream cmdDec;
     cmdDec << params.geometryMeshDecoderPath << " -i " << cbaseFileName.str()
            << " -o " << rbaseFileName.str();
-    std::cout << cmdDec.str() << '\n';
+    std::cout << cmdDec.str() << std::endl;
     system(cmdDec.str().c_str());
     base.loadFromOBJ(rbaseFileName.str());
 

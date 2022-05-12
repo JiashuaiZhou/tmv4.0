@@ -299,7 +299,7 @@ try {
   cout << "+ Configuration parameters\n";
   po::dumpCfg(cout, opts, "Input/Output", 4);
   po::dumpCfg(cout, opts, "Subdiv", 4);
-  cout << endl;
+  cout << '\n';
 
   return true;
 }
@@ -884,21 +884,21 @@ LoadInputMeshes(
         ? params.fnum : params.fnumRef;
     const auto& name = vmesh::expandNum(params.targetMeshPath, tgtFnum);
     if (!target.loadFromOBJ(name)) {
-      cerr << "Error: can't load target mesh " << name << endl;
+      cerr << "Error: can't load target mesh " << name << '\n';
       return false;
     }
   }
   if (1) {
     const auto& name = vmesh::expandNum(params.sourceMeshPath, params.fnumRef);
     if (!source.loadFromOBJ(name)) {
-      cerr << "Error: can't load source mesh " << name << endl;
+      cerr << "Error: can't load source mesh " << name << '\n';
       return false;
     }
   }
   if (!params.mappedMeshPath.empty()) {
     const auto& name = vmesh::expandNum(params.mappedMeshPath, params.fnumRef);
     if (!mapped.loadFromOBJ(name)) {
-      cerr << "Error: can't load mapped mesh " << name << endl;
+      cerr << "Error: can't load mapped mesh " << name << '\n';
       return false;
     }
   }
@@ -906,7 +906,7 @@ LoadInputMeshes(
     const auto& name =
       vmesh::expandNum(params.targetModifierMeshPath, params.fnumRef);
     if (!mtarget.loadFromOBJ(name)) {
-      cerr << "Error: can't load target modifier mesh " << name << endl;
+      cerr << "Error: can't load target modifier mesh " << name << '\n';
       return false;
     }
   }
@@ -927,7 +927,7 @@ LoadInputMeshes(
   if (!params.mappedMeshPath.empty() &&
       (mapped.pointCount() != target.pointCount() ||
        mapped.triangleCount() != target.triangleCount())) {
-    cerr << "Error: mapped has a different connectivity from target!" << endl;
+    cerr << "Error: mapped has a different connectivity from target!\n";
     return false;
   }
   return true;
@@ -938,7 +938,7 @@ LoadInputMeshes(
 int
 main(int argc, char* argv[])
 {
-  cout << "MPEG VMESH version " << ::vmesh::version << endl;
+  cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
   if (!parseParameters(argc, argv, params))
@@ -949,7 +949,7 @@ main(int argc, char* argv[])
 
   TriangleMesh<double> target, source, mapped, mtarget;
   if (!LoadInputMeshes(target, source, mapped, mtarget, params)) {
-    cerr << "Error: can't load input meshes!" << endl;
+    cerr << "Error: can't load input meshes!\n";
     return 1;
   }
   target.computeNormals();
@@ -958,7 +958,7 @@ main(int argc, char* argv[])
   if (
     !params.targetModifierMeshPath.empty()
     && !ComputeMotion(mtarget, target, motion)) {
-    cerr << "Error: target mesh not modified!" << endl;
+    cerr << "Error: target mesh not modified!\n";
     return 1;
   }
 
@@ -971,7 +971,7 @@ main(int argc, char* argv[])
 
   TriangleMesh<double> usource = source;
   if (params.applyVertexUnification && !UnifyVertices(source, usource)) {
-    cerr << "Error: can't unify vertices!" << endl;
+    cerr << "Error: can't unify vertices!\n";
     return 1;
   }
 
@@ -979,13 +979,13 @@ main(int argc, char* argv[])
   if (!params.subdiv0MeshPath.empty()) {
     const auto& name = vmesh::expandNum(params.subdiv0MeshPath, params.fnum);
     if (!deformed.loadFromOBJ(name)) {
-      cerr << "Error: can't load source mesh " << name << endl;
+      cerr << "Error: can't load source mesh " << name << '\n';
       return 1;
     }
   } else {
     deformed = usource;
     if (!Subdivide(deformed, params)) {
-      cerr << "Error: can't subdivide mesh!" << endl;
+      cerr << "Error: can't subdivide mesh!\n";
       return 1;
     }
   }
@@ -993,7 +993,7 @@ main(int argc, char* argv[])
   if (
     params.subdivisionIterationCount
     && !FitMesh(target, mapped, motion, deformed, params)) {
-    cerr << "Error: can't fit mesh!" << endl;
+    cerr << "Error: can't fit mesh!\n";
     return 1;
   }
 
@@ -1005,7 +1005,7 @@ main(int argc, char* argv[])
 
   auto subdiv = base;
   if (!Subdivide(subdiv, params)) {
-    cerr << "Error: can't subdivide mesh!" << endl;
+    cerr << "Error: can't subdivide mesh!\n";
     return 1;
   }
   auto ndeformed = deformed;
@@ -1025,13 +1025,13 @@ main(int argc, char* argv[])
   }
   errorNormal /= deformed.pointCount();
   errorTangent /= deformed.pointCount();
-  std::cout << " normal rmse = " << std::sqrt(errorNormal) << std::endl;
-  std::cout << " tangential rmse = " << std::sqrt(errorTangent) << std::endl;
+  std::cout << " normal rmse = " << std::sqrt(errorNormal) << '\n';
+  std::cout << " tangential rmse = " << std::sqrt(errorTangent) << '\n';
 
   if (!params.baseMeshPath.empty()) {
     const auto& name = vmesh::expandNum(params.baseMeshPath, params.fnum);
     if (!base.saveToOBJ(name)) {
-      cerr << "Error: can't save base mesh!" << endl;
+      cerr << "Error: can't save base mesh!\n";
       return 1;
     }
   }
@@ -1039,7 +1039,7 @@ main(int argc, char* argv[])
   if (!params.nsubdivMeshPath.empty()) {
     const auto& name = vmesh::expandNum(params.nsubdivMeshPath, params.fnum);
     if (!ndeformed.saveToOBJ(name)) {
-      cerr << "Error: can't save normal subdivision mesh!" << endl;
+      cerr << "Error: can't save normal subdivision mesh!\n";
       return 1;
     }
   }
@@ -1047,7 +1047,7 @@ main(int argc, char* argv[])
   if (1) {
     const auto& name = vmesh::expandNum(params.subdivMeshPath, params.fnum);
     if (!deformed.saveToOBJ(name)) {
-      cerr << "Error: can't save subdivision mesh!" << endl;
+      cerr << "Error: can't save subdivision mesh!\n";
       return 1;
     }
   }

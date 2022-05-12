@@ -137,7 +137,7 @@ try {
   cout << "+ Configuration parameters\n";
   po::dumpCfg(cout, opts, "Input/Output", 4);
   po::dumpCfg(cout, opts, "Simplification", 4);
-  cout << endl;
+  cout << '\n';
 
   return true;
 }
@@ -260,7 +260,7 @@ SimplifyMesh(
   TriangleMesh<double>& mmesh,
   const Parameters& params)
 {
-  vout << "Simplifying Mesh... " << std::endl;
+  vout << "Simplifying Mesh... \n";
   auto start = chrono::steady_clock::now();
 
   TriangleMeshDecimatorParameters dparams;
@@ -276,7 +276,7 @@ SimplifyMesh(
       (const double*)mesh.points().data(), mesh.pointCount(),
       (const int32_t*)mesh.triangles().data(), mesh.triangleCount(), dparams)
     != Error::OK) {
-    cerr << "Error: can't decimate model" << std::endl;
+    cerr << "Error: can't decimate model\n";
     return false;
   }
 
@@ -287,7 +287,7 @@ SimplifyMesh(
       (double*)dmesh.points().data(), dmesh.pointCount(),
       (int32_t*)dmesh.triangles().data(), dmesh.triangleCount())
     != Error::OK) {
-    cerr << "Error: can't extract decimated model" << std::endl;
+    cerr << "Error: can't extract decimated model\n";
     return false;
   }
 
@@ -328,7 +328,7 @@ LoadMesh(TriangleMesh<double>& mesh, const Parameters& params)
 int
 main(int argc, char* argv[])
 {
-  cout << "MPEG VMESH version " << ::vmesh::version << endl;
+  cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
   if (!parseParameters(argc, argv, params)) {
@@ -340,38 +340,38 @@ main(int argc, char* argv[])
 
   TriangleMesh<double> mesh;
   if (!LoadMesh(mesh, params)) {
-    cerr << "Error: can't load " << params.inputMeshPath << "!" << endl;
+    cerr << "Error: can't load " << params.inputMeshPath << "!\n";
     return 1;
   }
   if (!UnifyVertices(mesh)) {
-    cerr << "Error: can't unify vertices!" << endl;
+    cerr << "Error: can't unify vertices!\n";
     return 1;
   }
 
   TriangleMesh<double> dmesh;
   TriangleMesh<double> mmesh;
   if (!SimplifyMesh(mesh, dmesh, mmesh, params)) {
-    cerr << "Error: can't simplify mesh!" << endl;
+    cerr << "Error: can't simplify mesh!\n";
     return 1;
   }
 
   if (!RemoveDuplicatedTriangles(dmesh)) {
-    cerr << "Error: can't remove duplicated triangles!" << endl;
+    cerr << "Error: can't remove duplicated triangles!\n";
     return 1;
   }
 
   if (!RemoveSmallConnectedComponents(dmesh, params.minCCTriangleCount)) {
-    cerr << "Error: can't remove small connected components!" << endl;
+    cerr << "Error: can't remove small connected components!\n";
     return 1;
   }
 
   if (!dmesh.saveToOBJ(expandNum(params.decimatedMeshPath, params.fnum))) {
-    cerr << "Error: can't save decimated mesh" << endl;
+    cerr << "Error: can't save decimated mesh\n";
     return 1;
   }
 
   if (!mmesh.saveToOBJ(expandNum(params.mappedMeshPath, params.fnum))) {
-    cerr << "Error: can't save mapped mesh" << endl;
+    cerr << "Error: can't save mapped mesh\n";
     return 1;
   }
   const auto scale = params.texCoordQuantizationBits > 0
@@ -380,7 +380,7 @@ main(int argc, char* argv[])
 
   if (!mesh.saveToOBJ(
         expandNum(params.referenceMeshPath, params.fnum), scale)) {
-    cerr << "Error: can't save reference mesh" << endl;
+    cerr << "Error: can't save reference mesh\n";
     return 1;
   }
 

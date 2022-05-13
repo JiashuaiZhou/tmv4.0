@@ -7,6 +7,7 @@ MD_SRC=\
 	README.options.gengof.md \
 	README.options.simplify.md \
 	README.options.uvatlas.md \
+	README.options.fitsubdiv.md   \
 	README.options.vmc.md \
 	README.usage.md \
 	$(NULL)

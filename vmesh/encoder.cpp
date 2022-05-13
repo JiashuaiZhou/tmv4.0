@@ -140,7 +140,7 @@ VMCEncoder::compressDisplacementsVideo(
   bitstream.append(fnameCompressDisp.str(), true);
   _dispVideo.load(fnameDispRec.str());
 
-  if (params.keepIntermediateFiles) {
+  if (!params.keepIntermediateFiles) {
     std::remove(fnameDisp.str().c_str());
     std::remove(fnameCompressDisp.str().c_str());
     std::remove(fnameDispRec.str().c_str());
@@ -254,7 +254,7 @@ VMCEncoder::compressTextureVideo(
   }
   fileTextureVideoRec.close();
 
-  if (params.keepIntermediateFiles) {
+  if (!params.keepIntermediateFiles) {
     std::remove(fnameTextureBGR444.str().c_str());
     std::remove(fnameTextureBGR444Rec.str().c_str());
     std::remove(fnameTextureYUV420.str().c_str());
@@ -307,7 +307,7 @@ VMCEncoder::computeDracoMapping(
   system(cmdDec.str().c_str());
   base.loadFromOBJ(rmappingFileName.str());
 
-  if (params.keepIntermediateFiles) {
+  if (!params.keepIntermediateFiles) {
     std::remove(mappingFileName.str().c_str());
     std::remove(cmappingFileName.str().c_str());
     std::remove(rmappingFileName.str().c_str());
@@ -528,7 +528,7 @@ VMCEncoder::compressBaseMesh(
     system(cmdDec.str().c_str());
     base.loadFromOBJ(rbaseFileName.str());
 
-    if (params.keepIntermediateFiles) {
+    if (!params.keepIntermediateFiles) {
       std::remove(qbaseFileName.str().c_str());
       std::remove(cbaseFileName.str().c_str());
       std::remove(rbaseFileName.str().c_str());

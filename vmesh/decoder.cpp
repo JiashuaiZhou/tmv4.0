@@ -444,7 +444,7 @@ VMCDecoder::decompressTextureVideo(
   }
   fileTextureVideoDec.close();
 
-  if (params.keepIntermediateFiles) {
+  if (!params.keepIntermediateFiles) {
     std::remove(fnameCompressTexture.str().c_str());
     std::remove(fnameTextureYUV420Dec.str().c_str());
     std::remove(fnameTextureBGR444Dec.str().c_str());

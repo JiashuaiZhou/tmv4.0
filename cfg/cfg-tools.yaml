@@ -161,6 +161,9 @@ tools:
       - gofmax: 32
       - dqb: 0.3333,0.3333,0.3333
 
+      # don't normalize uv coordinates in locally decoded output
+      - normuv: 0
+
       # the following defaults are overridden for some sequences and rates
       - unifvertices: 0
       - texwidth: 2048
@@ -178,6 +181,9 @@ tools:
       # Specifying the first output frame number helps align src/dec filenames
       - fstart: ${first-frame}
       - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
+
+      # don't normalize uv coordinates in decoded output
+      - normuv: 0
 
 
     mmetric:

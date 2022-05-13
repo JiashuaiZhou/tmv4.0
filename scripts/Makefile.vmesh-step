@@ -588,7 +588,7 @@ endif
 	dequantize --inputModel "$*.vmesh.%04d_decoded.obj" \
 		--outputModel ID:deqDis --useFixedPoint \
 		--qp ${srcgeombits} --minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
-		--qt 0 --minUv "0 0" --maxUv "1.0 1.0" END \
+		--qt ${srctexcoordbits} --minUv "0 0" --maxUv "1.0 1.0" END \
 	compare --mode ibsm \
 		--inputModelA ID:deqRef --inputMapA ${srctex} \
 		--inputModelB ID:deqDis --inputMapB "$*.vmesh.%04d_decoded.png" \
@@ -612,7 +612,6 @@ endif
 
 mm_firstframe   = $(if ${FRAMENUM},${FRAMENUM},${firstframe})
 mm_lastframe    = $(if ${FRAMENUM},${FRAMENUM},${lastframe})
-mm_recon_obj_qt = $(if ${FRAMENUM},${srctexcoordbits},0)
 mm_recon_obj    = $(if ${FRAMENUM},$<,$*.vmesh.%04d_decoded.obj)
 mm_recon_tex    = $(if ${FRAMENUM},$(srctex),$*.vmesh.%04d_decoded.png)
 define pcc_mmetric_args
@@ -633,7 +632,7 @@ dequantize --inputModel "${mm_recon_obj}" \
 	--outputModel ID:deqDis --useFixedPoint --qp ${srcgeombits} \
 	--minPos "${srcminpos}" \
 	--maxPos "${srcmaxpos}" \
-	--qt ${mm_recon_obj_qt} --minUv "0 0" --maxUv "1.0 1.0" END \
+	--qt ${srctexcoordbits} --minUv "0 0" --maxUv "1.0 1.0" END \
 reindex --sort oriented -i ID:deqDis -o ID:ref_reordered END \
 sample --mode grid --gridSize ${gridsize} --hideProgress \
 	--useNormal --useFixedPoint \

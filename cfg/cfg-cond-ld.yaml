@@ -37,7 +37,7 @@ categories:
         r5:
           encoder:
             - base:   ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
-            - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+            - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
             - gofstruct: ""
             - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg
             - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg

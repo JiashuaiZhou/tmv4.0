@@ -9,6 +9,14 @@ categories:
       # preprocessed data
       - base:   ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
       - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+      # if the encoder should ignore subdivsion, use subdiv=base
+      # NB: If the subdiv mesh was computed with it=0, it is the same as base.
+      #     However, some base meshes in the CfP submission were generated with
+      #     it>0, causing the base mesh to be fitted to the subdivision result
+      #     even though the sequence wasn't coded with the subdivision mesh.
+      -
+        - !conditional '${pp} >= 0.24 and ${pp} < 1.0'
+        - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
       # if pp not set, or no decimation, use input sequence
       -
         - !conditional 'not defined ${pp} or ${pp} == 1.0'
@@ -20,6 +28,7 @@ categories:
       - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg
 
     # sequences to code in this condition, and their overridden options/vars
+    #  pp: sets per-rate decimation parameter
     sequences:
       basketball_player:
         pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.36, r5: 0.48 }

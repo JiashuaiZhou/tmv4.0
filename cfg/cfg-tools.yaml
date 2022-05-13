@@ -65,8 +65,7 @@ tools:
       - nsubdiv: ${src-dir}_r${pp}_ai/${src-mesh}_nsubdiv.obj
 
       # iteration count depends upon decimation level:
-      #   { 0.03: 3, 0.06: 3, 0.12: 2, 0.24: 2, 0.36: 2, 0.48: 1, 1.0: 0 }
-      - it: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : ${pp} < 1.0 ? 1 : 0 }'
+      - it: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
 
       - sdeform: 1
       - forceNormalDisp: 0
@@ -111,8 +110,7 @@ tools:
         - mapped: ${src-dir}_r${pp}/${src-mesh}_mapped.obj
 
       # iteration count depends upon decimation level:
-      #   { 0.03: 3, 0.06: 3, 0.12: 2, 0.24: 2, 0.36: 2, 0.48: 1, 1.0: 0 }
-      - it: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : ${pp} < 1.0 ? 1 : 0 }'
+      - it: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
 
       - sdeform: 1
       - forceNormalDisp: 0

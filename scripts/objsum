@@ -1,0 +1,203 @@
+#!/usr/bin/env perl
+
+use Digest::MD5;
+use Getopt::Long;
+use Pod::Usage;
+use strict;
+
+=head1 NAME
+
+objsum - Compute or check MD5 for each field type in a Wavefront OBJ file
+
+=head1 SYNOPSIS
+
+objsum [OPTION]... [FILE]...
+
+Allows simple comparison of OBJ files according to field type.  Particularly
+useful when an md5sum of an entire OBJ file incorporates filename dependent
+content.
+
+=head1 OPTIONS
+
+With no FILE, or when FILE is -, reads from standard input.
+
+=over 4
+
+=item B<--check>, B<-c>
+
+Check objsums from the FILEs.
+
+=item B<--cache>=FILE
+
+Assume that files to be checked have objsums listed in cache FILE.  The cache
+is only consulted if the file to be checked is older than the cache file.
+
+=item B<--ignore>=FIELD, B<-x> FIELD
+
+Do not check FIELD in objsums.  For example '-x mtllib'.
+
+=cut
+
+##
+# Command line processing
+my $do_help = '';
+my $chk = 0;
+my $quiet = 0;
+my $cache = '';
+my @ignore;
+GetOptions(
+	'help|h' => \$do_help,
+	'quiet' => \$quiet,
+	'check|c' => \$chk,
+	'cache=s' => \$cache,
+    'ignore|x=s' => \@ignore,
+);
+
+##
+# display help text and exit if asked, or if no config is provided
+pod2usage(0) if $do_help;
+
+##############################################################################
+## The cache
+my $cache_time = -M $cache if $cache;
+my %cache;
+
+# read cache
+if ($chk && $cache) {
+    open my $fd, '<', $cache;
+    while (<$fd>) {
+        my @vals = split /\s+/;
+        my $file = pop @vals;
+        my %digests = map { split /:/ } @vals;
+        $cache{$file} = \%digests;
+    }
+}
+
+# true if file is cached
+#  - applies in check mode only, and if the file is older than the cache
+sub is_cached {
+    my ($file) = @_;
+    return $chk && exists $cache{$file} && $cache_time < -M $file
+}
+
+##############################################################################
+# hash a single file
+sub hash_file {
+    my ($file) = @_;
+
+    # if the result is cached, use that
+    return $cache{$file} if is_cached($file);
+
+    open my $fd, '<', $file or print STDERR "$file: $!\n" and return ();
+    hash_fh($fd);
+}
+
+# hash a single file handle
+sub hash_fh {
+    my ($fh) = @_;
+
+    my %md5;
+    while (<$fh>) {
+        next if /^#/;
+
+        chomp;
+        my ($w,undef) = split(/\s+/,$_,2);
+
+        $md5{$w} = Digest::MD5->new unless exists $md5{$w};
+        $md5{$w}->add($_)
+    }
+
+    # finalize hashes
+    $_ = $_->hexdigest foreach (values %md5);
+    \%md5;
+}
+
+
+##############################################################################
+# check files
+
+# read a single line, convert to file name + flat list of (key, hash) pairs
+sub parse_objsum {
+    my ($line) = @_;
+    chomp;
+    my @vals = split /\s+/, $line;
+    my $file = pop @vals;
+    my @parts = map { split /:/ } @vals;
+    return ($file, @parts);
+}
+
+# check a file against the expected hashes, return a list of mismatched fields
+sub check_file {
+    my ($file, $expected) = @_;
+
+    my $checked = hash_file($file);
+    return () unless ref $checked;
+
+    my @failures;
+    foreach my $key (sort keys %$expected) {
+        push @failures, $key if $expected->{$key} ne $checked->{$key};
+    }
+
+    return \@failures;
+}
+
+if ($chk) {
+    my $fail = 0;
+    my $missing = 0;
+
+    while (<>) {
+        next if /^#/;
+
+        my ($file, %expected) = parse_objsum($_);
+
+        # remove any keys that should not be checked, then check
+        delete $expected{$_} foreach @ignore;
+        my $failures = check_file($file, \%expected);
+
+        # failed to open/read
+        unless (ref $failures) {
+            print "$file: FAILED to open or read\n";
+            $missing++;
+            next;
+        }
+
+        # check for failures
+        unless (scalar @$failures) {
+            print "$file: OK\n" unless $quiet;
+        } else {
+            local $" = ", ";
+            print "$file: FAILED (@$failures)\n";
+            $fail++;
+        }
+    }
+
+    print STDERR "objsum: WARNING: $missing listed files could not be read\n"
+      if $missing;
+
+    print STDERR "objsum: WARNING: $fail listed files did NOT match\n"
+      if $fail;
+
+    exit $fail > 0 || $missing > 0;
+}
+
+##############################################################################
+# hash files
+
+# read from stdin unless files are listed
+push @ARGV, '-' unless scalar @ARGV;
+
+foreach my $file (@ARGV) {
+    my $md5;
+
+    if ($file eq '-') {
+        $md5 = hash_fh(*STDIN);
+    } else {
+        $md5 = hash_file($file);
+    }
+
+    # failure, skip to next
+    next unless ref $md5;
+
+    print "$_:", $md5->{$_}, " " foreach (sort keys %$md5);
+    print " $file\n";
+}

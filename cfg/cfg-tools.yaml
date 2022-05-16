@@ -77,6 +77,13 @@ tools:
       - smoothMotion: 0
       - smoothMethod: 1
 
+      # For inter conditions w/o mapping, use fitsubdiv_inter threshold.
+      # NB: does not apply when mapping is performed.
+      # NB: the fitsubdiv_intra results are not always the same for ai and ld
+      #     conditions due to the following (for soldier)
+      -
+        - !conditional 'defined ${fitsubdiv_with_mapping} and !${fitsubdiv_with_mapping}'
+        - deformNormalThres: 0.8660254
 
     # step 4a, subdivision and fitting (for inter frames)
     fitsubdiv_inter:

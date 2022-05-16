@@ -589,8 +589,8 @@ namespace df
       start = line.find_first_not_of(" \t\n\r", ++start);
       if (start == string::npos)
       {
-        /* error: badly formatted line */
-        error_reporter.warn(where()) << "line formatting error\n";
+        /* empty string is a valid option? let the value parser decide */
+        storePair(true, false, option, "");
         return;
       }
 
@@ -617,12 +617,6 @@ namespace df
       if (value_end >= start)
       {
         value = line.substr(start, value_end +1 - start);
-      }
-      else
-      {
-        /* error: no value */
-        error_reporter.warn(where()) << "no value found\n";
-        return;
       }
 
       /* store the value in option */

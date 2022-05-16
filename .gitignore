@@ -27,3 +27,12 @@ DerivedData
 # A directory for developers to put anything
 data/
 
+doc/mpeg-vmesh-sw-manual.aux
+
+# Dependencies
+dependencies/directx-headers 
+dependencies/directx-math
+dependencies/directx-mesh 
+dependencies/draco
+dependencies/uvatlas
+

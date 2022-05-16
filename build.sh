@@ -14,12 +14,12 @@ then
   git am < ${CURDIR}/patches/draco-0001-*.patch
 
   echo -e "\033[0;32mPatch directx-mesh submodule: ${CURDIR} \033[0m";
-  cd "${CURDIR}dependencies/directx-mesh"
+  cd "${CURDIR}/dependencies/directx-mesh"
   git am < ${CURDIR}/patches/dxmesh-0001-*.patch
   git am < ${CURDIR}/patches/dxmesh-0002-*.patch
 
   echo -e "\033[0;32mPatch uvatlas submodule: ${CURDIR} \033[0m";
-  cd "${CURDIR}dependencies/uvatlas"
+  cd "${CURDIR}/dependencies/uvatlas"
   git am < ${CURDIR}/patches/uvatlas-0001-*.patch
 fi
 

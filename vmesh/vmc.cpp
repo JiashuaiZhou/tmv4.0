@@ -515,6 +515,8 @@ loadGroupOfFrames(
   const auto lastFrame = startFrame + frameCount - 1;
   vout << "Loading group of frames (" << startFrame << "-" << lastFrame
        << ") ";
+  printf("loadGroupOfFrames start Frame %d Last = %d count = %d  \n", startFrame, lastFrame, frameCount );
+  fflush(stdout);
 
   gof.resize(frameCount);
   vector<vector<int32_t>> umappings(frameCount);
@@ -532,6 +534,7 @@ loadGroupOfFrames(
       || !LoadImage(nameInputTexture, frame.inputTexture)
       || !frame.base.loadFromOBJ(nameBaseMesh)
       || !frame.subdiv.loadFromOBJ(nameSuvdivMesh)) {
+        printf("Error loading frame %d / %d \n", f, frameCount );
       return -1;
     }
 
@@ -607,6 +610,7 @@ compress(const Parameters& params)
   VMCStats totalStats;
   for (int g = 0, gofCount = int32_t(gofsInfo.size()); g < gofCount; ++g) {
     const auto& gofInfo = gofsInfo[g];
+    printf("loadGroupOfFrames GOF = %d / %zu \n", g,gofsInfo.size());
     if (loadGroupOfFrames(gofInfo, gof, params)) {
       cerr << "Error: can't load group of frames!" << endl;
       return -1;

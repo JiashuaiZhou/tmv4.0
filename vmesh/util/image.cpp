@@ -57,6 +57,7 @@ LoadImage(
   std::unique_ptr<uint8_t[]> buffer(
     stbi_load(fileName.c_str(), &width, &height, &channelCount, 0));
   if (buffer == nullptr || channelCount != 3) {
+    printf("Error loading file: %s \n", fileName.c_str());
     return false;
   }
   image.resize(width, height);

@@ -608,6 +608,8 @@ public:
       }
       fin.close();
       return true;
+    } else {
+      printf("Error loading file: %s \n", fileName.c_str());
     }
     return false;
   }

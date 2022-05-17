@@ -70,6 +70,7 @@ endef
 ##
 # the default target
 .PHONY: all
+$(info DEFAULT TARGET: ${output})
 all: $(outputs) ;
 
 ##
@@ -89,6 +90,7 @@ frames := $(shell seq ${firstframe} ${lastframe})
 define simplify_depends
 var:=$(shell printf $1 $2)
 $${var}: FRAMENUM=$2
+$(info SIMPLIFY TARGET: ${output})
 all: $${var}
 endef
 
@@ -99,6 +101,7 @@ dep:=$(shell printf $3 $2)
 $${var}: $${dep}
 dep:=$(shell printf $4 $2)
 $${var}: $${dep}
+$(info FITSUBDIV TARGET: ${output})
 all: $${var}
 endef
 
@@ -114,16 +117,25 @@ $(foreach frame,${frames},$(eval $(call simplify_depends,${output},${frame})))
 output := $(call read_cfg_param,base,$(call vpath,fitsubdiv_intra.cfg))
 tgt := $(call read_cfg_param,target,$(call vpath,fitsubdiv_intra.cfg))
 src := $(call read_cfg_param,source,$(call vpath,fitsubdiv_intra.cfg))
+$(info fitsubdiv_intra => output = ${output})
+$(foreach frame,${frames},$(eval $(call fitsubdiv_depends,${output},${frame},${tgt},${src})))
+
+output := $(call read_cfg_param,base,$(call vpath,fitsubdiv_inter.cfg))
+tgt := $(call read_cfg_param,target,$(call vpath,fitsubdiv_inter.cfg))
+src := $(call read_cfg_param,source,$(call vpath,fitsubdiv_inter.cfg))
+$(info fitsubdiv_inter => output = ${output})
 $(foreach frame,${frames},$(eval $(call fitsubdiv_depends,${output},${frame},${tgt},${src})))
 
 ## the encoded/decoded sequence
 output := $(call read_cfg_param,compressed,$(call vpath,encoder.cfg))
+testname := $(firstword $(subst ., ,$(output)))
 #src1 := $(call read_cfg_param,base,$(call vpath,encflags.cfg))
 #src2 := $(call read_cfg_param,subdiv,$(call vpath,encflags.cfg))
-all: ${output}
-all: ${output}.decoded.stamp
-all: ${output}.vmesh.decoded.ibsm_mmetric.csv
-all: ${output}.vmesh.decoded.pcc_mmetric.csv
+
+all: ${testname}_decoded_ibsm_mmetric.csv
+all: ${testname}_decoded_pcc_mmetric.csv
+$(info IBSM METRIC TARGET: ${testname}_decoded_ibsm_mmetric.csv)
+$(info PCC METRIC TARGET: ${testname}_decoded_ibsm_mmetric.csv)
 
 # for order-only dependencies on directory names
 .SECONDEXPANSION:
@@ -140,111 +152,209 @@ all: ${output}.vmesh.decoded.pcc_mmetric.csv
 ##
 # generate initial GOF; runs over an entire sequence
 %.gof: gengof.cfg
+	echo -e "\033[0;32m\n\n######################### GENGOF: $* ######################### \033[0m"; \
 	$(quiet_GENGOF)$(PRELOAD)$(GENGOF) \
 		$(foreach cfg,$(call vpath,gengof.cfg),-c "${cfg}") \
-	$(call log_output,$@)
-	@$(call remove_errlog_if_empty,$@)
+	$(call log_output,$*_gengof)
+
+# @$(call remove_errlog_if_empty,$*_gengof)
 
 ##
 # simplify/decimate mesh
 %_decimated.obj: simplify.cfg | $$(@D)/.
+	echo -e "\033[0;32m\n\n######################### SIMPLIFY: $* ######################### \033[0m"; \
 	$(quiet_SIMPLIFY)$(PRELOAD)$(SIMPLIFY) \
 		$(foreach cfg,$(call vpath,simplify.cfg),-c "${cfg}") \
 		--fnum=${FRAMENUM} \
-	$(call log_output,$@)
-	@$(call remove_errlog_if_empty,$@)
+	$(call log_output,$*_simplify)
+
+# @$(call remove_errlog_if_empty,$@)
 
 ##
 # compute isochart
 %_decimated_tex.obj: %_decimated.obj | $$(@D)/.
+	echo -e "\033[0;32m\n\n######################### UVATLAS: $* ######################### \033[0m"; \
 	$(quiet_UVATLAS)$(PRELOAD)$(UVATLAS) \
 		$(foreach cfg,$(call vpath,uvatlas.cfg),-c "${cfg}") \
 		--fnum=${FRAMENUM} \
-	$(call log_output,$@)
-	@$(call remove_errlog_if_empty,$@)
+	$(call log_output,$*_uvaltas)
+	
+#@$(call remove_errlog_if_empty,$*_uvaltas)
 
 ##
 # fitsubdiv
 %_base.obj: | $$(@D)/.
+	echo -e "\033[0;32m\n\n######################### FITSUBDIV INTRA: $* ######################### \033[0m"; \
+	echo -e "\033[0;32m  $@ \033[0m"; \
 	$(quiet_FITSUBDIV)$(PRELOAD)$(FITSUBDIV) \
-		$(foreach cfg,$(call vpath,fitsubdiv_intra.cfg),-c "${cfg}") \
+		$(foreach cfgIntra,$(call vpath,fitsubdiv_intra.cfg),-c "${cfgIntra}") \
 		--fnum=${FRAMENUM} \
-	$(call log_output,$@)
-	@$(call remove_errlog_if_empty,$@)
+	$(call log_output,$*_fitsubdiv_intra)
+
+# @$(call remove_errlog_if_empty,$*_fitsubdiv_intra)
+
+# echo -e "\033[0;32m\n\n######################### FITSUBDIV INTER: $* ######################### \033[0m"; \
+# echo -e "\033[0;32m  $@ \033[0m"; \
+# $(quiet_FITSUBDIV)$(PRELOAD)$(FITSUBDIV) \
+# 	$(foreach cfgInter,$(call vpath,fitsubdiv_inter.cfg),-c "${cfgInter}") \
+# 	--fnum=${FRAMENUM} \
+#	$(call log_output,$*_fitsubdiv_inter)
+# @$(call remove_errlog_if_empty,$*_fitsubdiv_inter)
+
+##
+# fitsubdiv
+%_reference.obj: 
+	@: 
 
 ##
 # encode
 %.vmesh: | $$(@D)/.
-	$(quiet_ENC)$(PRELOAD)$(VMC) $(foreach cfg,$(call vpath,encflags.cfg),-c "${cfg}") \
-		--recmesh=$@.%04d_encoded.obj \
-		--rectex=$@.%04d_encoded.png \
-		--recmat=$@.%04d_encoded.mtl \
+	echo -e "\033[0;32m\n\n######################### ENCODER: $* ######################### \033[0m"; \
+	echo -e "CONDITIONS= $$(@D)/."; \
+	$(quiet_ENC)$(PRELOAD)$(VMC) $(foreach cfg,$(call vpath,encoder.cfg),-c "${cfg}") \
+		--recmesh=$*_%04d_encoded.obj \
+		--rectex=$*_%04d_encoded.png \
+		--recmat=$*_%04d_encoded.mtl \
+		--keep=1 \
 		$(ENCFLAGS) \
-	$(call log_output,$@)
-	@$(call remove_errlog_if_empty,$@)
+	$(call log_output,$*_encoder)
+
+# @$(call remove_errlog_if_empty,$*_encoder)
 
 ##
 # decode
-%.vmesh.decoded.stamp: %.vmesh
-	$(quiet_DEC)$(PRELOAD)$(VMC) $(foreach cfg,$(call vpath,decflags.cfg),-c "${cfg}") \
+%_decoded.stamp: %.vmesh
+	echo -e "\033[0;32m\n\n######################### DECODER: $* ######################### \033[0m"; \
+	$(quiet_DEC)$(PRELOAD)$(VMC) $(foreach cfg,$(call vpath,decoder.cfg),-c "${cfg}") \
 		--compressed=$< \
-		--decmesh=$*.vmesh.%04d_decoded.obj \
-		--dectex=$*.vmesh.%04d_decoded.png \
-		--decmat=$*.vmesh.%04d_decoded.mtl \
+		--decmesh=$*_%04d_decoded.obj \
+		--dectex=$*_%04d_decoded.png \
+		--decmat=$*_%04d_decoded.mtl \
+		--keep=1 \
 		$(DECFLAGS) \
-	$(call log_output,$*.vmesh.decoded)
-	@$(call remove_errlog_if_empty,$*.vmesh.decoded)
+	$(call log_output,$*_decoder)
+#@$(call remove_errlog_if_empty,$*_decoder)
 	touch $@
 
 ##
 # mesh ibsm metric
 $(info $(call import_cfg,,$(call vpath,mmetric.cfg)))
-%.vmesh.decoded.ibsm_mmetric.csv: %.vmesh.decoded.stamp
+%_decoded_ibsm_mmetric.csv: %_decoded.stamp
+	echo -e "\033[0;32m\n\n######################### PCC METRICS ######################### \033[0m"; \
 	$(quiet_METRIC)$(PRELOAD)$(MMETRIC) \
-	sequence --firstFrame ${firstframe} --lastFrame ${lastframe} END \
-	dequantize --inputModel "${srcmesh}" \
-		--outputModel ID:deqRef --useFixedPoint \
-		--qp ${srcgeombits} --minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
-		--qt ${srctexcoordbits} --minUv "0 0" --maxUv "1.0 1.0" END \
-	dequantize --inputModel "$*.vmesh.%04d_decoded.obj" \
-		--outputModel ID:deqDis --useFixedPoint \
-		--qp ${srcgeombits} --minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
-		--qt 0 --minUv "0 0" --maxUv "1.0 1.0" END \
-	compare --mode ibsm \
-		--inputModelA ID:deqRef --inputMapA ${srctex} \
-		--inputModelB ID:deqDis --inputMapB "$*.vmesh.%04d_decoded.png" \
+	sequence \
+		--firstFrame ${firstframe} \
+		--lastFrame ${lastframe} \
+	END \
+	dequantize \
+		--inputModel "${srcmesh}" \
+		--outputModel ID:deqRef \
+		--useFixedPoint \
+		--qp ${srcgeombits} \
+		--minPos "${srcminpos}" \
+		--maxPos "${srcmaxpos}" \
+		--qt ${srctexcoordbits} \
+		--minUv "0 0" \
+		--maxUv "1.0 1.0" \
+	END \
+	dequantize \
+		--inputModel "$*_%04d_decoded.obj" \
+		--outputModel ID:deqDis \
+		--useFixedPoint \
+		--qp ${srcgeombits} \
+		--minPos "${srcminpos}" \
+		--maxPos "${srcmaxpos}" \
+		--qt 0 \
+		--minUv "0 0" \
+		--maxUv "1.0 1.0" \
+	END \
+	compare \
+		--mode ibsm \
+		--inputModelA ID:deqRef \
+		--inputMapA ${srctex} \
+		--inputModelB ID:deqDis \
+		--inputMapB "$*_%04d_decoded.png" \
 		--outputCsv "$@" \
-	$(call log_output,$@)
-	@$(call remove_errlog_if_empty,$@)
+	$(call log_output,$*_metric_ibsm)
+
+# @$(call remove_errlog_if_empty,$@)
 
 ##
 # mesh pcc_metric
 $(info $(call import_cfg,,$(call vpath,mmetric.cfg)))
-%.vmesh.decoded.pcc_mmetric.csv: %.vmesh.decoded.stamp
+%_decoded_pcc_mmetric.csv: %_decoded.stamp
+	echo -e "\033[0;32m\n\n######################### PCC METRICS ######################### \033[0m"; \
 	$(quiet_METRIC)$(PRELOAD)$(MMETRIC) \
-	sequence --firstFrame ${firstframe} --lastFrame ${lastframe} END \
-	dequantize --inputModel "${srcmesh}" \
-		--outputModel ID:deqRef --useFixedPoint \
-		--qp ${srcgeombits} --minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
-		--qt ${srctexcoordbits} --minUv "0 0" --maxUv "1.0 1.0" END \
-	reindex --sort oriented -i ID:deqRef -o ID:ref_reordered END \
-	sample --mode grid --gridSize ${gridsize} --hideProgress \
-		--useNormal --useFixedPoint \
-		--minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
-		--bilinear -i ID:ref_reordered \
-		-m ${srctex} -o ID:pcRef END \
-	dequantize --inputModel "$*.vmesh.%04d_decoded.obj" \
-		--outputModel ID:deqDis --useFixedPoint \
-		--qp ${srcgeombits} --minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
-		--qt 0 --minUv "0 0" --maxUv "1.0 1.0" END \
-	reindex --sort oriented -i ID:deqDis -o ID:ref_reordered END \
-	sample --mode grid --gridSize ${gridsize} --hideProgress \
-		--useNormal --useFixedPoint \
-		--minPos "${srcminpos}" --maxPos "${srcmaxpos}" \
-		--bilinear -i ID:ref_reordered \
-		-m "$*.vmesh.%04d_decoded.png"  -o ID:pcDis END \
-	compare --mode pcc --resolution ${srcmaxbblen} \
-		--inputModelA ID:pcRef --inputModelB ID:pcDis \
+	sequence \
+		--firstFrame ${firstframe} \
+		--lastFrame ${lastframe} \
+		END \
+	dequantize \
+		--inputModel "${srcmesh}" \
+		--outputModel ID:deqRef \
+		--useFixedPoint \
+		--qp ${srcgeombits} \
+		--minPos "${srcminpos}" \
+		--maxPos "${srcmaxpos}" \
+		--qt ${srctexcoordbits} \
+		--minUv "0 0" \
+		--maxUv "1.0 1.0" \
+		END \
+	reindex \
+		--sort oriented \
+		-i ID:deqRef \
+		-o ID:ref_reordered \
+		END \
+	sample \
+		--mode grid \
+		--gridSize ${gridsize} \
+		--hideProgress \
+		--useNormal \
+		--useFixedPoint \
+		--minPos "${srcminpos}" \
+		--maxPos "${srcmaxpos}" \
+		--bilinear \
+		-i ID:ref_reordered \
+		-m ${srctex} \
+		-o ID:pcRef \
+		END \
+	dequantize \
+		--inputModel "$*_%04d_decoded.obj" \
+		--outputModel ID:deqDis \
+		--useFixedPoint \
+		--qp ${srcgeombits} \
+		--minPos "${srcminpos}" \
+		--maxPos "${srcmaxpos}" \
+		--qt 0 \
+		--minUv "0 0" \
+		--maxUv "1.0 1.0" \
+		END \
+	reindex \
+		--sort oriented \
+		-i ID:deqDis \
+		-o ID:ref_reordered \
+		END \
+	sample \
+		--mode grid \
+		--gridSize ${gridsize} \
+		--hideProgress \
+		--useNormal \
+		--useFixedPoint \
+		--minPos "${srcminpos}" \
+		--maxPos "${srcmaxpos}" \
+		--bilinear \
+		-i ID:ref_reordered \
+		-m "$*_%04d_decoded.png"  \
+		-o ID:pcDis \
+		END \
+	compare \
+		--mode pcc \
+		--resolution ${srcmaxbblen} \
+		--inputModelA ID:pcRef \
+		--inputModelB ID:pcDis \
 		--outputCsv "$@" \
-	$(call log_output,$@)
-	@$(call remove_errlog_if_empty,$@)
+	$(call log_output,$*_metric_pcc)
+
+#@$(call remove_errlog_if_empty,$@)
+
+

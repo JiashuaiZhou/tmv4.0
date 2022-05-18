@@ -140,6 +140,46 @@ tools:
       - ld-gof: ${src-dir}_r${pp}_ld/${src-dir}.gof
 
 
+    # step 5, encode
+    encoder:
+      - mode: 0
+
+      # input / sequence configuration
+      - imesh: ${seq-prefix}${src-dir}/${src-mesh}
+      - itex:  ${seq-prefix}${src-dir}/${src-tex}
+      - fstart: ${first-frame}
+      - fcount: ${num-frames}
+      - gdepth: ${src-geom-bits}
+      - tdepth: ${src-texcoord-bits}
+
+      # output
+      - compressed: ${src-dir}.vmesh
+
+      # common options
+      - invorient: 0
+      - tqp: 10
+      - gofmax: 32
+      - dqb: 0.3333,0.3333,0.3333
+
+      # the following defaults are overridden for some sequences and rates
+      - unifvertices: 0
+      - texwidth: 2048
+      - texheight: 2048
+
+      # colourspace conversion
+      - cscencconfig: ${cfg-prefix}/hdrconvert/bgr444toyuv420.cfg
+      - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
+
+
+    # step 6, decode
+    decoder:
+      - mode: 1
+      - compressed: ${src-dir}.vmesh
+      # Specifying the first output frame number helps align src/dec filenames
+      - fstart: ${first-frame}
+      - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
+
+
     mmetric:
       - firstframe: ${first-frame}
       - lastframe: $eval{ ${first-frame} + ${num-frames} - 1 }

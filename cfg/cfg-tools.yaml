@@ -81,8 +81,7 @@ tools:
       # NB: does not apply when mapping is performed.
       # NB: the fitsubdiv_intra results are not always the same for ai and ld
       #     conditions due to the following (for soldier)
-      -
-        - !conditional 'defined ${fitsubdiv_with_mapping} and !${fitsubdiv_with_mapping}'
+      - - !conditional 'defined ${fitsubdiv_with_mapping} and !${fitsubdiv_with_mapping}'
         - deformNormalThres: 0.8660254
 
     # step 4a, subdivision and fitting (for inter frames)
@@ -96,8 +95,7 @@ tools:
       - nsubdiv: ${src-dir}_r${pp}_ld/${src-mesh}_nsubdiv.obj
 
       # inputs (without mapping)
-      -
-        - !conditional '!${fitsubdiv_with_mapping}'
+      - - !conditional '!${fitsubdiv_with_mapping}'
         # current frame
         - target: ${src-dir}_r${pp}/${src-mesh}_reference.obj
 
@@ -106,8 +104,7 @@ tools:
         - subdiv0: ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
 
       # inputs (with mapping)
-      -
-        - !conditional '${fitsubdiv_with_mapping}'
+      - - !conditional '${fitsubdiv_with_mapping}'
         # current frame index
         - mtarget: ${seq-prefix}${src-dir}/${src-mesh}
 
@@ -126,14 +123,12 @@ tools:
       - smoothMotion: 0
       - smoothMethod: 1
 
-      -
-        - !conditional '!${fitsubdiv_with_mapping}'
+      - - !conditional '!${fitsubdiv_with_mapping}'
         - unifyVertices: 0
         - deformNNCount: 512
         - deformNormalThres: 0.8660254
 
-      -
-        - !conditional '${fitsubdiv_with_mapping}'
+      - - !conditional '${fitsubdiv_with_mapping}'
         - unifyVertices: 1
         - deformNNCount: 1
         - deformNormalThres: -2.0

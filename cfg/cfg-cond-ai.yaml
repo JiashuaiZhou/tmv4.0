@@ -14,12 +14,10 @@ categories:
       #     However, some base meshes in the CfP submission were generated with
       #     it>0, causing the base mesh to be fitted to the subdivision result
       #     even though the sequence wasn't coded with the subdivision mesh.
-      -
-        - !conditional '${pp} >= 0.24 and ${pp} < 1.0'
+      - - !conditional '${pp} >= 0.24 and ${pp} < 1.0'
         - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
       # if pp not set, or no decimation, use input sequence
-      -
-        - !conditional 'not defined ${pp} or ${pp} == 1.0'
+      - - !conditional 'not defined ${pp} or ${pp} == 1.0'
         - base:   ${seq-prefix}${src-dir}/${src-mesh}
         - subdiv: ${seq-prefix}${src-dir}/${src-mesh}
 

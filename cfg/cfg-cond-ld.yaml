@@ -11,8 +11,7 @@ categories:
       - subdiv:    ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
       - gofstruct: ${src-dir}_r${pp}_ld/${src-dir}.gof
       # if pp not set, or no decimation, use input sequence
-      -
-        - !conditional 'not defined ${pp} or ${pp} == 1.0'
+      - - !conditional 'not defined ${pp} or ${pp} == 1.0'
         - base:      ${seq-prefix}${src-dir}/${src-mesh}
         - subdiv:    ${seq-prefix}${src-dir}/${src-mesh}
         - gofstruct: ${src-dir}.gof

@@ -257,12 +257,10 @@ sub genSeqVariants {
 		##
 		# per tool configuration
 		foreach my $tool (@{$cat->{tools} || [qw{encoder decoder}]}) {
+			# base tool configuration
 			my @flags = (
-				params_from_node($dict, $seq->{$tool}),
+				params_from_node($dict, $cfg->{tools}{$tool}),
 				params_from_node($dict, $cat->{$tool}, $var),
-				params_from_node($dict, $cat_seq->{$tool}, $var),
-				params_from_node($dict, $cat_seq->{$var}{$tool}),
-				params_from_node($dict, $cfg->{$tool}),
 			);
 
 			# don't write out empty config files (remove them)
@@ -270,8 +268,18 @@ sub genSeqVariants {
 					is_empty_cfg_line($_) || is_comment_cfg_line($_)
 				} @flags;
 
-			write_cfg("$cfgdir/$tool.cfg", \@flags) unless $is_empty;
+			# remove any out-of-date file that should be empty
 			rm_cfg("$cfgdir/$tool.cfg") if $is_empty;
+			next if $is_empty;
+
+			# add sequence/general overrides
+			push @flags,
+				params_from_node($dict, $seq->{$tool}),
+				params_from_node($dict, $cat_seq->{$tool}, $var),
+				params_from_node($dict, $cat_seq->{$var}{$tool}),
+				params_from_node($dict, $cfg->{$tool});
+
+			write_cfg("$cfgdir/$tool.cfg", \@flags);
 		}
 	}
 }

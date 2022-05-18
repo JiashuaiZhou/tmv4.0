@@ -1,4 +1,5 @@
 ---
+tools:
     # export some parameters to make scripting easier
     seqcfg:
       - firstframe: ${first-frame}

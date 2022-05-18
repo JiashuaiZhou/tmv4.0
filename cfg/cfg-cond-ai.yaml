@@ -2,7 +2,7 @@
 categories:
   ai:
     # the list of tools to generate configurations for
-    tools: [ seqcfg, gengof, simplify, uvatlas, fitsubdiv_intra, encoder, decoder, mmetric ]
+    tools: [ seqcfg, simplify, uvatlas, fitsubdiv_intra, encoder, decoder, mmetric ]
 
     # NB: common options are in cfg-tools.yaml
     encoder:

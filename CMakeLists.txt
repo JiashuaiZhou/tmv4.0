@@ -19,6 +19,10 @@ if (NOT WIN32)
     include_directories(dependencies/sal)
 endif()
 
+SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
+
 # directx-mesh unconditionally includes install targets that need dxheaders'
 set(DXHEADERS_INSTALL TRUE)
 

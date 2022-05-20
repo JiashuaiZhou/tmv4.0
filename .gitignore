@@ -2,6 +2,8 @@
 
 # Suggested "out-of-tree" build directory
 build/
+bin/
+lib/
 
 # Some tools expect this build generated file to be in
 # the root of the source tree.

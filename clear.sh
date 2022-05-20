@@ -4,8 +4,6 @@ CURDIR=$( cd "$( dirname "$0" )" && pwd );
 echo -e "\033[0;32mClean: $CURDIR \033[0m"; 
 
 rm -rf \
-  ${CURDIR}/bin/ \
-  ${CURDIR}/lib/ \
   ${CURDIR}/build/ 
 
 if [ "$#" -gt "0" ] 

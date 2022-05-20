@@ -31,6 +31,10 @@ Path to the generated reference mesh in OBJ format. The reference mesh is
 obtained after vertex unification, duplicated triangles removal, and small
 connected components filtering.
 
+### `--fnum=INT-VALUE`
+Frame number, used to expand `%d` format specifies in `input`, `decimated`,
+`mapped`, and `reference` file names.
+
 
 Simplification Parameters
 -------------------------

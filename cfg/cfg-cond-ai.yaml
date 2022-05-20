@@ -2,53 +2,31 @@
 categories:
   ai:
     # the list of tools to generate configurations for
-    tools: [ seqcfg, gengof, simplify, uvatlas, fitsubdiv_intra, encoder, decoder, mmetric ]
+    tools: [ seqcfg, simplify, uvatlas, fitsubdiv_intra, encoder, decoder, mmetric ]
 
+    # NB: common options are in cfg-tools.yaml
     encoder:
-      - mode: 0
-
-      # input / sequence configuration
-      - imesh: ${seq-prefix}${src-dir}/${src-mesh}
-      - itex:  ${seq-prefix}${src-dir}/${src-tex}
-      - fstart: ${first-frame}
-      - fcount: ${num-frames}
-      - gdepth: ${src-geom-bits}
-      - tdepth: ${src-texcoord-bits}
-
-      # output
-      - compressed: ${src-dir}.vmesh
-
       # preprocessed data
       - base:   ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
       - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
-
-      # common options
-      - invorient: 0
-      - tqp: 10
-      - gofmax: 32
-      - dqb: 0.3333,0.3333,0.3333
-
-      # the following defaults are overridden for some sequences and rates
-      - unifvertices: 0
-      - texwidth: 2048
-      - texheight: 2048
+      # if the encoder should ignore subdivsion, use subdiv=base
+      # NB: If the subdiv mesh was computed with it=0, it is the same as base.
+      #     However, some base meshes in the CfP submission were generated with
+      #     it>0, causing the base mesh to be fitted to the subdivision result
+      #     even though the sequence wasn't coded with the subdivision mesh.
+      - - !conditional '${pp} >= 0.24 and ${pp} < 1.0'
+        - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
+      # if pp not set, or no decimation, use input sequence
+      - - !conditional 'not defined ${pp} or ${pp} == 1.0'
+        - base:   ${seq-prefix}${src-dir}/${src-mesh}
+        - subdiv: ${seq-prefix}${src-dir}/${src-mesh}
 
       # configuration for HM
       - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg
       - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg
 
-      # colourspace conversion
-      - cscencconfig: ${cfg-prefix}/hdrconvert/bgr444toyuv420.cfg
-      - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
-
-    decoder:
-      - mode: 1
-      - compressed: ${src-dir}.vmesh
-      # Specifying the first output frame number helps align src/dec filenames
-      - fstart: ${first-frame}
-      - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
-
     # sequences to code in this condition, and their overridden options/vars
+    #  pp: sets per-rate decimation parameter
     sequences:
       basketball_player:
         pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.36, r5: 0.48 }
@@ -87,7 +65,7 @@ categories:
           - texheight: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
 
       longdress:
-        pp: { r1: 0.03, r2: 0.06, r3: 0.36, r4: 0.48, r5: 0.125 }
+        pp: { r1: 0.03, r2: 0.06, r3: 0.36, r4: 0.48, r5: 1.00 }
         encoder:
           - it: { r1: 3, r2: 3, r3: 0, r4: 0, r5: 0 }
           - gqp: 10
@@ -106,7 +84,7 @@ categories:
           - texheight: { r3: 4096, r4: 4096, r5: 4096 }
 
       soldier:
-        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.48, r5: 0.125 }
+        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.48, r5: 1.00 }
         encoder:
           - it: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
           - gqp: 10

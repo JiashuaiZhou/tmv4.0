@@ -86,7 +86,7 @@ struct Box2 {
 
   friend std::ostream& operator<<(std::ostream& os, const Box2& box)
   {
-    os << box.min[0] << " " << box.min[1] << " " << box.max[0] << " "
+    os << box.min[0] << ' ' << box.min[1] << ' ' << box.max[0] << ' '
        << box.max[1];
     return os;
   }
@@ -154,8 +154,8 @@ struct Box3 {
 
   friend std::ostream& operator<<(std::ostream& os, const Box3& box)
   {
-    os << box.min[0] << " " << box.min[1] << " " << box.min[2] << " "
-       << box.max[0] << " " << box.max[1] << " " << box.max[2];
+    os << box.min[0] << ' ' << box.min[1] << ' ' << box.min[2] << ' '
+       << box.max[0] << ' ' << box.max[1] << ' ' << box.max[2];
     return os;
   }
   friend std::istream& operator>>(std::istream& is, Box3& box)

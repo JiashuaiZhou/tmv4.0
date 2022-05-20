@@ -257,13 +257,27 @@ sub genSeqVariants {
 		##
 		# per tool configuration
 		foreach my $tool (@{$cat->{tools} || [qw{encoder decoder}]}) {
+			# base tool configuration
 			my @flags = (
-				params_from_node($dict, $seq->{$tool}),
+				params_from_node($dict, $cfg->{tools}{$tool}),
 				params_from_node($dict, $cat->{$tool}, $var),
+			);
+
+			# don't write out empty config files (remove them)
+			my $is_empty = List::Util::all {
+					is_empty_cfg_line($_) || is_comment_cfg_line($_)
+				} @flags;
+
+			# remove any out-of-date file that should be empty
+			rm_cfg("$cfgdir/$tool.cfg") if $is_empty;
+			next if $is_empty;
+
+			# add sequence/general overrides
+			push @flags,
+				params_from_node($dict, $seq->{$tool}),
 				params_from_node($dict, $cat_seq->{$tool}, $var),
 				params_from_node($dict, $cat_seq->{$var}{$tool}),
-				params_from_node($dict, $cfg->{$tool}),
-			);
+				params_from_node($dict, $cfg->{$tool});
 
 			write_cfg("$cfgdir/$tool.cfg", \@flags);
 		}
@@ -367,7 +381,7 @@ sub params_from_node {
 	}
 
 	my @params;
-	my @todo = @$node;
+	my @todo = $node;
 	while (my $item = shift @todo) {
 		# an unformatted string (not key:value)
 		unless (ref $item) {
@@ -394,9 +408,14 @@ sub params_from_node {
 			# if the first item of the array is a conditional, evaluate
 			# it and conditionally add the array
 			if (exists $item->[0] && ref $item->[0] eq 'conditional') {
-				my ($evald, undef) = eval_expr(${$item->[0]}, $dict);
-				next unless eval $evald;
+				my ($evald, @subst) = eval_expr(${$item->[0]}, $dict);
 				push @params, [""];
+				unless (eval $evald) {
+					push @params,
+					["# skipped $#$item elements: '${$item->[0]}' is false"];
+					push @params, substs_to_comments(\@subst), [""];
+					next;
+				}
 			}
 
 			unshift @todo, @$item;
@@ -404,6 +423,26 @@ sub params_from_node {
 		}
 	}
 	return @params;
+}
+
+
+##
+# convert the substition list to an array of comment params,
+# deduplicating substititions.
+sub substs_to_comments {
+	my ($subst) = @_;
+	my %dup;
+	my $joiner = "with";
+	return pairmap {
+		if (exists $dup{$a}) {
+			()
+		} else {
+			my $txt = "#   $joiner $a = '$b'";
+			$dup{$a} = ();
+			$joiner = " and";
+			[$txt]
+		}
+	} @$subst;
 }
 
 
@@ -487,12 +526,28 @@ sub print_cfg {
 	}
 }
 
+## true if the config line is empty
+sub is_empty_cfg_line {
+	my $line = shift @_ or $_;
+	return scalar @$line == 1 && $line->[0] eq "";
+}
+
+## true if the config line is a comment
+sub is_comment_cfg_line {
+	my $line = shift @_ or $_;
+	return scalar @$line == 1 && $line->[0] =~ /^#/;
+}
+
 
 ##
 # print config to file iff it differs from file's contents.
 # (ie, don't touch mtime if unchanged)
 sub write_cfg {
 	my ($filename, $flags) = @_;
+
+	# remove leading / trailing empty lines
+	shift @$flags while scalar @$flags && is_empty_cfg_line($$flags[0]);
+	pop @$flags   while scalar @$flags && is_empty_cfg_line($$flags[-1]);
 
 	# format config in memory
 	my $new_cfg = "";
@@ -518,6 +573,17 @@ sub write_cfg {
 		close $fd;
 	}
 }
+
+
+##
+# remove config
+sub rm_cfg {
+	my ($filename) = @_;
+
+	print "removed $filename\n" if -f $filename;
+	unlink $filename;
+}
+
 
 ##
 # a helper class to permit secure loading of untrusted yaml documents

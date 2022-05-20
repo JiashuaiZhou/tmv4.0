@@ -121,23 +121,23 @@ VMCEncoder::compressDisplacementsVideo(
   fnameCompressDisp << params.intermediateFilesPathPrefix << "GOF_"
                     << _gofInfo.index << "_disp.h265";
   std::stringstream cmd;
-  cmd << params.geometryVideoEncoderPath << " ";
-  cmd << "-c " << params.geometryVideoEncoderConfig << " ";
-  cmd << "--InputFile=" << fnameDisp.str() << " ";
-  cmd << "--InputBitDepth=" << params.geometryVideoBitDepth << " ";
+  cmd << params.geometryVideoEncoderPath << ' ';
+  cmd << "-c " << params.geometryVideoEncoderConfig << ' ';
+  cmd << "--InputFile=" << fnameDisp.str() << ' ';
+  cmd << "--InputBitDepth=" << params.geometryVideoBitDepth << ' ';
   cmd << "--InputChromaFormat=444 ";
-  cmd << "--OutputBitDepth=" << params.geometryVideoBitDepth << " ";
-  cmd << "--OutputBitDepthC=" << params.geometryVideoBitDepth << " ";
-  cmd << "--FrameRate=" << 30 << " ";
-  cmd << "--FrameSkip=" << 0 << " ";
-  cmd << "--SourceWidth=" << width << " ";
-  cmd << "--SourceHeight=" << height << " ";
-  cmd << "--FramesToBeEncoded=" << frameCount << " ";
-  cmd << "--BitstreamFile=" << fnameCompressDisp.str() << " ";
-  cmd << "--ReconFile=" << fnameDispRec.str() << " ";
-  cmd << "--InternalBitDepth=" << params.geometryVideoBitDepth << " ";
-  cmd << "--InternalBitDepthC=" << params.geometryVideoBitDepth << " ";
-  std::cout << cmd.str() << '\n';
+  cmd << "--OutputBitDepth=" << params.geometryVideoBitDepth << ' ';
+  cmd << "--OutputBitDepthC=" << params.geometryVideoBitDepth << ' ';
+  cmd << "--FrameRate=" << 30 << ' ';
+  cmd << "--FrameSkip=" << 0 << ' ';
+  cmd << "--SourceWidth=" << width << ' ';
+  cmd << "--SourceHeight=" << height << ' ';
+  cmd << "--FramesToBeEncoded=" << frameCount << ' ';
+  cmd << "--BitstreamFile=" << fnameCompressDisp.str() << ' ';
+  cmd << "--ReconFile=" << fnameDispRec.str() << ' ';
+  cmd << "--InternalBitDepth=" << params.geometryVideoBitDepth << ' ';
+  cmd << "--InternalBitDepthC=" << params.geometryVideoBitDepth << ' ';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
   bitstream.append(fnameCompressDisp.str(), true);
   _dispVideo.load(fnameDispRec.str());
@@ -192,17 +192,18 @@ VMCEncoder::compressTextureVideo(
                         << "bit_rec.yuv";
 
   std::stringstream cmd;
-  cmd << params.textureVideoHDRToolPath << " -f "
-      << params.textureVideoHDRToolEncConfig << " -p SourceFile=\""
-      << fnameTextureBGR444.str() << "\""
-      << " -p SourceWidth=" << width << " -p SourceHeight=" << height
-      << " -p NumberOfFrames=" << frameCount << " -p OutputFile=\""
-      << fnameTextureYUV420.str() << "\""
+  cmd << params.textureVideoHDRToolPath
+      << " -f " << params.textureVideoHDRToolEncConfig
+      << " -p SourceFile=\"" << fnameTextureBGR444.str() << '"'
+      << " -p SourceWidth=" << width
+      << " -p SourceHeight=" << height
+      << " -p NumberOfFrames=" << frameCount
+      << " -p OutputFile=\"" << fnameTextureYUV420.str() << '"'
       << " -p OutputBitDepthCmp0=" << params.textureVideoBitDepth
       << " -p OutputBitDepthCmp1=" << params.textureVideoBitDepth
       << " -p OutputBitDepthCmp2=" << params.textureVideoBitDepth
-      << " -p LogFile=\"\"" << std::endl;
-  std::cout << cmd.str() << '\n';
+      << " -p LogFile=\"\"" << '\n';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
 
   std::stringstream fnameCompressTexture;
@@ -210,40 +211,41 @@ VMCEncoder::compressTextureVideo(
                        << _gofInfo.index << "_texture.h265";
 
   cmd.str("");
-  cmd << params.textureVideoEncoderPath << " ";
-  cmd << "-c " << params.textureVideoEncoderConfig << " ";
-  cmd << "--InputFile=" << fnameTextureYUV420.str() << " ";
-  cmd << "--InputBitDepth=" << params.textureVideoBitDepth << " ";
+  cmd << params.textureVideoEncoderPath << ' ';
+  cmd << "-c " << params.textureVideoEncoderConfig << ' ';
+  cmd << "--InputFile=" << fnameTextureYUV420.str() << ' ';
+  cmd << "--InputBitDepth=" << params.textureVideoBitDepth << ' ';
   cmd << "--InputChromaFormat=420 ";
-  cmd << "--OutputBitDepth=" << params.textureVideoBitDepth << " ";
-  cmd << "--OutputBitDepthC=" << params.textureVideoBitDepth << " ";
-  cmd << "--FrameRate=" << 30 << " ";
-  cmd << "--FrameSkip=" << 0 << " ";
-  cmd << "--SourceWidth=" << width << " ";
-  cmd << "--SourceHeight=" << height << " ";
-  cmd << "--FramesToBeEncoded=" << frameCount << " ";
-  cmd << "--BitstreamFile=" << fnameCompressTexture.str() << " ";
-  cmd << "--ReconFile=" << fnameTextureYUV420Rec.str() << " ";
+  cmd << "--OutputBitDepth=" << params.textureVideoBitDepth << ' ';
+  cmd << "--OutputBitDepthC=" << params.textureVideoBitDepth << ' ';
+  cmd << "--FrameRate=" << 30 << ' ';
+  cmd << "--FrameSkip=" << 0 << ' ';
+  cmd << "--SourceWidth=" << width << ' ';
+  cmd << "--SourceHeight=" << height << ' ';
+  cmd << "--FramesToBeEncoded=" << frameCount << ' ';
+  cmd << "--BitstreamFile=" << fnameCompressTexture.str() << ' ';
+  cmd << "--ReconFile=" << fnameTextureYUV420Rec.str() << ' ';
   cmd << "--InternalBitDepth=10 ";
   cmd << "--InternalBitDepthC=10 ";
   cmd << "--QP=" << params.textureVideoQP;
 
-  std::cout << cmd.str() << '\n';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
   bitstream.append(fnameCompressTexture.str(), true);
 
   cmd.str("");
-  cmd << params.textureVideoHDRToolPath << " -f "
-      << params.textureVideoHDRToolDecConfig << " -p SourceFile=\""
-      << fnameTextureYUV420Rec.str() << "\""
-      << " -p SourceWidth=" << width << " -p SourceHeight=" << height
-      << " -p NumberOfFrames=" << frameCount << " -p OutputFile=\""
-      << fnameTextureBGR444Rec.str() << "\""
+  cmd << params.textureVideoHDRToolPath
+      << " -f " << params.textureVideoHDRToolDecConfig
+      << " -p SourceFile=\"" << fnameTextureYUV420Rec.str() << '"'
+      << " -p SourceWidth=" << width
+      << " -p SourceHeight=" << height
+      << " -p NumberOfFrames=" << frameCount
+      << " -p OutputFile=\"" << fnameTextureBGR444Rec.str() << '"'
       << " -p SourceBitDepthCmp0=" << params.textureVideoBitDepth
       << " -p SourceBitDepthCmp1=" << params.textureVideoBitDepth
       << " -p SourceBitDepthCmp2=" << params.textureVideoBitDepth
-      << " -p LogFile=\"\"" << std::endl;
-  std::cout << cmd.str() << '\n';
+      << " -p LogFile=\"\"" << '\n';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
 
   std::ifstream fileTextureVideoRec(fnameTextureBGR444Rec.str());
@@ -303,11 +305,13 @@ VMCEncoder::computeDracoMapping(
   cmdEnc << params.geometryMeshEncoderPath << " -cl 10"
          << " -i " << mappingFileName.str() << " -o "
          << cmappingFileName.str();
+  std::cout.flush();
   system(cmdEnc.str().c_str());
+
   std::stringstream cmdDec;
   cmdDec << params.geometryMeshDecoderPath << " -i " << cmappingFileName.str()
          << " -o " << rmappingFileName.str();
-
+  std::cout.flush();
   system(cmdDec.str().c_str());
   base.loadFromOBJ(rmappingFileName.str());
 
@@ -518,7 +522,7 @@ VMCEncoder::compressBaseMesh(
     cmdEnc << params.geometryMeshEncoderPath << " -i " << qbaseFileName.str()
            << " -o " << cbaseFileName.str() << " -qp " << params.qpPosition
            << " -qt " << params.qpTexCoord << " -qn -1 -qg -1 -cl 10 ";
-    std::cout << cmdEnc.str() << '\n';
+    std::cout << cmdEnc.str() << std::endl;
     system(cmdEnc.str().c_str());
 
     auto bitstreamByteCount0 = bitstream.size();
@@ -528,7 +532,7 @@ VMCEncoder::compressBaseMesh(
     std::stringstream cmdDec;
     cmdDec << params.geometryMeshDecoderPath << " -i " << cbaseFileName.str()
            << " -o " << rbaseFileName.str();
-    std::cout << cmdDec.str() << '\n';
+    std::cout << cmdDec.str() << std::endl;
     system(cmdDec.str().c_str());
     base.loadFromOBJ(rbaseFileName.str());
 
@@ -954,7 +958,7 @@ VMCEncoder::compress(
       if (transferTexture(frame, params)) {
         return -1;
       }
-      std::cout << ".";
+      std::cout << '.';
     }
     std::cout << '\n';
     // compress texture

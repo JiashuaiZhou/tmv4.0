@@ -35,7 +35,10 @@
 
 #include "vmesh/entropydirac.hpp"
 
+<<<<<<< HEAD
 #include <exception>
+=======
+>>>>>>> main
 #include <stdexcept>
 
 namespace vmesh {

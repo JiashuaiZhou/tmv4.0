@@ -75,14 +75,6 @@ then
   exit 0;
 fi 
 
-if [ $TIDY == 1 ] 
-then 
-  echo -e "\033[0;32mFormat: ${CURDIR} \033[0m";
-  ${CMAKE} --build "${CURDIR}/build/${MODE}" --target clang-tidy
-  echo -e "\033[0;32mdone \033[0m";
-  exit 0;
-fi 
-
 echo -e "\033[0;32mBuild: ${CURDIR} \033[0m";
 if ! ${CMAKE} --build "${CURDIR}/build/${MODE}" --config ${MODE} --parallel "${NUMBER_OF_PROCESSORS}" ; then exit 1; fi 
 echo -e "\033[0;32mdone \033[0m";

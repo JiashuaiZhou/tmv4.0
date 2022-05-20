@@ -4,50 +4,21 @@ categories:
     # the list of tools to generate configurations for
     tools: [ seqcfg, gengof, simplify, uvatlas, fitsubdiv_intra, fitsubdiv_inter, fitsubdiv_choose, encoder, decoder, mmetric ]
 
+    # NB: common options are in cfg-tools.yaml
     encoder:
-      - mode: 0
-
-      # input / sequence configuration
-      - imesh: ${seq-prefix}${src-dir}/${src-mesh}
-      - itex:  ${seq-prefix}${src-dir}/${src-tex}
-      - fstart: ${first-frame}
-      - fcount: ${num-frames}
-      - gdepth: ${src-geom-bits}
-      - tdepth: ${src-texcoord-bits}
-
-      # output
-      - compressed: ${src-dir}.vmesh
-
       # preprocessed data
       - base:      ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
       - subdiv:    ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
       - gofstruct: ${src-dir}_r${pp}_ld/${src-dir}.gof
-
-      # common options
-      - invorient: 0
-      - tqp: 10
-      - gofmax: 32
-      - dqb: 0.3333,0.3333,0.3333
-
-      # the following defaults are overridden for some sequences and rates
-      - unifvertices: 0
-      - texwidth: 2048
-      - texheight: 2048
+      # if pp not set, or no decimation, use input sequence
+      - - !conditional 'not defined ${pp} or ${pp} == 1.0'
+        - base:      ${seq-prefix}${src-dir}/${src-mesh}
+        - subdiv:    ${seq-prefix}${src-dir}/${src-mesh}
+        - gofstruct: ${src-dir}.gof
 
       # configuration for HM
       - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ld-main10.cfg
       - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ld.cfg
-
-      # colourspace conversion
-      - cscencconfig: ${cfg-prefix}/hdrconvert/bgr444toyuv420.cfg
-      - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
-
-    decoder:
-      - mode: 1
-      - compressed: ${src-dir}.vmesh
-      # Specifying the first output frame number helps align src/dec filenames
-      - fstart: ${first-frame}
-      - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
 
     # sequences to code in this condition, and their overridden options/vars
     sequences:
@@ -65,7 +36,7 @@ categories:
         r5:
           encoder:
             - base:   ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
-            - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+            - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
             - gofstruct: ""
             - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg
             - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg

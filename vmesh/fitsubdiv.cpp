@@ -68,8 +68,15 @@ namespace {
 struct Parameters {
   bool verbose;
 
-  // frame number for expansion in input/output filenames
+  ///
+  // Frame number.
+  // Used in the expansion of input/output filenames.
   int fnum;
+
+  ///
+  // Reference frame number.
+  // Used in the expansion of input filenames.
+  int fnumRef;
 
   std::string targetMeshPath;
   std::string sourceMeshPath;
@@ -148,7 +155,9 @@ try {
   ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("Input/Output"))
-  ("fnum",     params.fnum, {}, "Frame number for %d expansion")
+  ("fnum",     params.fnum, {},    "Frame number for %d expansion")
+  ("rnum",     params.fnumRef, -1, "Reference frame number for %d expansion")
+
   ("source,i", params.sourceMeshPath,  {}, "Source mesh")
   ("target",   params.targetMeshPath,  {}, "Target mesh")
   ("mtarget",  params.targetModifierMeshPath, {}, "Target modifier mesh")
@@ -243,7 +252,7 @@ try {
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
-    err.warn() << "Unhandled argument ignored: " << arg << "\n";
+    err.warn() << "Unhandled argument ignored: " << arg << '\n';
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -263,11 +272,34 @@ try {
   if (err.is_errored)
     return false;
 
+  // If --rnum is not set, default to --fnum
+  if (params.fnumRef < 0)
+    params.fnumRef = params.fnum;
+
+  // expand path names
+  // if mtarget is specified, target is reference frame
+  // otherwise,               target is current frame
+  params.targetMeshPath = expandNum(params.targetMeshPath,
+    params.targetModifierMeshPath.empty() ? params.fnum : params.fnumRef);
+
+  params.targetModifierMeshPath =
+    expandNum(params.targetModifierMeshPath, params.fnum);
+
+  // reference frames use fnumRef
+  params.sourceMeshPath = expandNum(params.sourceMeshPath, params.fnumRef);
+  params.mappedMeshPath = expandNum(params.mappedMeshPath, params.fnumRef);
+  params.subdiv0MeshPath = expandNum(params.subdiv0MeshPath, params.fnumRef);
+
+  // output file names use fnum
+  params.baseMeshPath = expandNum(params.baseMeshPath, params.fnum);
+  params.nsubdivMeshPath = expandNum(params.nsubdivMeshPath, params.fnum);
+  params.subdivMeshPath = expandNum(params.subdivMeshPath, params.fnum);
+
   // Dump the complete derived configuration
   cout << "+ Configuration parameters\n";
   po::dumpCfg(cout, opts, "Input/Output", 4);
-  po::dumpCfg(cout, opts, "Gof", 4);
-  cout << endl;
+  po::dumpCfg(cout, opts, "Subdiv", 4);
+  cout << '\n';
 
   return true;
 }
@@ -606,7 +638,7 @@ Deform(
       vertexToTriangleOutput, isBoundaryVertex, missedVertices, output, vadj,
       vtags, ttags, params);
 
-    vout << "[" << missedVertices.size() << "]";
+    vout << '[' << missedVertices.size() << ']';
     vout << "\t Smoothing[" << smoothCoeff << "]...";
 
     if (
@@ -846,31 +878,35 @@ LoadInputMeshes(
   vout << "Loading Meshes... ";
 
   if (1) {
-    const auto& name = vmesh::expandNum(params.targetMeshPath, params.fnum);
+    // if mtarget is specified, target is reference frame
+    // otherwise,               target is current frame
+    auto tgtFnum = params.targetModifierMeshPath.empty()
+        ? params.fnum : params.fnumRef;
+    const auto& name = vmesh::expandNum(params.targetMeshPath, tgtFnum);
     if (!target.loadFromOBJ(name)) {
-      cerr << "Error: can't load target mesh " << name << endl;
+      cerr << "Error: can't load target mesh " << name << '\n';
       return false;
     }
   }
   if (1) {
-    const auto& name = vmesh::expandNum(params.sourceMeshPath, params.fnum);
+    const auto& name = vmesh::expandNum(params.sourceMeshPath, params.fnumRef);
     if (!source.loadFromOBJ(name)) {
-      cerr << "Error: can't load source mesh " << name << endl;
+      cerr << "Error: can't load source mesh " << name << '\n';
       return false;
     }
   }
   if (!params.mappedMeshPath.empty()) {
-    const auto& name = vmesh::expandNum(params.mappedMeshPath, params.fnum);
+    const auto& name = vmesh::expandNum(params.mappedMeshPath, params.fnumRef);
     if (!mapped.loadFromOBJ(name)) {
-      cerr << "Error: can't load mapped mesh " << name << endl;
+      cerr << "Error: can't load mapped mesh " << name << '\n';
       return false;
     }
   }
   if (!params.targetModifierMeshPath.empty()) {
     const auto& name =
-      vmesh::expandNum(params.targetModifierMeshPath, params.fnum);
+      vmesh::expandNum(params.targetModifierMeshPath, params.fnumRef);
     if (!mtarget.loadFromOBJ(name)) {
-      cerr << "Error: can't load target modifier mesh " << name << endl;
+      cerr << "Error: can't load target modifier mesh " << name << '\n';
       return false;
     }
   }
@@ -891,7 +927,7 @@ LoadInputMeshes(
   if (!params.mappedMeshPath.empty() &&
       (mapped.pointCount() != target.pointCount() ||
        mapped.triangleCount() != target.triangleCount())) {
-    cerr << "Error: mapped has a different connectivity from target!" << endl;
+    cerr << "Error: mapped has a different connectivity from target!\n";
     return false;
   }
   return true;
@@ -902,7 +938,7 @@ LoadInputMeshes(
 int
 main(int argc, char* argv[])
 {
-  cout << "MPEG VMESH version " << ::vmesh::version << endl;
+  cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
   if (!parseParameters(argc, argv, params))
@@ -913,7 +949,7 @@ main(int argc, char* argv[])
 
   TriangleMesh<double> target, source, mapped, mtarget;
   if (!LoadInputMeshes(target, source, mapped, mtarget, params)) {
-    cerr << "Error: can't load input meshes!" << endl;
+    cerr << "Error: can't load input meshes!\n";
     return 1;
   }
   target.computeNormals();
@@ -922,7 +958,7 @@ main(int argc, char* argv[])
   if (
     !params.targetModifierMeshPath.empty()
     && !ComputeMotion(mtarget, target, motion)) {
-    cerr << "Error: target mesh not modified!" << endl;
+    cerr << "Error: target mesh not modified!\n";
     return 1;
   }
 
@@ -935,7 +971,7 @@ main(int argc, char* argv[])
 
   TriangleMesh<double> usource = source;
   if (params.applyVertexUnification && !UnifyVertices(source, usource)) {
-    cerr << "Error: can't unify vertices!" << endl;
+    cerr << "Error: can't unify vertices!\n";
     return 1;
   }
 
@@ -943,13 +979,13 @@ main(int argc, char* argv[])
   if (!params.subdiv0MeshPath.empty()) {
     const auto& name = vmesh::expandNum(params.subdiv0MeshPath, params.fnum);
     if (!deformed.loadFromOBJ(name)) {
-      cerr << "Error: can't load source mesh " << name << endl;
+      cerr << "Error: can't load source mesh " << name << '\n';
       return 1;
     }
   } else {
     deformed = usource;
     if (!Subdivide(deformed, params)) {
-      cerr << "Error: can't subdivide mesh!" << endl;
+      cerr << "Error: can't subdivide mesh!\n";
       return 1;
     }
   }
@@ -957,7 +993,7 @@ main(int argc, char* argv[])
   if (
     params.subdivisionIterationCount
     && !FitMesh(target, mapped, motion, deformed, params)) {
-    cerr << "Error: can't fit mesh!" << endl;
+    cerr << "Error: can't fit mesh!\n";
     return 1;
   }
 
@@ -969,7 +1005,7 @@ main(int argc, char* argv[])
 
   auto subdiv = base;
   if (!Subdivide(subdiv, params)) {
-    cerr << "Error: can't subdivide mesh!" << endl;
+    cerr << "Error: can't subdivide mesh!\n";
     return 1;
   }
   auto ndeformed = deformed;
@@ -989,13 +1025,13 @@ main(int argc, char* argv[])
   }
   errorNormal /= deformed.pointCount();
   errorTangent /= deformed.pointCount();
-  std::cout << " normal rmse = " << std::sqrt(errorNormal) << std::endl;
-  std::cout << " tangential rmse = " << std::sqrt(errorTangent) << std::endl;
+  std::cout << " normal rmse = " << std::sqrt(errorNormal) << '\n';
+  std::cout << " tangential rmse = " << std::sqrt(errorTangent) << '\n';
 
   if (!params.baseMeshPath.empty()) {
     const auto& name = vmesh::expandNum(params.baseMeshPath, params.fnum);
     if (!base.saveToOBJ(name)) {
-      cerr << "Error: can't save base mesh!" << endl;
+      cerr << "Error: can't save base mesh!\n";
       return 1;
     }
   }
@@ -1003,7 +1039,7 @@ main(int argc, char* argv[])
   if (!params.nsubdivMeshPath.empty()) {
     const auto& name = vmesh::expandNum(params.nsubdivMeshPath, params.fnum);
     if (!ndeformed.saveToOBJ(name)) {
-      cerr << "Error: can't save normal subdivision mesh!" << endl;
+      cerr << "Error: can't save normal subdivision mesh!\n";
       return 1;
     }
   }
@@ -1011,7 +1047,7 @@ main(int argc, char* argv[])
   if (1) {
     const auto& name = vmesh::expandNum(params.subdivMeshPath, params.fnum);
     if (!deformed.saveToOBJ(name)) {
-      cerr << "Error: can't save subdivision mesh!" << endl;
+      cerr << "Error: can't save subdivision mesh!\n";
       return 1;
     }
   }

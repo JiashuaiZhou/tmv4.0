@@ -369,10 +369,10 @@ VMCDecoder::decompressDisplacementsVideo(
   file.close();
   _byteCounter += byteCountDispVideo;
   std::stringstream cmd;
-  cmd << params.geometryVideoDecoderPath << " ";
-  cmd << "--BitstreamFile=" << fnameCompressDisp.str() << " ";
-  cmd << "--ReconFile=" << fnameDispDec.str() << " ";
-  std::cout << cmd.str() << '\n';
+  cmd << params.geometryVideoDecoderPath << ' ';
+  cmd << "--BitstreamFile=" << fnameCompressDisp.str() << ' ';
+  cmd << "--ReconFile=" << fnameDispDec.str() << ' ';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
   _dispVideo.load(fnameDispDec.str());
 
@@ -415,10 +415,10 @@ VMCDecoder::decompressTextureVideo(
   file.close();
   _byteCounter += byteCountTexVideo;
   std::stringstream cmd;
-  cmd << params.textureVideoDecoderPath << " ";
-  cmd << "--BitstreamFile=" << fnameCompressTexture.str() << " ";
-  cmd << "--ReconFile=" << fnameTextureYUV420Dec.str() << " ";
-  std::cout << cmd.str() << '\n';
+  cmd << params.textureVideoDecoderPath << ' ';
+  cmd << "--BitstreamFile=" << fnameCompressTexture.str() << ' ';
+  cmd << "--ReconFile=" << fnameTextureYUV420Dec.str() << ' ';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
 
   std::stringstream fnameTextureBGR444Dec;
@@ -426,16 +426,17 @@ VMCDecoder::decompressTextureVideo(
                         << _gofInfo.index << "_tex_" << width << "x" << height
                         << "_444_rec.bgrp";
   cmd.str("");
-  cmd << params.textureVideoHDRToolPath << " -f "
-      << params.textureVideoHDRToolDecConfig << " -p SourceFile=\""
-      << fnameTextureYUV420Dec.str() << "\""
-      << " -p SourceWidth=" << width << " -p SourceHeight=" << height
-      << " -p NumberOfFrames=" << frameCount << " -p OutputFile=\""
-      << fnameTextureBGR444Dec.str() << "\""
+  cmd << params.textureVideoHDRToolPath
+      << " -f " << params.textureVideoHDRToolDecConfig
+      << " -p SourceFile=\"" << fnameTextureYUV420Dec.str() << '"'
+      << " -p SourceWidth=" << width
+      << " -p SourceHeight=" << height
+      << " -p NumberOfFrames=" << frameCount
+      << " -p OutputFile=\"" << fnameTextureBGR444Dec.str() << '"'
       << " -p SourceBitDepthCmp0=" << _sps.textureVideoBitDepth
       << " -p SourceBitDepthCmp1=" << _sps.textureVideoBitDepth
-      << " -p SourceBitDepthCmp2=" << _sps.textureVideoBitDepth << std::endl;
-  std::cout << cmd.str() << '\n';
+      << " -p SourceBitDepthCmp2=" << _sps.textureVideoBitDepth << '\n';
+  std::cout << cmd.str() << std::endl;
   system(cmd.str().c_str());
 
   std::ifstream fileTextureVideoDec(fnameTextureBGR444Dec.str());

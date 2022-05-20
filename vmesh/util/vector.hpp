@@ -39,8 +39,9 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
-#include <vector>
+#include <istream>
 #include <ostream>
+#include <vector>
 
 namespace vmesh {
 
@@ -247,7 +248,7 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const Vec2& vec)
   {
-    os << vec[0] << " " << vec[1];
+    os << vec[0] << ' ' << vec[1];
     return os;
   }
 
@@ -554,7 +555,7 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const Vec3& vec)
   {
-    os << vec[0] << " " << vec[1] << " " << vec[2];
+    os << vec[0] << ' ' << vec[1] << ' ' << vec[2];
     return os;
   }
 
@@ -859,7 +860,7 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const Vec4& vec)
   {
-    os << vec[0] << " " << vec[1] << " " << vec[2] << " " << vec[3];
+    os << vec[0] << ' ' << vec[1] << ' ' << vec[2] << ' ' << vec[3];
     return os;
   }
 
@@ -1140,7 +1141,7 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const VecN<T>& vec)
   {
     for (int32_t x = 0, count = vec.size(); x < count; ++x) {
-      os << vec[x] << " ";
+      os << vec[x] << ' ';
     }
     return os;
   }

@@ -162,7 +162,7 @@ try {
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
-    err.warn() << "Unhandled argument ignored: " << arg << "\n";
+    err.warn() << "Unhandled argument ignored: " << arg << '\n';
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -183,7 +183,7 @@ try {
   std::cout << "+ Configuration parameters\n";
   po::dumpCfg(std::cout, opts, "Input/Output", 4);
   po::dumpCfg(std::cout, opts, "Isochart", 4);
-  std::cout << std::endl;
+  std::cout << '\n';
 
   return true;
 }

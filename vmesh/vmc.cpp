@@ -253,7 +253,7 @@ try {
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
-    err.warn() << "Unhandled argument ignored: " << arg << "\n";
+    err.warn() << "Unhandled argument ignored: " << arg << '\n';
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -350,7 +350,7 @@ try {
     po::dumpCfg(cout, opts, "Decoder", 4);
     po::dumpCfg(cout, opts, "External tools (Decoder)", 4);
   }
-  cout << endl;
+  cout << '\n';
 
   return true;
 }
@@ -386,26 +386,23 @@ dumpStats(
   const auto totalBitsPerVertex =
     stats.totalByteCount * 8.0 / stats.vertexCount;
 
-  cout << header << " frame count " << stats.frameCount << endl;
-  cout << header << " face count " << stats.faceCount << endl;
-  cout << header << " vertex count " << stats.vertexCount << endl;
+  cout << header << " frame count " << stats.frameCount << '\n';
+  cout << header << " face count " << stats.faceCount << '\n';
+  cout << header << " vertex count " << stats.vertexCount << '\n';
   cout << header << " processing time " << stats.processingTimeInSeconds
-       << " s " << endl;
+       << " s \n";
   cout << header << " meshes bitrate " << baseMeshBitrate << " mbps "
-       << stats.baseMeshByteCount << " B " << baseMeshBitsPerVertex << " bpv"
-       << endl;
+       << stats.baseMeshByteCount << " B "
+       << baseMeshBitsPerVertex << " bpv\n";
   cout << header << " motion bitrate " << motionBitrate << " mbps "
-       << stats.motionByteCount << " B " << motionBitsPerVertex << " bpv"
-       << endl;
+       << stats.motionByteCount << " B " << motionBitsPerVertex << " bpv\n";
   cout << header << " displacements bitrate " << displacementBitrate
        << " mbps " << stats.displacementsByteCount << " B "
-       << displacementBitsPerVertex << " bpv" << endl;
+       << displacementBitsPerVertex << " bpv\n";
   cout << header << " texture bitrate " << textureBitrate << " mbps "
-       << stats.textureByteCount << " B " << textureBitsPerVertex << " bpv"
-       << endl;
+       << stats.textureByteCount << " B " << textureBitsPerVertex << " bpv\n";
   cout << header << " total bitrate " << totalBitrate << " mbps "
-       << stats.totalByteCount << " B " << totalBitsPerVertex << " bpv"
-       << endl;
+       << stats.totalByteCount << " B " << totalBitsPerVertex << " bpv\n";
 }
 
 //============================================================================
@@ -513,7 +510,7 @@ loadGroupOfFrames(
   const auto startFrame = gofInfo.startFrameIndex;
   const auto frameCount = gofInfo.frameCount;
   const auto lastFrame = startFrame + frameCount - 1;
-  vout << "Loading group of frames (" << startFrame << "-" << lastFrame
+  vout << "Loading group of frames (" << startFrame << '-' << lastFrame
        << ") ";
   printf("loadGroupOfFrames start Frame %d Last = %d count = %d  \n", startFrame, lastFrame, frameCount );
   fflush(stdout);
@@ -527,7 +524,7 @@ loadGroupOfFrames(
     const auto nameSuvdivMesh = expandNum(params.subdivMeshPath, f);
     const auto findex = f - startFrame;
     auto& frame = gof.frames[findex];
-    vout << "." << std::flush;
+    vout << '.' << std::flush;
 
     if (
       !frame.input.loadFromOBJ(nameInputMesh)
@@ -589,7 +586,7 @@ loadGroupOfFrames(
     }
   }
 
-  cout << "\n";
+  cout << '\n';
   return 0;
 }
 
@@ -600,7 +597,7 @@ compress(const Parameters& params)
 {
   vector<VMCGroupOfFramesInfo> gofsInfo;
   if (loadGroupOfFramesInfo(params, gofsInfo)) {
-    cerr << "Error: can't load group of frames structure!" << endl;
+    cerr << "Error: can't load group of frames structure!\n";
     return -1;
   }
 
@@ -612,13 +609,13 @@ compress(const Parameters& params)
     const auto& gofInfo = gofsInfo[g];
     printf("loadGroupOfFrames GOF = %d / %zu \n", g,gofsInfo.size());
     if (loadGroupOfFrames(gofInfo, gof, params)) {
-      cerr << "Error: can't load group of frames!" << endl;
+      cerr << "Error: can't load group of frames!\n";
       return -1;
     }
 
     auto start = chrono::steady_clock::now();
     if (encoder.compress(gofInfo, gof, bitstream, params.encParams)) {
-      cerr << "Error: can't compress group of frames!" << endl;
+      cerr << "Error: can't compress group of frames!\n";
       return -1;
     }
 
@@ -661,7 +658,7 @@ compress(const Parameters& params)
   cout << "---------------------------------------\n\n";
 
   if (bitstream.save(params.compressedStreamPath)) {
-    cerr << "Error: can't save compressed bitstream!" << endl;
+    cerr << "Error: can't save compressed bitstream!\n";
     return -1;
   }
 
@@ -676,7 +673,7 @@ decompress(const Parameters& params)
   Bitstream bitstream;
   if (bitstream.load(params.compressedStreamPath)) {
     cerr << "Error: can't load compressed bitstream ! ("
-         << params.compressedStreamPath << ")" << endl;
+         << params.compressedStreamPath << ")\n";
     return -1;
   }
 
@@ -693,7 +690,7 @@ decompress(const Parameters& params)
     auto start = chrono::steady_clock::now();
     if (decoder.decompress(
           bitstream, gofInfo, gof, byteCounter, params.decParams)) {
-      cerr << "Error: can't decompress group of frames!" << endl;
+      cerr << "Error: can't decompress group of frames!\n";
       return -1;
     }
 
@@ -748,7 +745,7 @@ decompress(const Parameters& params)
 int
 main(int argc, char* argv[])
 {
-  cout << "MPEG VMESH version " << ::vmesh::version << endl;
+  cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
   if (!parseParameters(argc, argv, params))
@@ -758,10 +755,10 @@ main(int argc, char* argv[])
     vmesh::vout.rdbuf(std::cout.rdbuf());
 
   if (!params.isDecoder && compress(params)) {
-    cerr << "Error: can't compress animation!" << endl;
+    cerr << "Error: can't compress animation!\n";
     return 1;
   } else if (params.isDecoder && decompress(params)) {
-    cerr << "Error: can't decompress animation!" << endl;
+    cerr << "Error: can't decompress animation!\n";
     return 1;
   }
 

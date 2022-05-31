@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17)
 
 project(vmesh)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # fix policies in dependent projects by injecting code
 # notably, set CMP0077 so that setting variables is honoured by subprojects
@@ -31,13 +31,13 @@ SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
 SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
 SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin )
 
-include( dependencies/cmake/tools.cmake )
 
-add_subdirectory(dependencies/draco)
-add_subdirectory(dependencies/directx-headers)
-add_subdirectory(dependencies/directx-math)
-add_subdirectory(dependencies/directx-mesh)
-add_subdirectory(dependencies/uvatlas)
+include( dependencies/cmake/CPM.cmake )
+include( dependencies/cmake/tools.cmake )
+include( dependencies/cmake/geometry/draco.cmake )
+include( dependencies/cmake/geometry/directx.cmake )
+include( dependencies/cmake/geometry/uvatlas.cmake )
+include( dependencies/cmake/geometry/mmetric.cmake )
 
 add_subdirectory(source)
 

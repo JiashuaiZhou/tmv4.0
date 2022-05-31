@@ -2,26 +2,6 @@
 
 CURDIR=$( cd "$( dirname "$0" )" && pwd ); 
 echo -e "\033[0;32mBuild: ${CURDIR} \033[0m";
-  
-if [ ! -f "${CURDIR}/dependencies/draco/CMakeLists.txt" ]
-then
-  echo -e "\033[0;32mInit submodules: ${CURDIR} \033[0m";
-  git submodule init 
-  git submodule update
-  
-  echo -e "\033[0;32mPatch draco submodule: ${CURDIR} \033[0m";
-  cd "${CURDIR}/dependencies/draco" || exit
-  git am < "${CURDIR}"/patches/draco-0001-*.patch
-
-  echo -e "\033[0;32mPatch directx-mesh submodule: ${CURDIR} \033[0m";
-  cd "${CURDIR}/dependencies/directx-mesh" || exit
-  git am < "${CURDIR}"/patches/dxmesh-0001-*.patch
-  git am < "${CURDIR}"/patches/dxmesh-0002-*.patch
-
-  echo -e "\033[0;32mPatch uvatlas submodule: ${CURDIR} \033[0m";
-  cd "${CURDIR}/dependencies/uvatlas" || exit
-  git am < "${CURDIR}"/patches/uvatlas-0001-*.patch
-fi
 
 CMAKE=""; 
 if [ "$( cmake  --version 2>&1 | grep version | awk '{print $3 }' | awk -F '.' '{print $1}' )" == 3 ] ; then CMAKE=cmake; fi

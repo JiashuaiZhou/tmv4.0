@@ -8,7 +8,12 @@ rm -rf \
 
 if [ "$#" -gt "0" ] 
 then
-  for name in draco directx-headers directx-math directx-mesh uvatlas
+  for name in draco \
+              directx-headers \
+              directx-math \
+              directx-mesh \
+              uvatlas \
+              mmetric
   do
     if [ "$1" == "${name}" ] || [ "$1" == "all" ]
     then 

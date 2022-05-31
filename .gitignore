@@ -1,9 +1,7 @@
 .DS_Store
 
 # Suggested "out-of-tree" build directory
-build/
-bin/
-lib/
+/build/
 
 # Some tools expect this build generated file to be in
 # the root of the source tree.
@@ -30,9 +28,13 @@ data/
 doc/mpeg-vmesh-sw-manual.aux
 
 # Dependencies
-dependencies/directx-headers 
+dependencies/directx-headers
 dependencies/directx-math
 dependencies/directx-mesh 
+dependencies/directx-mesh
+dependencies/draco
 dependencies/draco
 dependencies/uvatlas
+dependencies/mmetric
+
 

@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.17)
-
 enable_language(C)
 
 if (MSVC)

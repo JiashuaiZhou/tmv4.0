@@ -36,24 +36,23 @@
 #include <chrono>
 #include <program-options-lite/program_options_lite.h>
 
-#include "vmesh/bitstream.hpp"
-#include "vmesh/decoder.hpp"
-#include "vmesh/encoder.hpp"
-#include "vmesh/util/misc.hpp"
-#include "vmesh/util/verbose.hpp"
-#include "vmesh/version.hpp"
-#include "vmesh/vmc.hpp"
-#include "vmesh/vmcstats.hpp"
+#include "bitstream.hpp"
+#include "encoder.hpp"
+#include "misc.hpp"
+#include "verbose.hpp"
+#include "version.hpp"
+#include "vmc.hpp"
+#include "vmcstats.hpp"
 
 using namespace std;
 using namespace vmesh;
+using namespace vmeshenc;
 
 //============================================================================
 
 namespace {
 struct Parameters {
   bool verbose;
-  bool isDecoder;
   std::string inputMeshPath;
   std::string inputTexturePath;
   std::string baseMeshPath;
@@ -63,9 +62,6 @@ struct Parameters {
   std::string reconstructedMeshPath;
   std::string reconstructedTexturePath;
   std::string reconstructedMaterialLibPath;
-  std::string decodedMeshPath;
-  std::string decodedTexturePath;
-  std::string decodedMaterialLibPath;
 
   int32_t startFrame;
   int32_t frameCount;
@@ -74,7 +70,6 @@ struct Parameters {
   double framerate;
 
   VMCEncoderParameters encParams;
-  VMCDecoderParameters decParams;
 };
 }  // namespace
 
@@ -95,10 +90,6 @@ try {
   ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("General"))
-  ("mode", params.isDecoder, true,
-    "The encoding/decoding mode:\n"
-    "  0: encode\n"
-    "  1: decode")
 
   ("compressed", params.compressedStreamPath, {}, "Compressed bitstream")
 
@@ -122,22 +113,6 @@ try {
    "Intermediate files path prefix")
 
   ("keep",    params.encParams.keepIntermediateFiles, false,
-   "Keep intermediate files")
-
-  (po::Section("Output (Decoder)"))
-  ("decmat",  params.decodedMaterialLibPath, {},
-   "Decoded materials")
-
-  ("decmesh", params.decodedMeshPath, {},
-   "Decoded mesh")
-
-  ("dectex",  params.decodedTexturePath, {},
-   "Decoded texture")
-
-  ("intermediateFilesPathPrefix", params.decParams.intermediateFilesPathPrefix, {},
-   "Intermediate files path prefix")
-
-  ("keep",    params.decParams.keepIntermediateFiles, false,
    "Keep intermediate files")
 
   (po::Section("Common"))
@@ -197,10 +172,6 @@ try {
   ("normuv", params.encParams.normalizeUV, true,
    "Normalize uv texture coordinates")
 
-  (po::Section("Decoder"))
-  ("normuv", params.decParams.normalizeUV, true,
-   "Normalize uv texture coordinates")
-
   (po::Section("External tools (Encoder)"))
   ("gmenc", params.encParams.geometryMeshEncoderPath, {},
    "Mesh encoder cmd")
@@ -228,22 +199,6 @@ try {
 
   ("cscdecconfig", params.encParams.textureVideoHDRToolDecConfig, {},
    "HDRTools decode cfg")
-
-  (po::Section("External tools (Decoder)"))
-  ("gmdec", params.decParams.geometryMeshDecoderPath, {},
-   "Mesh decoder cmd")
-
-  ("gvdec", params.decParams.geometryVideoDecoderPath, {},
-   "Geometry video decoder cmd")
-
-  ("tvdec", params.decParams.textureVideoDecoderPath, {},
-   "Texture video decoder cmd")
-
-  ("csc", params.decParams.textureVideoHDRToolPath, {},
-   "HDRTools cmd")
-
-  ("cscdecconfig", params.decParams.textureVideoHDRToolDecConfig, {},
-   "HDRTools decode cfg")
   ;
   /* clang-format on */
 
@@ -264,72 +219,44 @@ try {
   if (params.compressedStreamPath.empty())
     err.error() << "compressed input/output not specified\n";
 
-  if (!params.isDecoder) {
-    if (params.inputMeshPath.empty())
-      err.error() << "input mesh not specified\n";
+  if (params.inputMeshPath.empty())
+    err.error() << "input mesh not specified\n";
 
-    if (params.inputTexturePath.empty())
-      err.error() << "input texture not specified\n";
+  if (params.inputTexturePath.empty())
+    err.error() << "input texture not specified\n";
 
-    if (params.baseMeshPath.empty())
-      err.error() << "base mesh not specified\n";
+  if (params.baseMeshPath.empty())
+    err.error() << "base mesh not specified\n";
 
-    if (params.subdivMeshPath.empty())
-      err.error() << "subdivision mesh not specified\n";
+  if (params.subdivMeshPath.empty())
+    err.error() << "subdivision mesh not specified\n";
 
-    if (params.encParams.geometryMeshEncoderPath.empty())
-      err.error() << "mesh encoder command not specified\n";
+  if (params.encParams.geometryMeshEncoderPath.empty())
+    err.error() << "mesh encoder command not specified\n";
 
-    if (params.encParams.geometryMeshDecoderPath.empty())
-      err.error() << "mesh decoder command not specified\n";
+  if (params.encParams.geometryMeshDecoderPath.empty())
+    err.error() << "mesh decoder command not specified\n";
 
-    if (params.encParams.geometryVideoEncoderPath.empty())
-      err.error() << "geometry video encoder command not specified\n";
+  if (params.encParams.geometryVideoEncoderPath.empty())
+    err.error() << "geometry video encoder command not specified\n";
 
-    if (params.encParams.geometryVideoEncoderConfig.empty())
-      err.error() << "geometry video config not specified\n";
+  if (params.encParams.geometryVideoEncoderConfig.empty())
+    err.error() << "geometry video config not specified\n";
 
-    if (params.encParams.textureVideoEncoderPath.empty())
-      err.error() << "texture video encoder command not specified\n";
+  if (params.encParams.textureVideoEncoderPath.empty())
+    err.error() << "texture video encoder command not specified\n";
 
-    if (params.encParams.textureVideoEncoderConfig.empty())
-      err.error() << "texture video encoder config not specified\n";
+  if (params.encParams.textureVideoEncoderConfig.empty())
+    err.error() << "texture video encoder config not specified\n";
 
-    if (params.encParams.textureVideoHDRToolPath.empty())
-      err.error() << "hdrtools command not specified\n";
+  if (params.encParams.textureVideoHDRToolPath.empty())
+    err.error() << "hdrtools command not specified\n";
 
-    if (params.encParams.textureVideoHDRToolEncConfig.empty())
-      err.error() << "hdrtools encoder config not specified\n";
+  if (params.encParams.textureVideoHDRToolEncConfig.empty())
+    err.error() << "hdrtools encoder config not specified\n";
 
-    if (params.encParams.textureVideoHDRToolDecConfig.empty())
-      err.error() << "hdrtools decoder config not specified\n";
-  }
-
-  if (params.isDecoder) {
-    if (params.decodedMeshPath.empty())
-      err.error() << "decoded mesh not specified\n";
-
-    if (params.decodedTexturePath.empty())
-      err.error() << "decoded texture not specified\n";
-
-    if (params.decodedMaterialLibPath.empty())
-      err.error() << "decoded materials not specified\n";
-
-    if (params.decParams.geometryMeshDecoderPath.empty())
-      err.error() << "mesh decoder command not specified\n";
-
-    if (params.decParams.geometryVideoDecoderPath.empty())
-      err.error() << "geometry video decoder command not specified\n";
-
-    if (params.decParams.textureVideoDecoderPath.empty())
-      err.error() << "texture video decoder command not specified\n";
-
-    if (params.decParams.textureVideoHDRToolPath.empty())
-      err.error() << "hdrtools command not specified\n";
-
-    if (params.decParams.textureVideoHDRToolDecConfig.empty())
-      err.error() << "hdrtools decoder config not specified\n";
-  }
+  if (params.encParams.textureVideoHDRToolDecConfig.empty())
+    err.error() << "hdrtools decoder config not specified\n";
 
   if (err.is_errored)
     return false;
@@ -337,21 +264,12 @@ try {
   // Dump the complete derived configuration
   cout << "+ Configuration parameters\n";
   po::dumpCfg(cout, opts, "General", 4);
-  if (!params.isDecoder) {
-    po::dumpCfg(cout, opts, "Input (Encoder)", 4);
-    po::dumpCfg(cout, opts, "Output (Encoder)", 4);
-    po::dumpCfg(cout, opts, "Common", 4);
-    po::dumpCfg(cout, opts, "Encoder", 4);
-    po::dumpCfg(cout, opts, "External tools (Encoder)", 4);
-  }
-  if (params.isDecoder) {
-    po::dumpCfg(cout, opts, "Output (Decoder)", 4);
-    po::dumpCfg(cout, opts, "Common", 4);
-    po::dumpCfg(cout, opts, "Decoder", 4);
-    po::dumpCfg(cout, opts, "External tools (Decoder)", 4);
-  }
+  po::dumpCfg(cout, opts, "Input (Encoder)", 4);
+  po::dumpCfg(cout, opts, "Output (Encoder)", 4);
+  po::dumpCfg(cout, opts, "Common", 4);
+  po::dumpCfg(cout, opts, "Encoder", 4);
+  po::dumpCfg(cout, opts, "External tools (Encoder)", 4);
   cout << '\n';
-
   return true;
 }
 catch (df::program_options_lite::ParseFailure& e) {
@@ -425,7 +343,7 @@ loadGroupOfFramesInfo(
       gofInfo.resize(frameCountGOF);
       for (int32_t frameIndexInGOF = 0; frameIndexInGOF < frameCountGOF;
            ++frameIndexInGOF) {
-        VMCFrameInfo& frameInfo = gofInfo.frameInfo(frameIndexInGOF);
+        vmesh::VMCFrameInfo& frameInfo = gofInfo.frameInfo(frameIndexInGOF);
         frameInfo.frameIndex = frameIndexInGOF;
         frameInfo.referenceFrameIndex = -1;
         frameInfo.type = FrameType::INTRA;
@@ -504,7 +422,7 @@ loadGroupOfFramesInfo(
 int32_t
 loadGroupOfFrames(
   const VMCGroupOfFramesInfo& gofInfo,
-  VMCGroupOfFrames& gof,
+  vmesh::VMCGroupOfFrames& gof,
   const Parameters& params)
 {
   const auto startFrame = gofInfo.startFrameIndex;
@@ -667,81 +585,6 @@ compress(const Parameters& params)
 
 //============================================================================
 
-int32_t
-decompress(const Parameters& params)
-{
-  Bitstream bitstream;
-  if (bitstream.load(params.compressedStreamPath)) {
-    cerr << "Error: can't load compressed bitstream ! ("
-         << params.compressedStreamPath << ")\n";
-    return -1;
-  }
-
-  VMCDecoder decoder;
-  VMCGroupOfFramesInfo gofInfo;
-  VMCGroupOfFrames gof;
-  VMCStats totalStats;
-  totalStats.reset();
-  size_t byteCounter = 0;
-  int32_t f = 0;
-  gofInfo.index = 0;
-  gofInfo.startFrameIndex = params.startFrame;
-  while (byteCounter != bitstream.size()) {
-    auto start = chrono::steady_clock::now();
-    if (decoder.decompress(
-          bitstream, gofInfo, gof, byteCounter, params.decParams)) {
-      cerr << "Error: can't decompress group of frames!\n";
-      return -1;
-    }
-
-    auto end = chrono::steady_clock::now();
-    gof.stats.processingTimeInSeconds =
-      chrono::duration_cast<chrono::milliseconds>(end - start).count();
-
-    const auto& stats = gof.stats;
-    const auto startFrameGOF = f + params.startFrame;
-    const auto frameCountGOF = int32_t(stats.frameCount);
-    if (
-      !params.decodedMeshPath.empty() && !params.decodedTexturePath.empty()
-      && !params.decodedMaterialLibPath.empty()) {
-      for (int fIndex = 0; fIndex < frameCountGOF; ++fIndex) {
-        const auto fNum = startFrameGOF + fIndex;
-        auto nameDecMesh = expandNum(params.decodedMeshPath, fNum);
-        auto nameDecTexture = expandNum(params.decodedTexturePath, fNum);
-        auto nameDecMaterial = expandNum(params.decodedMaterialLibPath, fNum);
-
-        const auto& frame = gof.frame(fIndex);
-        SaveImage(nameDecTexture, frame.outputTexture);
-        Material<double> material;
-        material.texture = nameDecTexture;
-        material.save(nameDecMaterial);
-        auto& recmesh = gof.frame(fIndex).rec;
-        recmesh.setMaterialLibrary(nameDecMaterial);
-        recmesh.saveToOBJ(nameDecMesh);
-      }
-    }
-
-    totalStats += stats;
-    f += stats.frameCount;
-    gofInfo.startFrameIndex += stats.frameCount;
-    ++gofInfo.index;
-
-    if (vout) {
-      vout << "\n\n------- Group of frames " << gofInfo.index
-           << " -----------\n";
-      dumpStats(stats, "GOF", params);
-      vout << "---------------------------------------\n\n";
-    }
-  }
-
-  cout << "\n\n------- All frames -----------\n";
-  dumpStats(totalStats, "Sequence", params);
-  cout << "---------------------------------------\n\n";
-  return 0;
-}
-
-//============================================================================
-
 int
 main(int argc, char* argv[])
 {
@@ -754,13 +597,10 @@ main(int argc, char* argv[])
   if (params.verbose)
     vmesh::vout.rdbuf(std::cout.rdbuf());
 
-  if (!params.isDecoder && compress(params)) {
+  if ( compress(params)) {
     cerr << "Error: can't compress animation!\n";
     return 1;
-  } else if (params.isDecoder && decompress(params)) {
-    cerr << "Error: can't decompress animation!\n";
-    return 1;
-  }
+  } 
 
   return 0;
 }

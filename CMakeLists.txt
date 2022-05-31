@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.17)
+
 project(vmesh)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -26,10 +27,17 @@ set(DXHEADERS_INSTALL TRUE)
 # other dependencies that use the same variable.  The tools aren't required.
 set (BUILD_TOOLS FALSE)
 
+SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
+SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
+SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin )
+
+include( dependencies/cmake/tools.cmake )
+
 add_subdirectory(dependencies/draco)
 add_subdirectory(dependencies/directx-headers)
 add_subdirectory(dependencies/directx-math)
 add_subdirectory(dependencies/directx-mesh)
 add_subdirectory(dependencies/uvatlas)
 
-add_subdirectory(vmesh)
+add_subdirectory(source)
+

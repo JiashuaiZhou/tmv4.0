@@ -1,5 +1,0 @@
-#include "vmesh/version.hpp"
-
-namespace vmesh {
-const char version[] = "@VERSION@";
-}

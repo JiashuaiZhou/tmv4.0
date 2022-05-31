@@ -38,14 +38,15 @@
 #include <string>
 #include <program-options-lite/program_options_lite.h>
 
-#include "vmesh/util/mesh.hpp"
-#include "vmesh/util/misc.hpp"
-#include "vmesh/util/verbose.hpp"
-#include "vmesh/version.hpp"
-#include "vmesh/simplifymesh.hpp"
+#include "mesh.hpp"
+#include "misc.hpp"
+#include "verbose.hpp"
+#include "version.hpp"
+#include "simplifymesh.hpp"
 
 using namespace std;
 using namespace vmesh;
+using namespace vmeshenc;
 
 //============================================================================
 

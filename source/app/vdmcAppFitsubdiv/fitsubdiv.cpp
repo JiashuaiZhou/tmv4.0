@@ -43,13 +43,13 @@
 
 #include <program-options-lite/program_options_lite.h>
 
-#include "vmesh/util/image.hpp"
-#include "vmesh/util/kdtree.hpp"
-#include "vmesh/util/misc.hpp"
-#include "vmesh/util/mesh.hpp"
-#include "vmesh/util/vector.hpp"
-#include "vmesh/util/verbose.hpp"
-#include "vmesh/version.hpp"
+#include "image.hpp"
+#include "kdtree.hpp"
+#include "misc.hpp"
+#include "mesh.hpp"
+#include "vector.hpp"
+#include "verbose.hpp"
+#include "version.hpp"
 
 using namespace std;
 using namespace vmesh;

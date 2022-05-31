@@ -39,10 +39,10 @@
 
 #include <program-options-lite/program_options_lite.h>
 
-#include "vmesh/util/misc.hpp"
-#include "vmesh/util/mesh.hpp"
-#include "vmesh/util/vector.hpp"
-#include "vmesh/version.hpp"
+#include "misc.hpp"
+#include "mesh.hpp"
+#include "vector.hpp"
+#include "version.hpp"
 
 using namespace std;
 using namespace vmesh;

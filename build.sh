@@ -10,17 +10,17 @@ then
   git submodule update
   
   echo -e "\033[0;32mPatch draco submodule: ${CURDIR} \033[0m";
-  cd "${CURDIR}/dependencies/draco"
-  git am < ${CURDIR}/patches/draco-0001-*.patch
+  cd "${CURDIR}/dependencies/draco" || exit
+  git am < "${CURDIR}"/patches/draco-0001-*.patch
 
   echo -e "\033[0;32mPatch directx-mesh submodule: ${CURDIR} \033[0m";
-  cd "${CURDIR}/dependencies/directx-mesh"
-  git am < ${CURDIR}/patches/dxmesh-0001-*.patch
-  git am < ${CURDIR}/patches/dxmesh-0002-*.patch
+  cd "${CURDIR}/dependencies/directx-mesh" || exit
+  git am < "${CURDIR}"/patches/dxmesh-0001-*.patch
+  git am < "${CURDIR}"/patches/dxmesh-0002-*.patch
 
   echo -e "\033[0;32mPatch uvatlas submodule: ${CURDIR} \033[0m";
-  cd "${CURDIR}/dependencies/uvatlas"
-  git am < ${CURDIR}/patches/uvatlas-0001-*.patch
+  cd "${CURDIR}/dependencies/uvatlas" || exit
+  git am < "${CURDIR}"/patches/uvatlas-0001-*.patch
 fi
 
 CMAKE=""; 
@@ -61,7 +61,7 @@ CMAKE_FLAGS+=( "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON" )
 # DEPDIR="${CURDIR}/build/dependencies"
 # CMAKE_FLAGS+=( "-DCMAKE_PREFIX_PATH=${DEPDIR}/directx-mesh;${DEPDIR}/DirectXTex;${DEPDIR}/directx-headers" )
 
-echo "CMAKE_FLAGS = ${CMAKE_FLAGS[@]}"
+echo "CMAKE_FLAGS = " "${CMAKE_FLAGS[@]}"
 
 echo -e "\033[0;32mCmake: ${CURDIR} \033[0m";
 ${CMAKE} -H${CURDIR} -B"${CURDIR}/build/${MODE}" "${CMAKE_FLAGS[@]}"

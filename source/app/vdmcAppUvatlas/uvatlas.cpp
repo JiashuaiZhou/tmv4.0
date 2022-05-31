@@ -49,8 +49,8 @@
 #include <memory>
 #include <program-options-lite/program_options_lite.h>
 
-#include "vmesh/util/mesh.hpp"
-#include "vmesh/util/misc.hpp"
+#include "mesh.hpp"
+#include "misc.hpp"
 
 // NB: these must come after the standard headers as they define prohibited
 //     macros that conflict with the system implementation

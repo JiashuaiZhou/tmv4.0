@@ -63,20 +63,20 @@ include_directories(
 add_library(vmesh STATIC
     "simplifymesh.cpp"
     "simplifymesh.hpp"
-    "util/box.hpp"
-    "util/image.cpp"
-    "util/image.hpp"
-    "util/kdtree.hpp"
-    "util/matrix.hpp"
-    "util/mesh.hpp"
-    "util/misc.cpp"
-    "util/misc.hpp"
-    "util/mutablepriorityheap.hpp"
-    "util/sparsematrix.hpp"
-    "util/triangle.hpp"
-    "util/vector.hpp"
-    "util/verbose.cpp"
-    "util/verbose.hpp"
+    "box.hpp"
+    "image.cpp"
+    "image.hpp"
+    "kdtree.hpp"
+    "matrix.hpp"
+    "mesh.hpp"
+    "misc.cpp"
+    "misc.hpp"
+    "mutablepriorityheap.hpp"
+    "sparsematrix.hpp"
+    "triangle.hpp"
+    "vector.hpp"
+    "verbose.cpp"
+    "verbose.hpp"
     "error.hpp"
     "version.cpp"
 )
@@ -88,6 +88,7 @@ target_include_directories(vmesh
 add_library(po STATIC
     "${PROJECT_SOURCE_DIR}/dependencies/program-options-lite/program_options_lite.cpp"
 )
+
 target_include_directories(po INTERFACE
     "${PROJECT_SOURCE_DIR}/dependencies/"
 )
@@ -98,13 +99,11 @@ target_sources(fitsubdiv PRIVATE
     "fitsubdiv.cpp"
 )
 
-
 add_executable(gengof)
 target_link_libraries(gengof vmesh po)
 target_sources(gengof PRIVATE
     "gengof.cpp"
 )
-
 
 add_executable(simplify)
 target_link_libraries(simplify vmesh po)
@@ -118,7 +117,6 @@ target_link_libraries(uvatlas po vmesh UVAtlas DirectX-Headers DirectXMath Direc
 target_sources(uvatlas PRIVATE
 	"uvatlas.cpp"
 )
-
 
 add_executable(vmc)
 target_link_libraries(vmc vmesh po)

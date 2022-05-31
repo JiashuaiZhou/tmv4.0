@@ -396,8 +396,8 @@ namespace df
 
     struct Section
     {
-      Section(const std::string& name)
-      : name(name)
+      Section(const std::string& name_)
+      : name(name_)
       {}
 
       std::string name;

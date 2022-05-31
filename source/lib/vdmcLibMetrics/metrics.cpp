@@ -35,53 +35,96 @@
 #include "mmCompare.h"
 #include "mmSample.h"
 #include "mmIO.h"
+#include "mmModel.h"
+#include "vmc.hpp"
+#include "image.hpp"
 
 using namespace std;
 using namespace vmeshmet;
 
-PCCMeshMetrics::PCCMeshMetrics() {}
-PCCMeshMetrics::~PCCMeshMetrics() = default;
-void PCCMeshMetrics::setParameters( const PCCMeshMetricsParameters& params ) { params_ = params; }
-
-void PCCMeshMetrics::compute( const PCCGroupOfFrames& sources,
-                              const PCCGroupOfFrames& reconstructs,
-                              const std::string&      srcName,
-                              const std::string&      recName ) {
-  if ( ( sources.getFrameCount() != reconstructs.getFrameCount() ) ) {
-    printf( "Error: group of frames must have same numbers of frames. ( src = %zu rec = %zu ) \n",
-            sources.getFrameCount(), reconstructs.getFrameCount() );
-    exit( -1 );
+void
+convert(const vmesh::TriangleMesh<double>& src, mm::Model& dst)
+{
+  mm::ModelBuilder builder(dst);
+  mm::Vertex v[3];
+  for (int32_t p = 0; p < 3; p++) {
+    v[p].hasColor = false;
+    v[p].hasUVCoord = true;
+    v[p].hasNormal = false;
   }
-  for ( size_t i = 0; i < sources.getFrameCount(); i++ ) {
-    if ( !sources[i].isMesh() || !reconstructs[i].isMesh() ) {
-      printf( "Error: group of frames is not mesh \n" );
-      exit( -1 );
+  for (int32_t t = 0; t < src.triangleCount(); t++) {
+    const auto& triCoord = src.triangle(t);
+    const auto& texCoord = src.texCoordTriangle(t);
+    for (int32_t p = 0; p < 3; p++) {
+      auto& pos = src.point(triCoord[p]);
+      auto& tex = src.texCoord(texCoord[p]);
+      v[p].pos = glm::vec3(pos[0], pos[1], pos[2]);
+      v[p].uv = glm::vec2(tex[0], tex[1]);
+    }
+    builder.pushTriangle(v[0], v[1], v[2]);
+  }
+}
+
+void
+convert(
+  const vmesh::Frame<uint8_t, vmesh::ColourSpace::BGR444p>& src,
+  mm::Image& dst)
+{
+  const int32_t width = src.width();
+  const int32_t height = src.height();
+  dst.reset(width, height);
+  for (int32_t v = 0; v < height; v++) {
+    for (int32_t u = 0; u < width; u++) {
+      dst.data[(v * width + u) * 3 + 0] = src.plane(0).get(u, v);
+      dst.data[(v * width + u) * 3 + 1] = src.plane(1).get(u, v);
+      dst.data[(v * width + u) * 3 + 2] = src.plane(2).get(u, v);
     }
   }
+}
 
-  for ( size_t i = 0; i < sources.getFrameCount(); i++ ) {
-    compute( sources[i].getModel(),                                        // Scr object
-             reconstructs[i].getModel(),                                   // Rec object
-             sources[i].getMap(),                                          // Scr map
-             reconstructs[i].getMap(),                                     // Rec map
-             srcName.empty() ? "" : stringFormat( srcName.c_str(), i ),    // Scr name
-             recName.empty() ? "" : stringFormat( recName.c_str(), i ) );  // Rec map
+void
+VMCMetric::compute(
+  const vmesh::VMCGroupOfFrames& gof, const VMCMetricParameters& params)
+{
+  for (int32_t i = 0; i < gof.frameCount(); i++) {
+    mm::Model srcModel, recModel;
+    mm::Image srcImage, recImage;
+
+    auto& frame = gof.frame(i);
+    convert( frame.input, srcModel );
+    convert( frame.rec, recModel );
+
+    convert( frame.inputTexture, srcImage );
+    convert( frame.outputTexture, recImage );
+
+    compute(
+      srcModel,                    // Scr object
+      recModel,                    // Rec object
+      srcImage,                    // Scr map
+      recImage,                    // Rec map
+      "src " + std::to_string(i),  // Scr name
+      "rec " + std::to_string(i),  // Rec name
+      params);                     // params
   }
   display();
 }
 
-void PCCMeshMetrics::compute( const mm::Model& srcModel,
-                              const mm::Model& recModel,
-                              const mm::Image& srcMap,
-                              const mm::Image& recMap, 
-                              const std::string& srcName, 
-                              const std::string& recName ) {
+void
+VMCMetric::compute(
+  const mm::Model& srcModel,
+  const mm::Model& recModel,
+  const mm::Image& srcMap,
+  const mm::Image& recMap,
+  const std::string& srcName,
+  const std::string& recName,
+  const VMCMetricParameters& params)
+{
   mm::Model reindex[2];
   mm::Model sampled[2];
 
   // Sample
-  glm::vec3 minPos( params_.minPosition_[0], params_.minPosition_[1], params_.minPosition_[2] );
-  glm::vec3 maxPos( params_.maxPosition_[0], params_.maxPosition_[1], params_.maxPosition_[2] );
+  glm::vec3 minPos( params.minPosition_[0], params.minPosition_[1], params.minPosition_[2] );
+  glm::vec3 maxPos( params.maxPosition_[0], params.maxPosition_[1], params.maxPosition_[2] );
   for ( size_t i = 0; i < 2; i++ ) {
     auto& model =  i == 0 ? srcModel : recModel;
     printf( "Input model: \n");
@@ -112,7 +155,7 @@ void PCCMeshMetrics::compute( const mm::Model& srcModel,
     const size_t maxIterations = 10;
     const bool   useFixedPoint = true;
     std::cout << "Sampling in GRID mode" << std::endl;
-    std::cout << "  Grid Size = " << params_.gridSize_ << std::endl;
+    std::cout << "  Grid Size = " << params.gridSize_ << std::endl;
     std::cout << "  Use Normal = " << useNormal << std::endl;
     std::cout << "  Bilinear = " << bilinear << std::endl;
     std::cout << "  hideProgress = " << hideProgress << std::endl;
@@ -124,7 +167,7 @@ void PCCMeshMetrics::compute( const mm::Model& srcModel,
     mm::Sample::meshToPcGrid( reindex[i],                // input
                               sampled[i],                // output
                               i == 0 ? srcMap : recMap,  // map
-                              params_.gridSize_,         // grid res
+                              params.gridSize_,         // grid res
                               bilinear,                  // bilinear
                               !hideProgress,             // lowprogress
                               useNormal,                 // use normal
@@ -157,7 +200,7 @@ void PCCMeshMetrics::compute( const mm::Model& srcModel,
   std::cout << "  dropDuplicates = " << pccParams.dropDuplicates << std::endl;
   std::cout << "  averageNormals = " << pccParams.bAverageNormals << std::endl;
 
-  printf("Triangle numbers = %9zu \n",sampled[0].getTriangleCount() ,sampled[1].getTriangleCount() );
+  printf("Triangle numbers = %9zu / %9zu \n",sampled[0].getTriangleCount() ,sampled[1].getTriangleCount() );
 
   if ( !srcName.empty() ) { mm::IO::_savePly( srcName, sampled[0] ); }
   if ( !recName.empty() ) { mm::IO::_savePly( recName, sampled[1] ); }
@@ -170,49 +213,51 @@ void PCCMeshMetrics::compute( const mm::Model& srcModel,
                 outPcc[0],    // outputA
                 outPcc[1] );  // outputB
 
-  // // PCQM
-  // mm::Model outPcqm[2];
-  // compare_.pcqm( sampled[0],                       // modelA
-  //                sampled[1],                       // modelB
-  //                srcMap,                           // mapA
-  //                recMap,                           // mapB
-  //                params_.pcqmRadiusCurvature_,     // radiusCurvature
-  //                params_.pcqmThresholdKnnSearch_,  // thresholdKnnSearch
-  //                params_.pcqmRadiusFactor_,         // radiusFactor
-  //                outPcqm[0],                       // outputA
-  //                outPcqm[1] );                     // outputB
+  // PCQM
+  mm::Model outPcqm[2];
+  compare_.pcqm( sampled[0],                       // modelA
+                 sampled[1],                       // modelB
+                 srcMap,                           // mapA
+                 recMap,                           // mapB
+                 params.pcqmRadiusCurvature_,     // radiusCurvature
+                 params.pcqmThresholdKnnSearch_,  // thresholdKnnSearch
+                 params.pcqmRadiusFactor_,         // radiusFactor
+                 outPcqm[0],                       // outputA
+                 outPcqm[1] );                     // outputB
 
-  // // IBSM
-  // mm::Model          outIbsm[2];
-  // const unsigned int ibsmResolution        = 2048;
-  // const unsigned int ibsmCameraCount       = 16;
-  // const glm::vec3    ibsmCamRotParams      = { 0.0F, 0.0F, 0.0F };
-  // const std::string  ibsmRenderer          = "gl12_ibsm";
-  // const std::string  ibsmOutputPrefix      = "";
-  // const bool         ibsmDisableReordering = false;
-  // const bool         ibsmDisableCulling    = false;
+  // IBSM
+  mm::Model          outIbsm[2];
+  const unsigned int ibsmResolution        = 2048;
+  const unsigned int ibsmCameraCount       = 16;
+  const glm::vec3    ibsmCamRotParams      = { 0.0F, 0.0F, 0.0F };
+  const std::string  ibsmRenderer          = "gl12_ibsm";
+  const std::string  ibsmOutputPrefix      = "";
+  const bool         ibsmDisableReordering = false;
+  const bool         ibsmDisableCulling    = false;
 
-  // compare_.ibsm( srcModel,               // modelA
-  //                recModel,               // modelB
-  //                srcMap,                 // mapA
-  //                recMap,                 // mapB
-  //                ibsmDisableReordering,  // disableReordering
-  //                ibsmResolution,         // resolution
-  //                ibsmCameraCount,        // cameraCount
-  //                ibsmCamRotParams,       // camRotParams
-  //                ibsmRenderer,           // renderer
-  //                ibsmOutputPrefix,       // outputPrefix
-  //                ibsmDisableCulling,     // disableCulling
-  //                outIbsm[0],             // outputA
-  //                outIbsm[1] );           // outputB
+  compare_.ibsm( srcModel,               // modelA
+                 recModel,               // modelB
+                 srcMap,                 // mapA
+                 recMap,                 // mapB
+                 ibsmDisableReordering,  // disableReordering
+                 ibsmResolution,         // resolution
+                 ibsmCameraCount,        // cameraCount
+                 ibsmCamRotParams,       // camRotParams
+                 ibsmRenderer,           // renderer
+                 ibsmOutputPrefix,       // outputPrefix
+                 ibsmDisableCulling,     // disableCulling
+                 outIbsm[0],             // outputA
+                 outIbsm[1] );           // outputB
 }
 
-void PCCMeshMetrics::display() {
-  printf( "Metrics results :\n" );
-  printf( "PCC:\n" );
+void
+VMCMetric::display()
+{
+  printf("Metrics results :\n");
+  printf("PCC:\n");
   compare_.pccFinalize();
-  printf( "PCQM:\n" );
+  printf("PCQM:\n");
   compare_.pcqmFinalize();
-  printf( "IBSM:\n" );
+  printf("IBSM:\n");
   compare_.ibsmFinalize();
 }

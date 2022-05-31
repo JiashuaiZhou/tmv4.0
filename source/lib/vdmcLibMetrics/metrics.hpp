@@ -38,7 +38,7 @@
 #include <cstdint>
 #include <string>
 
-#include "mesh.hpp"
+#include "vmc.hpp"
 #include "mmCompare.h"
 
 //============================================================================
@@ -68,12 +68,20 @@ public:
   VMCMetric& operator=(const VMCMetric& rhs) = delete;
   ~VMCMetric() = default;
 
-  int32_t compute(
-    vmesh::VMCGroupOfFrames& source,
-    vmesh::VMCGroupOfFrames& reconsctucted,
-    const VMCMetricParameters& params);
+  void compute(
+    const vmesh::VMCGroupOfFrames& gof, const VMCMetricParameters& params);
+
+  void display() ;
 
 private:
+  void compute(
+    const mm::Model& srcModel,
+    const mm::Model& recModel,
+    const mm::Image& srcMap,
+    const mm::Image& recMap,
+    const std::string& srcName,
+    const std::string& recName,
+    const VMCMetricParameters& params);
   mm::Compare compare_;
 };
 

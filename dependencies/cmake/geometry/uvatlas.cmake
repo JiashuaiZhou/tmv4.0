@@ -9,10 +9,8 @@ endif()
 
 if( NOT EXISTS ${DIR}/PATCHED )  
   file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/patches/uvatlas*")
-  foreach(filename ${files})
-    execute_process( COMMAND git am ${filename}
-                    WORKING_DIRECTORY ${DIR} 
-                    RESULT_VARIABLE   ret )
+  foreach(file ${files})
+    execute_process( COMMAND git am ${file} WORKING_DIRECTORY ${DIR} RESULT_VARIABLE ret )
     if( NOT ${ret} EQUAL "0")
       message( FATAL_ERROR "Error during the uvatlas patch process. ")
     endif()

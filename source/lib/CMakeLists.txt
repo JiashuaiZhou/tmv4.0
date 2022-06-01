@@ -1,5 +1,1 @@
-# add_all_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR} )
-add_subdirectory( vdmcLibCommon )
-add_subdirectory( vdmcLibEncoder )
-add_subdirectory( vdmcLibDecoder )
-##add_subdirectory( vdmcLibMetrics )
+add_all_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR} )

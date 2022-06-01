@@ -334,7 +334,6 @@ loadGroupOfFramesInfo(
         gofInfo.framesInfo.push_back(frameInfo);
       }
     }
-
     fin.close();
     return 0;
   }

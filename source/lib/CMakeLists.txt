@@ -2,4 +2,4 @@
 add_subdirectory( vdmcLibCommon )
 add_subdirectory( vdmcLibEncoder )
 add_subdirectory( vdmcLibDecoder )
-add_subdirectory( vdmcLibMetrics )
+##add_subdirectory( vdmcLibMetrics )

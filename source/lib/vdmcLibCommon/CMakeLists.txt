@@ -30,9 +30,16 @@ add_custom_command( OUTPUT ${VERSION_FILE} DEPENDS genversion )
 
 file(GLOB SRC *.h *.cpp ${CMAKE_SOURCE_DIR}/dependencies/schroedinger/schroarith.c )
 
-include_directories( ${CMAKE_SOURCE_DIR}/dependencies ./ )
+include_directories( ${CMAKE_SOURCE_DIR}/dependencies
+                     ${CMAKE_SOURCE_DIR}/dependencies/mmetric/source/lib/include
+                     ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/
+                     ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/glad/include
+                     ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/glfw/include
+                     ./ )
  
 add_library( ${MYNAME} ${SRC} ${VERSION_FILE} )
+
+TARGET_LINK_LIBRARIES( ${MYNAME} mmlib )
 
 set_target_properties( ${MYNAME} PROPERTIES LINKER_LANGUAGE CXX)
 

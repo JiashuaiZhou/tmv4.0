@@ -107,8 +107,8 @@ struct VMCFrame {
   vmesh::TriangleMesh<double> base;
   vmesh::TriangleMesh<double> subdiv;
   vmesh::TriangleMesh<double> input;
-  vmesh::Frame<uint8_t, vmesh::ColourSpace::BGR444p> inputTexture;
-  vmesh::Frame<uint8_t, vmesh::ColourSpace::BGR444p> outputTexture;
+  vmesh::Frame<uint8_t> inputTexture;  // ColourSpace::BGR444p
+  vmesh::Frame<uint8_t> outputTexture; // ColourSpace::BGR444p
   vmesh::Plane<uint8_t> outputTextureOccupancy;
 };
 
@@ -171,7 +171,7 @@ struct VMCGroupOfFrames {
 
 static int32_t
 reconstructDisplacementFromVideoFrame(
-  const Frame<uint16_t, ColourSpace::YUV444p>& dispVideoFrame,
+  const Frame<uint16_t>& dispVideoFrame,  // ColourSpace::YUV444p
   VMCFrame& frame,
   const int32_t geometryVideoBlockSize,
   const int32_t geometryVideoBitDepth)

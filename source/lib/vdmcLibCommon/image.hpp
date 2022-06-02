@@ -61,6 +61,7 @@ enum class ColourSpace
   RGB444p,
   BGR444p,
   GBR444p,
+  UNKNOW
 };
 
 //============================================================================
@@ -130,10 +131,10 @@ private:
 
 //============================================================================
 
-template<typename T, ColourSpace CS>
+template<typename T>
 class Frame {
 public:
-  Frame(int w = 0, int h = 0) { resize(w, h); }
+  Frame(int w = 0 , int h= 0 , ColourSpace colourSpace = ColourSpace::UNKNOW ) { resize(w, h, colourSpace); }
 
   Vec3<double> fetch(const double y, const double x) const
   {
@@ -176,11 +177,11 @@ public:
       _planes[0].get(y1, x1), _planes[1].get(y1, x1), _planes[2].get(y1, x1));
     return w00 * v00 + w10 * v10 + w01 * v01 + w11 * v11;
   }
-  void resize(int w, int h)
+  void resize(int w, int h, ColourSpace colourSpace)
   {
     _width = w;
     _height = h;
-    switch (CS) {
+    switch (colourSpace) {
     case ColourSpace::YUV400p:
       _planes.resize(1);
       _planes[0].resize(w, h);
@@ -227,7 +228,7 @@ public:
   int planeCount() const { return int(_planes.size()); }
   int width() const { return _width; }
   int height() const { return _height; }
-  ColourSpace colourSpace() const { return CS; }
+  ColourSpace colourSpace() const { return _colourSpace; }
 
   void load(std::istream& is)
   {
@@ -268,39 +269,42 @@ public:
 private:
   int _width;
   int _height;
+  ColourSpace _colourSpace;
   std::vector<Plane<T>> _planes;
 };
 
 //============================================================================
 
-template<typename T, ColourSpace CS>
+template<typename T>
 class FrameSequence {
 public:
-  FrameSequence(int w = 0, int h = 0)
+  FrameSequence(int w = 0 , int h =0 , ColourSpace colourSpace = ColourSpace::UNKNOW)
   {
     _width = w;
     _height = h;
+    _colourSpace = colourSpace;
   }
   FrameSequence(const FrameSequence&) = default;
   FrameSequence& operator=(const FrameSequence&) = default;
   ~FrameSequence() = default;
 
-  void resize(int w, int h, int f)
+  void resize(int w, int h, ColourSpace colourSpace, int f)
   {
     _width = w;
     _height = h;
+    _colourSpace = colourSpace;
     _frames.resize(f);
     for (auto& frame : _frames) {
-      frame.resize(w, h);
+      frame.resize(w, h, colourSpace);
     }
   }
 
-  Frame<T, CS>& frame(int frameIndex)
+  Frame<T>& frame(int frameIndex)
   {
     assert(frameIndex < frameCount());
     return _frames[frameIndex];
   }
-  const Frame<T, CS>& frame(int frameIndex) const
+  const Frame<T>& frame(int frameIndex) const
   {
     assert(frameIndex < frameCount());
     return _frames[frameIndex];
@@ -308,7 +312,7 @@ public:
   int frameCount() const { return int(_frames.size()); }
   int width() const { return _width; }
   int height() const { return _height; }
-  ColourSpace colourSpace() const { return CS; }
+  ColourSpace colourSpace() const { return _colourSpace; }
 
   void load(std::istream& is)
   {
@@ -345,17 +349,18 @@ public:
 private:
   int _width;
   int _height;
-  std::vector<Frame<T, CS>> _frames;
+  ColourSpace _colourSpace;
+  std::vector<Frame<T>> _frames;
 };
 
 //============================================================================
 
-template<typename T1, ColourSpace CS, typename T2>
+template<typename T1, typename T2>
 void
 DilatePadding(
-  const Frame<T1, CS>& input,
+  const Frame<T1>& input,
   const Plane<T2>& inputOccupancy,
-  Frame<T1, CS>& output,
+  Frame<T1>& output,
   Plane<T2>& outputOccupancy)
 {
   const auto width = input.width();
@@ -418,18 +423,19 @@ DilatePadding(
 
 //============================================================================
 
-template<typename T1, ColourSpace CS, typename T2>
+template<typename T1, typename T2>
 void
-PullPushPadding(Frame<T1, CS>& input, const Plane<T2>& occupancy)
+PullPushPadding(Frame<T1>& input, const Plane<T2>& occupancy)
 {
   const auto width = input.width();
   const auto height = input.height();
+  const auto colourSpace = input.colourSpace();
   const auto planeCount = input.planeCount();
 
   assert(occupancy.width() == width && occupancy.height() == height);
 
   struct LevelOfDetail {
-    Frame<float, CS> values;
+    Frame<float> values;
     Plane<float> weights;
   };
 
@@ -439,9 +445,9 @@ PullPushPadding(Frame<T1, CS>& input, const Plane<T2>& occupancy)
   std::shared_ptr<LevelOfDetail> levelOfDetail0(new LevelOfDetail());
   mipmaps.push_back(levelOfDetail0);
 
-  Frame<float, CS>* values0 = &(levelOfDetail0->values);
+  Frame<float>* values0 = &(levelOfDetail0->values);
   Plane<float>* weights0 = &(levelOfDetail0->weights);
-  values0->resize(width, height);
+  values0->resize(width, height, colourSpace);
   weights0->resize(width, height);
   for (int32_t p = 0; p < planeCount; ++p) {
     const auto& iplane = input.plane(p);
@@ -476,9 +482,9 @@ PullPushPadding(Frame<T1, CS>& input, const Plane<T2>& occupancy)
     const auto width1 = (width0 + 1) >> 1;
     const auto height1 = (height0 + 1) >> 1;
     std::shared_ptr<LevelOfDetail> levelOfDetail(new LevelOfDetail());
-    Frame<float, CS>* values1 = &(levelOfDetail->values);
+    Frame<float>* values1 = &(levelOfDetail->values);
     Plane<float>* weights1 = &(levelOfDetail->weights);
-    values1->resize(width1, height1);
+    values1->resize(width1, height1,colourSpace);
     weights1->resize(width1, height1);
     values1->fill(0.0f);
     for (int32_t i1 = 0; i1 < height1; ++i1) {
@@ -520,21 +526,21 @@ PullPushPadding(Frame<T1, CS>& input, const Plane<T2>& occupancy)
 
   for (int32_t indexLoD = levelOfDetailCount - 2; indexLoD >= 0; --indexLoD) {
     const auto levelOfDetailCurrent = mipmaps[indexLoD];
-    Frame<float, CS>* valuesCurrent = &(levelOfDetailCurrent->values);
+    Frame<float>* valuesCurrent = &(levelOfDetailCurrent->values);
     Plane<float>* weightsCurrent = &(levelOfDetailCurrent->weights);
     const auto widthCurrent = weightsCurrent->width();
     const auto heightCurrent = weightsCurrent->height();
 
     const auto levelOfDetailNext = mipmaps[indexLoD + 1];
-    Frame<float, CS>* valuesNext = &(levelOfDetailNext->values);
+    Frame<float>* valuesNext = &(levelOfDetailNext->values);
     Plane<float>* weightsNext = &(levelOfDetailNext->weights);
     const auto widthNext = weightsNext->width();
     const auto heightNext = weightsNext->height();
 
     std::shared_ptr<LevelOfDetail> tmpLevelOfDetail(new LevelOfDetail());
-    Frame<float, CS>* tvalues0 = &(tmpLevelOfDetail->values);
+    Frame<float>* tvalues0 = &(tmpLevelOfDetail->values);
     Plane<float>* tweights0 = &(tmpLevelOfDetail->weights);
-    tvalues0->resize(widthCurrent, heightCurrent);
+    tvalues0->resize(widthCurrent, heightCurrent, colourSpace);
     tweights0->resize(widthCurrent, heightCurrent);
 
     for (int32_t i0 = 0; i0 < heightCurrent; ++i0) {
@@ -596,10 +602,10 @@ PullPushPadding(Frame<T1, CS>& input, const Plane<T2>& occupancy)
   }
 }
 
-template<typename T1, ColourSpace CS, typename T2>
+template<typename T1, typename T2>
 void
 SparseLinearPadding(
-  Frame<T1, CS>& input,
+  Frame<T1>& input,
   const Plane<T2>& occupancy,
   const double maxError = 0.001,
   const int32_t maxIterationCount = -1)
@@ -728,11 +734,11 @@ enum class ImageFormat
 //============================================================================
 
 bool LoadImage(
-  const std::string& fileName, Frame<uint8_t, ColourSpace::BGR444p>& image);
+  const std::string& fileName, Frame<uint8_t>& image);
 
 bool SaveImage(
   const std::string& fileName,
-  const Frame<uint8_t, ColourSpace::BGR444p>& image,
+  const Frame<uint8_t>& image,
   const ImageFormat format = ImageFormat::PNG,
   const int32_t quality = 100);
 

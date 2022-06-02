@@ -53,7 +53,7 @@ namespace vmesh {
 
 bool
 LoadImage(
-  const std::string& fileName, Frame<uint8_t, ColourSpace::BGR444p>& image)
+  const std::string& fileName, Frame<uint8_t>& image)
 {
   int32_t width = 0;
   int32_t height = 0;
@@ -64,7 +64,7 @@ LoadImage(
     printf("Error loading file: %s \n", fileName.c_str());
     return false;
   }
-  image.resize(width, height);
+  image.resize(width, height, ColourSpace::BGR444p);
   auto& B = image.plane(0);
   auto& G = image.plane(1);
   auto& R = image.plane(2);
@@ -87,10 +87,14 @@ LoadImage(
 bool
 SaveImage(
   const std::string& fileName,
-  const Frame<uint8_t, ColourSpace::BGR444p>& image,
+  const Frame<uint8_t>& image,
   const ImageFormat format,
   const int32_t quality)
 {
+  if( image.colourSpace() != ColourSpace::BGR444p) {
+    printf("Save frame must be ColourSpace::BGR444p \n");
+    exit(-1);
+  }
   const auto width = int32_t(image.width());
   const auto height = int32_t(image.height());
   const auto channelCount = int32_t(image.planeCount());

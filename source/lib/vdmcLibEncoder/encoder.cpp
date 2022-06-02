@@ -52,7 +52,7 @@ namespace vmeshenc {
 static vmesh::Vec3<double>
 computeNearestPointColour(
   const vmesh::Vec3<double>& point0,
-  const vmesh::Frame<uint8_t, vmesh::ColourSpace::BGR444p>& targetTexture,
+  const vmesh::Frame<uint8_t>& targetTexture,   // vmesh::ColourSpace::BGR444p
   const vmesh::TriangleMesh<double>& targetMesh,
   const vmesh::KdTree& kdtree,
   const vmesh::StaticAdjacencyInformation<int32_t>& vertexToTriangleTarget,
@@ -667,7 +667,8 @@ VMCEncoder::transferTexture(
   }
   targetMesh.subdivideMidPoint(
     params.textureTransferSamplingSubdivisionIterationCount);
-  frame.outputTexture.resize(params.textureWidth, params.textureHeight);
+  frame.outputTexture.resize(
+    params.textureWidth, params.textureHeight, vmesh::ColourSpace::BGR444p);
   frame.outputTextureOccupancy.resize(
     params.textureWidth, params.textureHeight);
   if (params.invertOrientation) {
@@ -685,8 +686,8 @@ int32_t
 VMCEncoder::transferTexture(
   const vmesh::TriangleMesh<double>& targetMesh,
   const vmesh::TriangleMesh<double>& sourceMesh,
-  const vmesh::Frame<uint8_t, vmesh::ColourSpace::BGR444p>& targetTexture,
-vmesh::  Frame<uint8_t, vmesh::ColourSpace::BGR444p>& outputTexture,
+  const vmesh::Frame<uint8_t>& targetTexture,  // , vmesh::ColourSpace::BGR444p
+  vmesh::Frame<uint8_t>& outputTexture,        // , vmesh::ColourSpace::BGR444p
   vmesh::Plane<uint8_t>& occupancy,
   const VMCEncoderParameters& params)
 {
@@ -837,7 +838,7 @@ vmesh::  Frame<uint8_t, vmesh::ColourSpace::BGR444p>& outputTexture,
     }
   }
   if (params.textureTransferPaddingDilateIterationCount) {
-    vmesh::Frame<uint8_t, vmesh::ColourSpace::BGR444p> tmpTexture;
+    vmesh::Frame<uint8_t> tmpTexture ; // vmesh::ColourSpace::BGR444p
     vmesh::Plane<uint8_t> tmpOccupancy;
     for (int32_t it = 0;
          it < params.textureTransferPaddingDilateIterationCount; ++it) {
@@ -873,7 +874,7 @@ VMCEncoder::compress(
   const auto widthDispVideo =
     params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
   auto heightDispVideo = 0;
-  _dispVideo.resize(widthDispVideo, heightDispVideo, frameCount);
+  _dispVideo.resize(widthDispVideo, heightDispVideo, vmesh::ColourSpace::YUV444p, frameCount);
   auto& stats = gof.stats;
   stats.reset();
   stats.totalByteCount = bitstream.size();
@@ -898,7 +899,7 @@ VMCEncoder::compress(
       heightDispVideo = std::max(
         heightDispVideo,
         geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
-      dispVideoFrame.resize(widthDispVideo, heightDispVideo);
+      dispVideoFrame.resize(widthDispVideo, heightDispVideo, vmesh::ColourSpace::YUV444p);
       computeDisplacements(frame, params);
       computeForwardLinearLifting(
         frame.disp, frame.subdivInfoLevelOfDetails, frame.subdivEdges,
@@ -910,9 +911,9 @@ VMCEncoder::compress(
   }
   if (params.encodeDisplacementsVideo) {
     // resize all the frame to the same resolution
-    _dispVideo.resize(widthDispVideo, heightDispVideo, frameCount);
+    _dispVideo.resize(widthDispVideo, heightDispVideo, vmesh::ColourSpace::YUV444p, frameCount);
   } else {
-    _dispVideo.resize(0, 0, 0);
+    _dispVideo.resize(0, 0, vmesh::ColourSpace::YUV444p, 0);
   }
 
   if (encodeSequenceHeader(gof, bitstream, params)) {
@@ -980,7 +981,7 @@ VMCEncoder::compress(
 int32_t
 VMCEncoder::computeDisplacementVideoFrame(
   const vmesh::VMCFrame& frame,
-  vmesh::Frame<uint16_t, vmesh::ColourSpace::YUV444p>& dispVideoFrame,
+  vmesh::Frame<uint16_t>& dispVideoFrame, // , vmesh::ColourSpace::YUV444p
   const VMCEncoderParameters& params) const
 {
   const auto pixelsPerBlock =

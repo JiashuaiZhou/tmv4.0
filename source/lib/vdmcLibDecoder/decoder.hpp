@@ -109,7 +109,7 @@ private:
   size_t _byteCounter = 0;
   vmesh::VMCGroupOfFramesInfo _gofInfo;
   vmesh::VMCSequenceParameterSet _sps;
-  vmesh::FrameSequence<uint16_t, vmesh::ColourSpace::YUV444p> _dispVideo;
+  vmesh::FrameSequence<uint16_t> _dispVideo;  // vmesh::ColourSpace::YUV444p
 };
 
 //============================================================================

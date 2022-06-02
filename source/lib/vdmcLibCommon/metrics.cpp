@@ -68,7 +68,7 @@ convert(const vmesh::TriangleMesh<double>& src, mm::Model& dst)
 
 void
 convert(
-  const vmesh::Frame<uint8_t, vmesh::ColourSpace::BGR444p>& src,
+  const vmesh::Frame<uint8_t>& src, // vmesh::ColourSpace::BGR444p
   mm::Image& dst)
 {
   const int32_t width = src.width();

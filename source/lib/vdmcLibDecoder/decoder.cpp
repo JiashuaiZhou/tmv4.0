@@ -323,7 +323,7 @@ VMCDecoder::decompressTextureVideo(
   }
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     auto& outTexture = gof.frame(frameIndex).outputTexture;
-    outTexture.resize(width, height);
+    outTexture.resize(width, height, ColourSpace::BGR444p);
     outTexture.load(fileTextureVideoDec);
   }
   fileTextureVideoDec.close();
@@ -357,7 +357,7 @@ VMCDecoder::decompress(
     return -1;
   }
   _dispVideo.resize(
-    _sps.widthDispVideo, _sps.heightDispVideo, _sps.frameCount);
+    _sps.widthDispVideo, _sps.heightDispVideo, vmesh::ColourSpace::YUV444p, _sps.frameCount);
   _gofInfo.frameCount = _sps.frameCount;
   _gofInfo.framesInfo.resize(_sps.frameCount);
   gof.resize(_sps.frameCount);

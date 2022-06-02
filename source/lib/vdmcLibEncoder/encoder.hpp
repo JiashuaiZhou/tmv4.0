@@ -164,7 +164,7 @@ private:
     const VMCEncoderParameters& params) const;
   int32_t computeDisplacementVideoFrame(
     const vmesh::VMCFrame& frame,
-    vmesh::Frame<uint16_t, vmesh::ColourSpace::YUV444p>& dispVideoFrame,
+    vmesh::Frame<uint16_t>& dispVideoFrame,  // vmesh::ColourSpace::YUV444p
     const VMCEncoderParameters& params) const;
   int32_t compressDisplacementsVideo(
     vmesh::Bitstream& bitstream, const VMCEncoderParameters& params);
@@ -179,14 +179,14 @@ private:
   static int32_t transferTexture(
     const vmesh::TriangleMesh<double>& targetMesh,
     const vmesh::TriangleMesh<double>& sourceMesh,
-    const vmesh::Frame<uint8_t, vmesh::ColourSpace::BGR444p>& targetTexture,
-    vmesh::Frame<uint8_t, vmesh::ColourSpace::BGR444p>& outputTexture,
+    const vmesh::Frame<uint8_t>& targetTexture,  // vmesh::ColourSpace::BGR444p
+    vmesh::Frame<uint8_t>& outputTexture,  // vmesh::ColourSpace::BGR444p
     vmesh::Plane<uint8_t>& occupancy,
     const VMCEncoderParameters& params);
 
 private:
   vmesh::VMCGroupOfFramesInfo _gofInfo;
-  vmesh::FrameSequence<uint16_t, vmesh::ColourSpace::YUV444p> _dispVideo;
+  vmesh::FrameSequence<uint16_t> _dispVideo; // vmesh::ColourSpace::YUV444p
 };
 
 //============================================================================

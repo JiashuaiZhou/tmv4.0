@@ -1,18 +1,10 @@
-cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
 
-  
-SET( HDRTOOLS_DIR             ${CMAKE_SOURCE_DIR}/dependencies/HDRTools )
-MESSAGE("Clone and build HDRTools libraries: ${HDRTOOLS_DIR}") 
-
-IF( NOT EXISTS "${HDRTOOLS_DIR}/CMakeLists.txt" )   
-  EXECUTE_PROCESS( COMMAND git clone --depth 1 http://gitlab.com/standards/HDRTools.git ${HDRTOOLS_DIR} )  
-ENDIF()
-
-MESSAGE("HDRTOOLS_DIR       : ${HDRTOOLS_DIR}") 
-IF ( NOT EXISTS "${HDRTOOLS_DIR}/common/CMakeLists.txt" )
-  message( "\n\n Error: commande: \n \t  git clone http://gitlab.com/standards/HDRTools.git ${HDRTOOLS_DIR} not work")
-  message( FATAL_ERROR "${HDRTOOLS_DIR}/common/CMakeLists.txt not exist")
-
-ELSE()
-  ADD_SUBDIRECTORY( ${HDRTOOLS_DIR}/common ) 
-ENDIF()
+set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/hdrtools )
+if( NOT EXISTS ${DIR} )
+  CPMAddPackage( NAME             mmetric
+                GIT_REPOSITORY    http://gitlab.com/standards/HDRTools.git
+                GIT_TAG           v0.23
+                SOURCE_DIR        ${DIR}
+                DOWNLOAD_ONLY     YES )
+endif()
+add_subdirectory(${DIR}/common)

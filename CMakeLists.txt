@@ -4,28 +4,18 @@ project(vmesh)
 
 set(CMAKE_CXX_STANDARD 14)
 
-# fix policies in dependent projects by injecting code
-# notably, set CMP0077 so that setting variables is honoured by subprojects
-SET(CMAKE_PROJECT_INCLUDE_BEFORE ${CMAKE_SOURCE_DIR}/scripts/fix-policy.cmake)
+# Option 
+# Video encoder and decoder library and application:
+OPTION( USE_JMAPP_VIDEO_CODEC     "Use JM application to encode and decode video"           FALSE )  # JMAPP  = 0
+OPTION( USE_HMAPP_VIDEO_CODEC     "Use HM application to encode and decode video"           TRUE  )  # HMAPP  = 1
+OPTION( USE_SHMAPP_VIDEO_CODEC    "Use SHM application to encode and decode video"          FALSE )  # SHMAPP = 2    
+OPTION( USE_JMLIB_VIDEO_CODEC     "Clone, build and use JM video encoder and decoder"       FALSE )  # JMLIB  = 3
+OPTION( USE_HMLIB_VIDEO_CODEC     "Clone, build and use HM video encoder and decoder"       TRUE  )  # HMLIB  = 4
+OPTION( USE_VTMLIB_VIDEO_CODEC    "Clone, build and use VTM video encoder and decoder"      TRUE )   # VTMLIB = 5
+OPTION( USE_FFMPEG_VIDEO_CODEC    "Clone, build and use FFMPEG video encoder and decoder"   FALSE )  # FFMPEG = 6                                                                                                 #UNKNOWN_CODEC = 7
 
-# Some dependencies include find_library commands, which wont work in the
-# in-tree build (because they've not been built yet).  Whereas actually
-# there is no need to find anything.  The following fake package definitions
-# will satisfy find_library without modifying the submodule
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/scripts/fakepkg)
-
-# Code in directx dependencies may use SAL annotations.
-# On non-win32 platforms, these are not defined.  Instead provide a SAL2 stub
-if (NOT WIN32)
-    include_directories(dependencies/sal)
-endif()
-
-# directx-mesh unconditionally includes install targets that need dxheaders'
-set(DXHEADERS_INSTALL TRUE)
-
-# directx-mesh unconditionally sets BUILD_TOOLS to TRUE, which then affects
-# other dependencies that use the same variable.  The tools aren't required.
-set (BUILD_TOOLS FALSE)
+# Color conversion library:
+OPTION( USE_HDRTOOLS              "Clone, build and use HDRTools for color conversions"     FALSE )
 
 SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
 SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
@@ -37,6 +27,10 @@ include( dependencies/cmake/geometry/draco.cmake )
 include( dependencies/cmake/geometry/directx.cmake )
 include( dependencies/cmake/geometry/uvatlas.cmake )
 include( dependencies/cmake/geometry/mmetric.cmake )
+if ( USE_HDRTOOLS )
+    include( dependencies/cmake/video/hdrtools.cmake )
+endif()
+
 
 add_subdirectory(source)
 

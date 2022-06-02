@@ -22,7 +22,7 @@ add_custom_target(
                            -D VERSION_EXTRA=${VERSION_EXTRA}
                            -D VERSION_CACHE_FILE=${VERSION_CACHE_FILE}
                            -D GIT_EXECUTABLE=${GIT_EXECUTABLE}
-                           -P ${CMAKE_SOURCE_DIR}/scripts/genversion.cmake
+                           -P ${CMAKE_SOURCE_DIR}/dependencies/cmake/genversion.cmake
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 

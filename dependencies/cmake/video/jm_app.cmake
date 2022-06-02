@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.17)
 
 SET( JM_VERSION         jm19.0_app )
 SET( JM_DIR             ${CMAKE_SOURCE_DIR}/dependencies/${JM_VERSION}/ )

@@ -1,13 +1,10 @@
 enable_language(C)
 
 if (MSVC)
-    add_compile_options(/W4)
+  add_compile_options(/W4)
 else ()
-    add_compile_options(
-        -Wshadow -Wall -Wextra -pedantic
-        -Wno-conversion -Wno-sign-conversion -Wno-long-long
-        -Wno-unused-function
-    )
+  add_compile_options( -Wshadow -Wall -Wextra -pedantic -Wno-conversion 
+                        -Wno-sign-conversion -Wno-long-long -Wno-unused-function )
 endif()
 
 if (UNIX)

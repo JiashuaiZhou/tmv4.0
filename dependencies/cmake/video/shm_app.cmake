@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.17)
 
 SET( SHM_VERSION         SHM-12.4 )
 SET( SHM_DIR             ${CMAKE_SOURCE_DIR}/dependencies/${SHM_VERSION}/ )

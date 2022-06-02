@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.17)
 SET( VTM_VERSION         VTM-13.0 )
 SET( VTM_DIR             ${CMAKE_SOURCE_DIR}/dependencies/VTM )
 set( VTM_LIB_SOURCE_DIR  ${VTM_DIR}/source/Lib )

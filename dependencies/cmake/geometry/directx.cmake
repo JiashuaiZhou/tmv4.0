@@ -1,3 +1,27 @@
+
+# fix policies in dependent projects by injecting code
+# notably, set CMP0077 so that setting variables is honoured by subprojects
+SET(CMAKE_PROJECT_INCLUDE_BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/scripts/fix-policy.cmake)
+
+# Some dependencies include find_library commands, which wont work in the
+# in-tree build (because they've not been built yet).  Whereas actually
+# there is no need to find anything.  The following fake package definitions
+# will satisfy find_library without modifying the submodule
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/fakepkg)
+
+# Code in directx dependencies may use SAL annotations.
+# On non-win32 platforms, these are not defined.  Instead provide a SAL2 stub
+if (NOT WIN32)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/sal)
+endif()
+
+# directx-mesh unconditionally includes install targets that need dxheaders'
+set(DXHEADERS_INSTALL TRUE)
+
+# directx-mesh unconditionally sets BUILD_TOOLS to TRUE, which then affects
+# other dependencies that use the same variable.  The tools aren't required.
+set (BUILD_TOOLS FALSE)
+
 # directx-headers
 set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/directx-headers )
 if( NOT EXISTS ${DIR} )

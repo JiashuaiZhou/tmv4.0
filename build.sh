@@ -37,13 +37,9 @@ done
 
 CMAKE_FLAGS+=( "-DCMAKE_BUILD_TYPE=$MODE" ) 
 CMAKE_FLAGS+=( "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON" )
+#echo ""
 
-# DEPDIR="${CURDIR}/build/dependencies"
-# CMAKE_FLAGS+=( "-DCMAKE_PREFIX_PATH=${DEPDIR}/directx-mesh;${DEPDIR}/DirectXTex;${DEPDIR}/directx-headers" )
-
-echo "CMAKE_FLAGS = " "${CMAKE_FLAGS[@]}"
-
-echo -e "\033[0;32mCmake: ${CURDIR} \033[0m";
+echo -e "\033[0;32mCmake: ${CURDIR}: CMAKE_FLAGS = ${CMAKE_FLAGS[@]}\033[0m";
 ${CMAKE} -H${CURDIR} -B"${CURDIR}/build/${MODE}" "${CMAKE_FLAGS[@]}"
 echo -e "\033[0;32mdone \033[0m";
 

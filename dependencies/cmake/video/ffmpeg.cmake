@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.17)
 
 SET( FFMPEG_DIR             ${CMAKE_SOURCE_DIR}/dependencies/ffmpeg )
 MESSAGE("FFMPEG_DIR       = ${FFMPEG_DIR}" )

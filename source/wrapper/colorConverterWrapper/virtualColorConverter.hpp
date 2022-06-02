@@ -30,23 +30,26 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
+
 #include "image.hpp"
 namespace vmesh {
 
-template <typename T, ColourSpace SRC, ColourSpace DST>
+template <class T>
 class VirtualColorConverter {
  public:
   VirtualColorConverter() {}
   ~VirtualColorConverter() {}
 
-  virtual void convert( std::string        configFile,
-                        FrameSequence<T, SRC>&    videoSrc,
-                        FrameSequence<T, DST>&    videoDst,
-                        const std::string& externalPath = "",
-                        const std::string& fileName     = "" ) = 0;
+  virtual void convert(
+    std::string configFile,
+    FrameSequence<T>& videoSrc,
+    FrameSequence<T>& videoDst,
+    const std::string& externalPath = "",
+    const std::string& fileName = "") = 0;
 
- private:
+private:
 };
 
-};  // namespace pcc
+}  // namespace vmesh
 

@@ -55,20 +55,20 @@
 #include "ToneMapping.H"
 #include "ProjectParameters.H"
 
-#include "video.hpp"
+#include "image.hpp"
 
-namespace pcc {
+namespace vmesh {
 
 template <class T>
 class hdrToolsLibColorConverterImpl {
  public:
   hdrToolsLibColorConverterImpl();
   ~hdrToolsLibColorConverterImpl();
-  void convert( std::string configFile, PCCVideo<T, 3>& videoSrc, PCCVideo<T, 3>& videoDst );
+  void convert( std::string configFile, FrameSequence<T>& videoSrc, FrameSequence<T>& videoDst );
 
  private:
   void init( ProjectParameters* inputParams );
-  void process( ProjectParameters* inputParams, PCCVideo<T, 3>& videoSrc, PCCVideo<T, 3>& videoDst );
+  void process( ProjectParameters* inputParams, FrameSequence<T>& videoSrc, FrameSequence<T>& videoDst );
   void destroy();
 
   int                 m_nFrameStores;
@@ -128,7 +128,7 @@ class hdrToolsLibColorConverterImpl {
   hdrtoolslib::Output*           m_outputFrame;  // output frames
 };
 
-};  // namespace pcc
+}  // namespace vmesh
 
 #endif  //~USE_HDRTOOLS
 

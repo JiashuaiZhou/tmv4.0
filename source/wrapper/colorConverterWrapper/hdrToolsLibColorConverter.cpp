@@ -37,7 +37,7 @@
 #include "hdrToolsLibColorConverter.hpp"
 #include "hdrToolsLibColorConverterImpl.hpp"
 
-using namespace pcc;
+using namespace vmesh;
 
 template <typename T>
 hdrToolsLibColorConverter<T>::hdrToolsLibColorConverter() {}
@@ -46,15 +46,15 @@ hdrToolsLibColorConverter<T>::~hdrToolsLibColorConverter() {}
 
 template <typename T>
 void hdrToolsLibColorConverter<T>::convert( std::string        configFile,
-                                               PCCVideo<T, 3>&    videoSrc,
-                                               PCCVideo<T, 3>&    videoDst,
+                                               FrameSequence<T>&    videoSrc,
+                                               FrameSequence<T>&    videoDst,
                                                const std::string& externalPath,
                                                const std::string& fileName ) {
   hdrToolsLibColorConverterImpl<T> converter;
   converter.convert( configFile, videoSrc, videoDst );
 }
 
-template class pcc::hdrToolsLibColorConverter<uint8_t>;
-template class pcc::hdrToolsLibColorConverter<uint16_t>;
+template class vmesh::hdrToolsLibColorConverter<uint8_t>;
+template class vmesh::hdrToolsLibColorConverter<uint16_t>;
 
 #endif  //~USE_HDRTOOLS

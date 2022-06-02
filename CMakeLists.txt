@@ -4,7 +4,7 @@ project(vmesh)
 
 set(CMAKE_CXX_STANDARD 14)
 
-# Option 
+# Options:
 # Video encoder and decoder library and application:
 OPTION( USE_JMAPP_VIDEO_CODEC     "Use JM application to encode and decode video"           FALSE )  # JMAPP  = 0
 OPTION( USE_HMAPP_VIDEO_CODEC     "Use HM application to encode and decode video"           TRUE  )  # HMAPP  = 1
@@ -15,12 +15,9 @@ OPTION( USE_VTMLIB_VIDEO_CODEC    "Clone, build and use VTM video encoder and de
 OPTION( USE_FFMPEG_VIDEO_CODEC    "Clone, build and use FFMPEG video encoder and decoder"   FALSE )  # FFMPEG = 6                                                                                                 #UNKNOWN_CODEC = 7
 
 # Color conversion library:
-OPTION( USE_HDRTOOLS              "Clone, build and use HDRTools for color conversions"     FALSE )
+OPTION( USE_HDRTOOLS              "Clone, build and use HDRTools for color conversions"     TRUE )
 
-SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
-SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
-SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin )
-
+# Dependencies
 include( dependencies/cmake/CPM.cmake )
 include( dependencies/cmake/tools.cmake )
 include( dependencies/cmake/geometry/draco.cmake )
@@ -31,6 +28,6 @@ if ( USE_HDRTOOLS )
     include( dependencies/cmake/video/hdrtools.cmake )
 endif()
 
-
+# Build
 add_subdirectory(source)
 

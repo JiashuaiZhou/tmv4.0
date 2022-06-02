@@ -37,29 +37,29 @@
 
 class ProjectParameters;
 
-namespace pcc {
+namespace vmesh {
 
 template <class T>
-class hdrToolsLibColorConverter : public PCCVirtualColorConverter<T> {
+class hdrToolsLibColorConverter : public VirtualColorConverter<T> {
  public:
   hdrToolsLibColorConverter();
   ~hdrToolsLibColorConverter();
   void convert( std::string        configuration,
-                PCCVideo<T, 3>&    videoSrc,
+                FrameSequence<T>&    videoSrc,
                 const std::string& externalPath = "",
                 const std::string& fileName     = "" ) {
-    PCCVideo<T, 3> videoDst;
+    FrameSequence<T> videoDst;
     convert( configuration, videoSrc, videoDst, externalPath, fileName );
     videoSrc = videoDst;
   }
 
   void convert( std::string        configuration,
-                PCCVideo<T, 3>&    videoSrc,
-                PCCVideo<T, 3>&    videoDst,
+                FrameSequence<T>&    videoSrc,
+                FrameSequence<T>&    videoDst,
                 const std::string& externalPath = "",
                 const std::string& fileName     = "" );
 };
 
-};  // namespace pcc
+}  // namespace vmesh
 
 #endif  //~USE_HDRTOOLS

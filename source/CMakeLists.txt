@@ -3,7 +3,7 @@ enable_language(C)
 if (MSVC)
   add_compile_options(/W4)
 else ()
-  add_compile_options( -Wshadow -Wall -Wextra -pedantic -Wno-conversion 
+  add_compile_options( -Wshadow -Wall -Wextra -pedantic -Wno-conversion  -Wno-unused-parameter
                         -Wno-sign-conversion -Wno-long-long -Wno-unused-function )
 endif()
 

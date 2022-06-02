@@ -34,7 +34,7 @@
 
 #include "hdrToolsLibColorConverterImpl.hpp"
 
-using namespace pcc;
+using namespace vmesh;
 
 template <typename T>
 hdrToolsLibColorConverterImpl<T>::hdrToolsLibColorConverterImpl() {
@@ -77,8 +77,8 @@ hdrToolsLibColorConverterImpl<T>::~hdrToolsLibColorConverterImpl() {
 
 template <typename T>
 void hdrToolsLibColorConverterImpl<T>::convert( std::string     configFile,
-                                                   PCCVideo<T, 3>& videoSrc,
-                                                   PCCVideo<T, 3>& videoDst ) {
+                                                   FrameSequence<T>& videoSrc,
+                                                   FrameSequence<T>& videoDst ) {
   using hdrtoolslib::params;
   using hdrtoolslib::ZERO;
   params                         = &ccParams;
@@ -88,9 +88,9 @@ void hdrToolsLibColorConverterImpl<T>::convert( std::string     configFile,
     printf( "Could not open configuration file: %s.\n", configFile.c_str() );
     exit( -1 );
   }
-  inputParams->m_source.m_width[0]  = videoSrc.getWidth();
-  inputParams->m_source.m_height[0] = videoSrc.getHeight();
-  inputParams->m_numberOfFrames     = videoSrc.getFrameCount();
+  inputParams->m_source.m_width[0]  = videoSrc.width();
+  inputParams->m_source.m_height[0] = videoSrc.height();
+  inputParams->m_numberOfFrames     = videoSrc.frameCount();
   inputParams->update();
   init( inputParams );
   process( inputParams, videoSrc, videoDst );
@@ -535,8 +535,8 @@ void hdrToolsLibColorConverterImpl<T>::init( ProjectParameters* inputParams ) {
 
 template <typename T>
 void hdrToolsLibColorConverterImpl<T>::process( ProjectParameters* inputParams,
-                                                   PCCVideo<T, 3>&    videoSrc,
-                                                   PCCVideo<T, 3>&    videoDst ) {
+                                                   FrameSequence<T>&    videoSrc,
+                                                   FrameSequence<T>&    videoDst ) {
   int                       frameNumber;
   int                       iCurrentFrameToProcess = 0;
   float                     fDistance0   = inputParams->m_source.m_frameRate / inputParams->m_output.m_frameRate;
@@ -553,16 +553,19 @@ void hdrToolsLibColorConverterImpl<T>::process( ProjectParameters* inputParams,
       printf( "float input not supported \n" );
       exit( -1 );
     } else {
-      if ( m_iFrameStore->m_bitDepth == 8 ) {
-        for ( int8_t c = 0; c < 3; c++ ) {
-          auto& image = videoSrc.getFrame( frameNumber );
-          auto& src   = image.getChannel( c );
-          for ( size_t i = 0; i < m_iFrameStore->m_compSize[c]; i++ ) { m_iFrameStore->m_comp[c][i] = src[i]; }
+      if (m_iFrameStore->m_bitDepth == 8) {
+        for (int8_t c = 0; c < 3; c++) {
+          auto* src = videoSrc.frame(frameNumber).plane(c).data();
+          for (int i = 0; i < m_iFrameStore->m_compSize[c]; i++) {
+            m_iFrameStore->m_comp[c][i] = src[i];
+          }
         }
       } else {
-        for ( int8_t c = 0; c < 3; c++ ) {
-          auto& src = videoSrc.getFrame( frameNumber ).getChannel( c );
-          for ( size_t i = 0; i < m_iFrameStore->m_compSize[c]; i++ ) { m_iFrameStore->m_ui16Comp[c][i] = src[i]; }
+        for (int8_t c = 0; c < 3; c++) {
+          auto* src = videoSrc.frame(frameNumber).plane(c).data();
+          for (int i = 0; i < m_iFrameStore->m_compSize[c]; i++) {
+            m_iFrameStore->m_ui16Comp[c][i] = src[i];
+          }
         }
       }
     }
@@ -665,22 +668,26 @@ void hdrToolsLibColorConverterImpl<T>::process( ProjectParameters* inputParams,
       printf( "float input not supported \n" );
       exit( -1 );
     } else {
-      videoDst.resize( videoDst.getFrameCount() + 1 );
-      auto&          image = videoDst.getFrames().back();
-      PCCCOLORFORMAT format =
-          m_oFrameStore->m_chromaFormat == hdrtoolslib::CF_420
-              ? PCCCOLORFORMAT::YUV420
-              : m_oFrameStore->m_colorSpace == hdrtoolslib::CM_RGB ? PCCCOLORFORMAT::RGB444 : PCCCOLORFORMAT::YUV444;
+      ColourSpace format = m_oFrameStore->m_chromaFormat == hdrtoolslib::CF_420
+        ? ColourSpace::YUV420p
+        : m_oFrameStore->m_colorSpace == hdrtoolslib::CM_RGB
+        ? ColourSpace::RGB444p
+        : ColourSpace::YUV444p;
+      videoDst.resize(
+        m_oFrameStore->m_width[hdrtoolslib::Y_COMP],
+        m_oFrameStore->m_height[hdrtoolslib::Y_COMP], format,
+        videoDst.frameCount() + 1);
+      auto& image = videoDst.frame( videoDst.frameCount() - 1 );
       image.resize( m_oFrameStore->m_width[hdrtoolslib::Y_COMP], m_oFrameStore->m_height[hdrtoolslib::Y_COMP], format );
       if ( m_oFrameStore->m_bitDepth == 8 ) {
         for ( int8_t c = 0; c < 3; c++ ) {
-          auto& dst = videoDst.getFrame( frameNumber ).getChannel( c );
-          for ( size_t i = 0; i < dst.size(); i++ ) { dst[i] = m_oFrameStore->m_comp[c][i]; }
+          auto* dst = image.plane( c ).data();
+          for ( size_t i = 0; i < image.plane( c ).size(); i++ ) { dst[i] = m_oFrameStore->m_comp[c][i]; }
         }
       } else if ( m_oFrameStore->m_bitDepth > 8 ) {
         for ( int8_t c = 0; c < 3; c++ ) {
-          auto& dst = videoDst.getFrame( frameNumber ).getChannel( c );
-          for ( size_t i = 0; i < dst.size(); i++ ) { dst[i] = m_oFrameStore->m_ui16Comp[c][i]; }
+          auto* dst = image.plane( c ).data();
+          for ( size_t i = 0; i < image.plane( c ).size(); i++ ) { dst[i] = m_oFrameStore->m_ui16Comp[c][i]; }
         }
       } else {
         printf( "output format not yet supported ( frame depht = %d \n", m_oFrameStore->m_bitDepth );
@@ -809,7 +816,7 @@ void hdrToolsLibColorConverterImpl<T>::destroy() {
   }
 }
 
-template class pcc::hdrToolsLibColorConverterImpl<uint8_t>;
-template class pcc::hdrToolsLibColorConverterImpl<uint16_t>;
+template class vmesh::hdrToolsLibColorConverterImpl<uint8_t>;
+template class vmesh::hdrToolsLibColorConverterImpl<uint16_t>;
 
 #endif  //~USE_HDRTOOLS

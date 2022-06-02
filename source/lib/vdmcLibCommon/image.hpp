@@ -76,6 +76,7 @@ struct Plane {
     _height = h;
     _buffer.resize(w * h);
   }
+  int size() const {return (int)_buffer.size(); }
   T get(int i, int j) const
   {
     assert(i >= 0 && i < _height);
@@ -122,7 +123,7 @@ struct Plane {
   const T* data() const { return _buffer.data(); }
   int width() const { return _width; }
   int height() const { return _height; }
-
+  void clear() { _buffer.clear(); }
 private:
   int _width;
   int _height;
@@ -218,11 +219,16 @@ public:
       p.fill(v);
     }
   }
+  void clear()
+  {
+    for ( auto& plane : _planes ) { plane.clear(); }
+  }
 
   Frame(const Frame&) = default;
   Frame& operator=(const Frame&) = default;
   ~Frame() = default;
 
+  Plane<T>& operator[]( int planeIndex ) { return _planes[planeIndex]; }
   Plane<T>& plane(int planeIndex) { return _planes[planeIndex]; }
   const Plane<T>& plane(int planeIndex) const { return _planes[planeIndex]; }
   int planeCount() const { return int(_planes.size()); }
@@ -287,6 +293,10 @@ public:
   FrameSequence(const FrameSequence&) = default;
   FrameSequence& operator=(const FrameSequence&) = default;
   ~FrameSequence() = default;
+  
+  Frame<T>& operator[]( int frameIndex ) { return _frames[frameIndex]; }
+  typename std::vector<Frame<T> >::iterator begin() { return _frames.begin(); }
+  typename std::vector<Frame<T> >::iterator end() { return _frames.end(); }
 
   void resize(int w, int h, ColourSpace colourSpace, int f)
   {
@@ -297,6 +307,13 @@ public:
     for (auto& frame : _frames) {
       frame.resize(w, h, colourSpace);
     }
+  }
+  void clear()
+  {
+    for (auto& frame : _frames) {
+      frame.clear();
+    }
+    _frames.clear();
   }
 
   Frame<T>& frame(int frameIndex)

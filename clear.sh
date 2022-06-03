@@ -14,7 +14,6 @@ then
               directx-mesh \
               uvatlas \
               mmetric \
-              jm \
               hm \
               vtm \
               ffmpeg

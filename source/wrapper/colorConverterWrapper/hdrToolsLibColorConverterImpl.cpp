@@ -32,7 +32,7 @@
  */
 #if defined( USE_HDRTOOLS )
 
-#include "hdrToolsLibColorConverterImpl.hpppp"
+#include "hdrToolsLibColorConverterImpl.hpp"
 
 using namespace vmesh;
 

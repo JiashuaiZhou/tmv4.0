@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2017, ITU/ISO/IEC
+ * Copyright (c) 2010-2017, ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
+ *  * Neither the name of the ISO/IEC nor the names of its contributors may
  *    be used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *
@@ -30,25 +30,28 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined( USE_DRACO_GEOMETRY_CODEC )
-#include "mesh.hpp"
-#include "virtualGeometryEncoder.hpp"
+
+#include "virtualGeometryDecoder.hpp"
+
+#include "dracoLibGeometryDecoder.hpp"
 
 namespace vmesh {
 
-template <class T>
-class dracoLibGeometryEncoder : public virtualGeometryEncoder<T> {
- public:
-  dracoLibGeometryEncoder();
-  ~dracoLibGeometryEncoder();
-
-  void encode(
-    TriangleMesh<T>& src,
-    GeometryEncoderParameters& params,
-    std::vector<uint8_t>& bitstream,
-    TriangleMesh<T>& rec);
-};
-
-}  // namespace vmesh
-
+template <typename T>
+std::shared_ptr<virtualGeometryDecoder<T>> virtualGeometryDecoder<T>::create( GeometryCodecId codecId ) {
+  switch ( codecId ) {
+#ifdef USE_DRACO_GEOMETRY_CODEC
+    case GeometryCodecId::DRACO: return std::make_shared<dracoLibGeometryDecoder<T>>(); break;
 #endif
+    default:
+      printf( "Error virtualGeometryDecoder: codec id not supported ( %d ) \n", (int)codecId );
+      exit( -1 );
+      break;
+  }
+  return nullptr;
+}
+
+template class vmesh::virtualGeometryDecoder<uint8_t>;
+template class vmesh::virtualGeometryDecoder<uint16_t>;
+
+} // namespace vmesh 

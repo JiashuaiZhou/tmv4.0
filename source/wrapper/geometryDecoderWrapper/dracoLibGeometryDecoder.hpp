@@ -32,21 +32,19 @@
  */
 #if defined( USE_DRACO_GEOMETRY_CODEC )
 #include "mesh.hpp"
-#include "virtualGeometryEncoder.hpp"
+#include "virtualGeometryDecoder.hpp"
 
 namespace vmesh {
 
 template <class T>
-class dracoLibGeometryEncoder : public virtualGeometryEncoder<T> {
+class dracoLibGeometryDecoder : public virtualGeometryDecoder<T> {
  public:
-  dracoLibGeometryEncoder();
-  ~dracoLibGeometryEncoder();
+  dracoLibGeometryDecoder();
+  ~dracoLibGeometryDecoder();
 
-  void encode(
-    TriangleMesh<T>& src,
-    GeometryEncoderParameters& params,
+  void decode(
     std::vector<uint8_t>& bitstream,
-    TriangleMesh<T>& rec);
+    TriangleMesh<T>& dec);
 };
 
 }  // namespace vmesh

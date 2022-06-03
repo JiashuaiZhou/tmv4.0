@@ -61,10 +61,10 @@ class virtualGeometryEncoder {
   static bool checkCodecId(GeometryCodecId codecId);
 
   virtual void encode(
-    TriangleMesh<T>& GeometrySrc,
+    TriangleMesh<T>& src,
     GeometryEncoderParameters& params,
     std::vector<uint8_t>& bitstream,
-    TriangleMesh<T>& GeometryRec) = 0;
+    TriangleMesh<T>& rec) = 0;
 };
 
 }  // namespace vmesh

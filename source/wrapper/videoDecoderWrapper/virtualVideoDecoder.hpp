@@ -43,7 +43,7 @@ class virtualVideoDecoder {
   virtualVideoDecoder() {}
   ~virtualVideoDecoder() {}
 
-  static std::shared_ptr<virtualVideoDecoder<T>> create( CodecId codecId );
+  static std::shared_ptr<virtualVideoDecoder<T>> create( VideoCodecId codecId );
 
   virtual void decode( std::vector<uint8_t>& bitstream,
                        FrameSequence<T>&    video,

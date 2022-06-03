@@ -292,6 +292,13 @@ public:
   Vec2() = default;
   ~Vec2(void) = default;
 
+  template<typename S>
+  Vec2(const Vec2<S>& vec)
+  {
+    _vec[0] = (T)vec.x();
+    _vec[1] = (T)vec.y();
+  }
+
 private:
   T _vec[2];
 };
@@ -597,6 +604,14 @@ public:
     _vec[0] = vec._vec[0];
     _vec[1] = vec._vec[1];
     _vec[2] = vec._vec[2];
+  }
+
+  template<typename S>
+  Vec3(const Vec3<S>& vec)
+  {
+    _vec[0] = (T)vec.x();
+    _vec[1] = (T)vec.y();
+    _vec[2] = (T)vec.z();
   }
 
   Vec3() = default;

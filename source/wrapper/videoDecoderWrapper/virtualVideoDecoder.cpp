@@ -41,18 +41,18 @@
 namespace vmesh {
 
 template <typename T>
-std::shared_ptr<virtualVideoDecoder<T>> virtualVideoDecoder<T>::create( CodecId codecId ) {
+std::shared_ptr<virtualVideoDecoder<T>> virtualVideoDecoder<T>::create( VideoCodecId codecId ) {
   printf( "virtualVideoDecoder: create codecId = %d \n", codecId );
   fflush( stdout );
   switch ( codecId ) {
 #if defined(USE_HM_VIDEO_CODEC)
-    case HMLIB: return std::make_shared<hmLibVideoDecoder<T>>(); break;
+    case VideoCodecId::HMLIB: return std::make_shared<hmLibVideoDecoder<T>>(); break;
 #endif
 #if defined(USE_VTM_VIDEO_CODEC)
-    case VTMLIB: return std::make_shared<vtmLibVideoDecoder<T>>(); break;
+    case VideoCodecId::VTMLIB: return std::make_shared<vtmLibVideoDecoder<T>>(); break;
 #endif
 #if defined(USE_FFMPEG_VIDEO_CODEC )
-    case FFMPEG: return std::make_shared<ffmpegLibVideoDecoder<T>>(); break;
+    case VideoCodecId::FFMPEG: return std::make_shared<ffmpegLibVideoDecoder<T>>(); break;
 #endif
     default:
       printf( "Error: codec id not supported \n" );

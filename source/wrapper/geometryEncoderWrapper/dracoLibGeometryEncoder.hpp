@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2017, ISO/IEC
+ * Copyright (c) 2010-2017, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  * Neither the name of the ISO/IEC nor the names of its contributors may
+ *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
  *    be used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *
@@ -30,46 +30,25 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once 
-
-#include "image.hpp"
+#if defined( USE_DRACO_GEOMETRY_CODEC )
+#include "mesh.hpp"
+#include "virtualGeometryEncoder.hpp"
 
 namespace vmesh {
 
-struct VideoEncoderParameters {
-  std::string encoderPath_                 = {};
-  std::string srcYuvFileName_              = {};
-  std::string binFileName_                 = {};
-  std::string recYuvFileName_              = {};
-  std::string encoderConfig_               = {};
-  int32_t     qp_                          = 30;
-  int32_t     inputBitDepth_               = 8;
-  int32_t     internalBitDepth_            = 8;
-  int32_t     outputBitDepth_              = 8;
-  bool        usePccMotionEstimation_      = false;
-  std::string blockToPatchFile_            = {};
-  std::string occupancyMapFile_            = {};
-  std::string patchInfoFile_               = {};
-  bool        transquantBypassEnable_      = false;
-  bool        cuTransquantBypassFlagForce_ = false;
-  bool        inputColourSpaceConvert_     = false;
-  bool        usePccRDO_                   = false;
-};
-
 template <class T>
-class virtualVideoEncoder {
+class dracoLibGeometryEncoder : public virtualGeometryEncoder<T> {
  public:
-  virtualVideoEncoder() {}
-  ~virtualVideoEncoder() {}
+  dracoLibGeometryEncoder();
+  ~dracoLibGeometryEncoder();
 
-  static std::shared_ptr<virtualVideoEncoder<T>> create( VideoCodecId codecId );
-  static VideoCodecId                                 getDefaultCodecId();
-  static bool                                       checkCodecId( VideoCodecId codecId );
-
-  virtual void encode( FrameSequence<T>&            videoSrc,
-                       VideoEncoderParameters& params,
-                       std::vector<uint8_t>&         bitstream,
-                       FrameSequence<T>&            videoRec ) = 0;
+  void encode(
+    TriangleMesh<T>& videoSrc,
+    GeometryEncoderParameters& params,
+    std::vector<uint8_t>& bitstream,
+    TriangleMesh<T>& videoRec);
 };
 
 }  // namespace vmesh
+
+#endif

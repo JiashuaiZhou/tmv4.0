@@ -53,7 +53,7 @@ namespace vmesh {
 
 //============================================================================
 
-enum CodecId
+enum VideoCodecId
 {
 #if defined(USE_HM_VIDEO_CODEC)
   HMLIB = 0,
@@ -64,7 +64,7 @@ enum CodecId
 #if defined(USE_FFMPEG_VIDEO_CODEC)
   FFMPEG = 2,
 #endif
-  UNKNOWN_CODEC = 255
+  UNKNOWN_VIDEO_CODEC = 255
 };
 
 //============================================================================

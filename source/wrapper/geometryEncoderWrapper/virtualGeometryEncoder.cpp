@@ -30,46 +30,52 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once 
 
-#include "image.hpp"
+#include "virtualGeometryEncoder.hpp"
+
+
+#include "dracoLibGeometryEncoder.hpp"
 
 namespace vmesh {
 
-struct VideoEncoderParameters {
-  std::string encoderPath_                 = {};
-  std::string srcYuvFileName_              = {};
-  std::string binFileName_                 = {};
-  std::string recYuvFileName_              = {};
-  std::string encoderConfig_               = {};
-  int32_t     qp_                          = 30;
-  int32_t     inputBitDepth_               = 8;
-  int32_t     internalBitDepth_            = 8;
-  int32_t     outputBitDepth_              = 8;
-  bool        usePccMotionEstimation_      = false;
-  std::string blockToPatchFile_            = {};
-  std::string occupancyMapFile_            = {};
-  std::string patchInfoFile_               = {};
-  bool        transquantBypassEnable_      = false;
-  bool        cuTransquantBypassFlagForce_ = false;
-  bool        inputColourSpaceConvert_     = false;
-  bool        usePccRDO_                   = false;
-};
+template <typename T>
+GeometryCodecId virtualGeometryEncoder<T>::getDefaultCodecId() {
+#ifdef USE_DRACO_GEOMETRY_CODEC
+  return GeometryCodecId::DRACO;
+#endif
+  printf( "Error: geometry codec not set \n" );
+  return GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
+}
 
-template <class T>
-class virtualVideoEncoder {
- public:
-  virtualVideoEncoder() {}
-  ~virtualVideoEncoder() {}
+template <typename T>
+bool virtualGeometryEncoder<T>::checkCodecId( GeometryCodecId codecId ) {
+  switch ( codecId ) {
+#ifdef USE_DRACO_GEOMETRY_CODEC
+    case GeometryCodecId::DRACO: break;
+#endif
+    default:
+      printf( "Error: codec id %d not supported \n", (int)codecId );
+      return false;
+      break;
+  }
+  return true;
+}
 
-  static std::shared_ptr<virtualVideoEncoder<T>> create( VideoCodecId codecId );
-  static VideoCodecId                                 getDefaultCodecId();
-  static bool                                       checkCodecId( VideoCodecId codecId );
+template <typename T>
+std::shared_ptr<virtualGeometryEncoder<T>> virtualGeometryEncoder<T>::create( GeometryCodecId codecId ) {
+  switch ( codecId ) {
+#ifdef USE_DRACO_GEOMETRY_CODEC
+    case GeometryCodecId::DRACO: return std::make_shared<dracoLibGeometryEncoder<T>>(); break;
+#endif
+    default:
+      printf( "Error virtualGeometryEncoder: codec id not supported ( %d ) \n", (int)codecId );
+      exit( -1 );
+      break;
+  }
+  return nullptr;
+}
 
-  virtual void encode( FrameSequence<T>&            videoSrc,
-                       VideoEncoderParameters& params,
-                       std::vector<uint8_t>&         bitstream,
-                       FrameSequence<T>&            videoRec ) = 0;
-};
+template class vmesh::virtualGeometryEncoder<uint8_t>;
+template class vmesh::virtualGeometryEncoder<uint16_t>;
 
-}  // namespace vmesh
+} // namespace vmesh 

@@ -5,16 +5,19 @@ project(vmesh)
 set(CMAKE_CXX_STANDARD 14)
 
 # Options:
-# Video encoder and decoder library and application:
-OPTION( USE_HM_VIDEO_CODEC     "Use HM video encoder and decoder"       TRUE )  # 0
-OPTION( USE_VTM_VIDEO_CODEC    "Use VTM video encoder and decoder"      TRUE )  # 1
-OPTION( USE_FFMPEG_VIDEO_CODEC "Use FFMPEG video encoder and decoder"   TRUE )  # 2
+# Video encoder and decoder:
+OPTION( USE_HM_VIDEO_CODEC       "Use HM video encoder and decoder"       TRUE )  # 0
+OPTION( USE_VTM_VIDEO_CODEC      "Use VTM video encoder and decoder"      TRUE )  # 1
+OPTION( USE_FFMPEG_VIDEO_CODEC   "Use FFMPEG video encoder and decoder"   TRUE )  # 2
+
+# Geometry encoder and decoder:
+OPTION( USE_DRACO_GEOMETRY_CODEC "Use draco geometry encoder and decoder" TRUE )  # 0
 
 # Color conversion library:
-OPTION( USE_HDRTOOLS           "Use HDRTools for color conversions"     TRUE )
+OPTION( USE_HDRTOOLS             "Use HDRTools for color conversions"     TRUE )
 
 # Use HM optimized RDO
-OPTION( USE_HM_PCC_RDO         "Use HM optimized RDO "                  TRUE )
+OPTION( USE_HM_PCC_RDO           "Use HM optimized RDO "                  TRUE )
 
 # Dependencies
 include( dependencies/cmake/CPM.cmake )

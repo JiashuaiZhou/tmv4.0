@@ -32,44 +32,39 @@
  */
 #pragma once 
 
-#include "image.hpp"
+#include "mesh.hpp"
 
 namespace vmesh {
 
-struct VideoEncoderParameters {
-  std::string encoderPath_                 = {};
-  std::string srcYuvFileName_              = {};
-  std::string binFileName_                 = {};
-  std::string recYuvFileName_              = {};
-  std::string encoderConfig_               = {};
-  int32_t     qp_                          = 30;
-  int32_t     inputBitDepth_               = 8;
-  int32_t     internalBitDepth_            = 8;
-  int32_t     outputBitDepth_              = 8;
-  bool        usePccMotionEstimation_      = false;
-  std::string blockToPatchFile_            = {};
-  std::string occupancyMapFile_            = {};
-  std::string patchInfoFile_               = {};
-  bool        transquantBypassEnable_      = false;
-  bool        cuTransquantBypassFlagForce_ = false;
-  bool        inputColourSpaceConvert_     = false;
-  bool        usePccRDO_                   = false;
+struct GeometryEncoderParameters {
+  std::string encoderPath_ = {};
+  std::string srcFileName_ = {};
+  std::string binFileName_ = {};
+  std::string recFileName_ = {};
+  std::string encoderConfig_ = {};
+  uint8_t qp_;
+  uint8_t qt_;
+  uint8_t qn_;
+  uint8_t qc_;
+  uint8_t cl_;
 };
 
 template <class T>
-class virtualVideoEncoder {
+class virtualGeometryEncoder {
  public:
-  virtualVideoEncoder() {}
-  ~virtualVideoEncoder() {}
+  virtualGeometryEncoder() {}
+  ~virtualGeometryEncoder() {}
 
-  static std::shared_ptr<virtualVideoEncoder<T>> create( VideoCodecId codecId );
-  static VideoCodecId                                 getDefaultCodecId();
-  static bool                                       checkCodecId( VideoCodecId codecId );
+  static std::shared_ptr<virtualGeometryEncoder<T>>
+  create(GeometryCodecId codecId);
+  static GeometryCodecId getDefaultCodecId();
+  static bool checkCodecId(GeometryCodecId codecId);
 
-  virtual void encode( FrameSequence<T>&            videoSrc,
-                       VideoEncoderParameters& params,
-                       std::vector<uint8_t>&         bitstream,
-                       FrameSequence<T>&            videoRec ) = 0;
+  virtual void encode(
+    TriangleMesh<T>& GeometrySrc,
+    GeometryEncoderParameters& params,
+    std::vector<uint8_t>& bitstream,
+    TriangleMesh<T>& GeometryRec) = 0;
 };
 
 }  // namespace vmesh

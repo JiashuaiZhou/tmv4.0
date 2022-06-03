@@ -55,6 +55,15 @@ namespace vmesh {
 
 //============================================================================
 
+enum GeometryCodecId
+{
+#if defined(USE_DRACO_GEOMETRY_CODEC)
+  DRACO = 0,
+#endif
+  UNKNOWN_GEOMETRY_CODEC = 255
+};
+//============================================================================
+
 enum class SubdivisionMethod
 {
   MID_POINT = 0,

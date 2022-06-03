@@ -43,29 +43,30 @@
 namespace vmesh {
 
 template <typename T>
-CodecId virtualVideoEncoder<T>::getDefaultCodecId() {
+VideoCodecId virtualVideoEncoder<T>::getDefaultCodecId() {
 #ifdef USE_HM_VIDEO_CODEC
-  return HMLIB;
+  return VideoCodecId::HMLIB;
 #endif
 #ifdef USE_VTM_VIDEO_CODEC
-  return VTMLIB;
+  return VideoCodecId::VTMLIB;
 #endif
 #ifdef USE_FFMPEG_VIDEO_CODEC
-  return FFMPEG;
+  return VideoCodecId::FFMPEG;
 #endif
+  return VideoCodecId::UNKNOWN_VIDEO_CODEC;
 }
 
 template <typename T>
-bool virtualVideoEncoder<T>::checkCodecId( CodecId codecId ) {
+bool virtualVideoEncoder<T>::checkCodecId( VideoCodecId codecId ) {
   switch ( codecId ) {
 #ifdef USE_HM_VIDEO_CODEC
-    case HMLIB: break;
+    case VideoCodecId::HMLIB: break;
 #endif
 #ifdef USE_VTM_VIDEO_CODEC
-    case VTMLIB: break;
+    case VideoCodecId::VTMLIB: break;
 #endif
 #ifdef USE_FFMPEG_VIDEO_CODEC
-    case FFMPEG: break;
+    case VideoCodecId::FFMPEG: break;
 #endif
     default:
       printf( "Error: codec id %d not supported \n", (int)codecId );
@@ -76,16 +77,16 @@ bool virtualVideoEncoder<T>::checkCodecId( CodecId codecId ) {
 }
 
 template <typename T>
-std::shared_ptr<virtualVideoEncoder<T>> virtualVideoEncoder<T>::create( CodecId codecId ) {
+std::shared_ptr<virtualVideoEncoder<T>> virtualVideoEncoder<T>::create( VideoCodecId codecId ) {
   switch ( codecId ) {
 #ifdef USE_HM_VIDEO_CODEC
-    case HMLIB: return std::make_shared<hmLibVideoEncoder<T>>(); break;
+    case VideoCodecId::HMLIB: return std::make_shared<hmLibVideoEncoder<T>>(); break;
 #endif
 #ifdef USE_VTM_VIDEO_CODEC
-    case VTMLIB: return std::make_shared<vtmLibVideoEncoder<T>>(); break;
+    case VideoCodecId::VTMLIB: return std::make_shared<vtmLibVideoEncoder<T>>(); break;
 #endif
 #ifdef USE_FFMPEG_VIDEO_CODEC
-    case FFMPEG: return std::make_shared<ffmpegLibVideoEncoder<T>>(); break;
+    case VideoCodecId::FFMPEG: return std::make_shared<ffmpegLibVideoEncoder<T>>(); break;
 #endif
     default:
       printf( "Error virtualVideoEncoder: codec id not supported ( %d ) \n", (int)codecId );

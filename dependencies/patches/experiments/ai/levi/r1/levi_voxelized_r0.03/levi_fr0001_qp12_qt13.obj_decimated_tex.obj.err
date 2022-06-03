@@ -1,0 +1,54 @@
+WARNING: 
+A bowtie was found.  Bowties can be fixed by calling Clean
+  A bowtie is the usage of a single vertex by two separate fans of triangles.
+  The fix is to duplicate the vertex so that each fan has its own vertex.
+
+Bowtie found around vertex 3 shared by faces 2 and 1
+
+Bowtie found around vertex 42 shared by faces 22 and 21
+
+Bowtie found around vertex 49 shared by faces 35 and 24
+
+Bowtie found around vertex 46 shared by faces 35 and 23
+
+Bowtie found around vertex 248 shared by faces 181 and 140
+
+Bowtie found around vertex 242 shared by faces 196 and 137
+
+Bowtie found around vertex 244 shared by faces 196 and 138
+
+Bowtie found around vertex 435 shared by faces 456 and 431
+
+Bowtie found around vertex 521 shared by faces 684 and 644
+
+Bowtie found around vertex 520 shared by faces 684 and 685
+
+Bowtie found around vertex 512 shared by faces 693 and 694
+
+Bowtie found around vertex 549 shared by faces 693 and 670
+
+Bowtie found around vertex 514 shared by faces 693 and 641
+
+Bowtie found around vertex 510 shared by faces 705 and 639
+
+Bowtie found around vertex 546 shared by faces 705 and 667
+
+Bowtie found around vertex 542 shared by faces 705 and 662
+
+Bowtie found around vertex 12 shared by faces 1127 and 6
+
+Bowtie found around vertex 588 shared by faces 1129 and 1128
+
+Bowtie found around vertex 590 shared by faces 1130 and 1132
+
+Bowtie found around vertex 591 shared by faces 1131 and 1130
+
+Bowtie found around vertex 592 shared by faces 1131 and 1130
+
+Bowtie found around vertex 9 shared by faces 1146 and 4
+
+Bowtie found around vertex 7 shared by faces 1151 and 3
+
+Bowtie found around vertex 55 shared by faces 1169 and 28
+
+Bowtie found around vertex 0 shared by faces 1173 and 0

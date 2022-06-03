@@ -1,6 +1,8 @@
 
 all: mpeg-vmesh-sw-manual.pdf
 
+## mpegdoc.cls : https://mpeg.expert/software/dflynn/mpeg-report
+
 MD_SRC=\
 	README.about.md \
 	README.build.md \

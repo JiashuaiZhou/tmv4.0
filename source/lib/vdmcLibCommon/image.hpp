@@ -53,6 +53,22 @@ namespace vmesh {
 
 //============================================================================
 
+enum CodecId
+{
+#if defined(USE_HM_VIDEO_CODEC)
+  HMLIB = 0,
+#endif
+#if defined(USE_VTM_VIDEO_CODEC)
+  VTMLIB = 1,
+#endif
+#if defined(USE_FFMPEG_VIDEO_CODEC)
+  FFMPEG = 2,
+#endif
+  UNKNOWN_CODEC = 255
+};
+
+//============================================================================
+
 enum class ColourSpace
 {
   YUV400p,
@@ -270,6 +286,97 @@ public:
     }
     save(os);
     return true;
+  }
+  
+  T clamp(T v, T a, T b) const { return ((v < a) ? a : ((v > b) ? b : v)); }
+
+  template <typename Pel>
+  void set( const Pel*     Y,
+            const Pel*     U,
+            const Pel*     V,
+            size_t         widthY,
+            size_t         heightY,
+            size_t         strideY,
+            size_t         widthC,
+            size_t         heightC,
+            size_t         strideC,
+            int16_t        shiftbits,
+            ColourSpace    format,
+            bool           rgb2bgr ) {
+    resize( widthY, heightY, format );
+    const Pel*   ptr[2][3] = {{Y, U, V}, {V, Y, U}};
+    const size_t width[3]  = {widthY, widthC, widthC};
+    const size_t height[3] = {heightY, heightC, heightC};
+    const size_t stride[3] = {strideY, strideC, strideC};
+    int16_t      rounding  = 1 << ( shiftbits - 1 );
+    // printf(
+    //     "copy image PCC: Shift=%d Round=%d (%4zux%4zu S=%4zu C:%4zux%4zu => "
+    //     "%4zux%4zu) stride = %4zu %4zu bgr=%d sizeof(Pel) = %zu sizeof(T) = %zu \n",
+    //     shiftbits, rounding, widthY, heightY, strideY, widthC, heightC, _width, _height,
+    //     strideY, strideC, rgb2bgr, sizeof(Pel), sizeof(T) );
+    for ( size_t c = 0; c < 3; c++ ) {
+      auto* src = ptr[rgb2bgr][c];
+      auto* dst = _planes[c].data();
+      if ( shiftbits > 0 ) {
+        T minval = 0;
+        T maxval = ( T )( ( 1 << ( 10 - (int)shiftbits ) ) - 1 );
+        for ( size_t v = 0; v < height[c]; ++v, src += stride[c], dst += width[c] ) {
+          for ( size_t u = 0; u < width[c]; ++u ) {
+            dst[u] = clamp( ( T )( ( src[u] + rounding ) >> shiftbits ), minval, maxval );
+          }
+        }
+      } else {
+        for ( size_t v = 0; v < height[c]; ++v, src += stride[c], dst += width[c] ) {
+          for ( size_t u = 0; u < width[c]; ++u ) { dst[u] = (T)src[u]; }
+        }
+      }
+    }
+  }
+
+  template <typename Pel>
+  void get( Pel*    Y,
+            Pel*    U,
+            Pel*    V,
+            size_t  widthY,
+            size_t  heightY,
+            size_t  strideY,
+            size_t  widthC,
+            size_t  heightC,
+            size_t  strideC,
+            int16_t shiftbits,
+            bool    rgb2bgr ) {
+    size_t chromaSubsample = widthY / widthC;
+    if ( ( chromaSubsample == 1 && _colourSpace == ColourSpace::YUV420p ) ||
+         ( chromaSubsample == 2 && _colourSpace != ColourSpace::YUV420p ) ) {
+      printf( "Error: image get not possible from image of format = %d with  chromaSubsample = %zu \n",
+              (int32_t)_colourSpace, chromaSubsample );
+      exit( -1 );
+    }
+    size_t       widthChroma  = _width / chromaSubsample;
+    size_t       heightChroma = _height / chromaSubsample;
+    Pel*         ptr[2][3]    = {{Y, U, V}, {V, Y, U}};
+    const size_t width[3]     = {_width, widthChroma, widthChroma};
+    const size_t heightSrc[3] = {_height, heightChroma, heightChroma};
+    const size_t heightDst[3] = {heightY, heightC, heightC};
+    const size_t stride[3]    = {strideY, strideC, strideC};
+    printf( "copy image from PCC: Shift = %d (%4zux%4zu => %4zux%4zu S=%4zu C: %4zux%4zu ) \n", shiftbits, _width,
+            _height, widthY, heightY, strideY, widthC, heightC );
+    for ( size_t c = 0; c < 3; c++ ) {
+      auto* src = _planes[c].data();
+      auto* dst = ptr[rgb2bgr][c];
+      if ( shiftbits > 0 ) {
+        for ( size_t v = 0; v < heightSrc[c]; ++v, src += width[c], dst += stride[c] ) {
+          for ( size_t u = 0; u < width[c]; ++u ) { dst[u] = ( Pel )( src[u] ) << shiftbits; }
+        }
+      } else {
+        for ( size_t v = 0; v < heightSrc[c]; ++v, src += width[c], dst += stride[c] ) {
+          for ( size_t u = 0; u < width[c]; ++u ) { dst[u] = (Pel)src[u]; }
+        }
+      }
+      for ( size_t v = heightSrc[c]; v < heightDst[c]; ++v, dst += stride[c] ) {
+        for ( size_t u = 0; u < width[c]; ++u ) { dst[u] = 0; }
+      }
+    }
   }
 
 private:

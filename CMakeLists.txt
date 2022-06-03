@@ -6,16 +6,15 @@ set(CMAKE_CXX_STANDARD 14)
 
 # Options:
 # Video encoder and decoder library and application:
-OPTION( USE_JMAPP_VIDEO_CODEC     "Use JM application to encode and decode video"           FALSE )  # JMAPP  = 0
-OPTION( USE_HMAPP_VIDEO_CODEC     "Use HM application to encode and decode video"           TRUE  )  # HMAPP  = 1
-OPTION( USE_SHMAPP_VIDEO_CODEC    "Use SHM application to encode and decode video"          FALSE )  # SHMAPP = 2    
-OPTION( USE_JMLIB_VIDEO_CODEC     "Clone, build and use JM video encoder and decoder"       FALSE )  # JMLIB  = 3
-OPTION( USE_HMLIB_VIDEO_CODEC     "Clone, build and use HM video encoder and decoder"       TRUE  )  # HMLIB  = 4
-OPTION( USE_VTMLIB_VIDEO_CODEC    "Clone, build and use VTM video encoder and decoder"      TRUE )   # VTMLIB = 5
-OPTION( USE_FFMPEG_VIDEO_CODEC    "Clone, build and use FFMPEG video encoder and decoder"   FALSE )  # FFMPEG = 6                                                                                                 #UNKNOWN_CODEC = 7
+OPTION( USE_HM_VIDEO_CODEC     "Use HM video encoder and decoder"       TRUE )  # 0
+OPTION( USE_VTM_VIDEO_CODEC    "Use VTM video encoder and decoder"      TRUE )  # 1
+OPTION( USE_FFMPEG_VIDEO_CODEC "Use FFMPEG video encoder and decoder"   TRUE )  # 2
 
 # Color conversion library:
-OPTION( USE_HDRTOOLS              "Clone, build and use HDRTools for color conversions"     TRUE )
+OPTION( USE_HDRTOOLS           "Use HDRTools for color conversions"     TRUE )
+
+# Use HM optimized RDO
+OPTION( USE_HM_PCC_RDO         "Use HM optimized RDO "                  TRUE )
 
 # Dependencies
 include( dependencies/cmake/CPM.cmake )
@@ -26,6 +25,15 @@ include( dependencies/cmake/geometry/uvatlas.cmake )
 include( dependencies/cmake/geometry/mmetric.cmake )
 if ( USE_HDRTOOLS )
     include( dependencies/cmake/video/hdrtools.cmake )
+endif()
+if ( USE_HM_VIDEO_CODEC )
+    include( dependencies/cmake/video/hm.cmake )
+endif()
+if ( USE_VTM_VIDEO_CODEC )
+    include( dependencies/cmake/video/vtm.cmake )
+endif()
+if ( USE_FFMPEG_VIDEO_CODEC )
+    include( dependencies/cmake/video/ffmpeg.cmake )
 endif()
 
 # Build

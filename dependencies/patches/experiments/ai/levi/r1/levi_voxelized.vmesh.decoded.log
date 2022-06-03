@@ -1,0 +1,96 @@
+MPEG VMESH version 58065ac+dirty
++ Configuration parameters
+    mode       : 1
+    compressed : "levi_voxelized.vmesh"
+    decmat                      : "levi_voxelized_%04d_decoded.mtl"
+    decmesh                     : "levi_voxelized_%04d_decoded.obj"
+    dectex                      : "levi_voxelized_%04d_decoded.png"
+    intermediateFilesPathPrefix : ""
+    keep                        : 1
+    fstart    : 0
+    fcount    : 1
+    framerate : 30
+    normuv : 0
+    gmdec        : "/home/wp21/PCC/ricardj/gitdmc/tmd_v01/build/Release/dependencies/draco/draco_decoder"
+    gvdec        : "/home/wp21/PCC/ricardj/gitdmc/externaltools/hm-16.21+scm-8.8/bin/TAppDecoderStatic"
+    tvdec        : "/home/wp21/PCC/ricardj/gitdmc/externaltools/hm-16.21+scm-8.8/bin/TAppDecoderStatic"
+    csc          : "/home/wp21/PCC/ricardj/gitdmc/externaltools/hdrtools/build/bin/HDRConvert"
+    cscdecconfig : "/home/wp21/PCC/ricardj/gitdmc/tmd_v01/cfg//hdrconvert/yuv420tobgr444.cfg"
+
+/home/wp21/PCC/ricardj/gitdmc/tmd_v01/build/Release/dependencies/draco/draco_decoder -i gof_0_fr_0_cbase_dec.drc -o gof_0_fr_0_dbase.obj
+Decoded geometry saved to gof_0_fr_0_dbase.obj (2 ms to decode)
+/home/wp21/PCC/ricardj/gitdmc/tmd_v01/build/Release/dependencies/draco/draco_decoder -i gof_0_fr_1_cbase_dec.drc -o gof_0_fr_1_dbase.obj
+Decoded geometry saved to gof_0_fr_1_dbase.obj (2 ms to decode)
+/home/wp21/PCC/ricardj/gitdmc/externaltools/hm-16.21+scm-8.8/bin/TAppDecoderStatic --BitstreamFile=GOF_0_disp_dec.h265 --ReconFile=GOF_0_disp_256x160_dec.yuv 
+
+HM software: Decoder Version [16.21_SCM8.8] (including RExt)[Linux][GCC 8.3.1][64 bit] 
+POC    0 TId: 0 ( I-SLICE, QP  8 ) [DT  0.010] [L0 ] [L1 ] [:,(unk)] 
+POC    1 TId: 0 ( I-SLICE, QP  8 ) [DT  0.000] [L0 ] [L1 ] [:,(unk)] 
+
+ Total Time:        0.010 sec.
+/home/wp21/PCC/ricardj/gitdmc/externaltools/hm-16.21+scm-8.8/bin/TAppDecoderStatic --BitstreamFile=GOF_0_texture_dec.h265 --ReconFile=GOF_0_tex_2048x2048_420_10bit_dec.yuv 
+
+HM software: Decoder Version [16.21_SCM8.8] (including RExt)[Linux][GCC 8.3.1][64 bit] 
+POC    0 TId: 0 ( I-SLICE, QP 38 ) [DT  0.110] [L0 ] [L1 ] [:,(unk)] 
+POC    1 TId: 0 ( I-SLICE, QP 38 ) [DT  0.110] [L0 ] [L1 ] [:,(unk)] 
+
+ Total Time:        0.360 sec.
+/home/wp21/PCC/ricardj/gitdmc/externaltools/hdrtools/build/bin/HDRConvert -f /home/wp21/PCC/ricardj/gitdmc/tmd_v01/cfg//hdrconvert/yuv420tobgr444.cfg -p SourceFile="GOF_0_tex_2048x2048_420_10bit_dec.yuv" -p SourceWidth=2048 -p SourceHeight=2048 -p NumberOfFrames=2 -p OutputFile="GOF_0_tex_2048x2048_444_rec.bgrp" -p SourceBitDepthCmp0=10 -p SourceBitDepthCmp1=10 -p SourceBitDepthCmp2=10
+
+Parsing configuration file /home/wp21/PCC/ricardj/gitdmc/tmd_v01/cfg//hdrconvert/yuv420tobgr444.cfg.
+Unknown parameter <UseAdaptiveFiltering>
+Parsing command line string 'SourceFile=GOF_0_tex_2048x2048_420_10bit_dec.yuv'
+Parsing command line string 'SourceWidth=2048'
+Parsing command line string 'SourceHeight=2048'
+Parsing command line string 'NumberOfFrames=2'
+Parsing command line string 'OutputFile=GOF_0_tex_2048x2048_444_rec.bgrp'
+Parsing command line string 'SourceBitDepthCmp0=10'
+Parsing command line string 'SourceBitDepthCmp1=10'
+Parsing command line string 'SourceBitDepthCmp2=10'
+================================================================================================================
+Source: GOF_0_tex_2048x2048_420_10bit_dec.yuv
+W x H:  (2048x2048) 
+ColorSpace: YCbCr (BT.709/Null)
+Format: 4:2:0p, PxFmt: YUV
+DataType: Fixed, BitDepth: 10, Range: STANDARD
+Fps:  24.000 (24/1)
+----------------------------------------------------------------------------------------------------------------
+Output: GOF_0_tex_2048x2048_444_rec.bgrp
+W x H:  (2048x2048) 
+ColorSpace: RGB (BT.709/Null)
+Format: 4:4:4p, PxFmt: BGR (4)
+DataType: Fixed, BitDepth: 8, Range: FULL
+Fps:  24.000 (24/1)
+================================================================================================================
+Processing Frame : 0Processing Frame : 1
+================================================================================================================
+Total of 2 frames processed in   1.010 seconds
+Conversion Speed: 1.98fps
+
+
+------- Group of frames 1 -----------
+GOF frame count 2
+GOF face count 150592
+GOF vertex count 75939
+GOF processing time 1641 s 
+GOF meshes bitrate 0.86352 mbps 7196 B 44.1134 bpv
+GOF motion bitrate 0 mbps 0 B 0 bpv
+GOF displacements bitrate 0.17856 mbps 1488 B 0.156757 bpv
+GOF texture bitrate 2.75148 mbps 22929 B 2.41552 bpv
+GOF total bitrate 3.7962 mbps 31635 B 3.33267 bpv
+---------------------------------------
+
+
+
+------- All frames -----------
+Sequence frame count 2
+Sequence face count 150592
+Sequence vertex count 75939
+Sequence processing time 1641 s 
+Sequence meshes bitrate 0.86352 mbps 7196 B 44.1134 bpv
+Sequence motion bitrate 0 mbps 0 B 0 bpv
+Sequence displacements bitrate 0.17856 mbps 1488 B 0.156757 bpv
+Sequence texture bitrate 2.75148 mbps 22929 B 2.41552 bpv
+Sequence total bitrate 3.7962 mbps 31635 B 3.33267 bpv
+---------------------------------------
+

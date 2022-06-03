@@ -32,10 +32,10 @@
  */
 #include "virtualColorConverter.hpp"
 
-#if USE_HDRTOOLS == 1 
+#if defined( USE_HDRTOOLS )
 
 #include "hdrToolsLibColorConverter.hpp"
-#include "hdrToolsLibColorConverterImpl.hpp"
+#include "hdrToolsLibColorConverterImpl.hpppp"
 
 using namespace vmesh;
 

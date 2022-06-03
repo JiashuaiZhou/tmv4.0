@@ -1,0 +1,1 @@
+GOF_0_tex_2048x2048_420_10bit_dec.yuv GOF_0_tex_2048x2048_444_rec.bgrp 2 0.505000 

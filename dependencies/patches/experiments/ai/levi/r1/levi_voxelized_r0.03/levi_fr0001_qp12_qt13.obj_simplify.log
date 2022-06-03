@@ -1,0 +1,39 @@
+MPEG VMESH version 58065ac+dirty
++ Configuration parameters
+    fnum      : 0
+    input     : "/home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0001_qp12_qt13.obj"
+    decimated : "levi_voxelized_r0.03/levi_fr0001_qp12_qt13.obj_decimated.obj"
+    mapped    : "levi_voxelized_r0.03/levi_fr0001_qp12_qt13.obj_mapped.obj"
+    reference : "levi_voxelized_r0.03/levi_fr0001_qp12_qt13.obj_reference.obj"
+    target   : 0.03
+    qt       : 13
+    cctcount : 8
+
+Loading Mesh...  [done]
+Original mesh: 19996V 40044T
+ 	 bbox = 1068 3 577 2218 3709 1739
+ 	 texCoord bbox = 6 6 8185 8185
+Unifying vertices...  [done] 4 ms
+Unified mesh: 19995V 40044T
+	 Removed 1 vertices 0 triangles
+Simplifying Mesh... 
+	 [>                                                                     ] 0 %
+	 [=======>                                                              ] 10 %
+	 [==============>                                                       ] 20 %
+	 [=====================>                                                ] 30 %
+	 [============================>                                         ] 40 %
+	 [===================================>                                  ] 50 %
+	 [==========================================>                           ] 60 %
+	 [=================================================>                    ] 70 %
+	 [========================================================>             ] 80 %
+	 [===============================================================>      ] 90 %
+ [done] 566 ms
+Decimated mesh: 598V 1201T
+Removing duplicated triangles...  [done] 0 ms
+Cleaned up mesh: 598V 1175T
+	 Removed 26 triangles
+Removing small connected components...
+	 CC 0 -> 596V 1175T
+ [done] 0 ms
+Input mesh: 1CC 598V 1175T
+Cleaned up mesh: 1CC 596V 1175T	 Removed 0CC 2V 0T

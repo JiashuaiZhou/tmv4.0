@@ -1,0 +1,67 @@
+Processing frame 0
+/home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0000_qp12_qt13.obj
+Loading file: /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0000_qp12_qt13.obj
+Time on loading: 0.119999997 sec.
+Input model: /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0000_qp12_qt13.obj
+  Vertices: 19997
+  UVs: 46795
+  Colors: 0
+  Normals: 0
+  Triangles: 40040
+  Trianglesuv: 40040
+De-quantizing
+  qp = 12
+  qt = 13
+  qn = 0
+  qc = 0
+  minPos="-0.780700684 -0.0424957275 -0.594329834"
+  maxPos="0.85723877 1.90898132 0.687271118"
+  rangePos=1.95147705
+  maxQuantizedValue=4095
+  scale=0.00048828125
+  minUv="0 0"
+  maxUv="1 1"
+  rangeUv=1
+Time on processing: 0 sec.
+levi_voxelized.vmesh.0000_decoded.obj
+Loading file: levi_voxelized.vmesh.0000_decoded.obj
+/home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0000.png
+Input map: /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0000.png
+levi_voxelized.vmesh.0000_decoded.png
+Input map: levi_voxelized.vmesh.0000_decoded.png
+Error: opening file levi_voxelized.vmesh.0000_decoded.png
+Error: model with id ID:deqDisnot defined
+Processing frame 1
+/home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0001_qp12_qt13.obj
+Loading file: /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0001_qp12_qt13.obj
+Time on loading: 0.119999997 sec.
+Input model: /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0001_qp12_qt13.obj
+  Vertices: 19996
+  UVs: 46529
+  Colors: 0
+  Normals: 0
+  Triangles: 40044
+  Trianglesuv: 40044
+De-quantizing
+  qp = 12
+  qt = 13
+  qn = 0
+  qc = 0
+  minPos="-0.780700684 -0.0424957275 -0.594329834"
+  maxPos="0.85723877 1.90898132 0.687271118"
+  rangePos=1.95147705
+  maxQuantizedValue=4095
+  scale=0.00048828125
+  minUv="0 0"
+  maxUv="1 1"
+  rangeUv=1
+Time on processing: 0 sec.
+levi_voxelized.vmesh.0001_decoded.obj
+Loading file: levi_voxelized.vmesh.0001_decoded.obj
+/home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0001.png
+Input map: /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr0001.png
+levi_voxelized.vmesh.0001_decoded.png
+Input map: levi_voxelized.vmesh.0001_decoded.png
+Error: opening file levi_voxelized.vmesh.0001_decoded.png
+Error: model with id ID:deqDisnot defined
+Time on overall processing: 1.23000002 sec.

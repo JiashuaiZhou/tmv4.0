@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
+cmake_minimum_required(VERSION 3.17)
 
 GET_FILENAME_COMPONENT(MYNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 STRING(REPLACE " " "_" MYNAME ${MYNAME})
@@ -15,7 +15,7 @@ INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/dependencies
 
 SET( LIBS vdmcLibCommon )
 IF( USE_HDRTOOLS )
-  add_compile_definitions(USE_HDRTOOLS=1)
+  add_compile_definitions( USE_HDRTOOLS )
   SET( LIBS ${LIBS} HDRLib )
 ENDIF()
 

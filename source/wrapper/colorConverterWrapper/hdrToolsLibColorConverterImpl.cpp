@@ -30,9 +30,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if USE_HDRTOOLS == 1 
+#if defined( USE_HDRTOOLS )
 
-#include "hdrToolsLibColorConverterImpl.hpp"
+#include "hdrToolsLibColorConverterImpl.hpppp"
 
 using namespace vmesh;
 
@@ -537,16 +537,13 @@ template <typename T>
 void hdrToolsLibColorConverterImpl<T>::process( ProjectParameters* inputParams,
                                                    FrameSequence<T>&    videoSrc,
                                                    FrameSequence<T>&    videoDst ) {
-  int                       frameNumber;
-  int                       iCurrentFrameToProcess = 0;
-  float                     fDistance0   = inputParams->m_source.m_frameRate / inputParams->m_output.m_frameRate;
+  int                       frameNumber;    
   bool                      errorRead    = false;
   hdrtoolslib::Frame*       currentFrame = NULL;
   hdrtoolslib::FrameFormat* input        = &inputParams->m_source;
   videoDst.clear();
   // Now process all frames
-  for ( frameNumber = 0; frameNumber < inputParams->m_numberOfFrames; frameNumber++ ) {
-    iCurrentFrameToProcess = int( frameNumber * fDistance0 );
+  for ( frameNumber = 0; frameNumber < inputParams->m_numberOfFrames; frameNumber++ ) {    
     // read frames
     m_iFrameStore->m_frameNo = frameNumber;
     if ( m_iFrameStore->m_isFloat ) {
@@ -682,12 +679,12 @@ void hdrToolsLibColorConverterImpl<T>::process( ProjectParameters* inputParams,
       if ( m_oFrameStore->m_bitDepth == 8 ) {
         for ( int8_t c = 0; c < 3; c++ ) {
           auto* dst = image.plane( c ).data();
-          for ( size_t i = 0; i < image.plane( c ).size(); i++ ) { dst[i] = m_oFrameStore->m_comp[c][i]; }
+          for ( int i = 0; i < image.plane( c ).size(); i++ ) { dst[i] = m_oFrameStore->m_comp[c][i]; }
         }
       } else if ( m_oFrameStore->m_bitDepth > 8 ) {
         for ( int8_t c = 0; c < 3; c++ ) {
           auto* dst = image.plane( c ).data();
-          for ( size_t i = 0; i < image.plane( c ).size(); i++ ) { dst[i] = m_oFrameStore->m_ui16Comp[c][i]; }
+          for ( int i = 0; i < image.plane( c ).size(); i++ ) { dst[i] = m_oFrameStore->m_ui16Comp[c][i]; }
         }
       } else {
         printf( "output format not yet supported ( frame depht = %d \n", m_oFrameStore->m_bitDepth );

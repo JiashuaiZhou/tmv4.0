@@ -512,7 +512,7 @@ InternalColorConverter<T>::convertRGB44ToYUV420(
   FrameSequence<T>& src, FrameSequence<T>& dst, size_t nbyte, size_t filter)
 {
   dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
-  for (size_t i = 0; i < src.frameCount(); i++) {
+  for (int i = 0; i < src.frameCount(); i++) {
     convertRGB44ToYUV420(src[i], dst[i], nbyte, filter);
   }
 }
@@ -543,7 +543,7 @@ InternalColorConverter<T>::convertRGB44ToYUV444(
   FrameSequence<T>& src, FrameSequence<T>& dst, size_t nbyte, size_t filter)
 {
   dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
-  for (size_t i = 0; i < src.frameCount(); i++) {
+  for (int i = 0; i < src.frameCount(); i++) {
     convertRGB44ToYUV444(src[i], dst[i], nbyte, filter);
   }
 }
@@ -570,7 +570,7 @@ InternalColorConverter<T>::convertYUV420ToYUV444(
   FrameSequence<T>& src, FrameSequence<T>& dst, size_t nbyte, size_t filter)
 {
   dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
-  for (size_t i = 0; i < src.frameCount(); i++) {
+  for (int i = 0; i < src.frameCount(); i++) {
     convertYUV420ToYUV444(src[i], dst[i], nbyte, filter);
   }
 }
@@ -603,7 +603,7 @@ InternalColorConverter<T>::convertYUV420ToRGB444(
   size_t filter)
 {
   dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
-  for (size_t i = 0; i < src.frameCount(); i++) {
+  for (int i = 0; i < src.frameCount(); i++) {
     convertYUV420ToRGB444(src[i], dst[i], nbyte, filter);
   }
 }
@@ -618,8 +618,6 @@ InternalColorConverter<T>::convertYUV420ToRGB444(
   const auto width = src.width();
   const auto height = src.height();
   dst.resize(width, height, ColourSpace::RGB444p);
-  size_t widthChroma = width / 2;
-  size_t heightChroma = height / 2;
   Plane<float> YUV444[3], YUV420[3], RGB444[3];
   YUVtoFloatYUV(src[0], YUV420[0], 0, nbyte);
   YUVtoFloatYUV(src[1], YUV420[1], 1, nbyte);
@@ -642,7 +640,7 @@ InternalColorConverter<T>::convertYUV444ToRGB444(
   size_t filter)
 {
   dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
-  for (size_t i = 0; i < src.frameCount(); i++) {
+  for (int i = 0; i < src.frameCount(); i++) {
     convertYUV444ToRGB444(src[i], dst[i], nbyte, filter);
   }
 }

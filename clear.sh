@@ -13,7 +13,11 @@ then
               directx-math \
               directx-mesh \
               uvatlas \
-              mmetric
+              mmetric \
+              jm \
+              hm \
+              vtm \
+              ffmpeg
   do
     if [ "$1" == "${name}" ] || [ "$1" == "all" ]
     then 

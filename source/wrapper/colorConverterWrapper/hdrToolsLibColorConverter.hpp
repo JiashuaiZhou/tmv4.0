@@ -33,7 +33,7 @@
 #include "virtualColorConverter.hpp"
 #include "image.hpp"
 
-#if USE_HDRTOOLS == 1 
+#if defined( USE_HDRTOOLS )
 
 class ProjectParameters;
 

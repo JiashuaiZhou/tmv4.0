@@ -1,4 +1,49 @@
-# # add_all_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR} )
-# add_subdirectory( vdmcLibCommon )
-# add_subdirectory( vdmcLibEncoder )
-# add_subdirectory( vdmcLibDecoder )
+cmake_minimum_required(VERSION 3.2)
+
+GET_FILENAME_COMPONENT(MYNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+STRING(REPLACE " " "_" MYNAME ${MYNAME})
+PROJECT(${MYNAME} C CXX)
+
+FILE(GLOB SRC *.h  *.cpp ${HM_LIB_SOURCE_DIR}/TAppCommon/* )
+
+SET( LIBS PccLibCommon )
+INCLUDE_DIRECTORIES( . ${CMAKE_SOURCE_DIR}/source/lib/vdmcLibCommon )
+
+MESSAGE("USE_HM_VIDEO_CODEC     = ${USE_HM_VIDEO_CODEC} ")
+MESSAGE("USE_VTM_VIDEO_CODEC    = ${USE_VTM_VIDEO_CODEC} ")
+MESSAGE("USE_FFMPEG_VIDEO_CODEC = ${USE_FFMPEG_VIDEO_CODEC} ")
+
+# HM
+IF( USE_HM_VIDEO_CODEC )
+  add_compile_definitions(USE_HM_VIDEO_CODEC)
+  INCLUDE_DIRECTORIES( ${HM_LIB_SOURCE_DIR} )
+  SET( LIBS ${LIBS} TLibCommon TLibEncoder )
+ENDIF()
+
+# VTM
+IF( USE_VTM_VIDEO_CODEC )
+  add_compile_definitions(USE_VTM_VIDEO_CODEC)
+  SET( LIBS ${LIBS} CommonLib EncoderLib_vtm DecoderLib_vtm Utilities_vtm )
+ENDIF()
+
+# FFMPEG
+IF( USE_FFMPEG_VIDEO_CODEC )
+  add_compile_definitions(USE_FFMPEG_VIDEO_CODEC)
+  INCLUDE_DIRECTORIES( ${FFMPEG_INCLUDE}
+                       ${CMAKE_SOURCE_DIR}/source/wrapper/videoDecoderWrapper/ )
+  IF( WIN32 OR MSVC OR MSYS OR MINGW )
+    LINK_DIRECTORIES( ${FFMPEG_DEV_DIR}/lib ) 
+  ENDIF()
+  INCLUDE_DIRECTORIES( )
+  SET( LIBS ${LIBS} ${AVCODEC_LIBRARY} ${AVUTIL_LIBRARY} ${AVFORMAT_LIBRARY} videoDecoderWrapper )    
+ENDIF()
+
+ADD_LIBRARY( ${MYNAME} ${SRC} )
+
+If( MSVC )
+  TARGET_LINK_LIBRARIES( ${MYNAME} ${LIBS} ws2_32)
+ELSE()
+  TARGET_LINK_LIBRARIES( ${MYNAME} ${LIBS} )
+ENDIF()
+
+SET_TARGET_PROPERTIES( ${MYNAME} PROPERTIES LINKER_LANGUAGE CXX)

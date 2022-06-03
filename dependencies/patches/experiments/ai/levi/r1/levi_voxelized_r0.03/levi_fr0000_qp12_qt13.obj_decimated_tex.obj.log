@@ -1,0 +1,16 @@
++ Configuration parameters
+    fnum   : 0
+    input  : "levi_voxelized_r0.03/levi_fr0000_qp12_qt13.obj_decimated.obj"
+    output : "levi_voxelized_r0.03/levi_fr0000_qp12_qt13.obj_decimated_tex.obj"
+    quality : QUALITY
+    n       : 0
+    stretch : 0.16667
+    gutter  : 32
+    width   : 4096
+    height  : 4096
+
+590 vertices, 1178 faces
+ [29 vertex dups]
+Computing isochart atlas on mesh...
+68.5098%   68.7745%   69.3922%   Processing time: 4733 ms
+Output # of charts: 34, resulting stretching 0.110659, 867 verts

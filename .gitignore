@@ -36,5 +36,8 @@ dependencies/draco
 dependencies/uvatlas
 dependencies/mmetric
 dependencies/hdrtools
+dependencies/hm
+dependencies/vtm
+dependencies/ffmpeg
 
 

@@ -42,7 +42,7 @@
 #include "HDRConvert.H"
 #include "Input.H"
 #include "Output.H"
-#include "Frame.H"
+#include "image.hpp"
 #include "IOFunctions.H"
 #include "Convert.H"
 #include "ConvertColorFormat.H"

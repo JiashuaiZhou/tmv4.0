@@ -1,15 +1,15 @@
 
 # LIST OF SUB-DIRECTORIES
-MACRO(subDirList result curdir)
-    FILE(GLOB children ${curdir}/*) 
-    SET(dirlist "")
-    FOREACH(child ${children})
-        IF(IS_DIRECTORY ${child})
-            LIST(APPEND dirlist ${child})
-        ENDIF()
-    ENDFOREACH()
+macro(subDirList result curdir)
+    file(GLOB children ${curdir}/*) 
+    set(dirlist "")
+    foreach(child ${children})
+        if(IS_DIRECTORY ${child})
+            list(APPEND dirlist ${child})
+        endif()
+    endforeach()
     SET(${result} ${dirlist})
-ENDMACRO()
+endmacro()
 
 # ADD ALL SUB-DIRECTORIES
 function(add_all_subdirectory curdir)

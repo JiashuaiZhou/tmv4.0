@@ -170,13 +170,6 @@ dracoLibGeometryEncoder<T>::encode(
   TriangleMesh<T>& rec)
 {
   // Load draco mesh
-  // printf( "encoding %s\n", params.srcFileName_.c_str() );
-  // auto maybe_mesh = draco::ReadMeshFromFile( params.srcFileName_, false );
-  // if ( !maybe_mesh.ok() ) {
-  //   printf( "Failed loading the input mesh %s: %s.\n", params.srcFileName_.c_str(), maybe_mesh.status().error_msg() );
-  //   exit( -1 );
-  // }
-  // auto mesh = maybe_mesh.value();
   auto mesh = convert(src);
 
   // Encode

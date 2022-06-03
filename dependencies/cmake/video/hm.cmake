@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
-
 set( HM_VERSION         HM-16.20+SCM-8.8 )
 set( HM_DIR             ${CMAKE_SOURCE_DIR}/dependencies/hm/ )
 set( HM_LIB_SOURCE_DIR  ${HM_DIR}/source/Lib )
@@ -7,7 +5,7 @@ set( HM_LIB_SOURCE_DIR  ${HM_DIR}/source/Lib )
 if( NOT EXISTS "${HM_DIR}/README" )
   execute_process( COMMAND git clone --depth 1 --branch ${HM_VERSION} https://vcgit.hhi.fraunhofer.de/jvet/HM.git ${HM_DIR} RESULT_VARIABLE ret)
   if( NOT ${ret} EQUAL "0")
-    MESSAGE( FATAL_ERROR "Error during the HM git clone process. Check that git is well installed on your system.")
+    message( FATAL_ERROR "Error during the HM git clone process. Check that git is well installed on your system.")
   endif()  
 endif()
 

@@ -1,7 +1,7 @@
 
 # fix policies in dependent projects by injecting code
 # notably, set CMP0077 so that setting variables is honoured by subprojects
-SET(CMAKE_PROJECT_INCLUDE_BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/scripts/fix-policy.cmake)
+set(CMAKE_PROJECT_INCLUDE_BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/scripts/fix-policy.cmake)
 
 # Some dependencies include find_library commands, which wont work in the
 # in-tree build (because they've not been built yet).  Whereas actually

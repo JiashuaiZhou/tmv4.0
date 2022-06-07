@@ -14,6 +14,7 @@ while (( $# )); do
 	case $1 in
 	--outdir=*) outdir="${1#--outdir=}" ;;
 	--cfgdir=*) src_cfg_dir="${1#--cfgdir=}" ;;
+	--keep-merged) keep_merged=1 ;;
 	--) shift; break ;;
 	--help|*)
 		echo -e "usage:\n $0\n" \
@@ -65,7 +66,7 @@ do_one_cfgset() {
 		${sitecfg:+"${sitecfg}"} \
 		"${extra_args[@]}"
 
-	rm -f "$outdir/config-merged.yaml"
+	[[ ${keep_merged} ]] || rm -f "$outdir/config-merged.yaml"
 }
 
 do_one_cfgset "all"

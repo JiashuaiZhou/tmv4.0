@@ -124,8 +124,9 @@ endef
 
 ##############################################################################
 # the default target, launches all steps
-.PHONY: all
+.PHONY: all pp
 all: encode decode ;
+pp: ;
 
 ##
 # avoid deleting expensive files
@@ -167,6 +168,7 @@ ifneq (1,$(SKIP_GENGOF))
 goffile := $(call read_cfg_param,output,$(call vpath,gengof.cfg))
 .PHONY: gengof
 gengof: ${goffile} ;
+pp: gengof
 
 endif # SKIP_GENGOF
 
@@ -186,6 +188,7 @@ tgts_simplify = $(sfy_outs_decimated) $(sfy_outs_reference) $(sfy_outs_mapped)
 # phony target to run only simplify stage
 .PHONY: simplify
 simplify: $(tgts_simplify) ;
+pp: simplify
 
 # add per-target dependencies
 $(call mapPair,addDep,sfy_outs_decimated,sfy_ins_input)
@@ -209,6 +212,7 @@ tgts_uvatlas = $(uv_outputs)
 # phony target to run only uvatlas stage (and dependencies)
 .PHONY: uvatlas
 uvatlas: $(tgts_uvatlas) ;
+pp: uvatlas
 
 # add per-target dependencies
 $(call mapPair,addDep,uv_outputs,uv_inputs)
@@ -234,6 +238,7 @@ tgts_fitsubdiv_intra = $(ai_outs_base) $(ai_outs_subdiv) $(ai_outs_nsubdiv)
 # phony target to run only intra fitsubdiv stage (and dependencies)
 .PHONY: fitsubdiv_intra
 fitsubdiv_intra: $(tgts_fitsubdiv_intra);
+pp: fitsubdiv_intra
 
 # add dependencies
 $(foreach in,target source mapped,$\
@@ -295,6 +300,7 @@ tgts_fitsubdiv_decision := $(patsubst %_base.obj,%.decision,${ld_outs_base})
 .PHONY: fitsubdiv_choose fitsubdiv_inter
 fitsubdiv_choose: $(tgts_fitsubdiv_decision) ;
 fitsubdiv_inter: fitsubdiv_choose ;
+pp: fitsubdiv_choose
 
 # the target-specific variable PREV is the decision file of the previous frame
 # NB: first frame doesn't depend on any previous frame

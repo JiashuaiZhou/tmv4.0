@@ -22,4 +22,5 @@ $(dirs):
 	-$(MAKE) -f $(scriptdir)/Makefile.vmesh-step -C $@ $(MAKECMDGOALS)
 
 # Parallel dispatch to each job directory
-%:: $(dirs)
+.PHONY: $(MAKECMDGOALS)
+$(MAKECMDGOALS): $(dirs)

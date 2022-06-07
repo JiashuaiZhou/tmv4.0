@@ -48,6 +48,7 @@ do_one_cfgset() {
 	mkdir -p "${outdir}"
 
 	cfgset="cfg_${what}[@]"
+	cfgs=("${!cfgset}")
 
 	for f in ${!cfgset}
 	do
@@ -60,7 +61,7 @@ do_one_cfgset() {
 		--prefix="$outdir" --no-skip-sequences-without-src \
 		"${src_cfg_dir}cfg-site-default.yaml" \
 		"${src_cfg_dir}cfg-tools.yaml" \
-		"${!cfgset/#/${src_cfg_dir}}" \
+		"${cfgs[@]/#/${src_cfg_dir}}" \
 		"${src_cfg_dir}sequences.yaml" \
 		${sitecfg:+"${sitecfg}"} \
 		"${extra_args[@]}"

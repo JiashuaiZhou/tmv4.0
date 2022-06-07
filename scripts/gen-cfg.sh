@@ -28,9 +28,9 @@ extra_args=("$@")
 # add trailing slash to src_cfg_dir if not empty
 src_cfg_dir="${src_cfg_dir}${src_cfg_dir:+/}"
 
-# load site configuration if present
+# load site configuration if present or fall-back to site-default
 sitecfg="${src_cfg_dir:-}cfg-site.yaml"
-[[ -f $sitecfg ]] || sitecfg=
+[[ -f $sitecfg ]] || sitecfg="${src_cfg_dir}cfg-site-default.yaml"
 
 ##
 # NB: it is important that the configs in each config set are
@@ -59,7 +59,6 @@ do_one_cfgset() {
 	# processing since gen-cfg.pl is flexible in argument positions
 	$script_dir/gen-cfg.pl \
 		--prefix="$outdir" --no-skip-sequences-without-src \
-		"${src_cfg_dir}cfg-site-default.yaml" \
 		"${src_cfg_dir}cfg-tools.yaml" \
 		"${cfgs[@]/#/${src_cfg_dir}}" \
 		"${src_cfg_dir}sequences.yaml" \

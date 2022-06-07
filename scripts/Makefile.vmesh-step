@@ -10,6 +10,10 @@ SHELL := bash
 GNUMAKEFLAGS := -rR --no-print-directory
 
 ##
+# MD5 command (GNU, OSX)
+MD5SUM := $(shell which md5sum || which md5)
+
+##
 # Prety output unless verbose requested
 quiet = $(if $(V)$(VERBOSE),,@$(if $1,$(info $1)))
 quiet_GENCFG   =$(call quiet,$(quiet_txt_GENCFG))

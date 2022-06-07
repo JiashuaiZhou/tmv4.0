@@ -4,7 +4,7 @@ scriptdir := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 # By default, assume that these tools are on the path
 export GENGOF ?= gengof
 export SIMPLIFY ?= simplify
-export UUVATLAS ?= uvatlas
+export UVATLAS ?= uvatlaslite
 export FITSUBDIV ?= fitsubdiv
 export VMC ?= vmc
 export MMETRIC ?= mm

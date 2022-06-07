@@ -113,10 +113,11 @@ target_sources(simplify PRIVATE
 )
 
 
-add_executable(uvatlas)
-target_link_libraries(uvatlas po vmesh UVAtlas DirectX-Headers DirectXMath DirectXMesh)
-target_sources(uvatlas PRIVATE
-	"uvatlas.cpp"
+add_executable(uvatlaslite)
+set_target_properties(uvatlaslite PROPERTIES OUTPUT_NAME uvatlas)
+target_link_libraries(uvatlaslite po vmesh UVAtlas DirectX-Headers DirectXMath DirectXMesh)
+target_sources(uvatlaslite PRIVATE
+    "uvatlas.cpp"
 )
 
 

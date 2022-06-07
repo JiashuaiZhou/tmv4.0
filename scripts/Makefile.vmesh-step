@@ -391,26 +391,29 @@ endif # SKIP_ENCODE
 ##############################################################################
 # Decoding
 ifneq (1,$(SKIP_DECODE))
+include Makefile.cfg.decoder
+
+dec_in_compressed := $(compressed)
 
 .PHONY: decode
-decode: ${enc_out_compressed}.decoded.stamp
-decode: ${enc_out_compressed}.decoded.ibsm_mmetric.csv
-decode: ${enc_out_compressed}.decoded.pcc_mmetric.csv
+decode: ${dec_in_compressed}.decoded.stamp
+decode: ${dec_in_compressed}.decoded.ibsm_mmetric.csv
+decode: ${dec_in_compressed}.decoded.pcc_mmetric.csv
 decode: ;
 
 # what the decoder will produce (objs) depends upon decoding
-decobjs := $(call expand_seq_frames,${enc_out_compressed}.%04d_decoded.obj)
-decpngs := $(call expand_seq_frames,${enc_out_compressed}.%04d_decoded.png)
-${decobjs}: ${enc_out_compressed}.decoded.stamp
-${decpngs}: ${enc_out_compressed}.decoded.stamp
+decobjs := $(call expand_seq_frames,${dec_in_compressed}.%04d_decoded.obj)
+decpngs := $(call expand_seq_frames,${dec_in_compressed}.%04d_decoded.png)
+${decobjs}: ${dec_in_compressed}.decoded.stamp
+${decpngs}: ${dec_in_compressed}.decoded.stamp
 
 # compute objsums/md5sums of all the obj/png files
-decode: ${enc_out_compressed}.decoded.objsums
-decode: ${enc_out_compressed}.decoded.md5sums
-${enc_out_compressed}.decoded.objsums: ${enc_out_compressed}.decoded.stamp
-${enc_out_compressed}.decoded.md5sums: ${enc_out_compressed}.decoded.stamp
-${enc_out_compressed}.decoded.objsums: ${decobjs}
-${enc_out_compressed}.decoded.md5sums: ${decpngs}
+decode: ${dec_in_compressed}.decoded.objsums
+decode: ${dec_in_compressed}.decoded.md5sums
+${dec_in_compressed}.decoded.objsums: ${dec_in_compressed}.decoded.stamp
+${dec_in_compressed}.decoded.md5sums: ${dec_in_compressed}.decoded.stamp
+${dec_in_compressed}.decoded.objsums: ${decobjs}
+${dec_in_compressed}.decoded.md5sums: ${decpngs}
 
 endif # SKIP_DECODE
 

@@ -7,38 +7,38 @@ target_include_directories(po INTERFACE "${PROJECT_SOURCE_DIR}/dependencies/" )
 
 # Draco Encoder/decoder
 create_executable( NAME      encodeDraco
-                   SOURCES   unitTesting/dracoEncoder.cpp 
+                   SOURCES   unitTests/dracoEncoder.cpp 
                    LIBRARIES po geometryEncoder 
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder )
 create_executable( NAME      decodeDraco 
-                   SOURCES   unitTesting/dracoDecoder.cpp 
+                   SOURCES   unitTests/dracoDecoder.cpp 
                    LIBRARIES po geometryDecoder
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder )
 
 # Video Encoder/decoder
 create_executable( NAME      encodeVideo 
-                   SOURCES   unitTesting/videoEncoder.cpp 
+                   SOURCES   unitTests/videoEncoder.cpp 
                    LIBRARIES po videoEncoder
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/videoEncoder )
 create_executable( NAME      decodeVideo 
-                   SOURCES   unitTesting/videoDecoder.cpp 
+                   SOURCES   unitTests/videoDecoder.cpp 
                    LIBRARIES po videoDecoder
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/videoDecoder )
 
 # Colour Converter
 create_executable( NAME      colourConverte
-                   SOURCES   unitTesting/colourConverter.cpp 
+                   SOURCES   unitTests/colourConverter.cpp 
                    LIBRARIES po colourConverter
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/colourConverter )
 
 # Metrics
 create_executable( NAME      metrics 
-                   SOURCES   unitTesting/metrics.cpp 
+                   SOURCES   unitTests/metrics.cpp 
                    LIBRARIES po vdmcUtil
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil )
 
@@ -62,8 +62,7 @@ create_executable( NAME      uvatlas
                    SOURCES   original/uvatlas.cpp 
                    LIBRARIES po vdmcUtil vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
-                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder 
-                             ${CMAKE_SOURCE_DIR}/dependnecies ) 
+                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder ) 
 
 # Fitsubdiv
 create_executable( NAME      fitsubdiv 
@@ -94,8 +93,7 @@ create_executable( NAME      encode
                    SOURCES   encode.cpp 
                    LIBRARIES po vdmcUtil vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
-                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder
-                             ${CMAKE_SOURCE_DIR}/dependnecies )  
+                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder )  
 
 # Decode
 create_executable( NAME      decode 
@@ -103,3 +101,15 @@ create_executable( NAME      decode
                    LIBRARIES po vdmcUtil vdmcDecoder 
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcDecoder )
+
+
+                             
+########################### GTest applications ###########################
+
+include( ${CMAKE_SOURCE_DIR}/dependencies/cmake/gtest.cmake )
+enable_testing()
+add_executable( hello_test tests/main.cpp )
+target_link_libraries( hello_test gtest_main vdmcUtil)
+include(GoogleTest)
+gtest_discover_tests(hello_test)
+

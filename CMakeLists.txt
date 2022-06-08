@@ -20,7 +20,9 @@ OPTION( USE_HDRTOOLS             "Use HDRTools for color conversions"     TRUE )
 OPTION( USE_HM_PCC_RDO           "Use HM optimized RDO "                  TRUE )
 
 # Building options
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD          17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS        OFF)
 if (MSVC)
   add_compile_options(/W4)
 else ()

@@ -43,8 +43,6 @@
 
 #include "virtualColourConverter.hpp"
 
-using namespace std;
-
 //============================================================================
 
 struct Parameters {
@@ -100,7 +98,7 @@ try {
 
   po::setDefaults(opts);
   po::ErrorReporter err;
-  const list<const char*>& argv_unhandled =
+  const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
@@ -120,10 +118,10 @@ try {
     return false;
 
   // Dump the complete derived configuration
-  cout << "+ Configuration parameters\n";
-  po::dumpCfg(cout, opts, "Input/Output", 4);
-  po::dumpCfg(cout, opts, "Convertion", 4);  
-  cout << '\n';
+  std::cout << "+ Configuration parameters\n";
+  po::dumpCfg(std::cout, opts, "Input/Output", 4);
+  po::dumpCfg(std::cout, opts, "Convertion", 4);  
+  std::cout << '\n';
   return true;
 }
 catch (df::program_options_lite::ParseFailure& e) {
@@ -137,7 +135,7 @@ catch (df::program_options_lite::ParseFailure& e) {
 int
 main(int argc, char* argv[])
 {
-  cout << "MPEG VMESH version " << ::vmesh::version << '\n';
+  std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
   if (!parseParameters(argc, argv, params))

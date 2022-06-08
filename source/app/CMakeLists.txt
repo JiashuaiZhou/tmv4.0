@@ -7,38 +7,38 @@ target_include_directories(po INTERFACE "${PROJECT_SOURCE_DIR}/dependencies/" )
 
 # Draco Encoder/decoder
 create_executable( NAME      encodeDraco
-                   SOURCES   unitTests/dracoEncoder.cpp 
+                   SOURCES   wrapper/dracoEncoder.cpp 
                    LIBRARIES po geometryEncoder 
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder )
 create_executable( NAME      decodeDraco 
-                   SOURCES   unitTests/dracoDecoder.cpp 
+                   SOURCES   wrapper/dracoDecoder.cpp 
                    LIBRARIES po geometryDecoder
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder )
 
 # Video Encoder/decoder
 create_executable( NAME      encodeVideo 
-                   SOURCES   unitTests/videoEncoder.cpp 
+                   SOURCES   wrapper/videoEncoder.cpp 
                    LIBRARIES po videoEncoder
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/videoEncoder )
 create_executable( NAME      decodeVideo 
-                   SOURCES   unitTests/videoDecoder.cpp 
+                   SOURCES   wrapper/videoDecoder.cpp 
                    LIBRARIES po videoDecoder
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/videoDecoder )
 
 # Colour Converter
 create_executable( NAME      colourConverte
-                   SOURCES   unitTests/colourConverter.cpp 
+                   SOURCES   wrapper/colourConverter.cpp 
                    LIBRARIES po colourConverter
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/colourConverter )
 
 # Metrics
 create_executable( NAME      metrics 
-                   SOURCES   unitTests/metrics.cpp 
+                   SOURCES   wrapper/metrics.cpp 
                    LIBRARIES po vdmcUtil
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil )
 
@@ -108,7 +108,7 @@ CPMAddPackage( "gh:google/googletest#release-1.11.0" )
 enable_testing()
 
 create_executable( NAME      tests 
-                   SOURCES   tests/main.cpp tests/draco.cpp
+                   SOURCES   gtests/main.cpp gtests/draco.cpp
                    LIBRARIES gtest_main vdmcUtil geometryEncoder geometryDecoder
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder

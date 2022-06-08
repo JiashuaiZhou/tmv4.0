@@ -56,10 +56,10 @@ namespace vmesh {
 enum VideoCodecId
 {
 #if defined(USE_HM_VIDEO_CODEC)
-  HMLIB = 0,
+  HM = 0,
 #endif
 #if defined(USE_VTM_VIDEO_CODEC)
-  VTMLIB = 1,
+  VTM = 1,
 #endif
 #if defined(USE_FFMPEG_VIDEO_CODEC)
   FFMPEG = 2,
@@ -77,11 +77,11 @@ operator>>(std::istream& in, vmesh::VideoCodecId& val)
   val = vmesh::VideoCodecId::UNKNOWN_VIDEO_CODEC;
 #if defined(USE_HM_VIDEO_CODEC)
   if (str == "HM")
-    val = vmesh::VideoCodecId::HMLIB;
+    val = vmesh::VideoCodecId::HM;
 #endif
 #if defined(USE_VTM_VIDEO_CODEC)
   if (str == "VTM")
-    val = vmesh::VideoCodecId::VTMLIB;
+    val = vmesh::VideoCodecId::VTM;
 #endif
 #if defined(USE_FFMPEG_VIDEO_CODEC)
   if (str == "FFMPEG")
@@ -99,10 +99,10 @@ operator<<(std::ostream& out, vmesh::VideoCodecId val)
 {
   switch (val) {
 #if defined(USE_HM_VIDEO_CODEC)
-  case vmesh::VideoCodecId::HMLIB: out << "HM"; break;
+  case vmesh::VideoCodecId::HM: out << "HM"; break;
 #endif
 #if defined(USE_HM_VIDEO_CODEC)
-  case vmesh::VideoCodecId::VTMLIB: out << "VTM"; break;
+  case vmesh::VideoCodecId::VTM: out << "VTM"; break;
 #endif
 #if defined(USE_HM_VIDEO_CODEC)
   case vmesh::VideoCodecId::FFMPEG: out << "FFMPEG"; break;

@@ -101,15 +101,18 @@ create_executable( NAME      decode
                    LIBRARIES po vdmcUtil vdmcDecoder 
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcDecoder )
-
-
-                             
+                           
 ########################### GTest applications ###########################
 
-include( ${CMAKE_SOURCE_DIR}/dependencies/cmake/gtest.cmake )
+CPMAddPackage( "gh:google/googletest#release-1.11.0" )
 enable_testing()
-add_executable( hello_test tests/main.cpp )
-target_link_libraries( hello_test gtest_main vdmcUtil)
+
+create_executable( NAME      tests 
+                   SOURCES   tests/main.cpp tests/draco.cpp
+                   LIBRARIES gtest_main vdmcUtil geometryEncoder geometryDecoder
+                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
+                             ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder
+                             ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder )
 include(GoogleTest)
-gtest_discover_tests(hello_test)
+gtest_discover_tests( tests )
 

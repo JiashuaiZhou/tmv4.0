@@ -32,9 +32,7 @@ doc/mpeg-vmesh-sw-manual.aux
 # Dependencies
 dependencies/directx-headers
 dependencies/directx-math
-dependencies/directx-mesh 
 dependencies/directx-mesh
-dependencies/draco
 dependencies/draco
 dependencies/uvatlas
 dependencies/mmetric

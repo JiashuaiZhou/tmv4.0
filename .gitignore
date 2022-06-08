@@ -21,6 +21,9 @@ CMakeCache.txt
 xcuserdata
 DerivedData
 
+# configure files
+source/lib/vdmcUtil/config.h
+
 # A directory for developers to put anything
 data/
 

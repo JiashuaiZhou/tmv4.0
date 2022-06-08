@@ -88,7 +88,7 @@ try {
   ("qp",  params.params.qp_, 11, "qp")
   ("qt",  params.params.qt_, 10, "qt")
   ("qn",  params.params.qn_, -1, "qn")
-  ("qc",  params.params.qc_, -1, "qc")
+  ("qg",  params.params.qg_, -1, "qg")
   ("cl",  params.params.cl_, 10, "cl")
   ;
   

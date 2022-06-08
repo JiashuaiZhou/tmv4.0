@@ -8,7 +8,7 @@ if( NOT EXISTS ${DIR} )
 endif()
 
 if( NOT EXISTS ${DIR}/PATCHED )  
-  file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/patches/uvatlas/*")
+  file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/patches/uvatlas/*")
   foreach(file ${files})
     execute_process( COMMAND git am ${file} WORKING_DIRECTORY ${DIR} RESULT_VARIABLE ret )
     if( NOT ${ret} EQUAL "0")

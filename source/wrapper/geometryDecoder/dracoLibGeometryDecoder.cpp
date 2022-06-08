@@ -57,13 +57,8 @@ convert(std::unique_ptr<draco::Mesh>& src, vmesh::TriangleMesh<T>& dst)
   auto nrmAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::NORMAL);
   auto colAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::COLOR);
   auto texAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::TEX_COORD);
-
-  printf("convert start \n");
-  fflush(stdout);
   // position
   if (posAtt) {
-    printf("posAtt->size() = %zu  \n", posAtt->size());
-    fflush(stdout);
     for (draco::AttributeValueIndex i(0);
          i < static_cast<uint32_t>(posAtt->size()); ++i) {
       std::array<int32_t, 3> value;
@@ -73,13 +68,8 @@ convert(std::unique_ptr<draco::Mesh>& src, vmesh::TriangleMesh<T>& dst)
       dst.addPoint(value[0], value[1], value[2]);
     }
   }
-  printf("position done \n");
-  fflush(stdout);
-
   // Normal
   if (nrmAtt) {
-    printf("nrmAtt->size() = %zu  \n", nrmAtt->size());
-    fflush(stdout);
     for (draco::AttributeValueIndex i(0);
          i < static_cast<uint32_t>(nrmAtt->size()); ++i) {
       std::array<int32_t, 3> value;
@@ -89,13 +79,8 @@ convert(std::unique_ptr<draco::Mesh>& src, vmesh::TriangleMesh<T>& dst)
       dst.addNormal(value[0], value[1], value[2]);
     }
   }
-  printf("Normal done \n");
-  fflush(stdout);
-
   // Color
   if (colAtt) {
-    printf("colAtt->size() = %zu  \n", colAtt->size());
-    fflush(stdout);
     for (draco::AttributeValueIndex i(0);
          i < static_cast<uint32_t>(colAtt->size()); ++i) {
       std::array<int32_t, 3> value;
@@ -105,37 +90,35 @@ convert(std::unique_ptr<draco::Mesh>& src, vmesh::TriangleMesh<T>& dst)
       dst.addColour(value[0], value[1], value[2]);
     }
   }
-  printf("Color done \n");
-  fflush(stdout);
-
   // Texture coordinate
   if (texAtt) {
-    printf("texAtt->size() = %zu  \n", texAtt->size());
-    fflush(stdout);
     for (draco::AttributeValueIndex i(0);
          i < static_cast<uint32_t>(texAtt->size()); ++i) {
       std::array<int32_t, 2> value;
-      if (!texAtt->ConvertValue<int32_t, 3>(i, &value[0])) {
+      if (!texAtt->ConvertValue<int32_t, 2>(i, &value[0])) {
         return;
       }
       dst.addTexCoord(value[0], value[1]);
     }
   }
-  printf("Texture done \n");
-  fflush(stdout);
-  
-  printf("mesh.num_faces() = %zu \n", (size_t)mesh.num_faces());
-  fflush(stdout);
   for (draco::FaceIndex i(0); i < mesh.num_faces(); ++i) {
     auto& face = mesh.face(i);
-    const int32_t idx0 = face[0].value();
-    const int32_t idx1 = face[1].value();
-    const int32_t idx2 = face[2].value();
+    const int32_t idx0 = posAtt->mapped_index(face[0]).value();
+    const int32_t idx1 = posAtt->mapped_index(face[1]).value();
+    const int32_t idx2 = posAtt->mapped_index(face[2]).value();
     dst.addTriangle(idx0, idx1, idx2);
-    if (texAtt && texAtt->size() > 0)
-      dst.addTexCoordTriangle(idx0, idx1, idx2);
-    if (nrmAtt && nrmAtt->size() > 0)
-      dst.addNormalTriangle(idx0, idx1, idx2);
+    if (texAtt && texAtt->size() > 0){
+      const int32_t tex0 = texAtt->mapped_index(face[0]).value();
+      const int32_t tex1 = texAtt->mapped_index(face[1]).value();
+      const int32_t tex2 = texAtt->mapped_index(face[2]).value();
+      dst.addTexCoordTriangle(tex0, tex1, tex2);
+    }
+    if (nrmAtt && nrmAtt->size() > 0){
+      const int32_t nrm0 = nrmAtt->mapped_index(face[0]).value();
+      const int32_t nrm1 = nrmAtt->mapped_index(face[1]).value();
+      const int32_t nrm2 = nrmAtt->mapped_index(face[2]).value();
+      dst.addNormalTriangle(nrm0, nrm1, nrm2);
+    }
   }
 }
 

@@ -52,13 +52,13 @@ TEST(DracoEncoder, Encode)
   vmesh::GeometryEncoderParameters params;
   std::string inputMesh = "data/gof_0_fr_0_qbase.obj";
   std::string recOrg = "rec_org.obj";
-  std::string binOrg = "bin_org.obj";
+  std::string binOrg = "bin_org.drc";
   std::string recNew = "rec_new.obj";
-  std::string binNew = "bin_new.obj";
+  std::string binNew = "bin_new.drc";
   params.qp_ = 11;
   params.qt_ = 10;
   params.qn_ = -1;
-  params.qc_ = -1;
+  params.qg_ = -1;
   params.cl_ = 10;
 
   // Encode with VirtualGeometryEncoder
@@ -80,12 +80,12 @@ TEST(DracoEncoder, Encode)
   std::stringstream cmd;
   cmd << "./build/Release/bin/draco_encoder "
       << " -i " << inputMesh    //
+      << " -o " << binOrg       //
       << " -qp " << params.qp_  //
       << " -qt " << params.qt_  //
       << " -qn " << params.qn_  //
-      << " -qc " << params.qc_  //
-      << " -cl " << params.cl_  //
-      << " -o " << binOrg;
+      << " -qg " << params.qg_  //
+      << " -cl " << params.cl_;
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -99,7 +99,7 @@ TEST(DracoEncoder, Encode)
 
   // Compare bitstreams
   std::ifstream fileBinOrg(binOrg);
-  std::ifstream fileBinNew(binOrg);
+  std::ifstream fileBinNew(binNew);
   std::string strBinOrg(
     (std::istreambuf_iterator<char>(fileBinOrg)),
     std::istreambuf_iterator<char>());
@@ -112,10 +112,10 @@ TEST(DracoEncoder, Encode)
   // TODO Add md5sun rec file comparison
   std::cout << "\033[0;32m[          ] \033[0;0m" << "TODO Add md5sun rec file comparison" << std::endl;
 
-  // Remove tmp files
-  remove( binOrg.c_str() );
-  remove( binNew.c_str() );
-  remove( recOrg.c_str() );
+  // // Remove tmp files
+  // remove( binOrg.c_str() );
+  // remove( binNew.c_str() );
+  // remove( recOrg.c_str() );
   
 
 }

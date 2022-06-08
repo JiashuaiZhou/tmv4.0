@@ -12,7 +12,7 @@ include_directories( ${CMAKE_SOURCE_DIR}/dependencies
  
 add_library( ${MYNAME} ${SRC} ${CMAKE_SOURCE_DIR}/dependencies/schroedinger/schroarith.c )
 
-target_link_libraries( ${MYNAME} vdmcUtils vdmcCommon )
+target_link_libraries( ${MYNAME} vdmcUtil vdmcCommon )
 
 set_target_properties( ${MYNAME} PROPERTIES LINKER_LANGUAGE CXX)
 

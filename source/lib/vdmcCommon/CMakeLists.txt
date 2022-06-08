@@ -14,7 +14,7 @@ include_directories( ${CMAKE_SOURCE_DIR}/dependencies
 
 add_library( ${MYNAME} ${SRC} ${VERSION_FILE} )
 
-target_link_libraries( ${MYNAME} vdmcUtils mmlib )
+target_link_libraries( ${MYNAME} vdmcUtil mmlib )
 
 set_target_properties( ${MYNAME} PROPERTIES LINKER_LANGUAGE CXX)
 

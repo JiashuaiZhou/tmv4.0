@@ -71,25 +71,29 @@ try {
   ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("Input/Output"))
-  ("srcMesh",  params.srcMeshPath,    {}, "Source mesh")
-  ("srcTex",   params.srcTexturePath, {}, "Source texture")
-  ("decMesh",  params.decMeshPath,    {}, "Reconsctructed/decoded mesh")
-  ("decTex",   params.decTexturePath, {}, "Reconsctructed/decoded texture")
-  ("fstart", params.startFrame,      1, "First frame number")
-  ("fcount", params.frameCount,      1, "Number of frames")
+  ("srcMesh",     params.srcMeshPath,           {},      "Source mesh")
+  ("srcTex",      params.srcTexturePath,        {},      "Source texture")
+  ("decMesh",     params.decMeshPath,           {},      "Reconsctructed/decoded mesh")
+  ("decTex",      params.decTexturePath,        {},      "Reconsctructed/decoded texture")
+  ("fstart",      params.startFrame,             1,      "First frame number")
+  ("fcount",      params.frameCount,             1,      "Number of frames")
   
   (po::Section("Metrics"))
-  ("computeMetrics", params.metParams.computeMetrics, true, "Compute metrics")
-  ("gridSize", params.metParams.gridSize, 1024, "Grid size")
-  ("minPosition", params.metParams.minPosition,  {0,0,0}, "min position")
-  ("maxPosition", params.metParams.minPosition,  {0,0,0}, "min position")
+  ("pcc",         params.metParams.computePcc,  true,    "Compute pcc metrics")
+  ("ibsm",        params.metParams.computeIbsm, false,   "Compute ibsm metrics")
+  ("pcqm",        params.metParams.computePcqm, false,   "Compute pcqm metrics")
+  ("gridSize",    params.metParams.gridSize,    1024,    "Grid size")
+  ("minPosition", params.metParams.minPosition, {0,0,0}, "Min position")
+  ("maxPosition", params.metParams.maxPosition, {0,0,0}, "Max position")
+  ("qp",          params.metParams.qp,          12,      "qt")
+  ("qt",          params.metParams.qt,          13,      "qp")
 
   ("pcqmRadiusCurvature", params.metParams.pcqmRadiusCurvature,  0.001, 
     "PCQM radius curvature")
   ("pcqmThresholdKnnSearch", params.metParams.pcqmThresholdKnnSearch, 20, 
     "PCQM threshold Knn search")
   ("pcqmRadiusFactor", params.metParams.pcqmRadiusFactor,   2.0, 
-    "PCQM radius factor")  ;
+    "PCQM radius factor");
   /* clang-format on */
 
   po::setDefaults(opts);
@@ -137,7 +141,7 @@ metrics(const Parameters& params)
 {
   vmesh::VMCMetrics metrics;
   const int lastFrame =  params.startFrame +  params.frameCount;
-  for (int f = params.startFrame; f <= lastFrame; ++f) {
+  for (int f = params.startFrame; f < lastFrame; ++f) {
     vmesh::VMCGroupOfFrames gof;
     gof.resize(1);
     const auto nameSrcMesh = vmesh::expandNum(params.srcMeshPath, f);
@@ -169,6 +173,7 @@ metrics(const Parameters& params)
         nameRecTexture.c_str());
       return -1;
     }
+    printf("Compute metric frame %d / %d  \n",f, params.frameCount );
     metrics.compute( gof, params.metParams);
   }
   return 0;
@@ -191,7 +196,7 @@ main(int argc, char* argv[])
   if ( metrics(params)) {
     std::cerr << "Error: can't compute metrics!\n";
     return 1;
-  } 
+  }
 
   return 0;
 }

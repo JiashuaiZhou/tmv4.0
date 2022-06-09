@@ -136,8 +136,6 @@ DracoLibGeometryDecoder<T>::decode(
     exit( -1 );
   }
   if ( type.value() == draco::TRIANGULAR_MESH ) {
-    printf("type == draco::TRIANGULAR_MESH \n");
-    fflush(stdout);
     draco::Decoder decoder;
     auto           status = decoder.DecodeMeshFromBuffer( &decBuffer );
     if ( !status.ok() ) {

@@ -8,6 +8,6 @@ if( NOT EXISTS ${DIR} )
                 OPTIONS           "USE_OPENMP   off"
                 DOWNLOAD_ONLY     YES )
 endif()
-set( MM_BUILD_CMD off )
+set( MM_BUILD_CMD on )
 set( USE_OPENMP   off )
 add_subdirectory(${DIR})

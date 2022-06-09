@@ -44,9 +44,11 @@
 #include "virtualGeometryDecoder.hpp"
 
 #include <gtest/gtest.h>
+#include "common.hpp"
 
 TEST(DracoEncoder, Encode)
 {
+  DISABLE_SUB_PROCESS_LOG()
   // Set parameters
   vmesh::GeometryCodecId codecId = vmesh::GeometryCodecId::DRACO;
   vmesh::GeometryEncoderParameters params;
@@ -69,7 +71,7 @@ TEST(DracoEncoder, Encode)
   src.loadFromOBJ(inputMesh);
   auto encoder = vmesh::VirtualGeometryEncoder<double>::create(codecId);
   encoder->encode(src, params, bitstream.vector(), rec);
-  rec.saveToOBJ(recNew);
+  // rec.saveToOBJ(recNew);
   bitstream.save(binNew);
 
   // Decode with VirtualGeometryDecoder
@@ -85,7 +87,8 @@ TEST(DracoEncoder, Encode)
       << " -qt " << params.qt_  //
       << " -qn " << params.qn_  //
       << " -qg " << params.qg_  //
-      << " -cl " << params.cl_;
+      << " -cl " << params.cl_ //
+      << " > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -93,7 +96,8 @@ TEST(DracoEncoder, Encode)
   cmd.str("");
   cmd << "./build/Release/bin/draco_decoder "
       << " -i " << binOrg   //
-      << " -o " << recOrg;  //
+      << " -o " << recOrg  //
+      << " > /dev/null"; 
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -106,16 +110,19 @@ TEST(DracoEncoder, Encode)
   std::string strBinNew(
     (std::istreambuf_iterator<char>(fileBinNew)),
     std::istreambuf_iterator<char>());
+  
+  // Compare decoded file  
+  src.loadFromOBJ(inputMesh);
+  
+  ENABLE_SUB_PROCESS_LOG()
 
   ASSERT_EQ(strBinOrg, strBinNew);
 
   // TODO Add md5sun rec file comparison
-  std::cout << "\033[0;32m[          ] \033[0;0m" << "TODO Add md5sun rec file comparison" << std::endl;
-
-  // // Remove tmp files
-  // remove( binOrg.c_str() );
-  // remove( binNew.c_str() );
-  // remove( recOrg.c_str() );
-  
-
+  // std::cout << "\033[0;32m[          ] \033[0;0m" << "TODO Add md5sun rec file comparison" << std::endl;
+ 
+  // Remove tmp files
+  remove( binOrg.c_str() );
+  remove( binNew.c_str() );
+  remove( recOrg.c_str() );
 }

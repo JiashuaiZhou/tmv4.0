@@ -108,7 +108,9 @@ CPMAddPackage( "gh:google/googletest#release-1.11.0" )
 enable_testing()
 
 create_executable( NAME      tests 
-                   SOURCES   gtests/main.cpp gtests/draco.cpp
+                   SOURCES   gtests/main.cpp
+                             gtests/draco.cpp 
+                             gtests/metrics.cpp
                    LIBRARIES gtest_main vdmcUtil geometryEncoder geometryDecoder
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder

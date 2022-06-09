@@ -52,8 +52,12 @@ namespace vmesh {
 //============================================================================
 
 struct VMCMetricsParameters {
-  bool computeMetrics = false;
+  bool computePcc = false;
+  bool computeIbsm = false;
+  bool computePcqm = false;
   int gridSize = 1024;
+  int qp = 12;
+  int qt = 13;  
   double minPosition[3] = {0, 0, 0};
   double maxPosition[3] = {0, 0, 0};
 
@@ -76,6 +80,10 @@ public:
     const vmesh::VMCGroupOfFrames& gof, const VMCMetricsParameters& params);
 
   void display();
+  
+  std::vector<double> getPccResults();
+  std::vector<double> getIbsmResults();
+  std::vector<double> getPcqmResults();
 
 private:
   void compute(

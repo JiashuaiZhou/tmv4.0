@@ -37,7 +37,10 @@
 #include "mmSample.h"
 #include "mmModel.h"
 #include "mmImage.h"
+#include "mmSample.h"
 #include "mmCompare.h"
+#include "mmDequantize.h"
+#include "mmIO.h"
 
 using namespace std;
 using namespace vmesh;
@@ -45,24 +48,38 @@ using namespace vmesh;
 void
 convert(const vmesh::TriangleMesh<double>& src, mm::Model& dst)
 {
-  mm::ModelBuilder builder(dst);
-  mm::Vertex v[3];
-  for (int32_t p = 0; p < 3; p++) {
-    v[p].hasColor = false;
-    v[p].hasUVCoord = true;
-    v[p].hasNormal = false;
+  dst.reset();
+  const auto& points = src.points();
+  dst.vertices.resize(points.size() * 3);
+  for (size_t i = 0; i < points.size(); i++) {
+    dst.vertices[3 * i + 0] = points[i][0];
+    dst.vertices[3 * i + 1] = points[i][1];
+    dst.vertices[3 * i + 2] = points[i][2];
   }
-  for (int32_t t = 0; t < src.triangleCount(); t++) {
-    const auto& triCoord = src.triangle(t);
-    const auto& texCoord = src.texCoordTriangle(t);
-    for (int32_t p = 0; p < 3; p++) {
-      auto& pos = src.point(triCoord[p]);
-      auto& tex = src.texCoord(texCoord[p]);
-      v[p].pos = glm::vec3(pos[0], pos[1], pos[2]);
-      v[p].uv = glm::vec2(tex[0], tex[1]);
+  if( src.texCoords().size() > 0 ){
+    const auto& texCoords = src.texCoords();
+    dst.uvcoords.resize(texCoords.size() * 2);
+    for (size_t i = 0; i < texCoords.size(); i++) {
+      dst.uvcoords[2 * i + 0] = texCoords[i][0];
+      dst.uvcoords[2 * i + 1] = texCoords[i][1];
     }
-    builder.pushTriangle(v[0], v[1], v[2]);
+  }  
+  const auto& triangles = src.triangles();
+  dst.triangles.resize(triangles.size() * 3);
+  for (size_t i = 0; i < triangles.size(); i++) {
+    dst.triangles[3 * i + 0] = triangles[i][0];
+    dst.triangles[3 * i + 1] = triangles[i][1];
+    dst.triangles[3 * i + 2] = triangles[i][2];
   }
+  if( src.texCoordTriangles().size() > 0 ){
+    const auto& texCoordsTri = src.texCoordTriangles();
+    dst.trianglesuv.resize(texCoordsTri.size() * 3);
+    for (size_t i = 0; i < texCoordsTri.size(); i++) {
+      dst.trianglesuv[3 * i + 0] = texCoordsTri[i][0];
+      dst.trianglesuv[3 * i + 1] = texCoordsTri[i][1];
+      dst.trianglesuv[3 * i + 2] = texCoordsTri[i][2];
+    }
+  }  
 }
 
 void
@@ -75,9 +92,9 @@ convert(
   dst.reset(width, height);
   for (int32_t v = 0; v < height; v++) {
     for (int32_t u = 0; u < width; u++) {
-      dst.data[(v * width + u) * 3 + 0] = src.plane(0).get(u, v);
-      dst.data[(v * width + u) * 3 + 1] = src.plane(1).get(u, v);
-      dst.data[(v * width + u) * 3 + 2] = src.plane(2).get(u, v);
+      dst.data[(v * width + u) * 3 + 2] = src.plane(0).get(v, u);
+      dst.data[(v * width + u) * 3 + 1] = src.plane(1).get(v, u);
+      dst.data[(v * width + u) * 3 + 0] = src.plane(2).get(v, u);
     }
   }
 }
@@ -105,11 +122,11 @@ VMCMetrics::compute(
       recModel,                    // Rec object
       srcImage,                    // Scr map
       recImage,                    // Rec map
-      "src " + std::to_string(i),  // Scr name
-      "rec " + std::to_string(i),  // Rec name
+      "src_mlib_" + std::to_string(i),  // Scr name
+      "rec_mlib_" + std::to_string(i),  // Rec name
       params);                     // params
   }
-  display();
+  // display();
 }
 
 void
@@ -122,6 +139,7 @@ VMCMetrics::compute(
   const std::string& recName,
   const VMCMetricsParameters& params)
 {
+  mm::Model dequantize[2];
   mm::Model reindex[2];
   mm::Model sampled[2];
 
@@ -131,9 +149,9 @@ VMCMetrics::compute(
   glm::vec3 maxPos(
     params.maxPosition[0], params.maxPosition[1], params.maxPosition[2]);
   for (size_t i = 0; i < 2; i++) {
-    auto& model = i == 0 ? srcModel : recModel;
+    auto& model = i == 0 ? srcModel : recModel;    
     std::cout << (i == 0 ? "Src" : "Rec")
-              << "model: " << (i == 0 ? srcName : recName) << std::endl;
+              << " model: " << (i == 0 ? srcName : recName) << std::endl;
     std::cout << "  Vertices: " << model.vertices.size() / 3 << std::endl;
     std::cout << "  UVs: " << model.uvcoords.size() / 2 << std::endl;
     std::cout << "  Colors: " << model.colors.size() / 3 << std::endl;
@@ -142,15 +160,38 @@ VMCMetrics::compute(
     std::cout << "  Trianglesuv: " << model.trianglesuv.size() / 3
               << std::endl;
 
+    // Dequantize
+    glm::vec2 zero2( 0, 0 ),one2( 1, 1 );
+    glm::vec3 zero3( 0, 0, 0 );
+
+    std::cout << "Dequantize" << std::endl;
+    mm::Dequantize::dequantize(
+      model,        // input
+      dequantize[i],// output
+      params.qp,    // qp
+      params.qt,    // qt,
+      0,            // qn,
+      0,            // qc,
+      minPos,       // minPos
+      maxPos,       // maxPos
+      zero2,        // minUv
+      one2,         // maxUv
+      zero3,        // minNrm
+      zero3,        // maxNrm
+      zero3,        // minCol
+      zero3,        // maxCol
+      true,         // useFixedPoint,
+      false);       // colorSpaceConversion
+
     // Reindex
     const std::string sort = "oriented";
     std::cout << "Reindex" << std::endl;
     std::cout << "  sort = " << sort << std::endl;
     if (sort == "none") {
-      mm::reindex(model, reindex[i]);
+      mm::reindex(dequantize[i], reindex[i]);
     } else if (
       sort == "vertex" || sort == "oriented" || sort == "unoriented") {
-      mm::reorder(model, sort, reindex[i]);
+      mm::reorder(dequantize[i], sort, reindex[i]);
     } else {
       std::cout << "Error: invalid sorting method " << sort << std::endl;
     }
@@ -184,8 +225,15 @@ VMCMetrics::compute(
       minPos,                    // minPos
       maxPos);                   // maxPos
   }
-  // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName, sampled[0] ); }
-  // if ( !recName.empty() ) { mm::IO::_saveObj( recName, sampled[1] ); }
+
+  // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName+"_source.obj", srcModel  ); }
+  // if ( !recName.empty() ) { mm::IO::_saveObj( recName+"_source.obj", recModel ); }
+  // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName+"_dequant.obj", dequantize[0] ); }
+  // if ( !recName.empty() ) { mm::IO::_saveObj( recName+"_dequant.obj", dequantize[1] ); }
+  // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName+"_reindex.obj", reindex[0] ); }
+  // if ( !recName.empty() ) { mm::IO::_saveObj( recName+"_reindex.obj", reindex[1] ); }
+  // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName+"_sample.obj", sampled[0] ); }
+  // if ( !recName.empty() ) { mm::IO::_saveObj( recName+"_sample.obj", sampled[1] ); }
 
   // PCC
   mm::Model outPcc[2];
@@ -213,55 +261,57 @@ VMCMetrics::compute(
     "Triangle numbers = %9zu / %9zu \n", sampled[0].getTriangleCount(),
     sampled[1].getTriangleCount());
 
-  // if ( !srcName.empty() ) { mm::IO::_savePly( srcName, sampled[0] ); }
-  // if ( !recName.empty() ) { mm::IO::_savePly( recName, sampled[1] ); }
+  if( params.computePcc )
+    compare->pcc(
+      sampled[0],  // modelA
+      sampled[1],  // modelB
+      srcMap,      // mapA
+      recMap,      // mapB
+      pccParams,   // params
+      outPcc[0],   // outputA
+      outPcc[1]);  // outputB
 
-  compare->pcc(
-    sampled[0],  // modelA
-    sampled[1],  // modelB
-    srcMap,      // mapA
-    recMap,      // mapB
-    pccParams,   // params
-    outPcc[0],   // outputA
-    outPcc[1]);  // outputB
-
-  // PCQM
-  mm::Model outPcqm[2];
-  compare->pcqm(
-    sampled[0],                     // modelA
-    sampled[1],                     // modelB
-    srcMap,                         // mapA
-    recMap,                         // mapB
-    params.pcqmRadiusCurvature,     // radiusCurvature
-    params.pcqmThresholdKnnSearch,  // thresholdKnnSearch
-    params.pcqmRadiusFactor,        // radiusFactor
-    outPcqm[0],                     // outputA
-    outPcqm[1]);                    // outputB
+  // // PCQM
+  if( params.computePcqm ) {
+    mm::Model outPcqm[2];  
+    compare->pcqm(
+       sampled[0],                     // modelA
+       sampled[1],                     // modelB
+       srcMap,                         // mapA
+       recMap,                         // mapB
+       params.pcqmRadiusCurvature,     // radiusCurvature
+       params.pcqmThresholdKnnSearch,  // thresholdKnnSearch
+       params.pcqmRadiusFactor,        // radiusFactor
+       outPcqm[0],                     // outputA
+       outPcqm[1]);                    // outputB
+  }
 
   // IBSM
-  mm::Model outIbsm[2];
-  const unsigned int ibsmResolution = 2048;
-  const unsigned int ibsmCameraCount = 16;
-  const glm::vec3 ibsmCamRotParams = {0.0F, 0.0F, 0.0F};
-  const std::string ibsmRenderer = "gl12_ibsm";
-  const std::string ibsmOutputPrefix = "";
-  const bool ibsmDisableReordering = false;
-  const bool ibsmDisableCulling = false;
+  if (params.computeIbsm) {
+    mm::Model outIbsm[2];
+    const unsigned int ibsmResolution = 2048;
+    const unsigned int ibsmCameraCount = 16;
+    const glm::vec3 ibsmCamRotParams = {0.0F, 0.0F, 0.0F};
+    const std::string ibsmRenderer = "gl12_ibsm";
+    const std::string ibsmOutputPrefix = "";
+    const bool ibsmDisableReordering = false;
+    const bool ibsmDisableCulling = false;
 
-  compare->ibsm(
-    srcModel,               // modelA
-    recModel,               // modelB
-    srcMap,                 // mapA
-    recMap,                 // mapB
-    ibsmDisableReordering,  // disableReordering
-    ibsmResolution,         // resolution
-    ibsmCameraCount,        // cameraCount
-    ibsmCamRotParams,       // camRotParams
-    ibsmRenderer,           // renderer
-    ibsmOutputPrefix,       // outputPrefix
-    ibsmDisableCulling,     // disableCulling
-    outIbsm[0],             // outputA
-    outIbsm[1]);            // outputB
+    compare->ibsm(
+      dequantize[0],          // modelA
+      dequantize[1],          // modelB
+      srcMap,                 // mapA
+      recMap,                 // mapB
+      ibsmDisableReordering,  // disableReordering
+      ibsmResolution,         // resolution
+      ibsmCameraCount,        // cameraCount
+      ibsmCamRotParams,       // camRotParams
+      ibsmRenderer,           // renderer
+      ibsmOutputPrefix,       // outputPrefix
+      ibsmDisableCulling,     // disableCulling
+      outIbsm[0],             // outputA
+      outIbsm[1]);            // outputB
+  }
 }
 
 void
@@ -274,4 +324,19 @@ VMCMetrics::display()
   compare->pcqmFinalize();
   printf("IBSM:\n");
   compare->ibsmFinalize();
+}
+
+std::vector<double>
+VMCMetrics::getPccResults(){
+  return compare->getFinalPccResults();
+}
+
+std::vector<double>
+VMCMetrics::getPcqmResults(){
+  return compare->getFinalPcqmResults();
+}
+
+std::vector<double>
+VMCMetrics::getIbsmResults(){
+  return compare->getFinalIbsmResults();
 }

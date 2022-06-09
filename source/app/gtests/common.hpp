@@ -1,3 +1,4 @@
+
 /* The copyright in this software is being made available under the BSD
  * Licence, included below.  This software may be subject to other third
  * party and contributor rights, including patent rights, and no such
@@ -32,24 +33,38 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <chrono>
-#include <iostream> 
+#pragma once 
 
-#include "misc.hpp"
-#include "verbose.hpp"
-#include "version.hpp"
+#define DISABLE_SUB_PROCESS_LOG()                     \
+  std::stringstream binStream;                        \
+  auto oldRdBuf = std::cout.rdbuf(binStream.rdbuf()); \
+  char binBuffer[1024];                               \
+  auto binFile = fmemopen(binBuffer, 1024, "w");      \
+  if ( !binFile ) { std::printf("error"); return; }   \
+  auto oldStdout = stdout;                            \
+  stdout = binFile;                                 
 
-#include <gtest/gtest.h>
-
-int
-main(int argc, char* argv[])
-{
-  std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
-
-  // this is mandatory to print floats with full precision
-  std::cout.precision( std::numeric_limits<float>::max_digits10 );
   
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-  return 0;
+#define ENABLE_SUB_PROCESS_LOG()                   \
+  std::cout.rdbuf(oldRdBuf);                       \
+  std::fclose(binFile);                            \
+  stdout = oldStdout;                               
+
+  
+static std::string
+grep(std::string filename, std::string keyword)
+{
+  std::ifstream in(filename.c_str());
+  if (in.is_open()) {
+    std::string line;
+    while (getline(in, line)) {
+      std::size_t pos = line.find(keyword);
+      if (pos != std::string::npos) {
+        in.close();
+        return line.substr(pos + keyword.size());        
+      }
+    }
+  }
+  in.close();
+  return std::string();
 }

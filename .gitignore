@@ -41,4 +41,13 @@ dependencies/hm
 dependencies/vtm
 dependencies/ffmpeg
 
+# External tools
+externaltools/
+
+# Temp files
+/*.yuv
+/*.bgr
+/*.h254
+/log.txt
+
 

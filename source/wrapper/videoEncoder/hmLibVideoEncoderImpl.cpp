@@ -784,6 +784,8 @@ Void hmLibVideoEncoderImpl<T>::xWritePicture( const TComPicYuv* pic, FrameSequen
 template <typename T>
 Void hmLibVideoEncoderImpl<T>::xReadPicture( TComPicYuv* pic, FrameSequence<T>& video, int frameIndex ) {
   auto& image = video.frame( frameIndex );
+  printf("video colourSpace = %d \n",(int) video.colourSpace());
+  printf("image colourSpace = %d \n",(int) image.colourSpace());
   image.get( pic->getAddr( COMPONENT_Y ), pic->getAddr( COMPONENT_Cb ), pic->getAddr( COMPONENT_Cr ),
              pic->getWidth( COMPONENT_Y ), pic->getHeight( COMPONENT_Y ), pic->getStride( COMPONENT_Y ),
              pic->getWidth( COMPONENT_Cb ), pic->getHeight( COMPONENT_Cb ), pic->getStride( COMPONENT_Cb ),

@@ -470,11 +470,13 @@ InternalColourConverter<T>::convert(
   videoDst.clear();
 
   int srcNB = srcBitdepth == 8 ? 1 : 2;
-  int dstNB = srcBitdepth == 8 ? 1 : 2;
+  int dstNB = dstBitdepth == 8 ? 1 : 2;
   if (config == "YUV420ToYUV444") {
     convertYUV420ToYUV444(videoSrc, videoDst, srcNB, dstNB, filter);
   } else if (config == "YUV420ToRGB444") {
-    convertYUV420ToRGB444(videoSrc, videoDst, srcNB, dstNB, filter);
+    convertYUV420ToRGB444(videoSrc, videoDst, srcNB, dstNB, filter, false);
+  } else if (config == "YUV420ToBGR444") {
+    convertYUV420ToRGB444(videoSrc, videoDst, srcNB, dstNB, filter, true);
   } else if (config == "RGB444ToYUV420") {
     convertRGB44ToYUV420(videoSrc, videoDst, srcNB, dstNB, filter);
   } else if (config == "RGB444ToYUV444") {
@@ -523,7 +525,7 @@ InternalColourConverter<T>::convertRGB44ToYUV420(
   size_t dstNumByte,
   size_t filter)
 {
-  dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
+  dst.resize(src.width(), src.height(), ColourSpace::YUV420p, src.frameCount());
   for (int i = 0; i < src.frameCount(); i++) {
     convertRGB44ToYUV420(src[i], dst[i], srcNumByte, dstNumByte, filter);
   }
@@ -562,7 +564,7 @@ InternalColourConverter<T>::convertRGB44ToYUV444(
   size_t dstNumByte,
   size_t filter)
 {
-  dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
+  dst.resize(src.width(), src.height(), ColourSpace::YUV444p, src.frameCount());
   for (int i = 0; i < src.frameCount(); i++) {
     convertRGB44ToYUV444(src[i], dst[i], srcNumByte, dstNumByte, filter);
   }
@@ -597,7 +599,7 @@ InternalColourConverter<T>::convertYUV420ToYUV444(
   size_t dstNumByte,
   size_t filter)
 {
-  dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
+  dst.resize(src.width(), src.height(), ColourSpace::YUV444p, src.frameCount());
   for (int i = 0; i < src.frameCount(); i++) {
     convertYUV420ToYUV444(src[i], dst[i], srcNumByte, dstNumByte, filter);
   }
@@ -633,11 +635,12 @@ InternalColourConverter<T>::convertYUV420ToRGB444(
   FrameSequence<T>& dst,
   size_t srcNumByte,
   size_t dstNumByte,
-  size_t filter)
+  size_t filter,
+  bool BGR)
 {
-  dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
+  dst.resize(src.width(), src.height(), BGR ? vmesh::ColourSpace::BGR444p : vmesh::ColourSpace::RGB444p, src.frameCount());
   for (int i = 0; i < src.frameCount(); i++) {
-    convertYUV420ToRGB444(src[i], dst[i], srcNumByte, dstNumByte, filter);
+    convertYUV420ToRGB444(src[i], dst[i], srcNumByte, dstNumByte, filter, BGR);
   }
 }
 
@@ -648,24 +651,53 @@ InternalColourConverter<T>::convertYUV420ToRGB444(
   Frame<T>& dst,
   size_t srcNumByte,
   size_t dstNumByte,
-  size_t filter)
+  size_t filter,
+  bool BGR )
 {
-  printf("convertYUV420ToRGB444 \n");
+  printf("convertYUV420ToRGB444 byte %zu => %zu \n",srcNumByte,dstNumByte);
   fflush(stdout);
   const auto width = src.width();
   const auto height = src.height();
-  dst.resize(width, height, ColourSpace::RGB444p);
+  dst.resize(width, height, BGR? ColourSpace::BGR444p : ColourSpace::RGB444p);
   Plane<float> YUV444[3], YUV420[3], RGB444[3];
+  src[0].log( "src  Y");
+  src[1].log( "src  Y");
+  src[2].log( "src  Y");
+  
+  printf("YUVtoFloatYUV \n");
+  fflush(stdout);
   YUVtoFloatYUV(src[0], YUV420[0], 0, srcNumByte);
   YUVtoFloatYUV(src[1], YUV420[1], 1, srcNumByte);
   YUVtoFloatYUV(src[2], YUV420[2], 1, srcNumByte);
+
+  YUV420[0].logF("YUV420[0]");
+  YUV420[1].logF("YUV420[1]");
+  YUV420[2].logF("YUV420[2]");
+  printf("upsampling \n");
+  fflush(stdout);
   upsampling(YUV420[1], YUV444[1], srcNumByte == 1 ? 255 : 1023, filter);
   upsampling(YUV420[2], YUV444[2], srcNumByte == 1 ? 255 : 1023, filter);
+  YUV420[0].logF("YUV444[0]");
+  YUV444[1].logF("YUV444[1]");
+  YUV444[2].logF("YUV444[2]");
+  printf("convertYUVToRGB \n");
+  fflush(stdout);
   convertYUVToRGB(
     YUV420[0], YUV444[1], YUV444[2], RGB444[0], RGB444[1], RGB444[2]);
-  floatRGBToRGB(RGB444[0], dst[0], dstNumByte);
+  RGB444[0].logF("RGB444[0]");
+  RGB444[1].logF("RGB444[1]");
+  RGB444[2].logF("RGB444[2]");
+  printf("floatRGBToRGB \n");
+  fflush(stdout);
+  floatRGBToRGB(RGB444[0], dst[BGR ?2 :0], dstNumByte);
   floatRGBToRGB(RGB444[1], dst[1], dstNumByte);
-  floatRGBToRGB(RGB444[2], dst[2], dstNumByte);
+  floatRGBToRGB(RGB444[2], dst[BGR ?0 :2], dstNumByte);
+  
+  dst[0].log( "dst  Y");
+  dst[1].log( "dst  Y");
+  dst[2].log( "dst  Y");
+  printf("Done \n");
+  fflush(stdout);
 }
 
 template<typename T>
@@ -677,7 +709,7 @@ InternalColourConverter<T>::convertYUV444ToRGB444(
   size_t dstNumByte,
   size_t filter)
 {
-  dst.resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
+  dst.resize(src.width(), src.height(), ColourSpace::RGB444p, src.frameCount());
   for (int i = 0; i < src.frameCount(); i++) {
     convertYUV444ToRGB444(src[i], dst[i], srcNumByte, dstNumByte, filter);
   }
@@ -715,9 +747,9 @@ InternalColourConverter<T>::RGBtoFloatRGB(
 {
   float offset = nbyte == 1 ? 255.f : 1023.f;
   dst.resize(src.width(), src.height());
-  for (int j = 0; j < src.height(); j++)
-    for (int i = 0; i < src.width(); i++)
-      dst(i, j) = (float)src(i, j) / offset;
+  for (int i = 0; i < src.height(); i++)
+    for (int j = 0; j < src.width(); j++)
+      dst.get(i, j) = (float)src.get(i, j) / offset;
 }
 
 template<typename T>
@@ -733,17 +765,20 @@ InternalColourConverter<T>::convertRGBToYUV(
   Y.resize(R.width(), R.height());
   U.resize(R.width(), R.height());
   V.resize(R.width(), R.height());
-  for (int j = 0; j < R.height(); j++)
-    for (int i = 0; i < R.width(); i++) {
-      Y(i, j) = (float)((double)clamp(
-        0.212600 * R(i, j) + 0.715200 * G(i, j) + 0.072200 * B(i, j), 0.0,
-        1.0));
-      U(i, j) = (float)((double)clamp(
-        -0.114572 * R(i, j) - 0.385428 * G(i, j) + 0.500000 * B(i, j), -0.5,
-        0.5));
-      V(i, j) = (float)((double)clamp(
-        0.500000 * R(i, j) - 0.454153 * G(i, j) - 0.045847 * B(i, j), -0.5,
-        0.5));
+  for (int i = 0; i < R.height(); i++)
+    for (int j = 0; j < R.width(); j++) {
+      Y.get(i, j) = (float)((double)clamp(
+        0.212600 * R.get(i, j) + 0.715200 * G.get(i, j)
+          + 0.072200 * B.get(i, j),
+        0.0, 1.0));
+      U.get(i, j) = (float)((double)clamp(
+        -0.114572 * R.get(i, j) - 0.385428 * G.get(i, j)
+          + 0.500000 * B.get(i, j),
+        -0.5, 0.5));
+      V.get(i, j) = (float)((double)clamp(
+        0.500000 * R.get(i, j) - 0.454153 * G.get(i, j)
+          - 0.045847 * B.get(i, j),
+        -0.5, 0.5));
     }
 }
 
@@ -758,10 +793,10 @@ InternalColourConverter<T>::floatYUVToYUV(
   dst.resize(src.width(), src.height());
   double offset = chroma ? nbyte == 1 ? 128. : 32768. : 0;
   double scale = nbyte == 1 ? 255. : 65535.;
-  for (int j = 0; j < src.height(); j++)
-    for (int i = 0; i < src.width(); i++) {
-      dst(i, j) = static_cast<T>(fClip(
-        std::round((float)(scale * (double)src(i, j) + offset)), 0.f,
+  for (int i = 0; i < src.height(); i++)
+    for (int j = 0; j < src.width(); j++) {
+      dst.get(i, j) = static_cast<T>(fClip(
+        std::round((float)(scale * (double)src.get(i, j) + offset)), 0.f,
         (float)scale));
     }
 }
@@ -780,10 +815,10 @@ InternalColourConverter<T>::YUVtoFloatYUV(
   uint16_t offset = chroma ? nbBytes == 1 ? 128 : 512 : 0;
   double scale = nbBytes == 1 ? 255. : 1023.;
   double weight = 1.0 / scale;
-  for (int j = 0; j < src.height(); j++)
-    for (int i = 0; i < src.width(); i++) {
-      dst(i, j) =
-        clamp((float)(weight * (double)(src(i, j) - offset)), minV, maxV);
+  for (int i = 0; i < src.height(); i++)
+    for (int j = 0; j < src.width(); j++) {
+      dst.get(i, j) =
+        clamp((float)(weight * (double)(src.get(i, j) - offset)), minV, maxV);
     }
 }
 
@@ -800,12 +835,15 @@ InternalColourConverter<T>::convertYUVToRGB(
   R.resize(Y.width(), Y.height());
   G.resize(Y.width(), Y.height());
   B.resize(Y.width(), Y.height());
-  for (int j = 0; j < Y.height(); j++)
-    for (int i = 0; i < Y.width(); i++) {
-      R(i, j) = (float)((double)clamp(Y(i, j) + 1.57480 * V(i, j), 0.0, 1.0));
-      G(i, j) = (float)((double)clamp(
-        Y(i, j) - 0.18733 * U(i, j) - 0.46813 * V(i, j), 0.0, 1.0));
-      B(i, j) = (float)((double)clamp(Y(i, j) + 1.85563 * U(i, j), 0.0, 1.0));
+  for (int i = 0; i < Y.height(); i++)
+    for (int j = 0; j < Y.width(); j++) {
+      R.get(i, j) =
+        (float)((double)clamp(Y.get(i, j) + 1.57480 * V.get(i, j), 0.0, 1.0));
+      G.get(i, j) = (float)((double)clamp(
+        Y.get(i, j) - 0.18733 * U.get(i, j) - 0.46813 * V.get(i, j), 0.0,
+        1.0));
+      B.get(i, j) =
+        (float)((double)clamp(Y.get(i, j) + 1.85563 * U.get(i, j), 0.0, 1.0));
     }
 }
 
@@ -816,10 +854,10 @@ InternalColourConverter<T>::floatRGBToRGB(
 {
   dst.resize(src.width(), src.height());
   float scale = nbyte == 1 ? 255.f : 1023.f;
-  for (int j = 0; j < src.height(); j++)
-    for (int i = 0; i < src.width(); i++) {
-      dst(i, j) = static_cast<T>(
-        clamp((T)std::round(scale * src(i, j)), (T)0, (T)scale));
+  for (int i = 0; i < src.height(); i++)
+    for (int j = 0; j < src.width(); j++) {
+      dst.get(i, j) = static_cast<T>(
+        clamp((T)std::round(scale * src.get(i, j)), (T)0, (T)scale));
     }
 }
 
@@ -867,17 +905,17 @@ InternalColourConverter<T>::upsampling(
   temp.resize(widthIn, heightOut);
   for (int i = 0; i < heightIn; i++) {
     for (int j = 0; j < widthIn; j++) {
-      temp(2 * i, j) =
+      temp.get(2 * i + 0, j) =
         upsamplingVertical0(g_filter420to444[filter], src, i + 0, j);
-      temp(2 * i + 1, j) =
+      temp.get(2 * i + 1, j) =
         upsamplingVertical1(g_filter420to444[filter], src, i + 1, j);
     }
   }
   for (int i = 0; i < heightOut; i++) {
     for (int j = 0; j < widthIn; j++) {
-      dst(i, 2) =
+      dst.get(i, j * 2 + 0) =
         upsamplingHorizontal0(g_filter420to444[filter], temp, i, j + 0);
-      dst(i, j * 2 + 1) =
+      dst.get(i, j * 2 + 1) =
         upsamplingHorizontal1(g_filter420to444[filter], temp, i, j + 1);
     }
   }
@@ -916,7 +954,7 @@ InternalColourConverter<T>::upsample(
     upsampling(src[0], up[0], srcNumByte == 1 ? 255 : 1023, filter);
     upsampling(src[1], up[1], srcNumByte == 1 ? 255 : 1023, filter);
     upsampling(src[2], up[2], srcNumByte == 1 ? 255 : 1023, filter);
-    image.resize(width * 2, height * 2, image.colourSpace());
+    image.resize(width * 2, height * 2, ColourSpace::YUV444p);
     floatYUVToYUV(up[0], image[0], 0, dstNumByte);
     floatYUVToYUV(up[1], image[1], 1, dstNumByte);
     floatYUVToYUV(up[2], image[2], 1, dstNumByte);

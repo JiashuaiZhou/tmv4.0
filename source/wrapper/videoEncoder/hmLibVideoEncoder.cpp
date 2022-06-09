@@ -71,6 +71,8 @@ hmLibVideoEncoder<T>::encode(
     || videoSrc.colourSpace() == ColourSpace::BGR444p
     || videoSrc.colourSpace() == ColourSpace::GBR444p)
     cmd << " --InputChromaFormat=444";
+  else
+    cmd << " --InputChromaFormat=420";
 
   if( params.qp_ != -8 )
     cmd << " --QP=" << params.qp_;

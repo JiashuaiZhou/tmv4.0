@@ -227,6 +227,30 @@ struct Plane {
   int width() const { return _width; }
   int height() const { return _height; }
   void clear() { _buffer.clear(); }
+
+  void log(const std::string str) const
+  {
+    printf("%s: ", str.c_str() );
+    fflush(stdout);
+    for (int v = 0; v < std::min(_height, 1); v++) {
+      for (int u = 0; u < std::min(_width, 16); u++) {
+        printf("%8u ", get(v, u));
+      }
+      printf("\n");
+    }
+  }  
+  void logF(const std::string str) const
+  {
+    printf("%s: ", str.c_str());
+    fflush(stdout);
+    for (int v = 0; v < std::min(_height, 1); v++) {
+      for (int u = 0; u < std::min(_width, 16); u++) {
+        printf("%8.4f  ", get(v, u));
+      }
+      printf("\n");
+    }
+  }
+
 private:
   int _width;
   int _height;
@@ -285,6 +309,7 @@ public:
   {
     _width = w;
     _height = h;
+    _colourSpace = colourSpace;
     switch (colourSpace) {
     case ColourSpace::YUV400p:
       _planes.resize(1);
@@ -374,7 +399,22 @@ public:
     save(os);
     return true;
   }
-  
+
+  void log(const std::string str) const
+  {
+    printf("%s: %dx%d \n", str.c_str(), _width, _height);
+    fflush(stdout);
+    for (int v = 0; v < std::min(_height, 1); v++) {
+      for (int c = 0; c < 3; c++) {
+        for (int u = 0; u < std::min(_width, 16); u++) {
+          printf("%2x ", _planes[c].get(v, u));
+        }
+        printf("    ");
+      }
+      printf("\n");
+    }
+  }
+
   T clamp(T v, T a, T b) const { return ((v < a) ? a : ((v > b) ? b : v)); }
 
   template <typename Pel>

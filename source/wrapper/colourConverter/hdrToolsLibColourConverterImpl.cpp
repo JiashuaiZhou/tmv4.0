@@ -36,6 +36,58 @@
 
 using namespace vmesh;
 
+// #define ENABLE_DEBUG_TRACE
+#ifdef ENABLE_DEBUG_TRACE
+void
+log(const std::string str, const hdrtoolslib::Frame* frame, int comp ) 
+{
+  fflush(stdout);
+  if( comp == 2 ){
+    printf("%s Y:", str.c_str());
+    for (int u = 0; u < 16; u++)
+      printf("%8.4f ", frame->m_floatComp[0][u]);
+    printf("\n");
+    printf("%s U:", str.c_str());
+    for (int u = 0; u < 16; u++)
+      printf("%8.4f ", frame->m_floatComp[1][u]);
+    printf("\n");
+    printf("%s V:", str.c_str());
+    for (int u = 0; u < 16; u++)
+      printf("%8.4f ", frame->m_floatComp[2][u]);
+  }
+  if( comp == 1 ){
+    printf("%s Y:", str.c_str());
+    for (int u = 0; u < 16; u++)
+      printf("%8x ", frame->m_ui16Comp[0][u]);
+    printf("\n");
+    printf("%s U:", str.c_str());
+    for (int u = 0; u < 16; u++)
+      printf("%8x ", frame->m_ui16Comp[1][u]);
+    printf("\n");
+    printf("%s V:", str.c_str());
+    for (int u = 0; u < 16; u++)
+      printf("%8x ", frame->m_ui16Comp[2][u]);
+  }
+  if( comp == 0 ){
+    printf("%s Y:", str.c_str());
+    for (int u = 0; u < 16; u++)
+      printf("%8x ", frame->m_comp[0][u]);
+    printf("\n");
+    printf("%s U:", str.c_str());
+    for (int u = 0; u < 16; u++)
+      printf("%8x ", frame->m_comp[1][u]);
+    printf("\n");
+    printf("%s V:", str.c_str());
+    for (int u = 0; u < 16; u++)
+      printf("%8x ", frame->m_comp[2][u]);
+  }
+  printf("\n");
+}
+#else 
+void
+log(const std::string str, const hdrtoolslib::Frame* frame, int comp ) {}
+#endif
+
 template <typename T>
 HdrToolsLibColourConverterImpl<T>::HdrToolsLibColourConverterImpl() {
   m_oFrameStore  = NULL;
@@ -549,21 +601,26 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
     if ( m_iFrameStore->m_isFloat ) {
       printf( "float input not supported \n" );
       exit( -1 );
-    } else {
+    } else {      
       if (m_iFrameStore->m_bitDepth == 8) {
         for (int8_t c = 0; c < 3; c++) {
-          auto* src = videoSrc.frame(frameNumber).plane(c).data();
+          auto* src = input->m_pixelFormat == hdrtoolslib::PF_BGR
+            ? videoSrc.frame(frameNumber).plane(2 - c).data()
+            : videoSrc.frame(frameNumber).plane(c).data();
           for (int i = 0; i < m_iFrameStore->m_compSize[c]; i++) {
             m_iFrameStore->m_comp[c][i] = src[i];
           }
         }
       } else {
         for (int8_t c = 0; c < 3; c++) {
-          auto* src = videoSrc.frame(frameNumber).plane(c).data();
+          auto* src = input->m_pixelFormat == hdrtoolslib::PF_BGR
+            ? videoSrc.frame(frameNumber).plane(2 - c).data()
+            : videoSrc.frame(frameNumber).plane(c).data();
           for (int i = 0; i < m_iFrameStore->m_compSize[c]; i++) {
             m_iFrameStore->m_ui16Comp[c][i] = src[i];
           }
         }
+        log( "src ", m_iFrameStore, 1 );
       }
     }
     // optional forced clipping of the data given their defined range. This is
@@ -580,6 +637,7 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
                                  m_iFrameStore->m_width[hdrtoolslib::Y_COMP] + m_cropOffsetRight,
                                  m_iFrameStore->m_height[hdrtoolslib::Y_COMP] + m_cropOffsetBottom, 0, 0 );
       currentFrame = m_croppedFrameStore;
+      log( "crop", m_iFrameStore, 2 );
     }
     if ( ( ( m_iFrameStore->m_chromaFormat != m_oFrameStore->m_chromaFormat ) &&
            ( m_iFrameStore->m_colorSpace != hdrtoolslib::CM_RGB ) ) ||
@@ -604,14 +662,18 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
       // Convert to different format if needed (integer to float)
       m_convertIQuantize->process( m_convertFrameStore, currentFrame );
     }
+    log( "conv", m_convertFrameStore, 2 );
+
     // Add noise
     m_addNoise->process( m_convertFrameStore );
     if ( m_bUseWienerFiltering == true ) m_frameFilterNoise0->process( m_convertFrameStore );
     if ( m_bUse2DSepFiltering == true ) m_frameFilterNoise1->process( m_convertFrameStore );
     if ( m_bUseNLMeansFiltering == true ) m_frameFilterNoise2->process( m_convertFrameStore );
     currentFrame = m_convertFrameStore;
+    log( "nois", currentFrame, 2 );    
     m_frameScale->process( m_scaledFrame, currentFrame );
     currentFrame = m_scaledFrame;
+    log( "scal", currentFrame, 2 );
     // Now perform a color format conversion
     // Output to m_pFrameStore memory with appropriate color space conversion
     // Note that the name of "forward" may be a bit of a misnomer.
@@ -630,6 +692,7 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
       m_colorTransform->process( m_pFrameStore[2], currentFrame );
       m_normalizeFunction->forward( m_pFrameStore[1], m_pFrameStore[2] );
     }
+    log( "colo", m_pFrameStore[1], 2 );    
 
     if ( m_changeColorPrimaries == true ) {
       m_colorSpaceConvert->process( m_colorSpaceFrame, m_pFrameStore[1] );
@@ -642,6 +705,7 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
         m_outputTransferFunction->inverse( m_pFrameStore[4], m_colorSpaceFrame );
         m_outDisplayGammaAdjust->inverse( m_colorSpaceFrame );
       }
+      // log( "prim", m_colorSpaceFrame, 2 );  
     } else {
       // here we apply the output transfer function (to be fixed)
       m_outDisplayGammaAdjust->inverse( m_pFrameStore[1] );
@@ -659,17 +723,22 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
     }
     // frame output
     m_outputFrame->copyFrame( m_oFrameStore );
-    // m_outputFrame->writeOneFrame( m_outputFile, frameNumber,
-    // m_outputFile->m_fileHeader, 0 );
+    
+    // m_outputFrame->writeOneFrame( m_outputFile, frameNumber,m_outputFile->m_fileHeader, 0 );
     if ( m_oFrameStore->m_isFloat ) {
       printf( "float input not supported \n" );
       exit( -1 );
     } else {
+      hdrtoolslib::FrameFormat* output = &inputParams->m_output;
       ColourSpace format = m_oFrameStore->m_chromaFormat == hdrtoolslib::CF_420
         ? ColourSpace::YUV420p
         : m_oFrameStore->m_colorSpace == hdrtoolslib::CM_RGB
-        ? ColourSpace::RGB444p
+        ? output->m_pixelFormat == hdrtoolslib::PF_BGR ? ColourSpace::BGR444p
+                                                       : ColourSpace::RGB444p
         : ColourSpace::YUV444p;
+      // printf( "Create converted video: %dx%d format = %d m_oFrameStore->m_bitDepth = %d \n",
+      //   m_oFrameStore->m_width[hdrtoolslib::Y_COMP],
+      //   m_oFrameStore->m_height[hdrtoolslib::Y_COMP], (int)format, m_oFrameStore->m_bitDepth );
       videoDst.resize(
         m_oFrameStore->m_width[hdrtoolslib::Y_COMP],
         m_oFrameStore->m_height[hdrtoolslib::Y_COMP], format,
@@ -677,13 +746,21 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
       auto& image = videoDst.frame( videoDst.frameCount() - 1 );
       image.resize( m_oFrameStore->m_width[hdrtoolslib::Y_COMP], m_oFrameStore->m_height[hdrtoolslib::Y_COMP], format );
       if ( m_oFrameStore->m_bitDepth == 8 ) {
+        log( "outp", m_oFrameStore, 0 );  
         for ( int8_t c = 0; c < 3; c++ ) {
-          auto* dst = image.plane( c ).data();
-          for ( int i = 0; i < image.plane( c ).size(); i++ ) { dst[i] = m_oFrameStore->m_comp[c][i]; }
+          auto* dst = output->m_pixelFormat == hdrtoolslib::PF_BGR ? 
+            image.plane( 2 - c ).data() :
+            image.plane( c ).data() ;
+          for ( int i = 0; i < image.plane( c ).size(); i++ ) {             
+              dst[i] = m_oFrameStore->m_comp[c][i];              
+          }
         }
       } else if ( m_oFrameStore->m_bitDepth > 8 ) {
+        log( "outp", m_oFrameStore, 1 );  
         for ( int8_t c = 0; c < 3; c++ ) {
-          auto* dst = image.plane( c ).data();
+          auto* dst = output->m_pixelFormat == hdrtoolslib::PF_BGR ? 
+            image.plane( 2 - c ).data() :
+            image.plane( c ).data() ;
           for ( int i = 0; i < image.plane( c ).size(); i++ ) { dst[i] = m_oFrameStore->m_ui16Comp[c][i]; }
         }
       } else {

@@ -33,24 +33,33 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once 
+#pragma once
 
-#define DISABLE_SUB_PROCESS_LOG()                     \
-  std::stringstream binStream;                        \
-  auto oldRdBuf = std::cout.rdbuf(binStream.rdbuf()); \
-  char binBuffer[1024];                               \
-  auto binFile = fmemopen(binBuffer, 1024, "w");      \
-  if ( !binFile ) { std::printf("error"); return; }   \
-  auto oldStdout = stdout;                            \
-  stdout = binFile;                                 
+#define DISABLE_LOG 1
 
-  
-#define ENABLE_SUB_PROCESS_LOG()                   \
-  std::cout.rdbuf(oldRdBuf);                       \
-  std::fclose(binFile);                            \
-  stdout = oldStdout;                               
+#if DISABLE_LOG == 1
+#  define DISABLE_SUB_PROCESS_LOG() \
+    std::stringstream binStream; \
+    auto oldRdBuf = std::cout.rdbuf(binStream.rdbuf()); \
+    char binBuffer[1024]; \
+    auto binFile = fmemopen(binBuffer, 1024, "w"); \
+    if (!binFile) { \
+      std::printf("error"); \
+      return; \
+    } \
+    auto oldStdout = stdout; \
+    stdout = binFile;
 
-  
+#  define ENABLE_SUB_PROCESS_LOG() \
+    std::cout.rdbuf(oldRdBuf); \
+    std::fclose(binFile); \
+    stdout = oldStdout;
+#else
+#  define DISABLE_SUB_PROCESS_LOG() ;
+#  define ENABLE_SUB_PROCESS_LOG() ;
+#endif
+
+
 static std::string
 grep(std::string filename, std::string keyword)
 {
@@ -67,4 +76,51 @@ grep(std::string filename, std::string keyword)
   }
   in.close();
   return std::string();
+}
+
+static inline bool
+exists(const std::string& name)
+{
+  std::ifstream file(name.c_str());
+  return file.good();
+}
+
+static inline size_t hash( const std::string& name){    
+  std::ifstream file(name);
+  if( file.is_open() ){
+    std::string str(
+      (std::istreambuf_iterator<char>(file)),
+      std::istreambuf_iterator<char>());
+    file.close();
+    return std::hash<std::string>{}(str);
+  }
+  return 0;
+}
+
+const std::string g_encoderPath =
+  "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderStatic";
+const std::string g_decoderPath =
+  "externaltools/hm-16.21+scm-8.8/bin/TAppDecoderStatic";
+const std::string g_hdrConvertPath =
+  "externaltools/hdrtools/build/bin/HDRConvert";
+
+static bool checkSoftwarePath(){
+  bool ret = true;
+  if ( !exists( g_encoderPath) ){
+    printf("Software path not exists: %s \n",g_encoderPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_decoderPath) ){
+    printf("Software path not exists: %s \n",g_decoderPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_hdrConvertPath) ){
+    printf("Software path not exists: %s \n",g_hdrConvertPath.c_str());
+    ret = false;
+  }
+  if ( !ret ){
+    printf("External softwares not installed: ");
+    printf("  Please run ./get_dependencies.jh scripts \n");
+  }
+  return ret;
 }

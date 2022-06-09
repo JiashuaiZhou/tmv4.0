@@ -127,13 +127,15 @@ private:
     FrameSequence<T>& videoDst,
     size_t srcNumByte,
     size_t dstNumByte,
-    size_t filter);
+    size_t filter,
+    bool BGR);
   void convertYUV420ToRGB444(
     Frame<T>& imageSrc,
     Frame<T>& imageDst,
     size_t srcNumByte,
     size_t dstNumByte,
-    size_t filter);
+    size_t filter,
+    bool BGR);
 
   void convertYUV444ToRGB444(
     FrameSequence<T>& videoSrc,
@@ -227,16 +229,16 @@ private:
     dst.resize(src.width(), src.height());
     for (int j = 0; j < src.height(); j++)
       for (int i = 0; i < src.width(); i++)
-        dst(i, j) = src(i, j);
+        dst(j, i) = src(j, i);
   }
 
   inline float downsamplingHorizontal(
     const Filter444to420& filter,
-    const Plane<float>& im,
+    const Plane<float>& plane,
     const int i0,
     const int j0) const
   {
-    const auto width = im.width();
+    const auto width = plane.width();
     const float scale =
       1.0f / ((float)(1 << ((int)filter.horizontal_.shift_)));
     const float offset = 0.00000000;
@@ -244,66 +246,72 @@ private:
     double value = 0;
     for (int j = 0; j < (int)filter.horizontal_.data_.size(); j++) {
       value += (double)filter.horizontal_.data_[j]
-        * (double)(im(clamp(j0 + j - position, 0, width - 1), i0));
+        * (double)(plane.get(i0, clamp(j0 + j - position, 0, width - 1)));
     }
     return (float)((value + (double)offset) * (double)scale);
   }
 
   inline float downsamplingVertical(
     const Filter444to420& filter,
-    const Plane<float>& im,
+    const Plane<float>& plane,
     const int i0,
     const int j0) const
   {
-    const auto height = im.height();
+    const auto height = plane.height();
     const float offset = 0;
     const float scale = 1.0f / ((float)(1 << ((int)filter.vertical_.shift_)));
     const int position = int(filter.vertical_.data_.size() - 1) >> 1;
     double value = 0;
     for (int i = 0; i < (int)filter.vertical_.data_.size(); i++) {
       value += (double)filter.vertical_.data_[i]
-        * (double)(im(j0, clamp(i0 + i - position, 0, height - 1)));
+        * (double)(plane.get(clamp(i0 + i - position, 0, height - 1), j0));
     }
     return (float)((value + (double)offset) * (double)scale);
   }
 
   inline float upsamplingVertical0(
     const Filter420to444& filter,
-    const Plane<float>& im,
+    const Plane<float>& plane,
     const int i0,
     const int j0) const
   {
-    const auto height = im.height();
+    const auto height = plane.height();
     const float scale = 1.0f / ((float)(1 << ((int)filter.vertical0_.shift_)));
     const float offset = 0.00000000;
     const int position = int(filter.vertical0_.data_.size() + 1) >> 1;
     float value = 0;
     for (int i = 0; i < (int)filter.vertical0_.data_.size(); i++) {
       value += filter.vertical0_.data_[i]
-        * (float)(im(j0, clamp(i0 + i - position, 0, height - 1)));
+        * (float)(plane.get(clamp(i0 + i - position, 0, height - 1), j0));
     }
     return (float)((value + (float)offset) * (float)scale);
   }
 
   inline float upsamplingVertical1(
-    const Filter420to444& filter, const Plane<float>& im, int i0, int j0) const
+    const Filter420to444& filter,
+    const Plane<float>& plane,
+    int i0,
+    int j0) const
   {
-    const auto height = im.height();
+    const auto height = plane.height();
     const float scale = 1.0f / ((float)(1 << ((int)filter.vertical1_.shift_)));
     const float offset = 0.00000000;
     const int position = int(filter.vertical1_.data_.size() + 1) >> 1;
     float value = 0;
     for (int i = 0; i < (int)filter.vertical1_.data_.size(); i++) {
       value += filter.vertical1_.data_[i]
-        * (float)(im(j0, clamp(i0 + i - position, 0, height - 1)));
+        * (float)(plane.get(clamp(i0 + i - position, 0, height - 1), j0));
     }
     return (float)((value + (float)offset) * (float)scale);
   }
 
   inline float upsamplingHorizontal0(
-    const Filter420to444& filter, const Plane<float>& im, int i0, int j0) const
+    const Filter420to444& filter,
+    const Plane<float>& plane,
+    int i0,
+    int j0) const
   {
-    const auto width = im.width();
+    const auto width = plane.width();
     const float scale =
       1.0f / ((float)(1 << ((int)filter.horizontal0_.shift_)));
     const float offset = 0.00000000;
@@ -311,15 +319,18 @@ private:
     float value = 0;
     for (int j = 0; j < (int)filter.horizontal0_.data_.size(); j++) {
       value += filter.horizontal0_.data_[j]
-        * (float)(im(clamp(j0 + j - position, 0, width - 1), i0));
+        * (float)(plane.get(i0, clamp(j0 + j - position, 0, width - 1)));
     }
     return (float)((value + (float)offset) * (float)scale);
   }
 
   inline float upsamplingHorizontal1(
-    const Filter420to444& filter, const Plane<float>& im, int i0, int j0) const
+    const Filter420to444& filter,
+    const Plane<float>& plane,
+    int i0,
+    int j0) const
   {
-    const auto width = im.width();
+    const auto width = plane.width();
     const float scale =
       1.0f / ((float)(1 << ((int)filter.horizontal1_.shift_)));
     const float offset = 0.00000000;
@@ -327,7 +338,7 @@ private:
     float value = 0;
     for (int j = 0; j < (int)filter.horizontal1_.data_.size(); j++) {
       value += filter.horizontal1_.data_[j]
-        * (float)(im(clamp(j0 + j - position, 0, width - 1), i0));
+        * (float)(plane.get(i0, clamp(j0 + j - position, 0, width - 1)));
     }
     return (float)((value + (float)offset) * (float)scale);
   }

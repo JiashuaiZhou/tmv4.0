@@ -111,10 +111,13 @@ create_executable( NAME      tests
                    SOURCES   gtests/main.cpp
                              gtests/draco.cpp 
                              gtests/metrics.cpp
-                   LIBRARIES gtest_main vdmcUtil geometryEncoder geometryDecoder
+                             gtests/hm.cpp
+                             gtests/colourConvert.cpp
+                   LIBRARIES gtest_main vdmcUtil geometryEncoder geometryDecoder videoEncoder videoDecoder colourConverter
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder )
 include(GoogleTest)
 gtest_discover_tests( tests )
+
 

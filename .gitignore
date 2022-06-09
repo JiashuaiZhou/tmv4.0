@@ -24,9 +24,7 @@ DerivedData
 # configure files
 source/lib/vdmcUtil/config.h
 
-# A directory for developers to put anything
-data/
-
+# doc
 doc/mpeg-vmesh-sw-manual.aux
 
 # Dependencies
@@ -42,12 +40,15 @@ dependencies/vtm
 dependencies/ffmpeg
 
 # External tools
-externaltools/
+/externaltools/
 
 # Temp files
 /*.yuv
 /*.bgr
 /*.h254
+
+# HDRTools 
+/test_1920x1080_24p_420.yuv
 /log.txt
 
 

@@ -74,6 +74,7 @@ TEST(VideoHm, EncodeDisp)
     printf("Src frame count = %d \n", src.frameCount());
     exit(-1);
   }
+  DISABLE_SUB_PROCESS_LOG()
 
   // Encode lib 
   vmesh::FrameSequence<uint16_t> rec;
@@ -135,6 +136,7 @@ TEST(VideoHm, EncodeDisp)
   std::cout << "hashDecLibs = " << std::hex << hashDecLibs << "\n";
   std::cout << "hashDecSoft = " << std::hex << hashDecSoft << "\n";
 
+  ENABLE_SUB_PROCESS_LOG();
   // Compare hashes
   ASSERT_EQ(hashBinLibs, hashBinSoft);
   ASSERT_EQ(hashRecLibs, hashRecSoft);
@@ -156,10 +158,10 @@ TEST(VideoHm, EncodeTexture)
   vmesh::VideoEncoderParameters params;
   std::string g_encoderPath = "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderStatic";
   std::string g_decoderPath = "externaltools/hm-16.21+scm-8.8/bin/TAppDecoderStatic";
-  std::string inputPath = "data/tex_2048x2048_10bits_p420.yuv";  
+  std::string inputPath = "data/tex_512x512_10bits_p420.yuv";  
   std::string configPath = "cfg/hm/ctc-hm-texture-ai.cfg";
-  const int width = 2048;
-  const int height = 2048;
+  const int width = 512;
+  const int height = 512;
   const int frameCount = 2;
   const vmesh::ColourSpace colorSpace = vmesh::ColourSpace::YUV420p;
   vmesh::VideoCodecId codecId = vmesh::VideoCodecId::HM;
@@ -180,6 +182,7 @@ TEST(VideoHm, EncodeTexture)
     printf("Src frame count = %d \n", src.frameCount());
     exit(-1);
   }
+  DISABLE_SUB_PROCESS_LOG()
 
   // Encode lib
   vmesh::FrameSequence<uint16_t> rec;
@@ -193,8 +196,8 @@ TEST(VideoHm, EncodeTexture)
   decoder->decode(bitstream.vector(), dec, 10);
 
   // Save bitstream, reconstructed and decoded
-  rec.save("rec_text_libs_2048x2048_10bits_p420.yuv");
-  dec.save("dec_text_libs_2048x2048_10bits_p420.yuv");
+  rec.save("rec_text_libs_512x512_10bits_p420.yuv");
+  dec.save("dec_text_libs_512x512_10bits_p420.yuv");
   bitstream.save( "hm_text_libs.h265" );
 
   // Encode with original draco application
@@ -203,7 +206,7 @@ TEST(VideoHm, EncodeTexture)
       << "  -c " << configPath << " "
       << "  --InputFile=" << inputPath << " "
       << "  --BitstreamFile=hm_text_soft.h265 "
-      << "  --ReconFile=rec_text_soft_2048x2048_10bits_p420.yuv "
+      << "  --ReconFile=rec_text_soft_512x512_10bits_p420.yuv "
       << "  --InputBitDepth=10 "
       << "  --OutputBitDepth=10 "
       << "  --OutputBitDepthC=10 "
@@ -223,17 +226,17 @@ TEST(VideoHm, EncodeTexture)
   cmd.str("");
   cmd << g_decoderPath << " " 
      << "  --BitstreamFile=hm_text_soft.h265 "
-     << "  --ReconFile=dec_text_soft_2048x2048_10bits_p420.yuv"; 
+     << "  --ReconFile=dec_text_soft_512x512_10bits_p420.yuv"; 
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
   // Compute hashes
   auto hashBinLibs =  hash("hm_text_libs.h265");
   auto hashBinSoft =  hash("hm_text_soft.h265");
-  auto hashRecLibs =  hash("rec_text_libs_2048x2048_10bits_p420.yuv");
-  auto hashRecSoft =  hash("rec_text_soft_2048x2048_10bits_p420.yuv");
-  auto hashDecLibs =  hash("dec_text_libs_2048x2048_10bits_p420.yuv");
-  auto hashDecSoft =  hash("dec_text_soft_2048x2048_10bits_p420.yuv");
+  auto hashRecLibs =  hash("rec_text_libs_512x512_10bits_p420.yuv");
+  auto hashRecSoft =  hash("rec_text_soft_512x512_10bits_p420.yuv");
+  auto hashDecLibs =  hash("dec_text_libs_512x512_10bits_p420.yuv");
+  auto hashDecSoft =  hash("dec_text_soft_512x512_10bits_p420.yuv");
   std::cout << "hashBinLibs = " << std::hex << hashBinLibs << "\n";
   std::cout << "hashBinSoft = " << std::hex << hashBinSoft << "\n";
   std::cout << "hashRecLibs = " << std::hex << hashRecLibs << "\n";
@@ -241,6 +244,7 @@ TEST(VideoHm, EncodeTexture)
   std::cout << "hashDecLibs = " << std::hex << hashDecLibs << "\n";
   std::cout << "hashDecSoft = " << std::hex << hashDecSoft << "\n";
 
+  ENABLE_SUB_PROCESS_LOG();
   // Compare hashes
   // ASSERT_EQ(hashBinLibs, hashBinSoft);
   // ASSERT_EQ(hashRecLibs, hashRecSoft);
@@ -251,8 +255,8 @@ TEST(VideoHm, EncodeTexture)
   // Remove files 
   remove("hm_text_libs.h265");
   remove("hm_text_soft.h265");
-  remove("rec_text_libs_2048x2048_10bits_p420.rgb");
-  remove("rec_text_soft_2048x2048_10bits_p420.rgb");
-  remove("dec_text_libs_2048x2048_10bits_p420.rgb");
-  remove("dec_text_soft_2048x2048_10bits_p420.rgb");
+  remove("rec_text_libs_512x512_10bits_p420.rgb");
+  remove("rec_text_soft_512x512_10bits_p420.rgb");
+  remove("dec_text_libs_512x512_10bits_p420.rgb");
+  remove("dec_text_soft_512x512_10bits_p420.rgb");
 }

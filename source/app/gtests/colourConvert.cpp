@@ -176,7 +176,7 @@ test(
 TEST(ColourConvert, HdrToolsUp)
 {
   test(
-    1, "data/tex_2048x2048_10bits_p420.yuv", 2048, 2048, 2, 10, 8,
+    1, "data/tex_512x512_10bits_p420.yuv", 512, 512, 2, 10, 8,
     vmesh::ColourSpace::YUV420p, vmesh::ColourSpace::BGR444p,
     "cfg/hdrconvert/yuv420tobgr444.cfg", "cfg/hdrconvert/yuv420tobgr444.cfg");
 }
@@ -184,7 +184,7 @@ TEST(ColourConvert, HdrToolsUp)
 TEST(ColourConvert, HdrToolsDown)
 {
   test(
-    1, "data/tex_2048x2048_8bits_p444.bgr", 2048, 2048, 2, 8, 10,
+    1, "data/tex_512x512_8bits_p444.bgr", 512, 512, 2, 8, 10,
     vmesh::ColourSpace::BGR444p, vmesh::ColourSpace::YUV420p,
     "cfg/hdrconvert/bgr444toyuv420.cfg", "cfg/hdrconvert/bgr444toyuv420.cfg");
 }
@@ -192,7 +192,7 @@ TEST(ColourConvert, HdrToolsDown)
 // TEST(ColourConvert, UpInternal)
 // {
 //   test(
-//     0, "data/tex_2048x2048_10bits_420.yuv", 2048, 2048, 2,
+//     0, "data/tex_512x512_10bits_p420.yuv", 512, 512, 2,
 //     vmesh::ColourSpace::YUV420p, vmesh::ColourSpace::BGR444p,
 //     "YUV420ToBGR444_10_8_1", "cfg/hdrconvert/yuv420tobgr444.cfg");
 // }

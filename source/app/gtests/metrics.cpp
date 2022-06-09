@@ -51,8 +51,8 @@ TEST(Metrics, compare)
   vmesh::VMCMetricsParameters params;
   std::string srcObjPath = "data/levi_fr%04d_qp12_qt13.obj";
   std::string srcTexPath = "data/levi_fr%04d.png";
-  std::string decObjPath = "data/levi_voxelized.vmesh.0000_decoded.obj";
-  std::string decTexPath = "data/levi_voxelized.vmesh.0000_decoded.png";
+  std::string decObjPath = "data/levi_fr%04d_decoded.obj";
+  std::string decTexPath = "data/levi_fr%04d_decoded.png";
   const int startFrame = 0;
   const int frameCount = 0;
   params.computePcc = true;

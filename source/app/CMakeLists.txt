@@ -47,8 +47,9 @@ create_executable( NAME      metrics
 # Gengof
 create_executable( NAME      gengof 
                    SOURCES   original/gengof.cpp 
-                   LIBRARIES po vdmcUtil
-                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil )
+                   LIBRARIES po vdmcUtil vdmcEncoder
+                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
+                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder )
 
 # Simplify
 create_executable( NAME      simplify 
@@ -113,6 +114,7 @@ create_executable( NAME      tests
                              gtests/metrics.cpp
                              gtests/hm.cpp
                              gtests/colourConvert.cpp
+                             gtests/gengof.cpp
                    LIBRARIES gtest_main vdmcUtil geometryEncoder geometryDecoder videoEncoder videoDecoder colourConverter
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder

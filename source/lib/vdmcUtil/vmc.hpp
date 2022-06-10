@@ -121,7 +121,9 @@ struct VMCFrameInfo {
   FrameType type = FrameType::INTRA;
 };
 
+
 //============================================================================
+
 
 struct VMCGroupOfFramesInfo {
   void resize(int32_t fCount) { framesInfo.resize(fCount); }

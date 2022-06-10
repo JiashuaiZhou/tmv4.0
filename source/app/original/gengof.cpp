@@ -43,6 +43,7 @@
 #include "mesh.hpp"
 #include "vector.hpp"
 #include "version.hpp"
+#include "sequenceInfo.hpp"
 
 using namespace std;
 using namespace vmesh;
@@ -136,126 +137,9 @@ main(int argc, char* argv[])
     cerr << "Error: frameCount < 1\n";
     return 1;
   }
-
-  std::ofstream fout(params.outputPath);
-  if (!fout.is_open()) {
-    cerr << "Error: can't create output file " << params.outputPath << '\n';
-    return 1;
-  }
-
-  TriangleMesh<double> mesh0, mesh1;
-  auto frameIndex0 = params.startFrame;
-  if (1) {
-    const auto& name = vmesh::expandNum(params.inputPath, frameIndex0);
-    if (!mesh0.loadFromOBJ(name)) {
-      cerr << "Error: can't load frame" << frameIndex0 << ' ' << name << '\n';
-      return 1;
-    }
-  }
-
-  vector<Vec3<int32_t>> predStructure(params.frameCount);
-  predStructure[0] = Vec3<int32_t>(frameIndex0, frameIndex0, 0);
-  int32_t interFrameCount = 0;
-  for (int32_t f = 1; f < params.frameCount; ++f) {
-    const auto frameIndex1 = params.startFrame + f;
-    if (1) {
-      const auto& name = vmesh::expandNum(params.inputPath, frameIndex1);
-      if (!mesh1.loadFromOBJ(name)) {
-        cerr << "Error: can't load frame" << frameIndex1 << ' ' << name << '\n';
-        return 1;
-      }
-    }
-
-    bool same = false;
-    if (
-      mesh1.pointCount() == mesh0.pointCount()
-      && mesh1.triangleCount() == mesh0.triangleCount()
-      && mesh1.pointCount() == mesh0.texCoordCount()
-      && mesh1.triangleCount() == mesh0.texCoordTriangleCount()) {
-      same = true;
-      const auto texCoordCount = mesh0.texCoordCount();
-      for (int32_t v = 0; same && v < texCoordCount; ++v) {
-        const auto& texCoord0 = mesh0.texCoord(v);
-        const auto& texCoord1 = mesh1.texCoord(v);
-        for (int32_t k = 0; k < 2; ++k) {
-          if (texCoord0[k] != texCoord1[k]) {
-            same = false;
-            break;
-          }
-        }
-      }
-      const auto triangleCount = mesh0.triangleCount();
-      for (int32_t t = 0; same && t < triangleCount; ++t) {
-        const auto& tri0 = mesh0.triangle(t);
-        const auto& tri1 = mesh1.triangle(t);
-        const auto& triTexCoord0 = mesh0.texCoordTriangle(t);
-        const auto& triTexCoord1 = mesh1.texCoordTriangle(t);
-        for (int32_t k = 0; k < 3; ++k) {
-          if (tri0[k] != tri1[k] || triTexCoord0[k] != triTexCoord1[k]) {
-            same = false;
-            break;
-          }
-        }
-      }
-    }
-    if (!same) {
-      frameIndex0 = frameIndex1;
-      mesh0 = mesh1;
-    } else {
-      cout << interFrameCount++ << ' ' << frameIndex0 << " -> " << frameIndex1
-           << '\n';
-    }
-    predStructure[f] = Vec3<int32_t>(frameIndex1, frameIndex0, 0);
-  }
-
-  int32_t framesInGOF = 0;
-  int32_t startFrameIndexGOF = params.startFrame;
-  int32_t counterGOF = 0;
-  for (int32_t f = 0; f < params.frameCount;) {
-    const auto refFrameIndex = predStructure[f][1];
-    int32_t coherentFrameCount = 0;
-    while (coherentFrameCount <= params.maxGOFSize
-           && f + coherentFrameCount < params.frameCount
-           && predStructure[f + coherentFrameCount][1] == refFrameIndex) {
-      ++coherentFrameCount;
-    }
-
-    if (framesInGOF + coherentFrameCount <= params.maxGOFSize) {
-      framesInGOF += coherentFrameCount;
-    } else {
-      const auto start = startFrameIndexGOF;
-      const auto end = startFrameIndexGOF + framesInGOF;
-      assert(start >= params.startFrame);
-      assert(end <= params.startFrame + params.frameCount);
-      cout << "GOf[" << counterGOF << "] " << start << " -> " << end << ' '
-           << framesInGOF << '\n';
-      for (int32_t t = start; t < end; ++t) {
-        predStructure[t - params.startFrame][2] = counterGOF;
-      }
-      startFrameIndexGOF = params.startFrame + f;
-      framesInGOF = coherentFrameCount;
-      ++counterGOF;
-    }
-    f += coherentFrameCount;
-  }
-
-  if (framesInGOF) {
-    const auto start = startFrameIndexGOF;
-    const auto end = startFrameIndexGOF + framesInGOF;
-    assert(start >= params.startFrame);
-    assert(end <= params.startFrame + params.frameCount);
-    cout << "GOf[" << counterGOF << "] " << start << " -> " << end << ' '
-         << framesInGOF << '\n';
-    for (int32_t t = start; t < end; ++t) {
-      predStructure[t - params.startFrame][2] = counterGOF;
-    }
-    ++counterGOF;
-  }
-
-  for (int32_t t = 0; t < params.frameCount; ++t) {
-    const auto& pred = predStructure[t];
-    fout << pred[0] << ' ' << pred[1] << ' ' << pred[2] << '\n';
-  }
-
+  vmesh::VMCSequenceInfo sequenceInfo;
+  sequenceInfo.create( params.frameCount, params.startFrame, params.maxGOFSize, params.inputPath );
+  sequenceInfo.save( params.outputPath );
+  
   return 0;
 }

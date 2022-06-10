@@ -62,6 +62,13 @@ TEST(Draco, Encode)
   params.qn_ = -1;
   params.qg_ = -1;
   params.cl_ = 10;
+  
+  if (!checkSoftwarePath())
+    return;
+  if (!exists(inputMesh)) {
+    printf("Input path not exists (%s) \n", inputMesh.c_str());
+    return;
+  }
 
   // Encode with VirtualGeometryEncoder
   vmesh::TriangleMesh<double> src;
@@ -80,7 +87,7 @@ TEST(Draco, Encode)
 
   // Encode with original draco application
   std::stringstream cmd;
-  cmd << "./build/Release/bin/draco_encoder "
+  cmd << g_dracoEncoderPath << "  "
       << " -i " << inputMesh    //
       << " -o " << binOrg       //
       << " -qp " << params.qp_  //
@@ -94,7 +101,7 @@ TEST(Draco, Encode)
 
   // Decode with original draco application
   cmd.str("");
-  cmd << "./build/Release/bin/draco_decoder "
+  cmd << g_dracoDecoderPath << "  "
       << " -i " << binOrg   //
       << " -o " << recOrg  //
       << " > /dev/null"; 

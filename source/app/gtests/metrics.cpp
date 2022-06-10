@@ -124,7 +124,7 @@ TEST(Metrics, Compare)
   // ISBM metrics
   std::stringstream cmd;
   // printf("START METRICS mm \n"); fflush(stdout);
-  // cmd << "./build/Release/bin/mm "
+  // cmd << g_mmMetricsPath << " "
   //     << "sequence "
   //     << "  --firstFrame 0 "
   //     << "  --lastFrame 0  "
@@ -163,7 +163,7 @@ TEST(Metrics, Compare)
 
   // PCC metrics
   cmd.str("");
-  cmd << "./build/Release/bin/mm "
+  cmd << g_mmMetricsPath << " "
       << "sequence "
       << "  --firstFrame 0 "
       << "  --lastFrame 0  "

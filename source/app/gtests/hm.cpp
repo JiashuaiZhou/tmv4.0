@@ -125,7 +125,7 @@ test(
  
   // Encode with application
   std::stringstream cmd;
-  cmd << g_encoderPath << " "
+  cmd << g_hmEncoderPath << " "
       << "  -c " << configPath << " "
       << "  --InputFile=" << inputPath << " "
       << "  --InputBitDepth=" << bitDepth << " "
@@ -149,7 +149,7 @@ test(
 
   // Decode with application
   cmd.str("");
-  cmd << g_decoderPath << " "
+  cmd << g_hmDecoderPath << " "
       << "  --BitstreamFile=" << binSoftPath << " "
       << "  --ReconFile=" << decSoftPath 
       << " 2&>1 ";

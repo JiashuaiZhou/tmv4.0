@@ -130,25 +130,47 @@ static inline size_t hash( const std::string& name){
   return 0;
 }
 
-const std::string g_encoderPath =
+const std::string g_hmEncoderPath =
   "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderHighBitDepthStatic";
-const std::string g_decoderPath =
+const std::string g_hmDecoderPath =
   "externaltools/hm-16.21+scm-8.8/bin/TAppDecoderHighBitDepthStatic";
 const std::string g_hdrConvertPath =
   "externaltools/hdrtools/build/bin/HDRConvert";
+const std::string g_dracoEncoderPath = "build/Release/bin/draco_encoder";
+const std::string g_dracoDecoderPath = "build/Release/bin/draco_decoder";
+const std::string g_mmMetricsPath = "build/Release/bin/mm";
+
+const std::string g_gengofPath =
+  "externaltools/mpeg-vmesh-tm/build/Release/bin/gengof";
 
 static bool checkSoftwarePath(){
   bool ret = true;
-  if ( !exists( g_encoderPath) ){
-    printf("Software path not exists: %s \n",g_encoderPath.c_str());
+  if ( !exists( g_hmEncoderPath) ){
+    printf("Software path not exists: %s \n",g_hmEncoderPath.c_str());
     ret = false;
   }
-  if ( !exists( g_decoderPath) ){
-    printf("Software path not exists: %s \n",g_decoderPath.c_str());
+  if ( !exists( g_hmDecoderPath) ){
+    printf("Software path not exists: %s \n",g_hmDecoderPath.c_str());
     ret = false;
   }
   if ( !exists( g_hdrConvertPath) ){
     printf("Software path not exists: %s \n",g_hdrConvertPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_dracoEncoderPath) ){
+    printf("Software path not exists: %s \n",g_dracoEncoderPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_dracoDecoderPath) ){
+    printf("Software path not exists: %s \n",g_dracoDecoderPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_mmMetricsPath) ){
+    printf("Software path not exists: %s \n",g_mmMetricsPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_gengofPath) ){
+    printf("Software path not exists: %s \n",g_gengofPath.c_str());
     ret = false;
   }
   if ( !ret ){

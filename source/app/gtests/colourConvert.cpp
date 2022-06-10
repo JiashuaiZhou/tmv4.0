@@ -138,6 +138,7 @@ test(
   std::cout << "hashBinSoft = " << std::hex << hashSoft << "\n";
 
   disableSubProcessLog.enable();
+  
   // Compare hashes
   ASSERT_EQ(hashLibs, hashSoft);
 

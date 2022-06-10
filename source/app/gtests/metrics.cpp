@@ -44,7 +44,7 @@
 #include <gtest/gtest.h>
 #include "common.hpp"
 
-TEST(Metrics, compare)
+TEST(Metrics, Compare)
 {
   DISABLE_SUB_PROCESS_LOG();
   // Set parameters

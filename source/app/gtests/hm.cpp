@@ -46,7 +46,7 @@
 #include <gtest/gtest.h>
 #include "common.hpp"
 
-TEST(VideoHm, EncodeDisp)
+TEST(HM, Disp)
 {
   // Set parameters
   vmesh::VideoEncoderParameters params;  
@@ -138,11 +138,12 @@ TEST(VideoHm, EncodeDisp)
 
   ENABLE_SUB_PROCESS_LOG();
   // Compare hashes
-  ASSERT_EQ(hashBinLibs, hashBinSoft);
-  ASSERT_EQ(hashRecLibs, hashRecSoft);
-  ASSERT_EQ(hashDecLibs, hashDecSoft);
-  ASSERT_EQ(hashRecLibs, hashDecLibs);
-
+  ASSERT_EQ(hashBinLibs, hashBinSoft) << "Libs and soft bitstreams are differentes";
+  ASSERT_EQ(hashRecLibs, hashRecSoft) << "Libs and soft rec videos are differentes";
+  ASSERT_EQ(hashDecLibs, hashDecSoft) << "Libs and soft dec videos are differentes";
+  ASSERT_EQ(hashRecLibs, hashDecLibs) << "Libs rec and dec videos are differentes";
+  ASSERT_EQ(hashRecSoft, hashDecSoft) << "Soft rec and dec videos are differentes";
+  
   // Remove files 
   remove("hm_disp_libs.h265");
   remove("hm_disp_soft.h265");
@@ -152,7 +153,7 @@ TEST(VideoHm, EncodeDisp)
   remove("dec_disp_soft_256x160_10bits_p444.brg");
 }
 
-TEST(VideoHm, EncodeTexture)
+TEST(HM, Texture)
 {
   // Set parameters
   vmesh::VideoEncoderParameters params;
@@ -246,11 +247,11 @@ TEST(VideoHm, EncodeTexture)
 
   ENABLE_SUB_PROCESS_LOG();
   // Compare hashes
-  // ASSERT_EQ(hashBinLibs, hashBinSoft);
-  // ASSERT_EQ(hashRecLibs, hashRecSoft);
-  // ASSERT_EQ(hashDecLibs, hashDecSoft);
-  ASSERT_EQ(hashRecLibs, hashDecLibs);
-  ASSERT_EQ(hashDecSoft, hashDecSoft);
+  ASSERT_EQ(hashBinLibs, hashBinSoft) << "Libs and soft bitstreams are differentes";
+  ASSERT_EQ(hashRecLibs, hashRecSoft) << "Libs and soft rec videos are differentes";
+  ASSERT_EQ(hashDecLibs, hashDecSoft) << "Libs and soft dec videos are differentes";
+  ASSERT_EQ(hashRecLibs, hashDecLibs) << "Libs rec and dec videos are differentes";
+  ASSERT_EQ(hashDecSoft, hashDecSoft) << "Soft rec and dec videos are differentes";
 
   // Remove files 
   remove("hm_text_libs.h265");

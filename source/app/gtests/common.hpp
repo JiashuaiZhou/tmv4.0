@@ -35,7 +35,7 @@
  */
 #pragma once
 
-#define DISABLE_LOG 1
+#define DISABLE_LOG 0
 
 #if DISABLE_LOG == 1
 #  define DISABLE_SUB_PROCESS_LOG() \

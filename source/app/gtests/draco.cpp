@@ -46,7 +46,7 @@
 #include <gtest/gtest.h>
 #include "common.hpp"
 
-TEST(DracoEncoder, Encode)
+TEST(Draco, Encode)
 {
   DISABLE_SUB_PROCESS_LOG()
   // Set parameters
@@ -102,23 +102,17 @@ TEST(DracoEncoder, Encode)
   system(cmd.str().c_str());
 
   // Compare bitstreams
-  std::ifstream fileBinOrg(binOrg);
-  std::ifstream fileBinNew(binNew);
-  std::string strBinOrg(
-    (std::istreambuf_iterator<char>(fileBinOrg)),
-    std::istreambuf_iterator<char>());
-  std::string strBinNew(
-    (std::istreambuf_iterator<char>(fileBinNew)),
-    std::istreambuf_iterator<char>());
-  
-  // Compare decoded file  
-  src.loadFromOBJ(inputMesh);
-  
+  auto hashBinLibs =  hash(binOrg);
+  auto hashBinSoft =  hash(binNew);
+  std::cout << "hashBinLibs = " << std::hex << hashBinLibs << "\n";
+  std::cout << "hashBinSoft = " << std::hex << hashBinSoft << "\n";
   ENABLE_SUB_PROCESS_LOG()
 
-  ASSERT_EQ(strBinOrg, strBinNew);
+  ASSERT_EQ(hashBinLibs, hashBinSoft);
 
-  // TODO Add md5sun rec file comparison
+  // TODO Add md5sun rec file comparison  
+  // Compare decoded file  
+  // src.loadFromOBJ(inputMesh);
   // std::cout << "\033[0;32m[          ] \033[0;0m" << "TODO Add md5sun rec file comparison" << std::endl;
  
   // Remove tmp files

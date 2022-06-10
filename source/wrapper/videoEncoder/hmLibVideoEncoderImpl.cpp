@@ -111,6 +111,9 @@ Void hmLibVideoEncoderImpl<T>::encode( FrameSequence<T>&    videoSrc,
     fclose( patchFile );
   }
 #endif
+#if PRINT_MACRO_VALUES
+  printMacroSettings();
+#endif
   printChromaFormat();
   // main encoder loop
   Int                              iNumEncoded = 0;
@@ -778,7 +781,7 @@ Void hmLibVideoEncoderImpl<T>::xWritePicture( const TComPicYuv* pic, FrameSequen
   image.set( pic->getAddr( COMPONENT_Y ), pic->getAddr( COMPONENT_Cb ), pic->getAddr( COMPONENT_Cr ), width, height,
              pic->getStride( COMPONENT_Y ), width / chromaSubsample, height / chromaSubsample,
              pic->getStride( COMPONENT_Cb ), m_internalBitDepth[0] - m_outputBitDepth[0], format,
-             m_inputColourSpaceConvert == IPCOLOURSPACE_RGBtoGBR );
+             false /*m_inputColourSpaceConvert == IPCOLOURSPACE_RGBtoGBR */ );
 }
 
 template <typename T>

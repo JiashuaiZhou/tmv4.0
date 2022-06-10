@@ -48,7 +48,7 @@
 
 TEST(Draco, Encode)
 {
-  DISABLE_SUB_PROCESS_LOG()
+  disableSubProcessLog.disable();
   // Set parameters
   vmesh::GeometryCodecId codecId = vmesh::GeometryCodecId::DRACO;
   vmesh::GeometryEncoderParameters params;
@@ -106,7 +106,7 @@ TEST(Draco, Encode)
   auto hashBinSoft =  hash(binNew);
   std::cout << "hashBinLibs = " << std::hex << hashBinLibs << "\n";
   std::cout << "hashBinSoft = " << std::hex << hashBinSoft << "\n";
-  ENABLE_SUB_PROCESS_LOG()
+  disableSubProcessLog.enable();
 
   ASSERT_EQ(hashBinLibs, hashBinSoft);
 

@@ -45,32 +45,6 @@
 #include <gtest/gtest.h>
 #include "common.hpp"
 
-std::string configPath = "cfg//hdrconvert/yuv420tobgr444.cfg";
-
-static std::string
-videoName(
-  const std::string prefix,
-  const int width,
-  const int height,
-  const int bits,
-  const vmesh::ColourSpace colorSpace)
-{
-  std::string str;
-  str += prefix + "_" + std::to_string(width) + "x" + std::to_string(height)
-    + "_" + std::to_string(bits) + "bits_";
-
-  switch (colorSpace) {
-  case vmesh::ColourSpace::YUV400p: str += "p400.yuv"; break;
-  case vmesh::ColourSpace::YUV420p: str += "p420.yuv"; break;
-  case vmesh::ColourSpace::YUV444p: str += "p444.yuv"; break;
-  case vmesh::ColourSpace::RGB444p: str += "p444.rgb"; break;
-  case vmesh::ColourSpace::BGR444p: str += "p444.bgr"; break;
-  case vmesh::ColourSpace::GBR444p: str += "p444.gbr"; break;
-  case vmesh::ColourSpace::UNKNOW: str += "UNKNOW.UNKNOW"; break;
-  }
-  return str;
-}
-
 void
 test(
   int mode,
@@ -82,14 +56,13 @@ test(
   const int outputBitDepth,
   const vmesh::ColourSpace inputColourSpace,
   const vmesh::ColourSpace outputColourSpace,
-
   std::string configPath0,
   std::string configPath1)
 {
-  auto recLibsPath = videoName(
+  auto recLibsPath = name(
     "conv_libs_" + std::to_string(mode), width, height, outputBitDepth,
     outputColourSpace);
-  auto recSoftPath = videoName(
+  auto recSoftPath = name(
     "conv_soft_" + std::to_string(mode), width, height, outputBitDepth,
     outputColourSpace);
 
@@ -101,7 +74,7 @@ test(
     return;
   }
   
-  DISABLE_SUB_PROCESS_LOG();
+  disableSubProcessLog.disable();
 
   // Load input mesh
   vmesh::FrameSequence<uint16_t> src(
@@ -164,7 +137,7 @@ test(
   std::cout << "hashBinLibs = " << std::hex << hashLibs << "\n";
   std::cout << "hashBinSoft = " << std::hex << hashSoft << "\n";
 
-  ENABLE_SUB_PROCESS_LOG()
+  disableSubProcessLog.enable();
   // Compare hashes
   ASSERT_EQ(hashLibs, hashSoft);
 

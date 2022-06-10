@@ -46,135 +46,48 @@
 #include <gtest/gtest.h>
 #include "common.hpp"
 
-TEST(HM, Disp)
+void
+test(
+  const std::string prefix,
+  const std::string inputPath,
+  const int width,
+  const int height,
+  const int bitDepth,
+  const vmesh::ColourSpace colorSpace,
+  const int frameCount,
+  const std::string configPath)
 {
-  // Set parameters
-  vmesh::VideoEncoderParameters params;  
-  std::string inputPath = "data/disp_256x160_10bits_p444.brg";  
-  std::string configPath = "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg";
-  const int width = 256;
-  const int height = 160;
-  const int frameCount = 2;
-  const vmesh::ColourSpace colorSpace = vmesh::ColourSpace::BGR444p;
-  vmesh::VideoCodecId codecId = vmesh::VideoCodecId::HM;
-  params.encoderConfig_ = configPath;
-  params.qp_ = 38;
-  params.inputBitDepth_ = 10;
-  params.internalBitDepth_ = 10;
-  params.outputBitDepth_ = 10;
+  auto binLibsPath = prefix + "_libs.h265";
+  auto binSoftPath = prefix + "_soft.h265";
+  auto recLibsPath =
+    name(prefix + "_rec_libs", width, height, bitDepth, colorSpace);
+  auto recSoftPath =
+    name(prefix + "_rec_soft", width, height, bitDepth, colorSpace);
+  auto decLibsPath =
+    name(prefix + "_dec_libs", width, height, bitDepth, colorSpace);
+  auto decSoftPath =
+    name(prefix + "_dec_soft", width, height, bitDepth, colorSpace);
 
   // Check encoder and decoder path exist
   if (!checkSoftwarePath())
     return;
-
-  // Load input mesh
-  vmesh::FrameSequence<uint16_t> src(width, height, colorSpace, frameCount);
-  src.load(inputPath);
-  if (src.frameCount() == 0) {
-    printf("Src frame count = %d \n", src.frameCount());
-    exit(-1);
+  if (!exists(inputPath)) {
+    printf("Input path not exists (%s) \n", inputPath.c_str());
+    return;
   }
-  DISABLE_SUB_PROCESS_LOG()
+  if (!exists(configPath)) {
+    printf("Config path not exists (%s) \n", configPath.c_str());
+    return;
+  }
 
-  // Encode lib 
-  vmesh::FrameSequence<uint16_t> rec;
-  vmesh::Bitstream bitstream;
-  auto encoder = vmesh::VirtualVideoEncoder<uint16_t>::create(codecId);
-  encoder->encode(src, params, bitstream.vector(), rec);
-
-  // Decode lib 
-  vmesh::FrameSequence<uint16_t> dec;
-  auto decoder = vmesh::VirtualVideoDecoder<uint16_t>::create(codecId);
-  decoder->decode(bitstream.vector(), dec);
-
-  // Save bitstream, reconstructed and decoded
-  rec.save("rec_disp_libs_256x160_10bits_p444.brg");
-  rec.save("dec_disp_libs_256x160_10bits_p444.brg");
-  bitstream.save( "hm_disp_libs.h265" );
-
-  // Encode with application
-  std::stringstream cmd;
-  cmd << g_encoderPath << " "
-      << "  -c " << configPath << " "
-      << "  --InputFile=" << inputPath << " "
-      << "  --InputBitDepth=10 "
-      << "  --OutputBitDepth=10 "
-      << "  --OutputBitDepthC=10 "
-      << "  --InternalBitDepth=10 "
-      << "  --InternalBitDepthC=10 "
-      << "  --InputChromaFormat=444 "
-      << "  --FrameRate=30 "
-      << "  --FrameSkip=0 "
-      << "  --SourceWidth=" << width << " "
-      << "  --SourceHeight=" << height << " "
-      << "  --FramesToBeEncoded=" << frameCount << " "
-      << "  --BitstreamFile=hm_disp_soft.h265 "
-      << "  --ReconFile=rec_disp_soft_256x160_10bits_p444.brg "
-      << "  --QP=38 ";
-  printf("cmd = %s \n", cmd.str().c_str());
-  system(cmd.str().c_str());
-
-  // Decode with application
-  cmd.str("");
-  cmd << g_decoderPath << " " 
-     << "  --BitstreamFile=hm_disp_soft.h265 "
-     << "  --ReconFile=dec_disp_soft_256x160_10bits_p444.brg"; 
-  printf("cmd = %s \n", cmd.str().c_str());
-  system(cmd.str().c_str());
-
-  // Compute hashes
-  auto hashBinLibs =  hash("hm_disp_libs.h265");
-  auto hashBinSoft =  hash("hm_disp_soft.h265");
-  auto hashRecLibs =  hash("rec_disp_libs_256x160_10bits_p444.brg");
-  auto hashRecSoft =  hash("rec_disp_soft_256x160_10bits_p444.brg");
-  auto hashDecLibs =  hash("dec_disp_libs_256x160_10bits_p444.brg");
-  auto hashDecSoft =  hash("dec_disp_soft_256x160_10bits_p444.brg");
-  std::cout << "hashBinLibs = " << std::hex << hashBinLibs << "\n";
-  std::cout << "hashBinSoft = " << std::hex << hashBinSoft << "\n";
-  std::cout << "hashRecLibs = " << std::hex << hashRecLibs << "\n";
-  std::cout << "hashRecSoft = " << std::hex << hashRecSoft << "\n";
-  std::cout << "hashDecLibs = " << std::hex << hashDecLibs << "\n";
-  std::cout << "hashDecSoft = " << std::hex << hashDecSoft << "\n";
-
-  ENABLE_SUB_PROCESS_LOG();
-  // Compare hashes
-  ASSERT_EQ(hashBinLibs, hashBinSoft) << "Libs and soft bitstreams are differentes";
-  ASSERT_EQ(hashRecLibs, hashRecSoft) << "Libs and soft rec videos are differentes";
-  ASSERT_EQ(hashDecLibs, hashDecSoft) << "Libs and soft dec videos are differentes";
-  ASSERT_EQ(hashRecLibs, hashDecLibs) << "Libs rec and dec videos are differentes";
-  ASSERT_EQ(hashRecSoft, hashDecSoft) << "Soft rec and dec videos are differentes";
-  
-  // Remove files 
-  remove("hm_disp_libs.h265");
-  remove("hm_disp_soft.h265");
-  remove("rec_disp_libs_256x160_10bits_p444.brg");
-  remove("rec_disp_soft_256x160_10bits_p444.brg");
-  remove("dec_disp_libs_256x160_10bits_p444.brg");
-  remove("dec_disp_soft_256x160_10bits_p444.brg");
-}
-
-TEST(HM, Texture)
-{
   // Set parameters
   vmesh::VideoEncoderParameters params;
-  std::string g_encoderPath = "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderStatic";
-  std::string g_decoderPath = "externaltools/hm-16.21+scm-8.8/bin/TAppDecoderStatic";
-  std::string inputPath = "data/tex_512x512_10bits_p420.yuv";  
-  std::string configPath = "cfg/hm/ctc-hm-texture-ai.cfg";
-  const int width = 512;
-  const int height = 512;
-  const int frameCount = 2;
-  const vmesh::ColourSpace colorSpace = vmesh::ColourSpace::YUV420p;
   vmesh::VideoCodecId codecId = vmesh::VideoCodecId::HM;
   params.encoderConfig_ = configPath;
   params.qp_ = 38;
-  params.inputBitDepth_ = 10;
-  params.internalBitDepth_ = 10;
-  params.outputBitDepth_ = 10;
-
-  // Check encoder and decoder path exist
-  if (!checkSoftwarePath())
-    return;
+  params.inputBitDepth_ = bitDepth;
+  params.internalBitDepth_ = bitDepth;
+  params.outputBitDepth_ = bitDepth;
 
   // Load input mesh
   vmesh::FrameSequence<uint16_t> src(width, height, colorSpace, frameCount);
@@ -183,7 +96,8 @@ TEST(HM, Texture)
     printf("Src frame count = %d \n", src.frameCount());
     exit(-1);
   }
-  DISABLE_SUB_PROCESS_LOG()
+
+  disableSubProcessLog.disable();
 
   // Encode lib
   vmesh::FrameSequence<uint16_t> rec;
@@ -191,53 +105,64 @@ TEST(HM, Texture)
   auto encoder = vmesh::VirtualVideoEncoder<uint16_t>::create(codecId);
   encoder->encode(src, params, bitstream.vector(), rec);
 
-  // Decode lib 
+  // Decode lib
   vmesh::FrameSequence<uint16_t> dec;
   auto decoder = vmesh::VirtualVideoDecoder<uint16_t>::create(codecId);
   decoder->decode(bitstream.vector(), dec, 10);
 
   // Save bitstream, reconstructed and decoded
-  rec.save("rec_text_libs_512x512_10bits_p420.yuv");
-  dec.save("dec_text_libs_512x512_10bits_p420.yuv");
-  bitstream.save( "hm_text_libs.h265" );
+  rec.save(recLibsPath);
+  dec.save(decLibsPath);
+  bitstream.save(binLibsPath);
 
-  // Encode with original draco application
+  rec[0].log("rec");
+  dec[0].log("dec");
+
+  disableSubProcessLog.enable ();
+
+  printf("Start Soft part \n");
+  disableSubProcessLog.disable();
+ 
+  // Encode with application
   std::stringstream cmd;
-  cmd << g_encoderPath
+  cmd << g_encoderPath << " "
       << "  -c " << configPath << " "
       << "  --InputFile=" << inputPath << " "
-      << "  --BitstreamFile=hm_text_soft.h265 "
-      << "  --ReconFile=rec_text_soft_512x512_10bits_p420.yuv "
-      << "  --InputBitDepth=10 "
-      << "  --OutputBitDepth=10 "
-      << "  --OutputBitDepthC=10 "
-      << "  --InternalBitDepth=10 "
-      << "  --InternalBitDepthC=10 "
-      << "  --InputChromaFormat=420 "
+      << "  --InputBitDepth=" << bitDepth << " "
+      << "  --OutputBitDepth=" << bitDepth << " "
+      << "  --OutputBitDepthC=" << bitDepth << " "
+      << "  --InternalBitDepth=" << bitDepth << " "
+      << "  --InternalBitDepthC=" << bitDepth << " "
+      << "  --InputChromaFormat="
+      << (colorSpace == vmesh::ColourSpace::YUV420p ? "420" : "444")
       << "  --FrameRate=30 "
       << "  --FrameSkip=0 "
+      << "  --FramesToBeEncoded=" << frameCount << " "
       << "  --SourceWidth=" << width << " "
       << "  --SourceHeight=" << height << " "
-      << "  --FramesToBeEncoded=" << frameCount << " "
-      << "  --QP=38 ";
+      << "  --BitstreamFile=" << binSoftPath << " "
+      << "  --ReconFile=" << recSoftPath << " "
+      << "  --QP=38 " 
+      << " 2&>1 ";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
-  
+
   // Decode with application
   cmd.str("");
-  cmd << g_decoderPath << " " 
-     << "  --BitstreamFile=hm_text_soft.h265 "
-     << "  --ReconFile=dec_text_soft_512x512_10bits_p420.yuv"; 
+  cmd << g_decoderPath << " "
+      << "  --BitstreamFile=" << binSoftPath << " "
+      << "  --ReconFile=" << decSoftPath 
+      << " 2&>1 ";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
   // Compute hashes
-  auto hashBinLibs =  hash("hm_text_libs.h265");
-  auto hashBinSoft =  hash("hm_text_soft.h265");
-  auto hashRecLibs =  hash("rec_text_libs_512x512_10bits_p420.yuv");
-  auto hashRecSoft =  hash("rec_text_soft_512x512_10bits_p420.yuv");
-  auto hashDecLibs =  hash("dec_text_libs_512x512_10bits_p420.yuv");
-  auto hashDecSoft =  hash("dec_text_soft_512x512_10bits_p420.yuv");
+  auto hashBinLibs = hash(binLibsPath);
+  auto hashBinSoft = hash(binSoftPath);
+  auto hashRecLibs = hash(recLibsPath);
+  auto hashRecSoft = hash(recSoftPath);
+  auto hashDecLibs = hash(decLibsPath);
+  auto hashDecSoft = hash(decSoftPath);
   std::cout << "hashBinLibs = " << std::hex << hashBinLibs << "\n";
   std::cout << "hashBinSoft = " << std::hex << hashBinSoft << "\n";
   std::cout << "hashRecLibs = " << std::hex << hashRecLibs << "\n";
@@ -245,19 +170,40 @@ TEST(HM, Texture)
   std::cout << "hashDecLibs = " << std::hex << hashDecLibs << "\n";
   std::cout << "hashDecSoft = " << std::hex << hashDecSoft << "\n";
 
-  ENABLE_SUB_PROCESS_LOG();
-  // Compare hashes
-  ASSERT_EQ(hashBinLibs, hashBinSoft) << "Libs and soft bitstreams are differentes";
-  ASSERT_EQ(hashRecLibs, hashRecSoft) << "Libs and soft rec videos are differentes";
-  ASSERT_EQ(hashDecLibs, hashDecSoft) << "Libs and soft dec videos are differentes";
-  ASSERT_EQ(hashRecLibs, hashDecLibs) << "Libs rec and dec videos are differentes";
-  ASSERT_EQ(hashDecSoft, hashDecSoft) << "Soft rec and dec videos are differentes";
+  disableSubProcessLog.enable();
 
-  // Remove files 
-  remove("hm_text_libs.h265");
-  remove("hm_text_soft.h265");
-  remove("rec_text_libs_512x512_10bits_p420.rgb");
-  remove("rec_text_soft_512x512_10bits_p420.rgb");
-  remove("dec_text_libs_512x512_10bits_p420.rgb");
-  remove("dec_text_soft_512x512_10bits_p420.rgb");
+  // Compare hashes
+  ASSERT_EQ(hashBinLibs, hashBinSoft)
+    << "Libs and soft bitstreams are differentes";
+  ASSERT_EQ(hashRecLibs, hashRecSoft)
+    << "Libs and soft rec videos are differentes";
+  ASSERT_EQ(hashDecLibs, hashDecSoft)
+    << "Libs and soft dec videos are differentes";
+  ASSERT_EQ(hashRecLibs, hashDecLibs)
+    << "Libs rec and dec videos are differentes";
+  ASSERT_EQ(hashRecSoft, hashDecSoft)
+    << "Soft rec and dec videos are differentes";
+
+  // Remove files
+  remove(binLibsPath.c_str());
+  remove(binSoftPath.c_str());
+  remove(recLibsPath.c_str());
+  remove(recSoftPath.c_str());
+  remove(decLibsPath.c_str());
+  remove(decSoftPath.c_str());
+}
+
+TEST(HM, Disp)
+{
+  test(
+    "disp", "data/disp_256x160_10bits_p444.brg", 256, 160, 10,
+    vmesh::ColourSpace::BGR444p, 2,
+    "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
+}
+
+TEST(HM, Texture)
+{
+  test(
+    "disp", "data/tex_512x512_10bits_p420.yuv", 512, 512, 10,
+    vmesh::ColourSpace::YUV420p, 2, "cfg/hm/ctc-hm-texture-ai.cfg");
 }

@@ -35,29 +35,62 @@
  */
 #pragma once
 
-#define DISABLE_LOG 0
 
-#if DISABLE_LOG == 1
-#  define DISABLE_SUB_PROCESS_LOG() \
-    std::stringstream binStream; \
-    auto oldRdBuf = std::cout.rdbuf(binStream.rdbuf()); \
-    char binBuffer[1024]; \
-    auto binFile = fmemopen(binBuffer, 1024, "w"); \
-    if (!binFile) { \
-      std::printf("error"); \
-      return; \
-    } \
-    auto oldStdout = stdout; \
-    stdout = binFile;
+#include "image.hpp"
 
-#  define ENABLE_SUB_PROCESS_LOG() \
-    std::cout.rdbuf(oldRdBuf); \
-    std::fclose(binFile); \
-    stdout = oldStdout;
-#else
-#  define DISABLE_SUB_PROCESS_LOG() ;
-#  define ENABLE_SUB_PROCESS_LOG() ;
-#endif
+struct DisableSubProcessLog {  
+  private :
+    bool disableLog = true;
+    bool isDisable = false;
+    std::stringstream binCoutStream; 
+    std::stringstream binCerrStream; 
+    std::streambuf* oldCoutRdBuf;
+    std::streambuf* oldCerrRdBuf;
+    char binStdoutBuffer[4096]; 
+    char binStderrBuffer[4096]; 
+    FILE* binStdout;
+    FILE* binStderr;
+    FILE* oldStdout;
+    FILE* oldStderr;
+  public:
+  void switchOnLog() { disableLog = false; }
+  
+  void disable()
+  {
+    if (disableLog && !isDisable) {
+      // Redirect std::cout and std::cerr
+      oldCoutRdBuf = std::cout.rdbuf(binCoutStream.rdbuf());
+      oldCerrRdBuf = std::cerr.rdbuf(binCerrStream.rdbuf());
+      
+      // redirect printf
+      binStdout = fmemopen(binStdoutBuffer, 4096, "w");
+      binStderr = fmemopen(binStderrBuffer, 4096, "w");
+      if (!binStdout) 
+        return;
+      if (!binStderr) 
+        return;
+      oldStdout = stdout;
+      oldStderr = stderr;
+      stdout = binStdout;
+      stderr = binStderr;
+      isDisable = true;
+    }
+  }
+  void enable()
+  {
+    if (isDisable) {
+      std::cout.rdbuf(oldCoutRdBuf);
+      std::cerr.rdbuf(oldCerrRdBuf);
+      std::fclose(binStdout);
+      std::fclose(binStderr);
+      stdout = oldStdout;
+      stderr = oldStderr;
+      isDisable = false;
+    }
+  }
+};
+
+extern DisableSubProcessLog disableSubProcessLog;
 
 
 static std::string
@@ -98,9 +131,9 @@ static inline size_t hash( const std::string& name){
 }
 
 const std::string g_encoderPath =
-  "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderStatic";
+  "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderHighBitDepthStatic";
 const std::string g_decoderPath =
-  "externaltools/hm-16.21+scm-8.8/bin/TAppDecoderStatic";
+  "externaltools/hm-16.21+scm-8.8/bin/TAppDecoderHighBitDepthStatic";
 const std::string g_hdrConvertPath =
   "externaltools/hdrtools/build/bin/HDRConvert";
 
@@ -123,4 +156,29 @@ static bool checkSoftwarePath(){
     printf("  Please run ./get_dependencies.jh scripts \n");
   }
   return ret;
+}
+
+
+static std::string
+name(
+  const std::string prefix,
+  const int width,
+  const int height,
+  const int bits,
+  const vmesh::ColourSpace colorSpace)
+{
+  std::string str;
+  str += prefix + "_" + std::to_string(width) + "x" + std::to_string(height)
+    + "_" + std::to_string(bits) + "bits_";
+
+  switch (colorSpace) {
+  case vmesh::ColourSpace::YUV400p: str += "p400.yuv"; break;
+  case vmesh::ColourSpace::YUV420p: str += "p420.yuv"; break;
+  case vmesh::ColourSpace::YUV444p: str += "p444.yuv"; break;
+  case vmesh::ColourSpace::RGB444p: str += "p444.rgb"; break;
+  case vmesh::ColourSpace::BGR444p: str += "p444.bgr"; break;
+  case vmesh::ColourSpace::GBR444p: str += "p444.gbr"; break;
+  case vmesh::ColourSpace::UNKNOW: str += "UNKNOW.UNKNOW"; break;
+  }
+  return str;
 }

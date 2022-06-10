@@ -40,6 +40,9 @@
 #include "version.hpp"
 
 #include <gtest/gtest.h>
+#include "common.hpp"
+
+DisableSubProcessLog disableSubProcessLog;
 
 int
 main(int argc, char* argv[])
@@ -50,6 +53,19 @@ main(int argc, char* argv[])
   std::cout.precision( std::numeric_limits<float>::max_digits10 );
   
   ::testing::InitGoogleTest(&argc, argv);
+
+  for (int i = 0; i < argc; i++) {
+    std::cout << i << ":" << argv[i] << std::endl;
+    if (std::strcmp( argv[i], "--verbose") == 0)
+    {
+      printf("disableSubProcessLog \n");
+      fflush(stdout);
+      disableSubProcessLog.switchOnLog();
+      printf("disableSubProcessLog done \n");
+      fflush(stdout);
+    }
+  }
+
   return RUN_ALL_TESTS();
   return 0;
 }

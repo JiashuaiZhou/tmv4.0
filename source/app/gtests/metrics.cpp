@@ -46,7 +46,7 @@
 
 TEST(Metrics, Compare)
 {
-  DISABLE_SUB_PROCESS_LOG();
+  disableSubProcessLog.disable();
   // Set parameters
   vmesh::VMCMetricsParameters params;
   std::string srcObjPath = "data/levi_fr%04d_qp12_qt13.obj";
@@ -83,7 +83,7 @@ TEST(Metrics, Compare)
 
     auto& frame = gof.frames[0];
     if (!frame.input.loadFromOBJ(srcObjName)) {
-      ENABLE_SUB_PROCESS_LOG();
+      disableSubProcessLog.enable();
       printf(
         "Error loading src mesh %d / %d: %s \n", f, frameCount,
         srcObjName.c_str());
@@ -91,7 +91,7 @@ TEST(Metrics, Compare)
       return;
     }
     if (!vmesh::LoadImage(srcTexName, frame.inputTexture)) {
-      ENABLE_SUB_PROCESS_LOG();
+      disableSubProcessLog.enable();
       printf(
         "Error loading src texture %d / %d: %s \n", f, frameCount,
         srcTexName.c_str());
@@ -99,7 +99,7 @@ TEST(Metrics, Compare)
       return;
     }
     if (!frame.rec.loadFromOBJ(decObjName)) {
-      ENABLE_SUB_PROCESS_LOG();
+      disableSubProcessLog.enable();
       printf(
         "Error loading rec mesh %d / %d: %s \n", f, frameCount,
         decObjName.c_str());
@@ -107,7 +107,7 @@ TEST(Metrics, Compare)
       return;
     }
     if (!vmesh::LoadImage(decTexName, frame.outputTexture)) {
-      ENABLE_SUB_PROCESS_LOG();
+      disableSubProcessLog.enable();
       printf(
         "Error loading rec texture %d / %d: %s \n", f, frameCount,
         decTexName.c_str());
@@ -254,7 +254,7 @@ TEST(Metrics, Compare)
   std::cout << "c1 " << c1a << " / " << c1b.str() << "\n";
   std::cout << "c2 " << c2a << " / " << c2b.str() << "\n";
 
-  ENABLE_SUB_PROCESS_LOG();
+  disableSubProcessLog.enable();
 
   ASSERT_EQ(d1a, d1b.str());
   ASSERT_EQ(d2a, d2b.str());

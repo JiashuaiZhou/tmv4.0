@@ -360,7 +360,7 @@ void hmLibVideoDecoderImpl<T>::xWritePicture( const pcc_hm::TComPicYuv* pic, Fra
     pic->getAddr(COMPONENT_Cr), m_outputWidth, m_outputHeight,
     pic->getStride(COMPONENT_Y), m_outputWidth / chromaSubsample,
     m_outputHeight / chromaSubsample, pic->getStride(COMPONENT_Cb),
-    m_internalBitDepths - m_outputBitDepth[0], format, m_bRGB2GBR);
+    m_internalBitDepths - m_outputBitDepth[0], format, false /*m_bRGB2GBR */ );
 }
 
 template class vmesh::hmLibVideoDecoderImpl<uint8_t>;

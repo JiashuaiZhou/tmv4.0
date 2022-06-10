@@ -142,8 +142,7 @@ test(
       << "  --SourceHeight=" << height << " "
       << "  --BitstreamFile=" << binSoftPath << " "
       << "  --ReconFile=" << recSoftPath << " "
-      << "  --QP=38 " 
-      << " 2&>1 ";
+      << "  --QP=38 ";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -151,8 +150,7 @@ test(
   cmd.str("");
   cmd << g_hmDecoderPath << " "
       << "  --BitstreamFile=" << binSoftPath << " "
-      << "  --ReconFile=" << decSoftPath 
-      << " 2&>1 ";
+      << "  --ReconFile=" << decSoftPath;
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 

@@ -42,11 +42,7 @@
 #include "misc.hpp"
 #include "verbose.hpp"
 #include "version.hpp"
-#include "simplifymesh.hpp"
-
-using namespace std;
-using namespace vmesh;
-using namespace vmeshenc;
+#include "simplifyMesh.hpp"
 
 //============================================================================
 
@@ -61,12 +57,7 @@ struct Parameters {
   std::string decimatedMeshPath;
   std::string mappedMeshPath;
   std::string referenceMeshPath;
-  int32_t texCoordQuantizationBits;
-  int32_t minCCTriangleCount;
-  double targetTriangleRatio;
-  double triangleFlipThreshold = 0.3;
-  double trackedTriangleFlipThreshold = 0.1;
-  double trackedPointNormalFlipThreshold = 0.5;
+  vmeshenc::VMCSimplifyParameters params;
 };
 }  // namespace
 
@@ -94,20 +85,20 @@ try {
   ("reference", params.referenceMeshPath, {}, "Reference mesh")
 
   (po::Section("Simplification"))
-  ("target", params.targetTriangleRatio, 0.125,
+  ("target", params.params.targetTriangleRatio, 0.125,
    "Target triangle count ratio")
 
-  ("qt", params.texCoordQuantizationBits, 0,
+  ("qt", params.params.texCoordQuantizationBits, 0,
    "texture coordinate quantization bits")
 
-  ("cctcount", params.minCCTriangleCount, 0,
+  ("cctcount", params.params.minCCTriangleCount, 0,
    "minimum triangle count per connected component")
   ;
   /* clang-format on */
 
   po::setDefaults(opts);
   po::ErrorReporter err;
-  const list<const char*>& argv_unhandled =
+  const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
@@ -135,10 +126,10 @@ try {
     return false;
 
   // Dump the complete derived configuration
-  cout << "+ Configuration parameters\n";
-  po::dumpCfg(cout, opts, "Input/Output", 4);
-  po::dumpCfg(cout, opts, "Simplification", 4);
-  cout << '\n';
+  std::cout << "+ Configuration parameters\n";
+  po::dumpCfg(std::cout, opts, "Input/Output", 4);
+  po::dumpCfg(std::cout, opts, "Simplification", 4);
+  std::cout << '\n';
 
   return true;
 }
@@ -150,186 +141,10 @@ catch (df::program_options_lite::ParseFailure& e) {
 
 //============================================================================
 
-bool
-RemoveSmallConnectedComponents(
-  TriangleMesh<double>& mesh, int32_t minCCTriangleCount)
-{
-  vout << "Removing small connected components...\n";
-  auto start = chrono::steady_clock::now();
-
-  const auto pointCount = mesh.pointCount();
-  const auto triangleCount = mesh.triangleCount();
-  vector<int32_t> partition;
-  vector<shared_ptr<TriangleMesh<double>>> connectedComponents;
-  const auto ccCount0 = ExtractConnectedComponents(
-    mesh.triangles(), mesh.pointCount(), mesh, partition,
-    &connectedComponents);
-  mesh.clear();
-  int32_t ccCounter = 0;
-  for (int32_t c = 0; c < ccCount0; ++c) {
-    const auto& connectedComponent = connectedComponents[c];
-
-    vout << "\t CC " << c << " -> " << connectedComponent->pointCount() << "V "
-         << connectedComponent->triangleCount() << "T\n";
-
-    if (connectedComponent->triangleCount() <= minCCTriangleCount) {
-      continue;
-    }
-    ++ccCounter;
-    mesh.append(*connectedComponent);
-  }
-
-  auto end = chrono::steady_clock::now();
-  auto deltams = chrono::duration_cast<chrono::milliseconds>(end - start);
-  vout << " [done] " << deltams.count() << " ms\n";
-  vout << "Input mesh: " << ccCount0 << "CC " << pointCount << "V "
-       << triangleCount << "T\n";
-  vout << "Cleaned up mesh: " << ccCounter << "CC " << mesh.pointCount()
-       << "V " << mesh.triangleCount() << 'T'
-       << "\t Removed " << (ccCount0 - ccCounter) << "CC "
-       << (pointCount - mesh.pointCount()) << "V "
-       << (triangleCount - mesh.triangleCount()) << "T\n";
-  return true;
-}
-
-//----------------------------------------------------------------------------
-
-bool
-RemoveDuplicatedTriangles(TriangleMesh<double>& mesh)
-{
-  vout << "Removing duplicated triangles... ";
-  auto start = chrono::steady_clock::now();
-
-  const auto triangleCount = mesh.triangleCount();
-  vector<Vec3<double>> triangleNormals;
-  mesh.computeTriangleNormals(triangleNormals);
-  StaticAdjacencyInformation<int32_t> vertexToTriangle;
-  ComputeVertexToTriangle(
-    mesh.triangles(), mesh.pointCount(), vertexToTriangle);
-  vector<Triangle> trianglesOutput;
-  if (!RemoveDuplicatedTriangles(
-        mesh.triangles(), triangleNormals, vertexToTriangle,
-        trianglesOutput)) {
-    return false;
-  }
-  swap(mesh.triangles(), trianglesOutput);
-
-  auto end = chrono::steady_clock::now();
-  auto deltams = chrono::duration_cast<chrono::milliseconds>(end - start);
-  vout << " [done] " << deltams.count() << " ms\n";
-  vout << "Cleaned up mesh: " << mesh.pointCount() << "V "
-       << mesh.triangleCount() << "T\n";
-  vout << "\t Removed " << (triangleCount - mesh.triangleCount())
-       << " triangles\n";
-  return true;
-}
-
-//----------------------------------------------------------------------------
-
-bool
-UnifyVertices(TriangleMesh<double>& mesh)
-{
-  vout << "Unifying vertices... ";
-  const auto pointCount0 = mesh.pointCount();
-  const auto triangleCount0 = mesh.triangleCount();
-  auto start = chrono::steady_clock::now();
-
-  vector<Vec3<double>> upoints;
-  vector<Triangle> utriangles;
-  vector<int32_t> mapping;
-  UnifyVertices(mesh.points(), mesh.triangles(), upoints, utriangles, mapping);
-  std::swap(mesh.points(), upoints);
-  std::swap(mesh.triangles(), utriangles);
-  RemoveDegeneratedTriangles(mesh);
-
-  auto end = chrono::steady_clock::now();
-  auto deltams = chrono::duration_cast<chrono::milliseconds>(end - start);
-  vout << " [done] " << deltams.count() << " ms\n";
-  vout << "Unified mesh: " << mesh.pointCount() << "V " << mesh.triangleCount()
-       << "T\n";
-  vout << "\t Removed " << (pointCount0 - mesh.pointCount()) << " vertices "
-       << (triangleCount0 - mesh.triangleCount()) << " triangles\n";
-  return true;
-}
-
-//----------------------------------------------------------------------------
-
-bool
-SimplifyMesh(
-  const TriangleMesh<double>& mesh,
-  TriangleMesh<double>& dmesh,
-  TriangleMesh<double>& mmesh,
-  const Parameters& params)
-{
-  vout << "Simplifying Mesh... \n";
-  auto start = chrono::steady_clock::now();
-
-  TriangleMeshDecimatorParameters dparams;
-  dparams.triangleCount =
-    std::ceil(mesh.triangleCount() * params.targetTriangleRatio);
-  dparams.triangleFlipThreshold = params.triangleFlipThreshold;
-  dparams.trackedTriangleFlipThreshold = params.trackedTriangleFlipThreshold;
-  dparams.trackedPointNormalFlipThreshold =
-    params.trackedPointNormalFlipThreshold;
-  TriangleMeshDecimator decimator;
-  if (
-    decimator.decimate(
-      (const double*)mesh.points().data(), mesh.pointCount(),
-      (const int32_t*)mesh.triangles().data(), mesh.triangleCount(), dparams)
-    != Error::OK) {
-    cerr << "Error: can't decimate model\n";
-    return false;
-  }
-
-  dmesh.resizePoints(decimator.decimatedPointCount());
-  dmesh.resizeTriangles(decimator.decimatedTriangleCount());
-  if (
-    decimator.decimatedMesh(
-      (double*)dmesh.points().data(), dmesh.pointCount(),
-      (int32_t*)dmesh.triangles().data(), dmesh.triangleCount())
-    != Error::OK) {
-    cerr << "Error: can't extract decimated model\n";
-    return false;
-  }
-
-  mmesh.triangles() = mesh.triangles();
-  mmesh.resizePoints(mesh.pointCount());
-  decimator.trackedPoints(
-    (double*)(mmesh.points().data()), nullptr, mesh.pointCount());
-
-  auto end = chrono::steady_clock::now();
-  auto deltams = chrono::duration_cast<chrono::milliseconds>(end - start);
-  vout << " [done] " << deltams.count() << " ms\n";
-  vout << "Decimated mesh: " << decimator.decimatedPointCount() << "V "
-       << decimator.decimatedTriangleCount() << "T\n";
-  return true;
-}
-
-//============================================================================
-
-bool
-LoadMesh(TriangleMesh<double>& mesh, const Parameters& params)
-{
-  vout << "Loading Mesh... ";
-
-  if (!mesh.loadFromOBJ(expandNum(params.inputMeshPath, params.fnum))) {
-    return false;
-  }
-
-  vout << " [done]\n";
-  vout << "Original mesh: " << mesh.pointCount() << "V "
-       << mesh.triangleCount() << "T\n";
-  vout << " \t bbox = " << mesh.boundingBox() << '\n';
-  vout << " \t texCoord bbox = " << mesh.texCoordBoundingBox() << '\n';
-  return true;
-}
-
-//============================================================================
-
 int
 main(int argc, char* argv[])
 {
-  cout << "MPEG VMESH version " << ::vmesh::version << '\n';
+  std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
   if (!parseParameters(argc, argv, params)) {
@@ -339,49 +154,32 @@ main(int argc, char* argv[])
   if (params.verbose)
     vmesh::vout.rdbuf(std::cout.rdbuf());
 
-  TriangleMesh<double> mesh;
-  if (!LoadMesh(mesh, params)) {
-    cerr << "Error: can't load " << params.inputMeshPath << "!\n";
-    return 1;
-  }
-  if (!UnifyVertices(mesh)) {
-    cerr << "Error: can't unify vertices!\n";
+  // Load input mesh   
+  vmesh::VMCFrame frame;
+  if (!frame.input.loadFromOBJ( vmesh::expandNum(params.inputMeshPath, params.fnum) )) {
+    std::cerr << "Error: can't load " << params.inputMeshPath << "!\n";
     return 1;
   }
 
-  TriangleMesh<double> dmesh;
-  TriangleMesh<double> mmesh;
-  if (!SimplifyMesh(mesh, dmesh, mmesh, params)) {
-    cerr << "Error: can't simplify mesh!\n";
+  // Simplify 
+  vmeshenc::SimplifyMesh simplifyMesh;
+  if (simplifyMesh.simplify(frame, params.params )) {
+    std::cerr << "Error: can't simplify mesh !\n";
     return 1;
   }
 
-  if (!RemoveDuplicatedTriangles(dmesh)) {
-    cerr << "Error: can't remove duplicated triangles!\n";
+  // Save generated meshes
+  if (!frame.decimate.saveToOBJ(vmesh::expandNum(params.decimatedMeshPath, params.fnum))) {
+    std::cerr << "Error: can't save decimated mesh\n";
     return 1;
   }
-
-  if (!RemoveSmallConnectedComponents(dmesh, params.minCCTriangleCount)) {
-    cerr << "Error: can't remove small connected components!\n";
+  if (!frame.mapped.saveToOBJ(vmesh::expandNum(params.mappedMeshPath, params.fnum))) {
+    std::cerr << "Error: can't save mapped mesh\n";
     return 1;
   }
-
-  if (!dmesh.saveToOBJ(expandNum(params.decimatedMeshPath, params.fnum))) {
-    cerr << "Error: can't save decimated mesh\n";
-    return 1;
-  }
-
-  if (!mmesh.saveToOBJ(expandNum(params.mappedMeshPath, params.fnum))) {
-    cerr << "Error: can't save mapped mesh\n";
-    return 1;
-  }
-  const auto scale = params.texCoordQuantizationBits > 0
-    ? 1.0 / ((1 << params.texCoordQuantizationBits) - 1)
-    : 1.0;
-
-  if (!mesh.saveToOBJ(
-        expandNum(params.referenceMeshPath, params.fnum), scale)) {
-    cerr << "Error: can't save reference mesh\n";
+  if (!frame.reference.saveToOBJ(
+        vmesh::expandNum(params.referenceMeshPath, params.fnum))) {
+    std::cerr << "Error: can't save reference mesh\n";
     return 1;
   }
 

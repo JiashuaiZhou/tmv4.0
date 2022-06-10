@@ -98,15 +98,19 @@ struct VMCSequenceParameterSet {
 //============================================================================
 
 struct VMCFrame {
+  vmesh::TriangleMesh<double> input;
+  vmesh::TriangleMesh<double> reference;
+  vmesh::TriangleMesh<double> mapped;
+  vmesh::TriangleMesh<double> decimate;
+  vmesh::TriangleMesh<double> decimateTexture;
+  vmesh::TriangleMesh<double> base;
+  vmesh::TriangleMesh<double> subdiv;  
+  vmesh::TriangleMesh<double> rec;  
   std::vector<int32_t> mapping;
   std::vector<vmesh::Vec3<int32_t>> qpositions;
   std::vector<vmesh::Vec3<double>> disp;
   std::vector<int64_t> subdivEdges;
   std::vector<vmesh::SubdivisionLevelInfo> subdivInfoLevelOfDetails;
-  vmesh::TriangleMesh<double> rec;
-  vmesh::TriangleMesh<double> base;
-  vmesh::TriangleMesh<double> subdiv;
-  vmesh::TriangleMesh<double> input;
   vmesh::Frame<uint8_t> inputTexture;  // ColourSpace::BGR444p
   vmesh::Frame<uint8_t> outputTexture; // ColourSpace::BGR444p
   vmesh::Plane<uint8_t> outputTextureOccupancy;
@@ -121,9 +125,7 @@ struct VMCFrameInfo {
   FrameType type = FrameType::INTRA;
 };
 
-
 //============================================================================
-
 
 struct VMCGroupOfFramesInfo {
   void resize(int32_t fCount) { framesInfo.resize(fCount); }

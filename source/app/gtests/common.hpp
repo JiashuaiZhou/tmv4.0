@@ -140,8 +140,20 @@ const std::string g_dracoEncoderPath = "build/Release/bin/draco_encoder";
 const std::string g_dracoDecoderPath = "build/Release/bin/draco_decoder";
 const std::string g_mmMetricsPath = "build/Release/bin/mm";
 
-const std::string g_gengofPath =
+const std::string g_gengofOldPath =
   "externaltools/mpeg-vmesh-tm/build/Release/bin/gengof";
+const std::string g_gengofNewPath =
+  "build/Release/bin/gengof";
+
+const std::string g_simplifyOldPath =
+  "externaltools/mpeg-vmesh-tm/build/Release/bin/simplify";
+const std::string g_simplifyNewPath =
+  "build/Release/bin/simplify";  
+  
+const std::string g_uvatlasOldPath =
+  "externaltools/mpeg-vmesh-tm/build/Release/bin/uvatlas";
+const std::string g_uvatlasNewPath =
+  "build/Release/bin/uvatlas";
 
 static bool checkSoftwarePath(){
   bool ret = true;
@@ -169,8 +181,28 @@ static bool checkSoftwarePath(){
     printf("Software path not exists: %s \n",g_mmMetricsPath.c_str());
     ret = false;
   }
-  if ( !exists( g_gengofPath) ){
-    printf("Software path not exists: %s \n",g_gengofPath.c_str());
+  if ( !exists( g_gengofOldPath) ){
+    printf("Software path not exists: %s \n",g_gengofOldPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_gengofNewPath) ){
+    printf("Software path not exists: %s \n",g_gengofNewPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_simplifyOldPath) ){
+    printf("Software path not exists: %s \n",g_simplifyOldPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_simplifyNewPath) ){
+    printf("Software path not exists: %s \n",g_simplifyNewPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_uvatlasOldPath) ){
+    printf("Software path not exists: %s \n",g_uvatlasOldPath.c_str());
+    ret = false;
+  }
+  if ( !exists( g_uvatlasNewPath) ){
+    printf("Software path not exists: %s \n",g_uvatlasNewPath.c_str());
     ret = false;
   }
   if ( !ret ){

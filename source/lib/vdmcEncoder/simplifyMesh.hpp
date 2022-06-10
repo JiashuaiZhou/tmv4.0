@@ -35,77 +35,48 @@
 
 #pragma once
 
-#include <memory>
-
-#include "error.hpp"
-
-#define SIMPLIFY_MESH_TRACK_POINTS 1
+#include "misc.hpp"
+#include "mesh.hpp"
+#include "verbose.hpp"
+#include "vector.hpp"
+#include "version.hpp"
+#include "vmc.hpp"
 
 namespace vmeshenc {
 
 //============================================================================
 
-enum class VertexPlacement
-{
-  END_POINTS = 0,
-  END_POINTS_OR_MID_POINT = 1,
-  OPTIMAL = 2
+struct VMCSimplifyParameters {  
+  int32_t texCoordQuantizationBits;
+  int32_t minCCTriangleCount;
+  double targetTriangleRatio;
+  double triangleFlipThreshold = 0.3;
+  double trackedTriangleFlipThreshold = 0.1;
+  double trackedPointNormalFlipThreshold = 0.5;
 };
 
 //============================================================================
 
-struct TriangleMeshDecimatorParameters {
-  double triangleFlipPenalty = 1e+7;
-  double triangleFlipThreshold = 0.5;
-  double boundaryWeight = 1e+7;
-  double angleQualityThreshold = 1.0;
-  double maxError = 1.0;
-  bool areaWeightedQuadratics = true;
-  int triangleCount = 1;
-  int vertexCount = 1;
-  VertexPlacement vertexPlacement = VertexPlacement::OPTIMAL;
-#if SIMPLIFY_MESH_TRACK_POINTS
-  double trackedTriangleFlipThreshold = 0.0;
-  double trackedPointNormalFlipThreshold = 0.0;
-  bool preserveTrackedTriangleNormalsOrientation = true;
-#endif  //SIMPLIFY_MESH_TRACK_POINTS
-};
-
-//============================================================================
-
-class TriangleMeshDecimatorImpl;
-class TriangleMeshDecimator {
+class SimplifyMesh {
 public:
-public:
-  TriangleMeshDecimator();
-  TriangleMeshDecimator(const TriangleMeshDecimator&) = delete;
-  TriangleMeshDecimator& operator=(const TriangleMeshDecimator&) = delete;
-  ~TriangleMeshDecimator();
+  SimplifyMesh() = default;
+  ~SimplifyMesh() = default;
 
-  vmesh::Error decimate(
-    const double* points,
-    int pointCount,
-    const int* triangles,
-    int triangleCount,
-    const TriangleMeshDecimatorParameters& params);
-
-  int decimatedTriangleCount() const;
-  int decimatedPointCount() const;
-  vmesh::Error decimatedMesh(
-    double* dpoints,
-    int dpointCount,
-    int* dtriangles,
-    int dtriangleCount) const;
-
-#if SIMPLIFY_MESH_TRACK_POINTS
-  int trackedPointCount() const;
-  vmesh::Error trackedPoints(double* tpoints, int* tindexes, int pointCount) const;
-#endif  // SIMPLIFY_MESH_TRACK_POINTS
+  bool simplify(vmesh::VMCFrame& frame, const VMCSimplifyParameters& params);
 
 private:
-  std::unique_ptr<TriangleMeshDecimatorImpl> _pimpl;
+  bool removeSmallConnectedComponents(
+    vmesh::TriangleMesh<double>& mesh, int32_t minCCTriangleCount);
+
+  bool removeDuplicatedTriangles(vmesh::TriangleMesh<double>& mesh);
+
+  bool unifyVertices(vmesh::TriangleMesh<double>& mesh);
+
+  bool decimate(
+    const vmesh::TriangleMesh<double>& mesh,
+    vmesh::TriangleMesh<double>& dmesh,
+    vmesh::TriangleMesh<double>& mmesh,
+    const VMCSimplifyParameters& params);
 };
 
-//============================================================================
-
-}  // namespace vmesh
+}  // namespace vmeshenc

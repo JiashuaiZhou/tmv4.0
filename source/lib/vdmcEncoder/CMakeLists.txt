@@ -7,6 +7,10 @@ enable_language( C )
 file(GLOB SRC *.h *.cpp )
 
 include_directories( ${CMAKE_SOURCE_DIR}/dependencies 
+                     ${CMAKE_SOURCE_DIR}/dependencies/uvatlas/UVAtlas/inc
+                     ${CMAKE_SOURCE_DIR}/dependencies/directx-math/Inc
+                     ${CMAKE_SOURCE_DIR}/dependencies/directx-mesh/DirectXMesh
+                     ${CMAKE_SOURCE_DIR}/dependencies/directx-headers/include
                      ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                      ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon )
  

@@ -60,7 +60,7 @@ create_executable( NAME      simplify
 
 # Uvatlas
 create_executable( NAME      uvatlas 
-                   SOURCES   original/uvatlas.cpp 
+                   SOURCES   original/uvatlas.cpp
                    LIBRARIES po vdmcUtil vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder ) 
@@ -115,7 +115,20 @@ create_executable( NAME      tests
                              gtests/hm.cpp
                              gtests/colourConvert.cpp
                              gtests/gengof.cpp
-                   LIBRARIES gtest_main vdmcUtil geometryEncoder geometryDecoder videoEncoder videoDecoder colourConverter
+                             gtests/simplify.cpp
+                             gtests/reparametrization.cpp
+                   LIBRARIES gtest_main 
+                             vdmcUtil 
+                             vdmcEncoder 
+                             geometryEncoder 
+                             geometryDecoder 
+                             videoEncoder 
+                             videoDecoder 
+                             colourConverter
+                             UVAtlas 
+                             DirectX-Headers 
+                             DirectXMath 
+                             DirectXMesh
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder )

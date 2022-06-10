@@ -127,7 +127,7 @@ test(
       << "  -p SourceWidth=" << width << " "
       << "  -p SourceHeight=" << height << " "
       << "  -p NumberOfFrames=" << frameCount << " "
-      << "  -p OutputFile=" << recSoftPath << " ";
+      << "  -p OutputFile=" << recSoftPath;
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 

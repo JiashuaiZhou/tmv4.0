@@ -773,7 +773,15 @@ public:
     }
     return false;
   }
+  TriangleMesh<T>&
+  operator=(const TriangleMesh<T>&) = default;
 
+  void scaleTextureCoordinates(int qt )
+  {
+    const auto scale = qt > 0 ? 1.0 / ((1 << qt) - 1) : 1.0;
+    for (auto& v : _texCoord)
+      v *= scale;
+  }
   const std::string& materialLibrary() const { return _mtllib; }
   std::string& materialLibrary() { return _mtllib; }
   void setMaterialLibrary(const std::string& mtllib) { _mtllib = mtllib; }
@@ -1470,6 +1478,44 @@ public:
         texCoordToPoint[triUV[k]] = tri[k];
       }
     }
+  }
+  template<typename D>
+  void convert( const TriangleMesh<D>& src ){
+    clear();
+
+    _mtllib = src.materialLibrary();
+    
+    _coordIndex.resize(src.triangles().size());
+    for (int i = 0; i < src.triangles().size(); i++)
+      _coordIndex[i] = src.triangle(i);
+
+    _texCoordIndex.resize(src.texCoordTriangles().size());
+    for (int i = 0; i < src.texCoordTriangles().size(); i++)
+      _texCoordIndex[i] = src.texCoordTriangle(i);
+
+    _normalIndex.resize(src.normalTriangles().size());
+    for (int i = 0; i < src.normalTriangles().size(); i++)
+      _texCoordIndex[i] = src.normalTriangle(i);
+
+    _disp.resize(src.displacements().size());
+    for (int i = 0; i < src.displacements().size(); i++)
+      _disp[i] = (Vec3<T>)src.displacement(i);
+
+    _coord.resize(src.points().size());
+    for (int i = 0; i < src.points().size(); i++)    
+      _coord[i] = (Vec3<T>)src.point(i);
+
+    _colour.resize(src.colours().size());
+    for (int i = 0; i < src.colours().size(); i++)
+      _colour[i] = (Vec3<T>)src.colour(i);
+
+    _texCoord.resize(src.texCoords().size());
+    for (int i = 0; i < src.texCoords().size(); i++)
+      _texCoord[i] = (Vec2<T>)src.texCoord(i);
+
+    _normal.resize(src.normals().size());
+    for (int i = 0; i < src.normals().size(); i++)
+      _normal[i] = (Vec3<T>)src.normal(i);
   }
 
 private:

@@ -51,8 +51,9 @@ void create(
 {
   
   std::string gofNewPath = "gof_new.gof";
-  std::string gofOrgPath = "gof_org.gof";
   std::string gofSavPath = "gof_sav.gof";
+  std::string gofNswPath = "gof_nsw.gof";
+  std::string gofOswPath = "gof_osw.gof";
 
   // Generate gof structure new 
   vmesh::VMCSequenceInfo sequenceInfo;
@@ -64,35 +65,47 @@ void create(
   readSequenceInfo.load( frameCount, startFrame, maxGOFSize, gofNewPath );
   readSequenceInfo.save( gofSavPath );
 
-  //  Generate gof structure old 
+  //  Generate gof structure old application
   std::stringstream cmd;
-  cmd << g_gengofPath << " "
+  cmd << g_gengofOldPath << " "
       << "  --input=" << inputPath   << " "
-      << "  --output=" << gofOrgPath << " "
+      << "  --output=" << gofOswPath << " "
       << "  --startFrame=" << startFrame << " "  
-      << "  --frameCount=" << frameCount    
-      << " 2&>1 ";
+      << "  --frameCount=" << frameCount;
+  printf("cmd = %s \n", cmd.str().c_str());
+  system(cmd.str().c_str());  
+  
+  //  Generate gof structure old application
+  cmd.str("");
+  cmd << g_gengofNewPath << " "
+      << "  --input=" << inputPath   << " "
+      << "  --output=" << gofNswPath << " "
+      << "  --startFrame=" << startFrame << " "  
+      << "  --frameCount=" << frameCount;
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
   // Compute hashes
   auto hashNew = hash(gofNewPath);
-  auto hashOld = hash(gofOrgPath);
+  auto hashOsw = hash(gofOswPath);
+  auto hashNsw = hash(gofNswPath);
   auto hashSav = hash(gofSavPath);
   std::cout << "hashNew = " << std::hex << hashNew << "\n";
-  std::cout << "hashOld = " << std::hex << hashOld << "\n";
+  std::cout << "hashOsw = " << std::hex << hashOsw << "\n";
+  std::cout << "hashNsw = " << std::hex << hashNsw << "\n";
   std::cout << "hashSav = " << std::hex << hashSav << "\n";
 
   disableSubProcessLog.enable();
 
   // Compare hashes
-  ASSERT_EQ(hashNew, hashOld)<< "New and old gof structure are differentes";
-  ASSERT_EQ(hashNew, hashSav)<< "New and save gof structure are differentes";
-    
+  ASSERT_EQ(hashNew, hashOsw)<< "New and old sw gof structure are differentes";
+  ASSERT_EQ(hashNsw, hashOsw)<< "New sw and old sw gof structure are differentes";
+  ASSERT_EQ(hashNew, hashSav)<< "New and save gof structure are differentes";    
 
   // Remove tmp files
   remove( gofNewPath.c_str() );
-  remove( gofOrgPath.c_str() );
+  remove( gofOswPath.c_str() );
+  remove( gofNswPath.c_str() );
   remove( gofSavPath.c_str() );
 }
 

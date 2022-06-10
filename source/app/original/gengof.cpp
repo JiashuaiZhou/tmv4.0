@@ -138,8 +138,8 @@ main(int argc, char* argv[])
     return 1;
   }
   vmesh::VMCSequenceInfo sequenceInfo;
-  sequenceInfo.create( params.frameCount, params.startFrame, params.maxGOFSize, params.inputPath );
+  sequenceInfo.generate( params.frameCount, params.startFrame, params.maxGOFSize, params.inputPath );
   sequenceInfo.save( params.outputPath );
-  
+
   return 0;
 }

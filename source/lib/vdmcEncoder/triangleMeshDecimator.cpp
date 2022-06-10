@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "simplifymesh.hpp"
+#include "triangleMeshDecimator.hpp"
 
 #include "matrix.hpp"
 #include "mesh.hpp"

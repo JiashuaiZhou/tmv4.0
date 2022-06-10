@@ -88,23 +88,21 @@ TEST(Draco, Encode)
   // Encode with original draco application
   std::stringstream cmd;
   cmd << g_dracoEncoderPath << "  "
-      << " -i " << inputMesh    //
-      << " -o " << binOrg       //
-      << " -qp " << params.qp_  //
-      << " -qt " << params.qt_  //
-      << " -qn " << params.qn_  //
-      << " -qg " << params.qg_  //
-      << " -cl " << params.cl_ //
-      << " > /dev/null";
+      << " -i " << inputMesh    
+      << " -o " << binOrg       
+      << " -qp " << params.qp_  
+      << " -qt " << params.qt_  
+      << " -qn " << params.qn_  
+      << " -qg " << params.qg_  
+      << " -cl " << params.cl_ ;
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
   // Decode with original draco application
   cmd.str("");
   cmd << g_dracoDecoderPath << "  "
-      << " -i " << binOrg   //
-      << " -o " << recOrg  //
-      << " > /dev/null"; 
+      << " -i " << binOrg  
+      << " -o " << recOrg; 
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 

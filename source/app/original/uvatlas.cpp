@@ -52,68 +52,18 @@
 #include "mesh.hpp"
 #include "misc.hpp"
 
-// NB: these must come after the standard headers as they define prohibited
-//     macros that conflict with the system implementation
-#include <DirectXMath.h>
-#include <DirectXMesh.h>
-
-#include <UVAtlas.h>
-
-using namespace DirectX;
-
-//============================================================================
+#include "reparametrization.hpp"
 
 namespace {
 struct Parameters {
   // frame number for expansion in input/output filenames
   int fnum;
-
   std::string input;
   std::string output;
-  size_t maxCharts;
-  float maxStretch;
-  float gutter;
-  size_t width;
-  size_t height;
-  UVATLAS uvOptions;
+
+  vmeshenc::VMCReparametrizationParameters params;
 };
 }  // namespace
-
-//============================================================================
-
-namespace DirectX {
-static std::istream&
-operator>>(std::istream& in, UVATLAS& val)
-{
-  std::string str;
-  in >> str;
-  if (str == "DEFAULT")
-    val = DirectX::UVATLAS_DEFAULT;
-  else if (str == "FAST")
-    val = DirectX::UVATLAS_GEODESIC_FAST;
-  else if (str == "QUALITY")
-    val = DirectX::UVATLAS_GEODESIC_QUALITY;
-  else
-    in.setstate(std::ios::failbit);
-  return in;
-}
-}  // namespace DirectX
-
-//----------------------------------------------------------------------------
-
-namespace DirectX {
-static std::ostream&
-operator<<(std::ostream& out, UVATLAS val)
-{
-  switch (val) {
-  case DirectX::UVATLAS_DEFAULT: out << "DEFAULT"; break;
-  case DirectX::UVATLAS_GEODESIC_FAST: out << "FAST"; break;
-  case DirectX::UVATLAS_GEODESIC_QUALITY: out << "QUALITY"; break;
-  default: out << int(val) << " (unknown)";
-  }
-  return out;
-}
-}  // namespace DirectX
 
 //============================================================================
 
@@ -136,22 +86,22 @@ try {
   ("output,o", params.output, {}, "Output mesh (OBJ format)")
 
   (po::Section("Isochart"))
-  ("quality,q",  params.uvOptions, UVATLAS_DEFAULT,
+  ("quality,q",  params.params.uvOptions, DirectX::UVATLAS_DEFAULT,
    "Quality level of DEFAULT, FAST or QUALITY")
 
-  ("n",          params.maxCharts, size_t(),
+  ("n",          params.params.maxCharts, size_t(),
    "Maximum number of charts to generate")
 
-  ("stretch,st", params.maxStretch, 0.16667f,
+  ("stretch,st", params.params.maxStretch, 0.16667f,
    "Maximum amount of stretch 0 to 1")
 
-  ("gutter,g",   params.gutter, 2.f,
+  ("gutter,g",   params.params.gutter, 2.f,
    "Gutter width betwen charts in texels")
 
-  ("width,w",    params.width, size_t(512),
+  ("width,w",    params.params.width, size_t(512),
    "texture width")
 
-  ("height,h",   params.height, size_t(512),
+  ("height,h",   params.params.height, size_t(512),
    "texture height")
   ;
   /* clang-format on */
@@ -195,21 +145,6 @@ catch (df::program_options_lite::ParseFailure& e) {
 
 //============================================================================
 
-HRESULT __cdecl UVAtlasCallback(float fPercentDone)
-{
-  static auto prev = std::chrono::steady_clock::now();
-  const auto tick = std::chrono::steady_clock::now();
-
-  if (tick - prev > std::chrono::seconds(1)) {
-    std::cout << fPercentDone * 100. << "%   \r" << std::flush;
-    prev = tick;
-  }
-
-  return S_OK;
-}
-
-//============================================================================
-
 int
 main(int argc, char* argv[])
 {
@@ -217,144 +152,24 @@ main(int argc, char* argv[])
   if (!parseParameters(argc, argv, params)) {
     return 1;
   }
-
-  vmesh::TriangleMesh<float> mesh;
-  if (1) {
-    const auto& name = vmesh::expandNum(params.input, params.fnum);
-    if (!mesh.loadFromOBJ(name)) {
-      std::cerr << "Error: can't load " << name << '\n';
-      return 1;
-    }
-  }
-
-  // Remove unwanted mesh components
-  mesh.displacements().clear();
-  mesh.colours().clear();
-  mesh.texCoords().clear();
-  mesh.texCoordTriangles().clear();
-  mesh.normals().clear();
-  mesh.normalTriangles().clear();
-
-  std::cout << mesh.pointCount() << " vertices, " << mesh.triangleCount()
-            << " faces\n";
-
-  if (!mesh.pointCount() || !mesh.triangleCount()) {
-    std::cerr << "ERROR: Invalid mesh\n";
+  
+  // Load decimate model
+  vmesh::VMCFrame frame;
+  const auto& inputName = vmesh::expandNum(params.input, params.fnum);
+  if (!frame.decimate.loadFromOBJ(inputName)) {
+    std::cerr << "Error: can't load " << inputName << '\n';
     return 1;
   }
 
-  // Prepare mesh for processing
-  const float epsilon = 0.f;
-  std::vector<uint32_t> adjacency(3 * mesh.triangleCount());
-  auto hr = DirectX::GenerateAdjacencyAndPointReps(
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), mesh.triangleCount(),
-    reinterpret_cast<XMFLOAT3*>(mesh.points().data()), mesh.pointCount(),
-    epsilon, nullptr, adjacency.data());
-  if (FAILED(hr)) {
-    std::cerr << "ERROR: Failed generating adjacency (" << hr << ")\n";
+  // Reparametrization
+  vmeshenc::Reparametrization reparametrization;
+  reparametrization.generate(frame, params.params);
+
+  // Save decimate texture model
+  const auto& outputName = vmesh::expandNum(params.output, params.fnum);
+  if (!frame.decimateTexture.saveToOBJ(outputName)) {
+    std::cerr << "Error: can't save " << outputName << '\n';
     return 1;
   }
-
-  // Validation
-  std::wstring msgs;
-  DirectX::Validate(
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), mesh.triangleCount(),
-    mesh.pointCount(), adjacency.data(),
-    VALIDATE_BACKFACING | VALIDATE_BOWTIES, &msgs);
-  if (!msgs.empty()) {
-    std::cerr << "WARNING: \n";
-    std::wcerr << msgs;
-  }
-
-  // Clean
-  std::vector<uint32_t> dups;
-  bool breakBowties = true;
-  hr = DirectX::Clean(
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), mesh.triangleCount(),
-    mesh.pointCount(), adjacency.data(), nullptr, dups, breakBowties);
-  if (FAILED(hr)) {
-    std::cerr << "ERROR: Failed mesh clean " << hr << '\n';
-    return 1;
-  }
-
-  if (!dups.empty()) {
-    std::cout << " [" << dups.size() << " vertex dups]\n";
-
-    mesh.reservePoints(mesh.pointCount() + dups.size());
-    for (auto dupIdx : dups)
-      mesh.addPoint(mesh.point(dupIdx));
-  }
-
-  // Perform UVAtlas isocharting
-  std::cout << "Computing isochart atlas on mesh...\n";
-
-  std::vector<UVAtlasVertex> vb;
-  std::vector<uint8_t> ib;
-  float outStretch = 0.f;
-  size_t outCharts = 0;
-  std::vector<uint32_t> facePartitioning;
-  std::vector<uint32_t> vertexRemapArray;
-  const auto start = std::chrono::steady_clock::now();
-  hr = UVAtlasCreate(
-    reinterpret_cast<XMFLOAT3*>(mesh.points().data()), mesh.pointCount(),
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), DXGI_FORMAT_R32_UINT,
-    mesh.triangleCount(), params.maxCharts, params.maxStretch, params.width,
-    params.height, params.gutter, adjacency.data(), nullptr, nullptr,
-    UVAtlasCallback, UVATLAS_DEFAULT_CALLBACK_FREQUENCY, params.uvOptions, vb,
-    ib, &facePartitioning, &vertexRemapArray, &outStretch, &outCharts);
-  if (FAILED(hr)) {
-    std::cerr << "ERROR: Failed creating isocharts " << hr << '\n';
-    return 1;
-  }
-
-  namespace chrono = std::chrono;
-  auto end = chrono::steady_clock::now();
-  auto deltams = chrono::duration_cast<chrono::milliseconds>(end - start);
-  std::cout << "Processing time: " << deltams.count() << " ms\n";
-  std::cout << "Output # of charts: " << outCharts << ", resulting stretching "
-            << outStretch << ", " << vb.size() << " verts\n";
-
-  assert(ib.size() == 3 * mesh.triangles().size() * sizeof(uint32_t));
-  memcpy(mesh.triangles().data(), ib.data(), ib.size());
-
-  assert(vertexRemapArray.size() == vb.size());
-  std::vector<vmesh::Vec3<float>> pos(vertexRemapArray.size());
-  hr = DirectX::UVAtlasApplyRemap(
-    reinterpret_cast<XMFLOAT3*>(mesh.points().data()), sizeof(XMFLOAT3),
-    mesh.pointCount(), vertexRemapArray.size(), vertexRemapArray.data(),
-    reinterpret_cast<XMFLOAT3*>(pos.data()));
-  if (FAILED(hr)) {
-    std::cerr << "ERROR: Failed applying atlas vertex remap (" << hr << ")\n";
-    return 1;
-  }
-  std::swap(mesh.points(), pos);
-
-  msgs.clear();
-  DirectX::Validate(
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), mesh.triangleCount(),
-    mesh.pointCount(), adjacency.data(), VALIDATE_DEFAULT, &msgs);
-  if (!msgs.empty()) {
-    std::cerr << "WARNING: \n";
-    std::wcerr << msgs;
-  }
-
-  // Copy isochart UVs into mesh
-  mesh.reserveTexCoords(vb.size());
-  std::transform(
-    vb.begin(), vb.end(), std::back_inserter(mesh.texCoords()),
-    [](UVAtlasVertex& vtx) {
-      return vmesh::Vec2<float>{vtx.uv.x, vtx.uv.y};
-    });
-
-  mesh.texCoordTriangles() = mesh.triangles();
-
-  if (1) {
-    const auto& name = vmesh::expandNum(params.output, params.fnum);
-    if (!mesh.saveToOBJ(name)) {
-      std::cerr << "Error: can't save " << name << '\n';
-      return 1;
-    }
-  }
-
   return 0;
 }

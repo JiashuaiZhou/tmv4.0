@@ -75,7 +75,7 @@ namespace DirectX {
   }
 }  // namespace DirectX
 
-namespace vmeshenc {
+namespace vmesh {
 
 //============================================================================
 
@@ -99,4 +99,4 @@ public:
     vmesh::VMCFrame& frame, const VMCReparametrizationParameters& params);
 };
 
-}  // namespace vmeshenc
+}  // namespace vmesh

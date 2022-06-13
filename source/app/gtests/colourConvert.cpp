@@ -128,6 +128,8 @@ test(
       << "  -p SourceHeight=" << height << " "
       << "  -p NumberOfFrames=" << frameCount << " "
       << "  -p OutputFile=" << recSoftPath;
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 

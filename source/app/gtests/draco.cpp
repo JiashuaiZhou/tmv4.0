@@ -95,6 +95,8 @@ TEST(Draco, Encode)
       << " -qn " << params.qn_  
       << " -qg " << params.qg_  
       << " -cl " << params.cl_ ;
+  if (disableSubProcessLog.disableLog())
+    cmd << " > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -103,6 +105,8 @@ TEST(Draco, Encode)
   cmd << g_dracoDecoderPath << "  "
       << " -i " << binOrg  
       << " -o " << recOrg; 
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -114,14 +118,10 @@ TEST(Draco, Encode)
   disableSubProcessLog.enable();
 
   ASSERT_EQ(hashBinLibs, hashBinSoft);
-
-  // TODO Add md5sun rec file comparison  
-  // Compare decoded file  
-  // src.loadFromOBJ(inputMesh);
-  // std::cout << "\033[0;32m[          ] \033[0;0m" << "TODO Add md5sun rec file comparison" << std::endl;
  
   // Remove tmp files
   remove( binOrg.c_str() );
   remove( binNew.c_str() );
   remove( recOrg.c_str() );
+  remove( recNew.c_str() );
 }

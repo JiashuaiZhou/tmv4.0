@@ -41,7 +41,7 @@
 #include "mutablepriorityheap.hpp"
 #include "triangle.hpp"
 
-namespace vmeshenc {
+namespace vmesh {
 
 //============================================================================
 
@@ -149,10 +149,10 @@ struct Quadratic {
     return *this;
   }
 
-  bool minDistPoint(vmesh::Vec3<double>& point) const
+  bool minDistPoint(Vec3<double>& point) const
   {
-    vmesh::Mat3<double> M;
-    vmesh::Mat3<double> iM;
+    Mat3<double> M;
+    Mat3<double> iM;
     M[0][0] = _data[0];
     M[0][1] = _data[1];
     M[0][2] = _data[2];
@@ -163,13 +163,13 @@ struct Quadratic {
     M[2][1] = _data[5];
     M[2][2] = _data[7];
     if (M.inverse(iM)) {
-      point = iM * vmesh::Vec3<double>(-_data[3], -_data[6], -_data[8]);
+      point = iM * Vec3<double>(-_data[3], -_data[6], -_data[8]);
       return true;
     }
     return false;
   }
 
-  double operator()(const vmesh::Vec3<double>& point) const
+  double operator()(const Vec3<double>& point) const
   {
     const double x = point[0];
     const double y = point[1];
@@ -302,7 +302,7 @@ typedef SmallVector<int, 8> SmallIntVec;
 
 class TriangleMeshDecimatorImpl {
   struct DVertex {
-    vmesh::Vec3<double> _pos;
+    Vec3<double> _pos;
     Quadratic _q;
     int _tag;
     SmallIntVec _triangles;
@@ -312,8 +312,8 @@ class TriangleMeshDecimatorImpl {
 
   struct DTriangle {
     int _tag;
-    vmesh::Vec3<int> _indices;
-    vmesh::Vec3<double> _normal;
+    Vec3<int> _indices;
+    Vec3<double> _normal;
     bool _zeroArea;
     bool _valid;
 #if SIMPLIFY_MESH_TRACK_POINTS
@@ -334,7 +334,7 @@ class TriangleMeshDecimatorImpl {
     }
 
     double _heapKey;
-    vmesh::Vec3<double> _pos;
+    Vec3<double> _pos;
     int _vindex0;
     int _vindex1;
     int _heapPosition;
@@ -348,7 +348,7 @@ public:
   operator=(const TriangleMeshDecimatorImpl&) = delete;
   ~TriangleMeshDecimatorImpl() = default;
 
-  vmesh::Error decimate(
+  Error decimate(
     const double* points,
     int pointCount,
     const int* triangles,
@@ -356,27 +356,27 @@ public:
     const TriangleMeshDecimatorParameters& params)
   {
     if (!triangles || !points || !pointCount || !triangleCount) {
-      return vmesh::Error::UNEXPECTED_INPUT_DATA;
+      return Error::UNEXPECTED_INPUT_DATA;
     }
     init(points, pointCount, triangles, triangleCount, params);
     decimate(params);
-    return vmesh::Error::OK;
+    return Error::OK;
   }
 
-  vmesh::Error decimatedMesh(
+  Error decimatedMesh(
     double* dpoints, int dpointCount, int* dtriangles, int dtriangleCount)
   {
     std::vector<int32_t> vmap;
-    vmesh::Error res = decimatedPoints(dpoints, dpointCount, vmap);
-    if (res != vmesh::Error::OK) {
+    Error res = decimatedPoints(dpoints, dpointCount, vmap);
+    if (res != Error::OK) {
       return res;
     }
 
     if (dtriangleCount < _triangleCount || !dtriangles) {
-      return vmesh::Error::UNEXPECTED_INPUT_DATA;
+      return Error::UNEXPECTED_INPUT_DATA;
     }
 
-    const auto triangles = reinterpret_cast<vmesh::Vec3<int>*>(dtriangles);
+    const auto triangles = reinterpret_cast<Vec3<int>*>(dtriangles);
     int tcount = 0;
     int count = 0;
     for (const auto& triangle : _triangles) {
@@ -396,7 +396,7 @@ public:
     }
 
     assert(tcount == _triangleCount);
-    return vmesh::Error::OK;
+    return Error::OK;
   }
 
   int decimatedTriangleCount() const { return _triangleCount; }
@@ -404,10 +404,10 @@ public:
 
 #if SIMPLIFY_MESH_TRACK_POINTS
 
-  vmesh::Error trackedPoints(double* tpoints, int* tindexes, int pointCount) const
+  Error trackedPoints(double* tpoints, int* tindexes, int pointCount) const
   {
     if (pointCount > _trackedMesh.pointCount()) {
-      return vmesh::Error::UNEXPECTED_INPUT_DATA;
+      return Error::UNEXPECTED_INPUT_DATA;
     }
 
     if (tpoints) {
@@ -431,7 +431,7 @@ public:
       }
     }
 
-    return vmesh::Error::OK;
+    return Error::OK;
   }
 
   int trackedPointCount() const { return _trackedMesh.pointCount(); }
@@ -448,14 +448,14 @@ public:
   }
 
 private:
-  vmesh::Error decimatedPoints(
+  Error decimatedPoints(
     double* const dpoints, int dpointCount, std::vector<int32_t>& vmap)
   {
     if (dpointCount < _pointCount || !dpoints) {
-      return vmesh::Error::UNEXPECTED_INPUT_DATA;
+      return Error::UNEXPECTED_INPUT_DATA;
     }
 
-    const auto points = reinterpret_cast<vmesh::Vec3<double>*>(dpoints);
+    const auto points = reinterpret_cast<Vec3<double>*>(dpoints);
     const auto pointCount0 = int(_vertices.size());
     vmap.resize(pointCount0, -1);
     int vcount = 0;
@@ -469,10 +469,10 @@ private:
     }
 
     assert(vcount == _pointCount);
-    return vmesh::Error::OK;
+    return Error::OK;
   }
 
-  vmesh::Error init(
+  Error init(
     const double* points,
     int pointCount,
     const int* triangles,
@@ -480,7 +480,7 @@ private:
     const TriangleMeshDecimatorParameters& params)
   {
     if (pointCount == 0 || triangleCount == 0) {
-      return vmesh::Error::UNEXPECTED_INPUT_DATA;
+      return Error::UNEXPECTED_INPUT_DATA;
     }
 
     clear();
@@ -635,7 +635,7 @@ private:
       computeEdgeCollapseCost(edge, params);
     }
 
-    return vmesh::Error::OK;
+    return Error::OK;
   }
 
   void decimate(const TriangleMeshDecimatorParameters& params);
@@ -645,7 +645,7 @@ private:
 
   double computeCost(
     const Quadratic& q,
-    const vmesh::Vec3<double>& pos,
+    const Vec3<double>& pos,
     const int32_t vindex0,
     const int32_t vindex1,
     const TriangleMeshDecimatorParameters& params);
@@ -699,7 +699,7 @@ private:
   int32_t trackPoint(
     const int32_t vindex,
     const SmallIntVec& tadj,
-    vmesh::Vec3<double>& tpoint0,
+    Vec3<double>& tpoint0,
     const TriangleMeshDecimatorParameters& params) const
   {
     const auto tpoint = _trackedMesh.point(vindex);
@@ -793,7 +793,7 @@ private:
 
   void computeAdjacentTrianglesQuality(
     int vindex,
-    const vmesh::Vec3<double>& pos,
+    const Vec3<double>& pos,
     double& angleQuality,
     double& normalQuality) const
   {
@@ -883,12 +883,12 @@ private:
       }
 
       const auto trackedPointCount = int32_t(trackedPointsIndexes.size());
-      std::vector<vmesh::Vec3<double>> trackedPointsPositions(trackedPointCount);
+      std::vector<Vec3<double>> trackedPointsPositions(trackedPointCount);
       for (int32_t p = 0; p < trackedPointCount; ++p) {
         const auto vindex = trackedPointsIndexes[p];
         assert(vindex >= 0 && vindex < _trackedMesh.pointCount());
         trackedPointsPositions[p] = _trackedMesh.point(vindex);
-        vmesh::Vec3<double> tpoint0;
+        Vec3<double> tpoint0;
         const auto tindex0 = trackPoint(vindex, modified, tpoint0, params);
         if (tindex0 >= 0) {
           _trackedMesh.setPoint(vindex, tpoint0);
@@ -954,17 +954,17 @@ private:
   int _triangleCount;
 
   double _scale;
-  vmesh::Vec3<double> _center;
+  Vec3<double> _center;
 
   std::vector<DVertex> _vertices;
   std::vector<DTriangle> _triangles;
   std::vector<DEdge> _edges;
-  vmesh::MutablePriorityHeap<DEdge> _heap;
+  MutablePriorityHeap<DEdge> _heap;
 
 #if SIMPLIFY_MESH_TRACK_POINTS
-  vmesh::TriangleMesh<double> _trackedMesh;
+  TriangleMesh<double> _trackedMesh;
   std::vector<int32_t> _trackedPointToTriangle;
-  vmesh::StaticAdjacencyInformation<int32_t> _initialVertexToTriangle;
+  StaticAdjacencyInformation<int32_t> _initialVertexToTriangle;
 #endif  // SIMPLIFY_MESH_TRACK_POINTS
 };
 
@@ -1118,7 +1118,7 @@ TriangleMeshDecimatorImpl::decimate(
 #if SIMPLIFY_MESH_TRACK_POINTS
             resetIncidentTrianglesTrackedPoints(vindex0);
             for (const auto vindex : trackedPointsIndexes) {
-              vmesh::Vec3<double> tpoint0;
+              Vec3<double> tpoint0;
               const auto tindex0 = trackPoint(
                 vindex, _vertices[vindex0]._triangles, tpoint0, params);
               assert(tindex0 >= 0);
@@ -1170,7 +1170,7 @@ TriangleMeshDecimatorImpl::decimate(
 double
 TriangleMeshDecimatorImpl::computeCost(
   const Quadratic& q,
-  const vmesh::Vec3<double>& pos,
+  const Vec3<double>& pos,
   const int32_t vindex0,
   const int32_t vindex1,
   const TriangleMeshDecimatorParameters& params)
@@ -1237,7 +1237,7 @@ TriangleMeshDecimatorImpl::computeEdgeCollapseCost(
     }
   }
 
-  vmesh::Vec3<double> posOptimal;
+  Vec3<double> posOptimal;
   if (
     params.vertexPlacement == VertexPlacement::OPTIMAL
     && q.minDistPoint(posOptimal)) {
@@ -1266,7 +1266,7 @@ TriangleMeshDecimator::TriangleMeshDecimator()
 
 TriangleMeshDecimator::~TriangleMeshDecimator() = default;
 
-vmesh::Error
+Error
 TriangleMeshDecimator::decimate(
   const double* points,
   int pointCount,
@@ -1278,7 +1278,7 @@ TriangleMeshDecimator::decimate(
     points, pointCount, triangles, triangleCount, params);
 }
 
-vmesh::Error
+Error
 TriangleMeshDecimator::decimatedMesh(
   double* dpoints, int dpointCount, int* dtriangles, int dtriangleCount) const
 {
@@ -1305,7 +1305,7 @@ TriangleMeshDecimator::trackedPointCount() const
   return _pimpl->trackedPointCount();
 }
 
-vmesh::Error
+Error
 TriangleMeshDecimator::trackedPoints(
   double* tpoints, int* tindexes, int pointCount) const
 {

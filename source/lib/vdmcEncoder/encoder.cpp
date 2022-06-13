@@ -45,17 +45,17 @@
 #include "kdtree.hpp"
 #include "vmc.hpp"
 
-namespace vmeshenc {
+namespace vmesh {
   
 //============================================================================
 
-static vmesh::Vec3<double>
+static Vec3<double>
 computeNearestPointColour(
-  const vmesh::Vec3<double>& point0,
-  const vmesh::Frame<uint8_t>& targetTexture,   // vmesh::ColourSpace::BGR444p
-  const vmesh::TriangleMesh<double>& targetMesh,
-  const vmesh::KdTree& kdtree,
-  const vmesh::StaticAdjacencyInformation<int32_t>& vertexToTriangleTarget,
+  const Vec3<double>& point0,
+  const Frame<uint8_t>& targetTexture,   // ColourSpace::BGR444p
+  const TriangleMesh<double>& targetMesh,
+  const KdTree& kdtree,
+  const StaticAdjacencyInformation<int32_t>& vertexToTriangleTarget,
   double& minDist2)
 {
   const auto neighboursTarget = vertexToTriangleTarget.neighbours();
@@ -76,7 +76,7 @@ computeNearestPointColour(
     const auto& pt0 = targetMesh.point(tri[0]);
     const auto& pt1 = targetMesh.point(tri[1]);
     const auto& pt2 = targetMesh.point(tri[2]);
-    vmesh::Vec3<double> bcoord;
+    Vec3<double> bcoord;
     const auto cpoint = ClosestPointInTriangle(point0, pt0, pt1, pt2, &bcoord);
     //    assert(bcoord[0] >= 0.0 && bcoord[1] >= 0.0 && bcoord[2] >= 0.0);
     assert(fabs(1.0 - bcoord[0] - bcoord[1] - bcoord[2]) < 0.000001);
@@ -97,7 +97,7 @@ computeNearestPointColour(
 
 int32_t
 VMCEncoder::compressDisplacementsVideo(
-  vmesh::Bitstream& bitstream, const VMCEncoderParameters& params)
+  Bitstream& bitstream, const VMCEncoderParameters& params)
 {
   std::stringstream fnameDisp, fnameDispRec;
   const auto width = _dispVideo.width();
@@ -147,8 +147,8 @@ VMCEncoder::compressDisplacementsVideo(
 
 int32_t
 VMCEncoder::compressTextureVideo(
-  vmesh::VMCGroupOfFrames& gof,
-  vmesh::Bitstream& bitstream,
+  VMCGroupOfFrames& gof,
+  Bitstream& bitstream,
   const VMCEncoderParameters& params)
 {
   const auto width = params.textureWidth;
@@ -267,7 +267,7 @@ VMCEncoder::compressTextureVideo(
 
 int32_t
 VMCEncoder::computeDracoMapping(
-  vmesh::TriangleMesh<double> base,
+  TriangleMesh<double> base,
   std::vector<int32_t>& mapping,
   const int32_t frameIndex,
   const VMCEncoderParameters& params) const
@@ -275,10 +275,10 @@ VMCEncoder::computeDracoMapping(
   const auto scalePosition = 1 << (18 - params.bitDepthPosition);
   const auto scaleTexCoord = 1 << 18;
   for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-    base.setPoint(v, vmesh::Round(base.point(v) * scalePosition));
+    base.setPoint(v, Round(base.point(v) * scalePosition));
   }
   for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
-    base.setTexCoord(tc, vmesh::Round(base.texCoord(tc) * scaleTexCoord));
+    base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
   }
   std::stringstream mappingFileName, cmappingFileName, rmappingFileName;
   mappingFileName << params.intermediateFilesPathPrefix << "gof_"
@@ -369,30 +369,30 @@ VMCEncoder::computeDracoMapping(
 
 int32_t
 VMCEncoder::compressMotion(
-  const std::vector<vmesh::Vec3<int32_t>>& triangles,
-  const std::vector<vmesh::Vec3<int32_t>>& current,
-  const std::vector<vmesh::Vec3<int32_t>>& reference,
-  vmesh::Bitstream& bitstream,
+  const std::vector<Vec3<int32_t>>& triangles,
+  const std::vector<Vec3<int32_t>>& current,
+  const std::vector<Vec3<int32_t>>& reference,
+  Bitstream& bitstream,
   const VMCEncoderParameters& /*params*/) const
 {
   const auto pointCount = int32_t(current.size());
   const auto maxAcBufLen = pointCount * 3 * 4 + 1024;
-  vmesh::VMCMotionACContext ctx;
-  vmesh::EntropyEncoder arithmeticEncoder;
+  VMCMotionACContext ctx;
+  EntropyEncoder arithmeticEncoder;
   arithmeticEncoder.setBuffer(maxAcBufLen, nullptr);
   arithmeticEncoder.start();
-  vmesh::StaticAdjacencyInformation<int32_t> vertexToTriangle;
+  StaticAdjacencyInformation<int32_t> vertexToTriangle;
   ComputeVertexToTriangle(triangles, pointCount, vertexToTriangle);
   std::vector<int8_t> available(pointCount, 0);
   std::vector<int8_t> vtags(pointCount);
   std::vector<int32_t> vadj, tadj;
-  std::vector<vmesh::Vec3<int32_t>> motion(pointCount);
+  std::vector<Vec3<int32_t>> motion(pointCount);
   for (int vindex = 0; vindex < pointCount; ++vindex) {
     motion[vindex] = current[vindex] - reference[vindex];
   }
   for (int vindex0 = 0; vindex0 < pointCount; ++vindex0) {
     ComputeAdjacentVertices(vindex0, triangles, vertexToTriangle, vtags, vadj);
-    vmesh::Vec3<int32_t> pred(0);
+    Vec3<int32_t> pred(0);
     int32_t predCount = 0;
     for (int i = 0, count = int(vadj.size()); i < count; ++i) {
       const auto vindex1 = vadj[i];
@@ -416,7 +416,7 @@ VMCEncoder::compressMotion(
     const auto res1 = motion[vindex0] - pred;
     const auto bits0 = ctx.estimateBits(res0, 0);
     const auto bits1 = ctx.estimateBits(res1, 1);
-    vmesh::Vec3<int32_t> res;
+    Vec3<int32_t> res;
     if (bits0 <= bits1) {
       res = res0;
       arithmeticEncoder.encode(0, ctx.ctxPred);
@@ -459,11 +459,11 @@ VMCEncoder::compressMotion(
 
 int32_t
 VMCEncoder::compressBaseMesh(
-  const vmesh::VMCGroupOfFrames& gof,
-  const vmesh::VMCFrameInfo& frameInfo,
-  vmesh::VMCFrame& frame,
-  vmesh::Bitstream& bitstream,
-  vmesh::VMCStats& stats,
+  const VMCGroupOfFrames& gof,
+  const VMCFrameInfo& frameInfo,
+  VMCFrame& frame,
+  Bitstream& bitstream,
+  VMCStats& stats,
   const VMCEncoderParameters& params) const
 {
   if (encodeFrameHeader(frameInfo, bitstream)) {
@@ -480,7 +480,7 @@ VMCEncoder::compressBaseMesh(
   auto& subdiv = frame.subdiv;
   auto& mapping = frame.mapping;
   auto& qpositions = frame.qpositions;
-  if (frameInfo.type == vmesh::FrameType::INTRA) {
+  if (frameInfo.type == FrameType::INTRA) {
     const auto texCoordBBox = base.texCoordBoundingBox();
     const auto delta = texCoordBBox.max - texCoordBBox.min;
     const auto d = std::max(delta[0], delta[1]);
@@ -595,7 +595,7 @@ VMCEncoder::compressBaseMesh(
 
 int32_t
 VMCEncoder::computeDisplacements(
-  vmesh::VMCFrame& frame, const VMCEncoderParameters& params) const
+  VMCFrame& frame, const VMCEncoderParameters& params) const
 {
   const auto& subdiv = frame.subdiv;
   const auto& rec = frame.rec;
@@ -604,14 +604,14 @@ VMCEncoder::computeDisplacements(
   for (int32_t v = 0, vcount = rec.pointCount(); v < vcount; ++v) {
     if (
       params.displacementCoordinateSystem
-      == vmesh::DisplacementCoordinateSystem::LOCAL) {
+      == DisplacementCoordinateSystem::LOCAL) {
       const auto n = rec.normal(v);
-      vmesh::Vec3<double> t, b;
+      Vec3<double> t, b;
       computeLocalCoordinatesSystem(n, t, b);
       const auto& pt0 = rec.point(v);
       const auto& pt1 = subdiv.point(v);
       const auto delta = pt1 - pt0;
-      disp[v] = vmesh::Vec3<double>(delta * n, delta * t, delta * b);
+      disp[v] = Vec3<double>(delta * n, delta * t, delta * b);
     } else {
       disp[v] = subdiv.point(v) - rec.point(v);
     }
@@ -621,7 +621,7 @@ VMCEncoder::computeDisplacements(
 
 int32_t
 VMCEncoder::quantizeDisplacements(
-  vmesh::VMCFrame& frame, const VMCEncoderParameters& params) const
+  VMCFrame& frame, const VMCEncoderParameters& params) const
 {
   const auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   const auto lodCount = int32_t(infoLevelOfDetails.size());
@@ -656,7 +656,7 @@ VMCEncoder::quantizeDisplacements(
 
 int32_t
 VMCEncoder::transferTexture(
-  vmesh::VMCFrame& frame, const VMCEncoderParameters& params) const
+  VMCFrame& frame, const VMCEncoderParameters& params) const
 {
   auto targetMesh = frame.input;
   // normalize texcoords so they are between 0.0 and 1.0
@@ -668,7 +668,7 @@ VMCEncoder::transferTexture(
   targetMesh.subdivideMidPoint(
     params.textureTransferSamplingSubdivisionIterationCount);
   frame.outputTexture.resize(
-    params.textureWidth, params.textureHeight, vmesh::ColourSpace::BGR444p);
+    params.textureWidth, params.textureHeight, ColourSpace::BGR444p);
   frame.outputTextureOccupancy.resize(
     params.textureWidth, params.textureHeight);
   if (params.invertOrientation) {
@@ -684,11 +684,11 @@ VMCEncoder::transferTexture(
 }
 int32_t
 VMCEncoder::transferTexture(
-  const vmesh::TriangleMesh<double>& targetMesh,
-  const vmesh::TriangleMesh<double>& sourceMesh,
-  const vmesh::Frame<uint8_t>& targetTexture,  // , vmesh::ColourSpace::BGR444p
-  vmesh::Frame<uint8_t>& outputTexture,        // , vmesh::ColourSpace::BGR444p
-  vmesh::Plane<uint8_t>& occupancy,
+  const TriangleMesh<double>& targetMesh,
+  const TriangleMesh<double>& sourceMesh,
+  const Frame<uint8_t>& targetTexture,  // , ColourSpace::BGR444p
+  Frame<uint8_t>& outputTexture,        // , ColourSpace::BGR444p
+  Plane<uint8_t>& occupancy,
   const VMCEncoderParameters& params)
 {
   if (
@@ -702,11 +702,11 @@ VMCEncoder::transferTexture(
   }
   occupancy.fill(uint8_t(0));
 
-  vmesh::StaticAdjacencyInformation<int32_t> vertexToTriangleTarget;
+  StaticAdjacencyInformation<int32_t> vertexToTriangleTarget;
   ComputeVertexToTriangle(
     targetMesh.triangles(), targetMesh.pointCount(), vertexToTriangleTarget);
 
-  vmesh::KdTree kdtree(3, targetMesh.points(), 10);  // dim, cloud, max leaf
+  KdTree kdtree(3, targetMesh.points(), 10);  // dim, cloud, max leaf
 
   const auto oWidth = outputTexture.width();
   const auto oHeight = outputTexture.height();
@@ -716,16 +716,16 @@ VMCEncoder::transferTexture(
   auto& oG = outputTexture.plane(1);
   auto& oR = outputTexture.plane(2);
   const auto sTriangleCount = sourceMesh.triangleCount();
-  vmesh::Plane<int32_t> triangleMap;
+  Plane<int32_t> triangleMap;
   triangleMap.resize(oWidth, oHeight);
 
   for (int32_t t = 0; t < sTriangleCount; ++t) {
     const auto& triUV = sourceMesh.texCoordTriangle(t);
-    const vmesh::Vec2<double> uv[3] = {
+    const Vec2<double> uv[3] = {
       sourceMesh.texCoord(triUV[0]), sourceMesh.texCoord(triUV[1]),
       sourceMesh.texCoord(triUV[2])};
     const auto& triPos = sourceMesh.triangle(t);
-    const vmesh::Vec3<double> pos[3] = {
+    const Vec3<double> pos[3] = {
       sourceMesh.point(triPos[0]), sourceMesh.point(triPos[1]),
       sourceMesh.point(triPos[2])};
     const auto area = (uv[1] - uv[0]) ^ (uv[2] - uv[0]);
@@ -754,7 +754,7 @@ VMCEncoder::transferTexture(
       const auto y = double(i) / oHeightMinus1;
       for (int32_t j = j0; j <= j1; ++j) {
         const auto x = double(j) / oWidthMinus1;
-        const vmesh::Vec2<double> uvP(x, y);
+        const Vec2<double> uvP(x, y);
         auto w0 = ((uv[2] - uv[1]) ^ (uvP - uv[1])) * iarea;
         auto w1 = ((uv[0] - uv[2]) ^ (uvP - uv[2])) * iarea;
         auto w2 = ((uv[1] - uv[0]) ^ (uvP - uv[0])) * iarea;
@@ -784,7 +784,7 @@ VMCEncoder::transferTexture(
           continue;
         }
         double minTriangleDist2 = std::numeric_limits<double>::max();
-        vmesh::Vec3<double> bgr(0.0);
+        Vec3<double> bgr(0.0);
         int32_t count = 0;
         for (int32_t k = 0; k < 4; ++k) {
           const auto i1 = i + shift[k][0];
@@ -798,16 +798,16 @@ VMCEncoder::transferTexture(
           const auto y = double(oHeightMinus1 - i) / oHeightMinus1;
           const auto x = double(j) / oWidthMinus1;
 
-          const vmesh::Vec2<double> uvP(x, y);
+          const Vec2<double> uvP(x, y);
 
           const auto t = triangleMap(i1, j1);
           const auto& triUV = sourceMesh.texCoordTriangle(t);
-          const vmesh::Vec2<double> uv[3] = {
+          const Vec2<double> uv[3] = {
             sourceMesh.texCoord(triUV[0]), sourceMesh.texCoord(triUV[1]),
             sourceMesh.texCoord(triUV[2])};
 
           const auto& triPos = sourceMesh.triangle(t);
-          const vmesh::Vec3<double> pos[3] = {
+          const Vec3<double> pos[3] = {
             sourceMesh.point(triPos[0]), sourceMesh.point(triPos[1]),
             sourceMesh.point(triPos[2])};
           const auto area = (uv[1] - uv[0]) ^ (uv[2] - uv[0]);
@@ -838,18 +838,18 @@ VMCEncoder::transferTexture(
     }
   }
   if (params.textureTransferPaddingDilateIterationCount) {
-    vmesh::Frame<uint8_t> tmpTexture ; // vmesh::ColourSpace::BGR444p
-    vmesh::Plane<uint8_t> tmpOccupancy;
+    Frame<uint8_t> tmpTexture ; // ColourSpace::BGR444p
+    Plane<uint8_t> tmpOccupancy;
     for (int32_t it = 0;
          it < params.textureTransferPaddingDilateIterationCount; ++it) {
-      vmesh::DilatePadding(outputTexture, occupancy, tmpTexture, tmpOccupancy);
-      vmesh::DilatePadding(tmpTexture, tmpOccupancy, outputTexture, occupancy);
+      DilatePadding(outputTexture, occupancy, tmpTexture, tmpOccupancy);
+      DilatePadding(tmpTexture, tmpOccupancy, outputTexture, occupancy);
     }
   }
-  if (params.textureTransferPaddingMethod == vmesh::PaddingMethod::PUSH_PULL) {
+  if (params.textureTransferPaddingMethod == PaddingMethod::PUSH_PULL) {
     PullPushPadding(outputTexture, occupancy);
   } else if (
-    params.textureTransferPaddingMethod == vmesh::PaddingMethod::SPARSE_LINEAR) {
+    params.textureTransferPaddingMethod == PaddingMethod::SPARSE_LINEAR) {
     PullPushPadding(outputTexture, occupancy);
     SparseLinearPadding(
       outputTexture, occupancy,
@@ -862,9 +862,9 @@ VMCEncoder::transferTexture(
 
 int32_t
 VMCEncoder::compress(
-  const vmesh::VMCGroupOfFramesInfo& gofInfo,
-  vmesh::VMCGroupOfFrames& gof,
-  vmesh::Bitstream& bitstream,
+  const VMCGroupOfFramesInfo& gofInfo,
+  VMCGroupOfFrames& gof,
+  Bitstream& bitstream,
   const VMCEncoderParameters& params)
 {
   _gofInfo = gofInfo;
@@ -874,12 +874,12 @@ VMCEncoder::compress(
   const auto widthDispVideo =
     params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
   auto heightDispVideo = 0;
-  _dispVideo.resize(widthDispVideo, heightDispVideo, vmesh::ColourSpace::YUV444p, frameCount);
+  _dispVideo.resize(widthDispVideo, heightDispVideo, ColourSpace::YUV444p, frameCount);
   auto& stats = gof.stats;
   stats.reset();
   stats.totalByteCount = bitstream.size();
 
-  vmesh::Bitstream bitstreamCompressedMeshes;
+  Bitstream bitstreamCompressedMeshes;
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
     auto& frame = gof.frame(frameIndex);
@@ -899,7 +899,7 @@ VMCEncoder::compress(
       heightDispVideo = std::max(
         heightDispVideo,
         geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
-      dispVideoFrame.resize(widthDispVideo, heightDispVideo, vmesh::ColourSpace::YUV444p);
+      dispVideoFrame.resize(widthDispVideo, heightDispVideo, ColourSpace::YUV444p);
       computeDisplacements(frame, params);
       computeForwardLinearLifting(
         frame.disp, frame.subdivInfoLevelOfDetails, frame.subdivEdges,
@@ -911,9 +911,9 @@ VMCEncoder::compress(
   }
   if (params.encodeDisplacementsVideo) {
     // resize all the frame to the same resolution
-    _dispVideo.resize(widthDispVideo, heightDispVideo, vmesh::ColourSpace::YUV444p, frameCount);
+    _dispVideo.resize(widthDispVideo, heightDispVideo, ColourSpace::YUV444p, frameCount);
   } else {
-    _dispVideo.resize(0, 0, vmesh::ColourSpace::YUV444p, 0);
+    _dispVideo.resize(0, 0, ColourSpace::YUV444p, 0);
   }
 
   if (encodeSequenceHeader(gof, bitstream, params)) {
@@ -980,8 +980,8 @@ VMCEncoder::compress(
 
 int32_t
 VMCEncoder::computeDisplacementVideoFrame(
-  const vmesh::VMCFrame& frame,
-  vmesh::Frame<uint16_t>& dispVideoFrame, // , vmesh::ColourSpace::YUV444p
+  const VMCFrame& frame,
+  Frame<uint16_t>& dispVideoFrame, // , ColourSpace::YUV444p
   const VMCEncoderParameters& params) const
 {
   const auto pixelsPerBlock =
@@ -1006,7 +1006,7 @@ VMCEncoder::computeDisplacementVideoFrame(
     const auto y0 = (blockIndex / params.geometryVideoWidthInBlocks)
       * params.geometryVideoBlockSize;  // to do: optimize power of 2
     int32_t x, y;
-    vmesh::computeMorton2D(indexWithinBlock, x, y);
+    computeMorton2D(indexWithinBlock, x, y);
     assert(x < params.geometryVideoBlockSize);
     assert(y < params.geometryVideoBlockSize);
 
@@ -1031,8 +1031,8 @@ VMCEncoder::computeDisplacementVideoFrame(
 
 int32_t
 VMCEncoder::encodeSequenceHeader(
-  const vmesh::VMCGroupOfFrames& gof,
-  vmesh::Bitstream& bitstream,
+  const VMCGroupOfFrames& gof,
+  Bitstream& bitstream,
   const VMCEncoderParameters& params) const
 {
   if (
@@ -1087,14 +1087,14 @@ VMCEncoder::encodeSequenceHeader(
 
 int32_t
 VMCEncoder::encodeFrameHeader(
-  const vmesh::VMCFrameInfo& frameInfo, vmesh::Bitstream& bitstream) const
+  const VMCFrameInfo& frameInfo, Bitstream& bitstream) const
 {
   const auto frameType = uint8_t(frameInfo.type);
   assert(frameInfo.patchCount >= 0 && frameInfo.patchCount <= 256);
   const auto patchCountMinusOne = uint8_t(frameInfo.patchCount - 1);
   bitstream.write(frameType);
   bitstream.write(patchCountMinusOne);
-  if (frameInfo.type != vmesh::FrameType::INTRA) {
+  if (frameInfo.type != FrameType::INTRA) {
     uint8_t referenceFrameIndex =
       frameInfo.frameIndex - frameInfo.referenceFrameIndex - 1;
     assert(frameInfo.frameIndex > frameInfo.referenceFrameIndex);

@@ -143,6 +143,8 @@ test(
       << "  --BitstreamFile=" << binSoftPath << " "
       << "  --ReconFile=" << recSoftPath << " "
       << "  --QP=38 ";
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -151,6 +153,8 @@ test(
   cmd << g_hmDecoderPath << " "
       << "  --BitstreamFile=" << binSoftPath << " "
       << "  --ReconFile=" << decSoftPath;
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 

@@ -137,7 +137,7 @@ main(int argc, char* argv[])
     cerr << "Error: frameCount < 1\n";
     return 1;
   }
-  vmesh::VMCSequenceInfo sequenceInfo;
+  vmesh::SequenceInfo sequenceInfo;
   sequenceInfo.generate( params.frameCount, params.startFrame, params.maxGOFSize, params.inputPath );
   sequenceInfo.save( params.outputPath );
 

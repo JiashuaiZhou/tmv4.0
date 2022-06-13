@@ -40,15 +40,16 @@
 #include "version.hpp"
 #include "vmc.hpp"
  #include "reparametrization.hpp"
-#include "simplifyMesh.hpp"
+#include "simplifyer.hpp"
 
 #include <gtest/gtest.h>
 #include "common.hpp"
 
 void reparametrize( const std::string inputPath)
 {
+  disableSubProcessLog.disable();
   // Parameters
-  vmeshenc::VMCReparametrizationParameters params;
+  vmesh::VMCReparametrizationParameters params;
   params.width = 4096;
   params.height = 4096;
   params.uvOptions = DirectX::UVATLAS_GEODESIC_QUALITY;
@@ -61,7 +62,7 @@ void reparametrize( const std::string inputPath)
   std::string decimatePath = "decimate.obj";
 
   // Generate reference mesh
-  vmeshenc::VMCSimplifyParameters paramsSimplify;
+  vmesh::VMCSimplifyParameters paramsSimplify;
   paramsSimplify.targetTriangleRatio = 0.03;
   paramsSimplify.minCCTriangleCount = 8;
   paramsSimplify.texCoordQuantizationBits = 13;
@@ -70,8 +71,8 @@ void reparametrize( const std::string inputPath)
     std::cerr << "Error: can't load " << inputPath << "!\n";
     return ;
   }
-  vmeshenc::SimplifyMesh simplifyMesh;
-  if (simplifyMesh.simplify(frame0, paramsSimplify )) {
+  vmesh::Simplifyer Simplifyer;
+  if (Simplifyer.simplify(frame0, paramsSimplify )) {
     std::cerr << "Error: can't simplify mesh !\n";
     return ;
   }
@@ -83,28 +84,32 @@ void reparametrize( const std::string inputPath)
   // Reparametrization old application
   std::stringstream cmd;
   cmd << g_uvatlasOldPath << " "
-      << "  --input=" << decimatePath   << " "
+      << "  --input=" << decimatePath << " "
       << "  --output=" << outputOswPath << " "
-      << "  --width=" << params.width << " "  
-      << "  --height=" << params.height << " "  
-      << "  --gutter=" << params.gutter << " "  
-      << "  --quality=QUALITY " ;
-  printf("cmd = %s \n", cmd.str().c_str());
-  system(cmd.str().c_str());  
-  
-  // Reparametrization new application
-  cmd.str("");
-  cmd << g_uvatlasNewPath << " "
-      << "  --input=" << decimatePath   << " "
-      << "  --output=" << outputNswPath << " "
-      << "  --width=" << params.width << " "  
-      << "  --height=" << params.height << " "  
-      << "  --gutter=" << params.gutter << " "  
-      << "  --quality=QUALITY " ;
+      << "  --width=" << params.width << " "
+      << "  --height=" << params.height << " "
+      << "  --gutter=" << params.gutter << " "
+      << "  --quality=QUALITY ";
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
-  // Load input mesh   
+  // Reparametrization new application
+  cmd.str("");
+  cmd << g_uvatlasNewPath << " "
+      << "  --input=" << decimatePath << " "
+      << "  --output=" << outputNswPath << " "
+      << "  --width=" << params.width << " "
+      << "  --height=" << params.height << " "
+      << "  --gutter=" << params.gutter << " "
+      << "  --quality=QUALITY ";
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
+  printf("cmd = %s \n", cmd.str().c_str());
+  system(cmd.str().c_str());
+
+  // Load input mesh
   // vmesh::VMCFrame frame;
   printf("START LIB REPARAMETRIZATION \n");
   vmesh::VMCFrame frame;
@@ -115,7 +120,7 @@ void reparametrize( const std::string inputPath)
   }
 
   // Reparametrization
-  vmeshenc::Reparametrization reparametrization;
+  vmesh::Reparametrization reparametrization;
   reparametrization.generate(frame, params);
 
   // Save generated meshes

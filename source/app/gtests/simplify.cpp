@@ -39,15 +39,16 @@
 #include "verbose.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
-#include "simplifyMesh.hpp"
+#include "simplifyer.hpp"
 
 #include <gtest/gtest.h>
 #include "common.hpp"
 
 void create( const std::string inputPath)
 {
+  disableSubProcessLog.disable();
   // Parameters
-  vmeshenc::VMCSimplifyParameters params;
+  vmesh::VMCSimplifyParameters params;
   params.targetTriangleRatio = 0.03;
   params.minCCTriangleCount = 8;
   params.texCoordQuantizationBits = 13;
@@ -55,42 +56,42 @@ void create( const std::string inputPath)
   std::string mappedNewPath = "mappedNew.obj";
   std::string refereNewPath = "refereNew.obj";
   std::string decimaNewPath = "decimaNew.obj";
-
   std::string mappedNswPath = "mappedNsw.obj";
   std::string refereNswPath = "refereNsw.obj";
   std::string decimaNswPath = "decimaNsw.obj";
-
   std::string mappedOswPath = "mappedOsw.obj";
   std::string refereOswPath = "refereOsw.obj";
   std::string decimaOswPath = "decimaOsw.obj";
 
-
   //  Simplify old application
   std::stringstream cmd;
   cmd << g_simplifyOldPath << " "
-      << "  --input=" << inputPath   << " "
+      << "  --input=" << inputPath << " "
       << "  --decimated=" << decimaOswPath << " "
       << "  --mapped=" << mappedOswPath << " "
       << "  --reference=" << refereOswPath << " "
-      << "  --target=" << params.targetTriangleRatio << " "  
-      << "  --qt=" << params.texCoordQuantizationBits << " "  
+      << "  --target=" << params.targetTriangleRatio << " "
+      << "  --qt=" << params.texCoordQuantizationBits << " "
       << "  --cctcount=" << params.minCCTriangleCount << " ";
-  printf("cmd = %s \n", cmd.str().c_str());
-  system(cmd.str().c_str());  
-  
-  //  Simplify new application
-  cmd.str("");
-  cmd << g_simplifyNewPath << " "
-      << "  --input=" << inputPath   << " "
-      << "  --decimated=" << decimaNswPath << " "
-      << "  --mapped=" << mappedNswPath << " "
-      << "  --reference=" << refereNswPath << " "
-      << "  --target=" << params.targetTriangleRatio << " "  
-      << "  --qt=" << params.texCoordQuantizationBits << " "  
-      << "  --cctcount=" << params.minCCTriangleCount << " ";
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
+  //  Simplify new application
+  cmd.str("");
+  cmd << g_simplifyNewPath << " "
+      << "  --input=" << inputPath << " "
+      << "  --decimated=" << decimaNswPath << " "
+      << "  --mapped=" << mappedNswPath << " "
+      << "  --reference=" << refereNswPath << " "
+      << "  --target=" << params.targetTriangleRatio << " "
+      << "  --qt=" << params.texCoordQuantizationBits << " "
+      << "  --cctcount=" << params.minCCTriangleCount << " ";
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
+  printf("cmd = %s \n", cmd.str().c_str());
+  system(cmd.str().c_str());
 
   // Load input mesh   
   vmesh::VMCFrame frame;
@@ -100,8 +101,8 @@ void create( const std::string inputPath)
   }
 
   // Simplify 
-  vmeshenc::SimplifyMesh simplifyMesh;
-  if (simplifyMesh.simplify(frame, params )) {
+  vmesh::Simplifyer Simplifyer;
+  if (Simplifyer.simplify(frame, params )) {
     std::cerr << "Error: can't simplify mesh !\n";
     return ;
   }

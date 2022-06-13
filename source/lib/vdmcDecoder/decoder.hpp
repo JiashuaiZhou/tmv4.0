@@ -42,7 +42,7 @@
 #include "vmcstats.hpp"
 #include "bitstream.hpp"
 
-namespace vmeshdec {
+namespace vmesh {
 
 //============================================================================
 
@@ -75,41 +75,41 @@ public:
   ~VMCDecoder() = default;
 
   int32_t decompress(
-    const vmesh::Bitstream& bitstream,
-    vmesh::VMCGroupOfFramesInfo& gofInfo,
-    vmesh::VMCGroupOfFrames& gof,
+    const Bitstream& bitstream,
+    VMCGroupOfFramesInfo& gofInfo,
+    VMCGroupOfFrames& gof,
     size_t& byteCounter,
     const VMCDecoderParameters& params);
 
 private:
-  int32_t decodeSequenceHeader(const vmesh::Bitstream& bitstream);
+  int32_t decodeSequenceHeader(const Bitstream& bitstream);
   int32_t
-  decodeFrameHeader(const vmesh::Bitstream& bitstream, vmesh::VMCFrameInfo& frameInfo);
+  decodeFrameHeader(const Bitstream& bitstream, VMCFrameInfo& frameInfo);
   int32_t decompressBaseMesh(
-    const vmesh::Bitstream& bitstream,
-    const vmesh::VMCGroupOfFrames& gof,
-    vmesh::VMCFrameInfo& frameInfo,
-    vmesh::VMCFrame& frame,
-    vmesh::VMCStats& stats,
+    const Bitstream& bitstream,
+    const VMCGroupOfFrames& gof,
+    VMCFrameInfo& frameInfo,
+    VMCFrame& frame,
+    VMCStats& stats,
     const VMCDecoderParameters& params);
   int32_t decompressMotion(
-    const vmesh::Bitstream& bitstream,
-    const std::vector<vmesh::Vec3<int32_t>>& triangles,
-    const std::vector<vmesh::Vec3<int32_t>>& reference,
-    std::vector<vmesh::Vec3<int32_t>>& current,
+    const Bitstream& bitstream,
+    const std::vector<Vec3<int32_t>>& triangles,
+    const std::vector<Vec3<int32_t>>& reference,
+    std::vector<Vec3<int32_t>>& current,
     const VMCDecoderParameters& params);
   int32_t decompressDisplacementsVideo(
-    const vmesh::Bitstream& bitstream, const VMCDecoderParameters& params);
+    const Bitstream& bitstream, const VMCDecoderParameters& params);
   int32_t decompressTextureVideo(
-    const vmesh::Bitstream& bitstream,
-    vmesh::VMCGroupOfFrames& gof,
+    const Bitstream& bitstream,
+    VMCGroupOfFrames& gof,
     const VMCDecoderParameters& params);
 
 private:
   size_t _byteCounter = 0;
-  vmesh::VMCGroupOfFramesInfo _gofInfo;
-  vmesh::VMCSequenceParameterSet _sps;
-  vmesh::FrameSequence<uint16_t> _dispVideo;  // vmesh::ColourSpace::YUV444p
+  VMCGroupOfFramesInfo _gofInfo;
+  VMCSequenceParameterSet _sps;
+  FrameSequence<uint16_t> _dispVideo;  // ColourSpace::YUV444p
 };
 
 //============================================================================

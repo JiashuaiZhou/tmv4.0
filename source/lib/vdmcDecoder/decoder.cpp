@@ -44,7 +44,7 @@
 
 using namespace vmesh;
 
-namespace vmeshdec {
+namespace vmesh {
 
 //============================================================================
 
@@ -52,7 +52,7 @@ namespace vmeshdec {
 
 int32_t
 VMCDecoder::decompressMotion(
-  const vmesh::Bitstream& bitstream,
+  const Bitstream& bitstream,
   const std::vector<Vec3<int32_t>>& triangles,
   const std::vector<Vec3<int32_t>>& reference,
   std::vector<Vec3<int32_t>>& current,
@@ -133,11 +133,11 @@ VMCDecoder::decompressMotion(
 
 int32_t
 VMCDecoder::decompressBaseMesh(
-  const vmesh::Bitstream& bitstream,
-  const vmesh::VMCGroupOfFrames& gof,
-  vmesh::VMCFrameInfo& frameInfo,
-  vmesh::VMCFrame& frame,
-  vmesh::VMCStats& stats,
+  const Bitstream& bitstream,
+  const VMCGroupOfFrames& gof,
+  VMCFrameInfo& frameInfo,
+  VMCFrame& frame,
+  VMCStats& stats,
   const VMCDecoderParameters& params)
 {
   if (decodeFrameHeader(bitstream, frameInfo)) {
@@ -225,7 +225,7 @@ VMCDecoder::decompressBaseMesh(
 
 int32_t
 VMCDecoder::decompressDisplacementsVideo(
-  const vmesh::Bitstream& bitstream, const VMCDecoderParameters& params)
+  const Bitstream& bitstream, const VMCDecoderParameters& params)
 {
   std::stringstream fnameCompressDisp, fnameDispDec;
   const auto width = _dispVideo.width();
@@ -266,8 +266,8 @@ VMCDecoder::decompressDisplacementsVideo(
 
 int32_t
 VMCDecoder::decompressTextureVideo(
-  const vmesh::Bitstream& bitstream,
-  vmesh::VMCGroupOfFrames& gof,
+  const Bitstream& bitstream,
+  VMCGroupOfFrames& gof,
   const VMCDecoderParameters& params)
 {
   const auto width = _sps.widthTexVideo;
@@ -341,9 +341,9 @@ VMCDecoder::decompressTextureVideo(
 
 int32_t
 VMCDecoder::decompress(
-  const vmesh::Bitstream& bitstream,
-  vmesh::VMCGroupOfFramesInfo& gofInfo,
-  vmesh::VMCGroupOfFrames& gof,
+  const Bitstream& bitstream,
+  VMCGroupOfFramesInfo& gofInfo,
+  VMCGroupOfFrames& gof,
   size_t& byteCounter,
   const VMCDecoderParameters& params)
 {
@@ -357,7 +357,7 @@ VMCDecoder::decompress(
     return -1;
   }
   _dispVideo.resize(
-    _sps.widthDispVideo, _sps.heightDispVideo, vmesh::ColourSpace::YUV444p, _sps.frameCount);
+    _sps.widthDispVideo, _sps.heightDispVideo, ColourSpace::YUV444p, _sps.frameCount);
   _gofInfo.frameCount = _sps.frameCount;
   _gofInfo.framesInfo.resize(_sps.frameCount);
   gof.resize(_sps.frameCount);
@@ -423,7 +423,7 @@ VMCDecoder::decompress(
 //----------------------------------------------------------------------------
 
 int32_t
-VMCDecoder::decodeSequenceHeader(const vmesh::Bitstream& bitstream)
+VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream)
 {
   uint16_t frameCount = 0;
   uint8_t bitField = 0;
@@ -463,7 +463,7 @@ VMCDecoder::decodeSequenceHeader(const vmesh::Bitstream& bitstream)
   _sps.geometryVideoBlockSize = geometryVideoBlockSize;
   _sps.bitDepthPosition = 1 + (bitDepth & 15);
   _sps.bitDepthTexCoord = 1 + ((bitDepth >> 4) & 15);
-  _sps.subdivisionMethod = vmesh::SubdivisionMethod(subdivInfo & 15);
+  _sps.subdivisionMethod = SubdivisionMethod(subdivInfo & 15);
   _sps.subdivisionIterationCount = (subdivInfo >> 4) & 15;
   _sps.qpPosition = 1 + (qpBaseMesh & 15);
   _sps.qpTexCoord = 1 + ((qpBaseMesh >> 4) & 15);
@@ -475,15 +475,15 @@ VMCDecoder::decodeSequenceHeader(const vmesh::Bitstream& bitstream)
 
 int32_t
 VMCDecoder::decodeFrameHeader(
-  const vmesh::Bitstream& bitstream, vmesh::VMCFrameInfo& frameInfo)
+  const Bitstream& bitstream, VMCFrameInfo& frameInfo)
 {
   uint8_t frameType = 0;
   bitstream.read(frameType, _byteCounter);
-  frameInfo.type = vmesh::FrameType(frameType);
+  frameInfo.type = FrameType(frameType);
   uint8_t patchCountMinusOne = 0;
   bitstream.read(patchCountMinusOne, _byteCounter);
   frameInfo.patchCount = patchCountMinusOne + 1;
-  if (frameInfo.type != vmesh::FrameType::INTRA) {
+  if (frameInfo.type != FrameType::INTRA) {
     uint8_t referenceFrameIndex = 0;
     bitstream.read(referenceFrameIndex, _byteCounter);
     frameInfo.referenceFrameIndex =

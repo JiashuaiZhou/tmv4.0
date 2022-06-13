@@ -35,14 +35,11 @@
 
 #pragma once
 
-#include "misc.hpp"
-#include "mesh.hpp"
-#include "verbose.hpp"
-#include "vector.hpp"
-#include "version.hpp"
-#include "vmc.hpp"
+namespace vmesh {
 
-namespace vmeshenc {
+struct VMCFrame; 
+template<typename T>
+class TriangleMesh;
 
 //============================================================================
 
@@ -57,26 +54,28 @@ struct VMCSimplifyParameters {
 
 //============================================================================
 
-class SimplifyMesh {
+class Simplifyer {
 public:
-  SimplifyMesh() = default;
-  ~SimplifyMesh() = default;
+  Simplifyer() = default;
+  ~Simplifyer() = default;
 
-  bool simplify(vmesh::VMCFrame& frame, const VMCSimplifyParameters& params);
+  bool simplify(VMCFrame& frame, const VMCSimplifyParameters& params);
 
-private:
   bool removeSmallConnectedComponents(
-    vmesh::TriangleMesh<double>& mesh, int32_t minCCTriangleCount);
+    TriangleMesh<double>& mesh, int32_t minCCTriangleCount);
 
-  bool removeDuplicatedTriangles(vmesh::TriangleMesh<double>& mesh);
+  bool removeDuplicatedTriangles(TriangleMesh<double>& mesh);
 
-  bool unifyVertices(vmesh::TriangleMesh<double>& mesh);
+  bool unifyVertices(TriangleMesh<double>& mesh);
+
+  bool unifyVertices(const TriangleMesh<double>& mesh, TriangleMesh<double>& umesh);
 
   bool decimate(
-    const vmesh::TriangleMesh<double>& mesh,
-    vmesh::TriangleMesh<double>& dmesh,
-    vmesh::TriangleMesh<double>& mmesh,
+    const TriangleMesh<double>& mesh,
+    TriangleMesh<double>& dmesh,
+    TriangleMesh<double>& mmesh,
     const VMCSimplifyParameters& params);
+private:
 };
 
-}  // namespace vmeshenc
+}  // namespace vmesh

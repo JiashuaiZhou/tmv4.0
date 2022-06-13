@@ -49,19 +49,19 @@ void create(
     const int maxGOFSize,
     const std::string inputPath)
 {
-  
+  disableSubProcessLog.disable();
   std::string gofNewPath = "gof_new.gof";
   std::string gofSavPath = "gof_sav.gof";
   std::string gofNswPath = "gof_nsw.gof";
   std::string gofOswPath = "gof_osw.gof";
 
   // Generate gof structure new 
-  vmesh::VMCSequenceInfo sequenceInfo;
+  vmesh::SequenceInfo sequenceInfo;
   sequenceInfo.generate( frameCount, startFrame, maxGOFSize, inputPath );
   sequenceInfo.save( gofNewPath );
 
   // Reload sequence info
-  vmesh::VMCSequenceInfo readSequenceInfo;
+  vmesh::SequenceInfo readSequenceInfo;
   readSequenceInfo.load( frameCount, startFrame, maxGOFSize, gofNewPath );
   readSequenceInfo.save( gofSavPath );
 
@@ -72,6 +72,8 @@ void create(
       << "  --output=" << gofOswPath << " "
       << "  --startFrame=" << startFrame << " "  
       << "  --frameCount=" << frameCount;
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());  
   
@@ -82,6 +84,8 @@ void create(
       << "  --output=" << gofNswPath << " "
       << "  --startFrame=" << startFrame << " "  
       << "  --frameCount=" << frameCount;
+  if (disableSubProcessLog.disableLog())
+    cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 

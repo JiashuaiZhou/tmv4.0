@@ -105,6 +105,7 @@ struct VMCFrame {
   vmesh::TriangleMesh<double> decimateTexture;
   vmesh::TriangleMesh<double> base;
   vmesh::TriangleMesh<double> subdiv;  
+  vmesh::TriangleMesh<double> nsubdiv;  
   vmesh::TriangleMesh<double> rec;  
   std::vector<int32_t> mapping;
   std::vector<vmesh::Vec3<int32_t>> qpositions;

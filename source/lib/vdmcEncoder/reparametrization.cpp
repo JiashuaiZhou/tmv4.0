@@ -50,7 +50,7 @@
 
 #include <UVAtlas.h>
 
-namespace vmeshenc {
+namespace vmesh {
 
 //============================================================================
 
@@ -70,8 +70,8 @@ HRESULT __cdecl UVAtlasCallback(float fPercentDone)
 //============================================================================
 
 bool 
-Reparametrization::generate( vmesh::VMCFrame& frame, const VMCReparametrizationParameters& params ) {
-  vmesh::TriangleMesh<float> mesh;
+Reparametrization::generate( VMCFrame& frame, const VMCReparametrizationParameters& params ) {
+  TriangleMesh<float> mesh;
   mesh.convert( frame.decimate );  
 
   // Remove unwanted mesh components
@@ -165,7 +165,7 @@ Reparametrization::generate( vmesh::VMCFrame& frame, const VMCReparametrizationP
   memcpy(mesh.triangles().data(), ib.data(), ib.size());
 
   assert(vertexRemapArray.size() == vb.size());
-  std::vector<vmesh::Vec3<float>> pos(vertexRemapArray.size());
+  std::vector<Vec3<float>> pos(vertexRemapArray.size());
   hr = DirectX::UVAtlasApplyRemap(
     reinterpret_cast<DirectX::XMFLOAT3*>(mesh.points().data()), sizeof(DirectX::XMFLOAT3),
     mesh.pointCount(), vertexRemapArray.size(), vertexRemapArray.data(),
@@ -194,7 +194,7 @@ Reparametrization::generate( vmesh::VMCFrame& frame, const VMCReparametrizationP
   std::transform(
     vb.begin(), vb.end(), std::back_inserter(mesh.texCoords()),
     [](DirectX::UVAtlasVertex& vtx) {
-      return vmesh::Vec2<float>{vtx.uv.x, vtx.uv.y};
+      return Vec2<float>{vtx.uv.x, vtx.uv.y};
     });
 
   mesh.texCoordTriangles() = mesh.triangles();
@@ -204,4 +204,4 @@ Reparametrization::generate( vmesh::VMCFrame& frame, const VMCReparametrizationP
   return 0;
 }
 
-}  // namespace vmeshenc
+}  // namespace vmesh

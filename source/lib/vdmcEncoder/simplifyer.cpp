@@ -35,16 +35,25 @@
 
 //============================================================================
 
-#include "simplifyMesh.hpp"
+#include "misc.hpp"
+#include "mesh.hpp"
+#include "verbose.hpp"
+#include "vector.hpp"
+#include "version.hpp"
+#include "vmc.hpp"
+
+#include "simplifyer.hpp"
 #include "triangleMeshDecimator.hpp"
 
-namespace vmeshenc {
+#include <chrono>
+
+namespace vmesh {
 
 
 //============================================================================
 
 bool 
-SimplifyMesh::simplify( vmesh::VMCFrame& frame, const VMCSimplifyParameters& params ) {
+Simplifyer::simplify( VMCFrame& frame, const VMCSimplifyParameters& params ) {
   if (!unifyVertices(frame.input)) {
     std::cerr << "Error: can't unify vertices!\n";
     return 1;
@@ -74,15 +83,15 @@ SimplifyMesh::simplify( vmesh::VMCFrame& frame, const VMCSimplifyParameters& par
 //============================================================================
 
 bool
-SimplifyMesh::removeSmallConnectedComponents(
-  vmesh::TriangleMesh<double>& mesh, int32_t minCCTriangleCount)
+Simplifyer::removeSmallConnectedComponents(
+  TriangleMesh<double>& mesh, int32_t minCCTriangleCount)
 {
   std::cout << "Removing small connected components...\n";
 
   const auto pointCount = mesh.pointCount();
   const auto triangleCount = mesh.triangleCount();
   std::vector<int32_t> partition;
-  std::vector<std::shared_ptr<vmesh::TriangleMesh<double>>> connectedComponents;
+  std::vector<std::shared_ptr<TriangleMesh<double>>> connectedComponents;
   const auto ccCount0 = ExtractConnectedComponents(
     mesh.triangles(), mesh.pointCount(), mesh, partition,
     &connectedComponents);
@@ -111,18 +120,18 @@ SimplifyMesh::removeSmallConnectedComponents(
 //============================================================================
 
 bool
-SimplifyMesh::removeDuplicatedTriangles(vmesh::TriangleMesh<double>& mesh)
+Simplifyer::removeDuplicatedTriangles(TriangleMesh<double>& mesh)
 {
   std::cout << "Removing duplicated triangles... ";
 
   const auto triangleCount = mesh.triangleCount();
-  std::vector<vmesh::Vec3<double>> triangleNormals;
+  std::vector<Vec3<double>> triangleNormals;
   mesh.computeTriangleNormals(triangleNormals);
-  vmesh::StaticAdjacencyInformation<int32_t> vertexToTriangle;
+  StaticAdjacencyInformation<int32_t> vertexToTriangle;
   ComputeVertexToTriangle(
     mesh.triangles(), mesh.pointCount(), vertexToTriangle);
-  std::vector<vmesh::Triangle> trianglesOutput;
-  if (!vmesh::RemoveDuplicatedTriangles(
+  std::vector<Triangle> trianglesOutput;
+  if (!RemoveDuplicatedTriangles(
         mesh.triangles(), triangleNormals, vertexToTriangle,
         trianglesOutput)) {
     return false;
@@ -139,7 +148,33 @@ SimplifyMesh::removeDuplicatedTriangles(vmesh::TriangleMesh<double>& mesh)
 //============================================================================
 
 bool
-SimplifyMesh::unifyVertices(vmesh::TriangleMesh<double>& mesh)
+Simplifyer::unifyVertices(const TriangleMesh<double>& mesh, TriangleMesh<double>& umesh)
+{
+  std::cout << "Unifying vertices... ";
+  const auto pointCount0 = mesh.pointCount();
+  const auto triangleCount0 = mesh.triangleCount();
+  auto start = std::chrono::steady_clock::now();
+
+  std::vector<int32_t> mapping;
+  UnifyVertices(
+    mesh.points(), mesh.triangles(), umesh.points(), umesh.triangles(),
+    mapping);
+  RemoveDegeneratedTriangles(umesh);
+
+  auto end = std::chrono::steady_clock::now();
+  auto deltams = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  vout << " [done] " << deltams.count() << " ms\n";
+  vout << "\t Unified mesh: " << mesh.pointCount() << "V "
+       << mesh.triangleCount() << "T\n";
+  vout << "\t\t Removed " << (pointCount0 - umesh.pointCount()) << " vertices "
+       << (triangleCount0 - umesh.triangleCount()) << " triangles\n";
+  return true;
+}
+
+//============================================================================
+
+bool
+Simplifyer::unifyVertices(TriangleMesh<double>& mesh)
 {
   std::cout << "Unifying vertices... ";
   const auto pointCount0 = mesh.pointCount();
@@ -163,10 +198,10 @@ SimplifyMesh::unifyVertices(vmesh::TriangleMesh<double>& mesh)
 //============================================================================
 
 bool
-SimplifyMesh::decimate(
-  const vmesh::TriangleMesh<double>& mesh,
-  vmesh::TriangleMesh<double>& dmesh,
-  vmesh::TriangleMesh<double>& mmesh,
+Simplifyer::decimate(
+  const TriangleMesh<double>& mesh,
+  TriangleMesh<double>& dmesh,
+  TriangleMesh<double>& mmesh,
   const VMCSimplifyParameters& params )
 {
   std::cout << "Simplifying Mesh... \n";
@@ -182,7 +217,7 @@ SimplifyMesh::decimate(
     decimator.decimate(
       (const double*)mesh.points().data(), mesh.pointCount(),
       (const int32_t*)mesh.triangles().data(), mesh.triangleCount(), dparams)
-    != vmesh::Error::OK) {
+    != Error::OK) {
     std::cerr << "Error: can't decimate model\n";
     return false;
   }
@@ -193,7 +228,7 @@ SimplifyMesh::decimate(
     decimator.decimatedMesh(
       (double*)dmesh.points().data(), dmesh.pointCount(),
       (int32_t*)dmesh.triangles().data(), dmesh.triangleCount())
-    != vmesh::Error::OK) {
+    != Error::OK) {
     std::cerr << "Error: can't extract decimated model\n";
     return false;
   }
@@ -209,4 +244,4 @@ SimplifyMesh::decimate(
 }
 
 
-}  // namespace vmeshenc
+}  // namespace vmesh

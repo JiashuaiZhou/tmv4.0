@@ -40,52 +40,53 @@
 
 struct DisableSubProcessLog {  
   private :
-    bool disableLog = true;
-    bool isDisable = false;
-    std::stringstream binCoutStream; 
-    std::stringstream binCerrStream; 
-    std::streambuf* oldCoutRdBuf;
-    std::streambuf* oldCerrRdBuf;
-    char binStdoutBuffer[4096]; 
-    char binStderrBuffer[4096]; 
-    FILE* binStdout;
-    FILE* binStderr;
-    FILE* oldStdout;
-    FILE* oldStderr;
+    bool disableLog_ = true;
+    bool isDisable_ = false;
+    std::stringstream binCoutStream_; 
+    std::stringstream binCerrStream_; 
+    std::streambuf* oldCoutRdBuf_;
+    std::streambuf* oldCerrRdBuf_;
+    char binStdoutBuffer_[4096]; 
+    char binStderrBuffer_[4096]; 
+    FILE* binStdout_;
+    FILE* binStderr_;
+    FILE* oldStdout_;
+    FILE* oldStderr_;
   public:
-  void switchOnLog() { disableLog = false; }
+  void switchOnLog() { disableLog_ = false; }
+  bool disableLog() const { return disableLog_; }
   
   void disable()
   {
-    if (disableLog && !isDisable) {
+    if (disableLog_ && !isDisable_) {
       // Redirect std::cout and std::cerr
-      oldCoutRdBuf = std::cout.rdbuf(binCoutStream.rdbuf());
-      oldCerrRdBuf = std::cerr.rdbuf(binCerrStream.rdbuf());
+      oldCoutRdBuf_ = std::cout.rdbuf(binCoutStream_.rdbuf());
+      oldCerrRdBuf_ = std::cerr.rdbuf(binCerrStream_.rdbuf());
       
       // redirect printf
-      binStdout = fmemopen(binStdoutBuffer, 4096, "w");
-      binStderr = fmemopen(binStderrBuffer, 4096, "w");
-      if (!binStdout) 
+      binStdout_ = fmemopen(binStdoutBuffer_, 4096, "w");
+      binStderr_ = fmemopen(binStderrBuffer_, 4096, "w");
+      if (!binStdout_) 
         return;
-      if (!binStderr) 
+      if (!binStderr_) 
         return;
-      oldStdout = stdout;
-      oldStderr = stderr;
-      stdout = binStdout;
-      stderr = binStderr;
-      isDisable = true;
+      oldStdout_ = stdout;
+      oldStderr_ = stderr;
+      stdout = binStdout_;
+      stderr = binStderr_;
+      isDisable_ = true;
     }
   }
   void enable()
   {
-    if (isDisable) {
-      std::cout.rdbuf(oldCoutRdBuf);
-      std::cerr.rdbuf(oldCerrRdBuf);
-      std::fclose(binStdout);
-      std::fclose(binStderr);
-      stdout = oldStdout;
-      stderr = oldStderr;
-      isDisable = false;
+    if (isDisable_) {
+      std::cout.rdbuf(oldCoutRdBuf_);
+      std::cerr.rdbuf(oldCerrRdBuf_);
+      std::fclose(binStdout_);
+      std::fclose(binStderr_);
+      stdout = oldStdout_;
+      stderr = oldStderr_;
+      isDisable_ = false;
     }
   }
 };
@@ -127,7 +128,7 @@ static inline size_t hash( const std::string& name){
     file.close();
     return std::hash<std::string>{}(str);
   }
-  return 0;
+  return 0xffffffffffffffff;
 }
 
 const std::string g_hmEncoderPath =
@@ -155,63 +156,43 @@ const std::string g_uvatlasOldPath =
 const std::string g_uvatlasNewPath =
   "build/Release/bin/uvatlas";
 
+const std::string g_fitsubdivOldPath =
+  "externaltools/mpeg-vmesh-tm/build/Release/bin/fitsubdiv";
+const std::string g_fitsubdivNewPath =
+  "build/Release/bin/fitsubdiv";
+
+const std::string g_encoderOldPath =
+  "externaltools/mpeg-vmesh-tm/build/Release/bin/vmc";
+const std::string g_encoderNewPath =
+  "build/Release/bin/vmcenc";
+
+const std::string g_decoderOldPath =
+  "externaltools/mpeg-vmesh-tm/build/Release/bin/vmc";
+const std::string g_decoderNewPath =
+  "build/Release/bin/vmcdec";
+
+
 static bool checkSoftwarePath(){
   bool ret = true;
-  if ( !exists( g_hmEncoderPath) ){
-    printf("Software path not exists: %s \n",g_hmEncoderPath.c_str());
-    ret = false;
+  auto externalPath = {
+    g_hmEncoderPath,    g_hmDecoderPath,    g_hdrConvertPath,
+    g_dracoEncoderPath, g_dracoDecoderPath, g_mmMetricsPath,
+    g_gengofOldPath,    g_gengofNewPath,    g_simplifyOldPath,
+    g_simplifyNewPath,  g_uvatlasOldPath,   g_uvatlasNewPath,
+    g_encoderOldPath,   g_encoderNewPath,   g_decoderOldPath,
+    g_decoderNewPath};
+  for (auto& path : externalPath) {
+    if (!exists(path)) {
+      printf("Software path not exists: %s \n", path.c_str());
+      ret = false;
+    }
   }
-  if ( !exists( g_hmDecoderPath) ){
-    printf("Software path not exists: %s \n",g_hmDecoderPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_hdrConvertPath) ){
-    printf("Software path not exists: %s \n",g_hdrConvertPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_dracoEncoderPath) ){
-    printf("Software path not exists: %s \n",g_dracoEncoderPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_dracoDecoderPath) ){
-    printf("Software path not exists: %s \n",g_dracoDecoderPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_mmMetricsPath) ){
-    printf("Software path not exists: %s \n",g_mmMetricsPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_gengofOldPath) ){
-    printf("Software path not exists: %s \n",g_gengofOldPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_gengofNewPath) ){
-    printf("Software path not exists: %s \n",g_gengofNewPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_simplifyOldPath) ){
-    printf("Software path not exists: %s \n",g_simplifyOldPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_simplifyNewPath) ){
-    printf("Software path not exists: %s \n",g_simplifyNewPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_uvatlasOldPath) ){
-    printf("Software path not exists: %s \n",g_uvatlasOldPath.c_str());
-    ret = false;
-  }
-  if ( !exists( g_uvatlasNewPath) ){
-    printf("Software path not exists: %s \n",g_uvatlasNewPath.c_str());
-    ret = false;
-  }
-  if ( !ret ){
+  if (!ret) {
     printf("External softwares not installed: ");
     printf("  Please run ./get_dependencies.jh scripts \n");
   }
   return ret;
 }
-
 
 static std::string
 name(

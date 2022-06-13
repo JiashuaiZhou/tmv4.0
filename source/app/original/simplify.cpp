@@ -42,7 +42,8 @@
 #include "misc.hpp"
 #include "verbose.hpp"
 #include "version.hpp"
-#include "simplifyMesh.hpp"
+#include "simplifyer.hpp"
+#include "vmc.hpp"
 
 //============================================================================
 
@@ -57,7 +58,7 @@ struct Parameters {
   std::string decimatedMeshPath;
   std::string mappedMeshPath;
   std::string referenceMeshPath;
-  vmeshenc::VMCSimplifyParameters params;
+  vmesh::VMCSimplifyParameters params;
 };
 }  // namespace
 
@@ -78,7 +79,7 @@ try {
   ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("Input/Output"))
-  ("fnum",      params.fnum, {}, "Frame number for %d expansion")
+  ("fnum",      params.fnum,              {}, "Frame number for %d expansion")
   ("input",     params.inputMeshPath,     {}, "Input mesh")
   ("decimated", params.decimatedMeshPath, {}, "Decimated mesh")
   ("mapped",    params.mappedMeshPath,    {}, "Mapped mesh")
@@ -162,8 +163,8 @@ main(int argc, char* argv[])
   }
 
   // Simplify 
-  vmeshenc::SimplifyMesh simplifyMesh;
-  if (simplifyMesh.simplify(frame, params.params )) {
+  vmesh::Simplifyer Simplifyer;
+  if (Simplifyer.simplify(frame, params.params )) {
     std::cerr << "Error: can't simplify mesh !\n";
     return 1;
   }

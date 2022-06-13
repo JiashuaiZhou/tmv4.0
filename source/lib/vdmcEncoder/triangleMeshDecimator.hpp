@@ -41,7 +41,7 @@
 
 #define SIMPLIFY_MESH_TRACK_POINTS 1
 
-namespace vmeshenc {
+namespace vmesh {
 
 //============================================================================
 
@@ -81,7 +81,7 @@ public:
   TriangleMeshDecimator& operator=(const TriangleMeshDecimator&) = delete;
   ~TriangleMeshDecimator();
 
-  vmesh::Error decimate(
+  Error decimate(
     const double* points,
     int pointCount,
     const int* triangles,
@@ -90,7 +90,7 @@ public:
 
   int decimatedTriangleCount() const;
   int decimatedPointCount() const;
-  vmesh::Error decimatedMesh(
+  Error decimatedMesh(
     double* dpoints,
     int dpointCount,
     int* dtriangles,
@@ -98,7 +98,7 @@ public:
 
 #if SIMPLIFY_MESH_TRACK_POINTS
   int trackedPointCount() const;
-  vmesh::Error trackedPoints(double* tpoints, int* tindexes, int pointCount) const;
+  Error trackedPoints(double* tpoints, int* tindexes, int pointCount) const;
 #endif  // SIMPLIFY_MESH_TRACK_POINTS
 
 private:

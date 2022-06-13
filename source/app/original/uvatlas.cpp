@@ -61,7 +61,7 @@ struct Parameters {
   std::string input;
   std::string output;
 
-  vmeshenc::VMCReparametrizationParameters params;
+  vmesh::VMCReparametrizationParameters params;
 };
 }  // namespace
 
@@ -162,7 +162,7 @@ main(int argc, char* argv[])
   }
 
   // Reparametrization
-  vmeshenc::Reparametrization reparametrization;
+  vmesh::Reparametrization reparametrization;
   reparametrization.generate(frame, params.params);
 
   // Save decimate texture model

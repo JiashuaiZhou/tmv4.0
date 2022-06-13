@@ -117,9 +117,12 @@ create_executable( NAME      tests
                              gtests/gengof.cpp
                              gtests/simplify.cpp
                              gtests/reparametrization.cpp
+                             gtests/fitsubdiv.cpp
                    LIBRARIES gtest_main 
                              vdmcUtil 
+                             vdmcCommon 
                              vdmcEncoder 
+                             vdmcDecoder 
                              geometryEncoder 
                              geometryDecoder 
                              videoEncoder 
@@ -129,9 +132,13 @@ create_executable( NAME      tests
                              DirectX-Headers 
                              DirectXMath 
                              DirectXMesh
-                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
+                   INCLUDES  ${CMAKE_SOURCE_DIR}/dependencies
+                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil
+                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
+                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder 
+                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcDecoder 
                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder
-                             ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder )
+                             ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder  )
 include(GoogleTest)
 gtest_discover_tests( tests )
 

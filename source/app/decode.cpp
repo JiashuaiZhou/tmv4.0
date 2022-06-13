@@ -44,13 +44,8 @@
 #include "vmc.hpp"
 #include "vmcstats.hpp"
 
-using namespace std;
-using namespace vmesh;
-using namespace vmeshdec;
-
 //============================================================================
 
-namespace {
 struct Parameters {
   bool verbose;
 
@@ -73,9 +68,8 @@ struct Parameters {
 
   double framerate;
 
-  VMCDecoderParameters decParams;
+  vmesh::VMCDecoderParameters decParams;
 };
-}  // namespace
 
 //============================================================================
 
@@ -142,7 +136,7 @@ try {
 
   po::setDefaults(opts);
   po::ErrorReporter err;
-  const list<const char*>& argv_unhandled =
+  const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
@@ -186,15 +180,13 @@ try {
     return false;
 
   // Dump the complete derived configuration
-  cout << "+ Configuration parameters\n";
-  po::dumpCfg(cout, opts, "General", 4);
-  po::dumpCfg(cout, opts, "Output (Decoder)", 4);
-  po::dumpCfg(cout, opts, "Common", 4);
-  po::dumpCfg(cout, opts, "Decoder", 4);
-  po::dumpCfg(cout, opts, "External tools (Decoder)", 4);
-
-  cout << '\n';
-
+  std::cout << "+ Configuration parameters\n";
+  po::dumpCfg(std::cout, opts, "General", 4);
+  po::dumpCfg(std::cout, opts, "Output (Decoder)", 4);
+  po::dumpCfg(std::cout, opts, "Common", 4);
+  po::dumpCfg(std::cout, opts, "Decoder", 4);
+  po::dumpCfg(std::cout, opts, "External tools (Decoder)", 4);
+  std::cout << '\n';
   return true;
 }
 catch (df::program_options_lite::ParseFailure& e) {
@@ -207,7 +199,7 @@ catch (df::program_options_lite::ParseFailure& e) {
 
 void
 dumpStats(
-  const VMCStats& stats, const string& header, const Parameters& params)
+  const vmesh::VMCStats& stats, const std::string& header, const Parameters& params)
 {
   const auto byteCountToBitrate =
     (8.0 * params.framerate) / (stats.frameCount * 1000000.0);
@@ -229,116 +221,23 @@ dumpStats(
   const auto totalBitsPerVertex =
     stats.totalByteCount * 8.0 / stats.vertexCount;
 
-  cout << header << " frame count " << stats.frameCount << '\n';
-  cout << header << " face count " << stats.faceCount << '\n';
-  cout << header << " vertex count " << stats.vertexCount << '\n';
-  cout << header << " processing time " << stats.processingTimeInSeconds
+  std::cout << header << " frame count " << stats.frameCount << '\n';
+  std::cout << header << " face count " << stats.faceCount << '\n';
+  std::cout << header << " vertex count " << stats.vertexCount << '\n';
+  std::cout << header << " processing time " << stats.processingTimeInSeconds
        << " s \n";
-  cout << header << " meshes bitrate " << baseMeshBitrate << " mbps "
+  std::cout << header << " meshes bitrate " << baseMeshBitrate << " mbps "
        << stats.baseMeshByteCount << " B "
        << baseMeshBitsPerVertex << " bpv\n";
-  cout << header << " motion bitrate " << motionBitrate << " mbps "
+  std::cout << header << " motion bitrate " << motionBitrate << " mbps "
        << stats.motionByteCount << " B " << motionBitsPerVertex << " bpv\n";
-  cout << header << " displacements bitrate " << displacementBitrate
+  std::cout << header << " displacements bitrate " << displacementBitrate
        << " mbps " << stats.displacementsByteCount << " B "
        << displacementBitsPerVertex << " bpv\n";
-  cout << header << " texture bitrate " << textureBitrate << " mbps "
+  std::cout << header << " texture bitrate " << textureBitrate << " mbps "
        << stats.textureByteCount << " B " << textureBitsPerVertex << " bpv\n";
-  cout << header << " total bitrate " << totalBitrate << " mbps "
+  std::cout << header << " total bitrate " << totalBitrate << " mbps "
        << stats.totalByteCount << " B " << totalBitsPerVertex << " bpv\n";
-}
-
-//============================================================================
-
-int32_t
-loadGroupOfFramesInfo(
-  const Parameters& params, vector<VMCGroupOfFramesInfo>& gofsInfo)
-{
-  gofsInfo.reserve(10);
-  if (params.groupOfFramesStructurePath.empty()) {
-    for (int32_t f = 0, gofIndex = 0; f < params.frameCount; ++gofIndex) {
-      const auto startFrameGOF = f + params.startFrame;
-      const auto frameCountGOF =
-        std::min(params.groupOfFramesMaxSize, params.frameCount - f);
-      gofsInfo.resize(gofsInfo.size() + 1);
-      auto& gofInfo = gofsInfo.back();
-      gofInfo.frameCount = frameCountGOF;
-      gofInfo.startFrameIndex = startFrameGOF;
-      gofInfo.index = gofIndex;
-      gofInfo.resize(frameCountGOF);
-      for (int32_t frameIndexInGOF = 0; frameIndexInGOF < frameCountGOF;
-           ++frameIndexInGOF) {
-        vmesh::VMCFrameInfo& frameInfo = gofInfo.frameInfo(frameIndexInGOF);
-        frameInfo.frameIndex = frameIndexInGOF;
-        frameInfo.referenceFrameIndex = -1;
-        frameInfo.type = FrameType::INTRA;
-      }
-      f += frameCountGOF;
-    }
-    return 0;
-  }
-
-  std::ifstream fin(params.groupOfFramesStructurePath);
-  if (fin.is_open()) {
-    std::string line;
-    std::vector<std::string> tokens;
-    int32_t currentGofIndex = -1;
-    int32_t frameCounter = 0;
-
-    while (getline(fin, line) && frameCounter++ < params.frameCount) {
-      size_t prev = 0, pos;
-      tokens.resize(0);
-      while ((pos = line.find_first_of(" ,;:/", prev)) != std::string::npos) {
-        if (pos > prev) {
-          tokens.push_back(line.substr(prev, pos - prev));
-        }
-        prev = pos + 1;
-      }
-
-      if (prev < line.length()) {
-        tokens.push_back(line.substr(prev, std::string::npos));
-      }
-
-      const auto frameIndex = atoi(tokens[0].c_str());
-      const auto referenceFrameIndex = atoi(tokens[1].c_str());
-      const auto gofIndex = atoi(tokens[2].c_str());
-      assert(referenceFrameIndex <= frameIndex);
-
-      if (gofIndex != currentGofIndex) {
-        currentGofIndex = gofIndex;
-        gofsInfo.resize(gofsInfo.size() + 1);
-        auto& gofInfo = gofsInfo.back();
-        gofInfo.frameCount = 1;
-        gofInfo.startFrameIndex = frameIndex;
-        gofInfo.index = gofIndex;
-        VMCFrameInfo frameInfo;
-        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex;
-        frameInfo.referenceFrameIndex = -1;
-        frameInfo.type = FrameType::INTRA;
-        gofInfo.framesInfo.reserve(params.groupOfFramesMaxSize);
-        gofInfo.framesInfo.push_back(frameInfo);
-      } else {
-        auto& gofInfo = gofsInfo.back();
-        ++gofInfo.frameCount;
-        VMCFrameInfo frameInfo;
-
-        if (referenceFrameIndex == frameIndex) {
-          frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex;
-          frameInfo.referenceFrameIndex = -1;
-          frameInfo.type = FrameType::INTRA;
-        } else {
-          frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex;
-          frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
-          frameInfo.type = FrameType::SKIP;
-        }
-        gofInfo.framesInfo.push_back(frameInfo);
-      }
-    }
-    fin.close();
-    return 0;
-  }
-
-  return -1;
 }
 
 //============================================================================
@@ -346,33 +245,33 @@ loadGroupOfFramesInfo(
 int32_t
 decompress(const Parameters& params)
 {
-  Bitstream bitstream;
+  vmesh::Bitstream bitstream;
   if (bitstream.load(params.compressedStreamPath)) {
-    cerr << "Error: can't load compressed bitstream ! ("
+    std::cerr << "Error: can't load compressed bitstream ! ("
          << params.compressedStreamPath << ")\n";
     return -1;
   }
 
-  VMCDecoder decoder;
-  VMCGroupOfFramesInfo gofInfo;
-  VMCGroupOfFrames gof;
-  VMCStats totalStats;
+  vmesh::VMCDecoder decoder;
+  vmesh::VMCGroupOfFramesInfo gofInfo;
+  vmesh::VMCGroupOfFrames gof;
+  vmesh::VMCStats totalStats;
   totalStats.reset();
   size_t byteCounter = 0;
   int32_t f = 0;
   gofInfo.index = 0;
   gofInfo.startFrameIndex = params.startFrame;
   while (byteCounter != bitstream.size()) {
-    auto start = chrono::steady_clock::now();
+    auto start = std::chrono::steady_clock::now();
     if (decoder.decompress(
           bitstream, gofInfo, gof, byteCounter, params.decParams)) {
-      cerr << "Error: can't decompress group of frames!\n";
+      std::cerr << "Error: can't decompress group of frames!\n";
       return -1;
     }
 
-    auto end = chrono::steady_clock::now();
+    auto end = std::chrono::steady_clock::now();
     gof.stats.processingTimeInSeconds =
-      chrono::duration_cast<chrono::milliseconds>(end - start).count();
+      std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     const auto& stats = gof.stats;
     const auto startFrameGOF = f + params.startFrame;
@@ -382,13 +281,13 @@ decompress(const Parameters& params)
       && !params.decodedMaterialLibPath.empty()) {
       for (int fIndex = 0; fIndex < frameCountGOF; ++fIndex) {
         const auto fNum = startFrameGOF + fIndex;
-        auto nameDecMesh = expandNum(params.decodedMeshPath, fNum);
-        auto nameDecTexture = expandNum(params.decodedTexturePath, fNum);
-        auto nameDecMaterial = expandNum(params.decodedMaterialLibPath, fNum);
+        auto nameDecMesh = vmesh::expandNum(params.decodedMeshPath, fNum);
+        auto nameDecTexture = vmesh::expandNum(params.decodedTexturePath, fNum);
+        auto nameDecMaterial = vmesh::expandNum(params.decodedMaterialLibPath, fNum);
 
         const auto& frame = gof.frame(fIndex);
-        SaveImage(nameDecTexture, frame.outputTexture);
-        Material<double> material;
+        vmesh::SaveImage(nameDecTexture, frame.outputTexture);
+        vmesh::Material<double> material;
         material.texture = nameDecTexture;
         material.save(nameDecMaterial);
         auto& recmesh = gof.frame(fIndex).rec;
@@ -402,17 +301,17 @@ decompress(const Parameters& params)
     gofInfo.startFrameIndex += stats.frameCount;
     ++gofInfo.index;
 
-    if (vout) {
-      vout << "\n\n------- Group of frames " << gofInfo.index
+    if (vmesh::vout) {
+      vmesh::vout << "\n\n------- Group of frames " << gofInfo.index
            << " -----------\n";
       dumpStats(stats, "GOF", params);
-      vout << "---------------------------------------\n\n";
+      vmesh::vout << "---------------------------------------\n\n";
     }
   }
 
-  cout << "\n\n------- All frames -----------\n";
+  std::cout << "\n\n------- All frames -----------\n";
   dumpStats(totalStats, "Sequence", params);
-  cout << "---------------------------------------\n\n";
+  std::cout << "---------------------------------------\n\n";
   return 0;
 }
 
@@ -421,7 +320,7 @@ decompress(const Parameters& params)
 int
 main(int argc, char* argv[])
 {
-  cout << "MPEG VMESH version " << ::vmesh::version << '\n';
+  std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
   if (!parseParameters(argc, argv, params))
@@ -431,7 +330,7 @@ main(int argc, char* argv[])
     vmesh::vout.rdbuf(std::cout.rdbuf());
 
   if (decompress(params)) {
-    cerr << "Error: can't decompress animation!\n";
+    std::cerr << "Error: can't decompress animation!\n";
     return 1;
   }
 

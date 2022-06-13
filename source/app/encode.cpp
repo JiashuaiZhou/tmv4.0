@@ -274,53 +274,6 @@ catch (df::program_options_lite::ParseFailure& e) {
 
 //============================================================================
 
-void
-dumpStats(
-  const vmesh::VMCStats& stats, const std::string& header, const Parameters& params)
-{
-  const auto byteCountToBitrate =
-    (8.0 * params.framerate) / (stats.frameCount * 1000000.0);
-  const auto baseMeshBitrate = stats.baseMeshByteCount * byteCountToBitrate;
-  const auto motionBitrate = stats.motionByteCount * byteCountToBitrate;
-  const auto displacementBitrate =
-    stats.displacementsByteCount * byteCountToBitrate;
-  const auto textureBitrate = stats.textureByteCount * byteCountToBitrate;
-  const auto totalBitrate = stats.totalByteCount * byteCountToBitrate;
-
-  const auto baseMeshBitsPerVertex =
-    stats.baseMeshByteCount * 8.0 / stats.baseMeshVertexCount;
-  const auto motionBitsPerVertex =
-    stats.motionByteCount * 8.0 / stats.baseMeshVertexCount;
-  const auto textureBitsPerVertex =
-    stats.textureByteCount * 8.0 / stats.vertexCount;
-  const auto displacementBitsPerVertex =
-    stats.displacementsByteCount * 8.0 / stats.vertexCount;
-  const auto totalBitsPerVertex =
-    stats.totalByteCount * 8.0 / stats.vertexCount;
-
-  std::cout << header << " frame count " << stats.frameCount << '\n';
-  std::cout << header << " face count " << stats.faceCount << '\n';
-  std::cout << header << " vertex count " << stats.vertexCount << '\n';
-  std::cout << header << " processing time " << stats.processingTimeInSeconds
-            << " s \n";
-  std::cout << header << " meshes bitrate " << baseMeshBitrate << " mbps "
-            << stats.baseMeshByteCount << " B " << baseMeshBitsPerVertex
-            << " bpv\n";
-  std::cout << header << " motion bitrate " << motionBitrate << " mbps "
-            << stats.motionByteCount << " B " << motionBitsPerVertex
-            << " bpv\n";
-  std::cout << header << " displacements bitrate " << displacementBitrate
-            << " mbps " << stats.displacementsByteCount << " B "
-            << displacementBitsPerVertex << " bpv\n";
-  std::cout << header << " texture bitrate " << textureBitrate << " mbps "
-            << stats.textureByteCount << " B " << textureBitsPerVertex
-            << " bpv\n";
-  std::cout << header << " total bitrate " << totalBitrate << " mbps "
-            << stats.totalByteCount << " B " << totalBitsPerVertex << " bpv\n";
-}
-
-//============================================================================
-
 int32_t
 loadGroupOfFramesInfo(
   const Parameters& params, std::vector<vmesh::VMCGroupOfFramesInfo>& gofsInfo)
@@ -544,7 +497,6 @@ compress(const Parameters& params)
         auto nameRecMesh = vmesh::expandNum(params.reconstructedMeshPath, fNum);
         auto nameRecTex = vmesh::expandNum(params.reconstructedTexturePath, fNum);
         auto nameRecMat = vmesh::expandNum(params.reconstructedMaterialLibPath, fNum);
-
         const auto& frame = gof.frame(fIndex);
         SaveImage(nameRecTex, frame.outputTexture);
         vmesh::Material<double> material;
@@ -559,12 +511,12 @@ compress(const Parameters& params)
     if (vmesh::vout) {
       vmesh::vout << "\n------- Group of frames " << gofInfo.index
            << " -----------\n";
-      dumpStats(stats, "GOF", params);
+      stats.dump( "GOF", params.framerate);
       vmesh::vout << "---------------------------------------\n";
     }
   }
   std::cout << "\n------- All frames -----------\n";
-  dumpStats(totalStats, "Sequence", params);
+  totalStats.dump( "Sequence", params.framerate);
   std::cout << "---------------------------------------\n";
 
   if (bitstream.save(params.compressedStreamPath)) {

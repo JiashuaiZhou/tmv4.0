@@ -87,22 +87,14 @@ try {
   ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("General"))
-  
   ("compressed", params.compressedStreamPath, {}, "Compressed bitstream")
 
   (po::Section("Output (Decoder)"))
-  ("decmat",  params.decodedMaterialLibPath, {},
-   "Decoded materials")
-
-  ("decmesh", params.decodedMeshPath, {},
-   "Decoded mesh")
-
-  ("dectex",  params.decodedTexturePath, {},
-   "Decoded texture")
-
+  ("decmat",  params.decodedMaterialLibPath, {},   "Decoded materials")
+  ("decmesh", params.decodedMeshPath, {},   "Decoded mesh")
+  ("dectex",  params.decodedTexturePath, {},   "Decoded texture")
   ("intermediateFilesPathPrefix", params.decParams.intermediateFilesPathPrefix, {},
    "Intermediate files path prefix")
-
   ("keep",    params.decParams.keepIntermediateFiles, false,
    "Keep intermediate files")
 
@@ -114,20 +106,6 @@ try {
   (po::Section("Decoder"))
   ("normuv", params.decParams.normalizeUV, true,
    "Normalize uv texture coordinates")
-
-  (po::Section("External tools (Decoder)"))
-  ("gmdec", params.decParams.geometryMeshDecoderPath, {},
-   "Mesh decoder cmd")
-
-  ("gvdec", params.decParams.geometryVideoDecoderPath, {},
-   "Geometry video decoder cmd")
-
-  ("tvdec", params.decParams.textureVideoDecoderPath, {},
-   "Texture video decoder cmd")
-
-  ("csc", params.decParams.textureVideoHDRToolPath, {},
-   "HDRTools cmd")
-
   ("cscdecconfig", params.decParams.textureVideoHDRToolDecConfig, {},
    "HDRTools decode cfg")
   ;
@@ -159,21 +137,8 @@ try {
   if (params.decodedMaterialLibPath.empty())
     err.error() << "decoded materials not specified\n";
 
-  if (params.decParams.geometryMeshDecoderPath.empty())
-    err.error() << "mesh decoder command not specified\n";
-
-  if (params.decParams.geometryVideoDecoderPath.empty())
-    err.error() << "geometry video decoder command not specified\n";
-
-  if (params.decParams.textureVideoDecoderPath.empty())
-    err.error() << "texture video decoder command not specified\n";
-
-  if (params.decParams.textureVideoHDRToolPath.empty())
-    err.error() << "hdrtools command not specified\n";
-
   if (params.decParams.textureVideoHDRToolDecConfig.empty())
     err.error() << "hdrtools decoder config not specified\n";
-
 
   if (err.is_errored)
     return false;
@@ -184,7 +149,6 @@ try {
   po::dumpCfg(std::cout, opts, "Output (Decoder)", 4);
   po::dumpCfg(std::cout, opts, "Common", 4);
   po::dumpCfg(std::cout, opts, "Decoder", 4);
-  po::dumpCfg(std::cout, opts, "External tools (Decoder)", 4);
   std::cout << '\n';
   return true;
 }

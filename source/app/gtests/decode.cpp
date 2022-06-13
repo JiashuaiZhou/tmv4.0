@@ -50,10 +50,6 @@ decode(const std::string bitstreamPath)
   disableSubProcessLog.disable();
   // Parameters 
   vmesh::VMCDecoderParameters params;
-  params.geometryMeshDecoderPath = g_dracoDecoderPath; 
-  params.geometryVideoDecoderPath = g_hmDecoderPath; 
-  params.textureVideoDecoderPath = g_hmDecoderPath; 
-  params.textureVideoHDRToolPath = g_hdrConvertPath; 
   params.textureVideoHDRToolDecConfig = "cfg/hdrconvert/yuv420tobgr444.cfg"; 
   params.normalizeUV = 0;
   params.keepIntermediateFiles = 0;
@@ -87,17 +83,13 @@ decode(const std::string bitstreamPath)
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
-  // FitSubDiv new application
+  // Decoder new application
   cmd.str("");
   cmd << g_decoderNewPath << "  "
       << "  --compressed=" << bitstreamPath
       << "  --fstart=" << 0
       << "  --cscdecconfig=" << "cfg/hdrconvert/yuv420tobgr444.cfg"
       << "  --normuv=" << 0
-      << "  --csc=" << g_hdrConvertPath
-      << "  --gmdec=" << g_dracoDecoderPath
-      << "  --gvdec=" << g_hmDecoderPath
-      << "  --tvdec=" << g_hmDecoderPath
       << "  --decmesh=" << objNswPath
       << "  --dectex=" << texNswPath
       << "  --decmat=" << mtlPath;
@@ -189,7 +181,7 @@ decode(const std::string bitstreamPath)
     remove(vmesh::expandNum(texNewPath, f).c_str());
     remove(vmesh::expandNum(texNswPath, f).c_str());
     remove(vmesh::expandNum(texOswPath, f).c_str());
-    remove(mtlPath.c_str());
+    remove(vmesh::expandNum(mtlPath, f).c_str());
   }
 }
 

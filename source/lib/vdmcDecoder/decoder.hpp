@@ -50,19 +50,10 @@ namespace vmesh {
 //============================================================================
 
 struct VMCDecoderParameters {
-  std::string geometryMeshDecoderPath;
-  std::string geometryVideoDecoderPath;
-
-  // texture video
-  std::string textureVideoDecoderPath;
-  std::string textureVideoHDRToolPath;
-  std::string textureVideoHDRToolDecConfig;
-
-  bool normalizeUV;
-
-  // output
+  std::string textureVideoHDRToolDecConfig = {};
   std::string intermediateFilesPathPrefix = {};
-  bool keepIntermediateFiles;
+  bool normalizeUV = false;
+  bool keepIntermediateFiles = false;
 };
 
 //============================================================================

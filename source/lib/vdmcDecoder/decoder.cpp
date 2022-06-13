@@ -279,7 +279,7 @@ VMCDecoder::decompressTextureVideo(
     gof.frame(f).outputTexture = brg[f];
 
   // Save intermediate files
-  if (params.keepIntermediateFiles || true) {
+  if (params.keepIntermediateFiles) {
     vmesh::FrameSequence<uint8_t> brg8(brg);
     auto videoPath = brg8.createName(
       params.intermediateFilesPathPrefix + "GOF_"

@@ -118,6 +118,7 @@ create_executable( NAME      tests
                              gtests/simplify.cpp
                              gtests/reparametrization.cpp
                              gtests/fitsubdiv.cpp
+                             gtests/decode.cpp
                    LIBRARIES gtest_main 
                              vdmcUtil 
                              vdmcCommon 

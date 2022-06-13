@@ -169,6 +169,32 @@ operator<<(std::ostream& out, vmesh::ColourSpace val)
 
 //============================================================================
 
+static std::string
+createVideoName(
+  const std::string prefix,
+  const int width,
+  const int height,
+  const int bits,
+  const vmesh::ColourSpace colorSpace)
+{
+  std::string str;
+  str += prefix + "_" + std::to_string(width) + "x" + std::to_string(height)
+    + "_" + std::to_string(bits) + "bits_";
+
+  switch (colorSpace) {
+  case vmesh::ColourSpace::YUV400p: str += "p400.yuv"; break;
+  case vmesh::ColourSpace::YUV420p: str += "p420.yuv"; break;
+  case vmesh::ColourSpace::YUV444p: str += "p444.yuv"; break;
+  case vmesh::ColourSpace::RGB444p: str += "p444.rgb"; break;
+  case vmesh::ColourSpace::BGR444p: str += "p444.bgr"; break;
+  case vmesh::ColourSpace::GBR444p: str += "p444.gbr"; break;
+  case vmesh::ColourSpace::UNKNOW: str += "UNKNOW.UNKNOW"; break;
+  }
+  return str;
+}
+
+//============================================================================
+
 template<typename T>
 struct Plane {
   void zero() { fill(T(0)); }
@@ -179,6 +205,16 @@ struct Plane {
     _height = h;
     _buffer.resize(w * h);
   }
+  template<typename D>
+  Plane& operator=(const Plane<D>& src)
+  {
+    resize(src.width(), src.height());
+    for (int i = 0; i < _height; i++)
+      for (int j = 0; j < _width; j++)
+        set(i, j , (T)src.get(i, j) );       
+    return *this;
+  }
+
   int size() const {return (int)_buffer.size(); }
   T get(int i, int j) const
   {
@@ -224,6 +260,8 @@ struct Plane {
   }
   T* data() { return _buffer.data(); }
   const T* data() const { return _buffer.data(); }
+  std::vector<T>& buffer() { return _buffer; }
+  const std::vector<T>& buffer() const { return _buffer; }
   int width() const { return _width; }
   int height() const { return _height; }
   void clear() { _buffer.clear(); }
@@ -354,6 +392,15 @@ public:
 
   Frame(const Frame&) = default;
   Frame& operator=(const Frame&) = default;
+  template<typename D>
+  Frame& operator=( const Frame<D>& src)
+  {
+    resize(src.width(), src.height(), src.colourSpace());
+    for (int i = 0; i < src.planeCount(); i++)
+      _planes[i] = src.plane(i);
+    return *this;
+  }
+
   ~Frame() = default;
 
   Plane<T>& operator[]( int planeIndex ) { return _planes[planeIndex]; }
@@ -524,9 +571,25 @@ public:
     resize(w, h, colourSpace, f);
   }
   FrameSequence(const FrameSequence&) = default;
+  template<typename D>
+  FrameSequence(const FrameSequence<D>& src)
+  {
+    *this = src;    
+  }
   FrameSequence& operator=(const FrameSequence&) = default;
+  template<typename D>
+  FrameSequence& operator=(const FrameSequence<D>& src)
+  {
+    resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
+    for (int i = 0; i < src.frameCount(); i++)
+      _frames[i] = src.frame(i);
+    return *this;
+  }
   ~FrameSequence() = default;
-  
+
+  std::string createName( std::string prefix, int bits ){
+    return createVideoName( prefix, _width, _height, bits, _colourSpace );
+  }
   Frame<T>& operator[]( int frameIndex ) { return _frames[frameIndex]; }
   typename std::vector<Frame<T> >::iterator begin() { return _frames.begin(); }
   typename std::vector<Frame<T> >::iterator end() { return _frames.end(); }

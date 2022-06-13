@@ -128,6 +128,7 @@ static inline size_t hash( const std::string& name){
     file.close();
     return std::hash<std::string>{}(str);
   }
+  printf("Can not open: %s \n",name.c_str());
   return 0xffffffffffffffff;
 }
 
@@ -194,26 +195,3 @@ static bool checkSoftwarePath(){
   return ret;
 }
 
-static std::string
-name(
-  const std::string prefix,
-  const int width,
-  const int height,
-  const int bits,
-  const vmesh::ColourSpace colorSpace)
-{
-  std::string str;
-  str += prefix + "_" + std::to_string(width) + "x" + std::to_string(height)
-    + "_" + std::to_string(bits) + "bits_";
-
-  switch (colorSpace) {
-  case vmesh::ColourSpace::YUV400p: str += "p400.yuv"; break;
-  case vmesh::ColourSpace::YUV420p: str += "p420.yuv"; break;
-  case vmesh::ColourSpace::YUV444p: str += "p444.yuv"; break;
-  case vmesh::ColourSpace::RGB444p: str += "p444.rgb"; break;
-  case vmesh::ColourSpace::BGR444p: str += "p444.bgr"; break;
-  case vmesh::ColourSpace::GBR444p: str += "p444.gbr"; break;
-  case vmesh::ColourSpace::UNKNOW: str += "UNKNOW.UNKNOW"; break;
-  }
-  return str;
-}

@@ -41,7 +41,6 @@ using namespace vmesh;
 void
 log(const std::string str, const hdrtoolslib::Frame* frame, int comp ) 
 {
-  fflush(stdout);
   if( comp == 2 ){
     printf("%s Y:", str.c_str());
     for (int u = 0; u < 16; u++)

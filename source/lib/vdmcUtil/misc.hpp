@@ -38,6 +38,8 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <string>
+#include <fstream>
 
 #include "vector.hpp"
 
@@ -48,6 +50,68 @@ namespace vmesh {
 // Replace any occurence of %d with formatted number.  The %d format
 // specifier may use the formatting conventions of snprintf().
 std::string expandNum(const std::string& src, int num);
+
+//============================================================================
+
+static inline std::string removeExtension( const std::string string ) {
+  size_t pos = string.find_last_of( "." );
+  return pos != std::string::npos ? string.substr( 0, pos ) : string;
+}
+
+//============================================================================
+
+#ifdef WIN32
+#include <windows.h>
+static void mkdir( const char* pDirectory, int ) { CreateDirectory( pDirectory, NULL ); }
+#else
+#include <sys/dir.h>
+#endif
+
+//============================================================================
+
+#ifndef _WIN32
+static char getSeparator() { return '/'; }
+#else
+static char getSeparator() { return '\\'; }
+#endif
+
+//============================================================================
+
+static char getSeparator( const std::string& eFilename ) {
+  auto pos1 = eFilename.find_last_of( '/' ), pos2 = eFilename.find_last_of( '\\' );
+  auto pos = ( std::max )( pos1 != std::string::npos ? pos1 : 0, pos2 != std::string::npos ? pos2 : 0 );
+  return ( pos != 0 ? eFilename[pos] : getSeparator() );
+}
+
+//============================================================================
+
+static std::string directoryName( const std::string& string ) {
+  auto position = string.find_last_of( getSeparator( string ) );
+  if ( position != std::string::npos ) { return string.substr( 0, position ); }
+  return string;
+}
+
+//============================================================================
+static int
+save(std::string filename, std::vector<uint8_t>& buffer)
+{
+  std::ofstream file(filename, std::ios::binary);
+  if (!file.is_open()){
+    printf("Can not save: %s \n",filename.c_str());
+    return -1;
+  }
+  file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+  file.close();
+  return 0;
+}
+
+//============================================================================
+
+static inline std::string basename( const std::string& string ) {
+  auto position = string.find_last_of( getSeparator( string ) );
+  if ( position != std::string::npos ) { return string.substr( position + 1, string.length() ); }
+  return string;
+}
 
 //============================================================================
 

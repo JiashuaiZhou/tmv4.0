@@ -302,16 +302,15 @@ decompress(const Parameters& params)
     ++gofInfo.index;
 
     if (vmesh::vout) {
-      vmesh::vout << "\n\n------- Group of frames " << gofInfo.index
+      vmesh::vout << "\n------- Group of frames " << gofInfo.index
            << " -----------\n";
       dumpStats(stats, "GOF", params);
-      vmesh::vout << "---------------------------------------\n\n";
+      vmesh::vout << "---------------------------------------\n";
     }
   }
-
-  std::cout << "\n\n------- All frames -----------\n";
+  std::cout << "\n------- All frames -----------\n";
   dumpStats(totalStats, "Sequence", params);
-  std::cout << "---------------------------------------\n\n";
+  std::cout << "---------------------------------------\n";
   return 0;
 }
 

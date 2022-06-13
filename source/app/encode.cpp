@@ -557,15 +557,15 @@ compress(const Parameters& params)
     }
 
     if (vmesh::vout) {
-      vmesh::vout << "\n\n------- Group of frames " << gofInfo.index
+      vmesh::vout << "\n------- Group of frames " << gofInfo.index
            << " -----------\n";
       dumpStats(stats, "GOF", params);
-      vmesh::vout << "---------------------------------------\n\n";
+      vmesh::vout << "---------------------------------------\n";
     }
   }
-  std::cout << "\n\n------- All frames -----------\n";
+  std::cout << "\n------- All frames -----------\n";
   dumpStats(totalStats, "Sequence", params);
-  std::cout << "---------------------------------------\n\n";
+  std::cout << "---------------------------------------\n";
 
   if (bitstream.save(params.compressedStreamPath)) {
     std::cerr << "Error: can't save compressed bitstream!\n";

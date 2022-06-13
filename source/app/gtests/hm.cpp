@@ -47,7 +47,7 @@
 #include "common.hpp"
 
 void
-test(
+encodeDecodeHM(
   const std::string prefix,
   const std::string inputPath,
   const int width,
@@ -60,13 +60,13 @@ test(
   auto binLibsPath = prefix + "_libs.h265";
   auto binSoftPath = prefix + "_soft.h265";
   auto recLibsPath =
-    name(prefix + "_rec_libs", width, height, bitDepth, colorSpace);
+    createVideoName(prefix + "_rec_libs", width, height, bitDepth, colorSpace);
   auto recSoftPath =
-    name(prefix + "_rec_soft", width, height, bitDepth, colorSpace);
+    createVideoName(prefix + "_rec_soft", width, height, bitDepth, colorSpace);
   auto decLibsPath =
-    name(prefix + "_dec_libs", width, height, bitDepth, colorSpace);
+    createVideoName(prefix + "_dec_libs", width, height, bitDepth, colorSpace);
   auto decSoftPath =
-    name(prefix + "_dec_soft", width, height, bitDepth, colorSpace);
+    createVideoName(prefix + "_dec_soft", width, height, bitDepth, colorSpace);
 
   // Check encoder and decoder path exist
   if (!checkSoftwarePath())
@@ -197,7 +197,7 @@ test(
 
 TEST(HM, Disp)
 {
-  test(
+  encodeDecodeHM(
     "disp", "data/disp_256x160_10bits_p444.brg", 256, 160, 10,
     vmesh::ColourSpace::BGR444p, 2,
     "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
@@ -205,7 +205,7 @@ TEST(HM, Disp)
 
 TEST(HM, Texture)
 {
-  test(
+  encodeDecodeHM(
     "disp", "data/tex_512x512_10bits_p420.yuv", 512, 512, 10,
     vmesh::ColourSpace::YUV420p, 2, "cfg/hm/ctc-hm-texture-ai.cfg");
 }

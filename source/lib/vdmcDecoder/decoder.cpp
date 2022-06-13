@@ -42,6 +42,10 @@
 #include "contexts.hpp"
 #include "entropy.hpp"
 
+#include "virtualGeometryDecoder.hpp"
+#include "virtualVideoDecoder.hpp"
+#include "virtualColourConverter.hpp"
+
 using namespace vmesh;
 
 namespace vmesh {
@@ -147,36 +151,30 @@ VMCDecoder::decompressBaseMesh(
   auto& base = frame.base;
   auto& qpositions = frame.qpositions;
   if (frameInfo.type == FrameType::INTRA) {
-    std::stringstream cbaseFileName, dbaseFileName;
-    cbaseFileName << params.intermediateFilesPathPrefix << "gof_"
-                  << _gofInfo.index << "_fr_" << frameIndex
-                  << "_cbase_dec.drc";
-    dbaseFileName << params.intermediateFilesPathPrefix << "gof_"
-                  << _gofInfo.index << "_fr_" << frameIndex << "_dbase.obj";
     auto bitstreamByteCount0 = _byteCounter;
     uint32_t byteCountBaseMesh = 0;
     bitstream.read(byteCountBaseMesh, _byteCounter);
-    std::ofstream file(cbaseFileName.str(), std::ios::binary);
-    if (!file.is_open()) {
-      return -1;
-    }
-    file.write(
-      reinterpret_cast<const char*>(bitstream.buffer.data() + _byteCounter),
-      byteCountBaseMesh);
-    file.close();
+
+    // Get geometry bitstream
+    std::vector<uint8_t> geometryBitstream(
+      bitstream.buffer.begin() + _byteCounter,
+      bitstream.buffer.begin() + _byteCounter + byteCountBaseMesh);
     _byteCounter += byteCountBaseMesh;
     stats.baseMeshByteCount += _byteCounter - bitstreamByteCount0;
 
-    std::stringstream cmdDec;
-    cmdDec << params.geometryMeshDecoderPath << " -i " << cbaseFileName.str()
-           << " -o " << dbaseFileName.str();
-    std::cout << cmdDec.str() << std::endl;
-    system(cmdDec.str().c_str());
-    base.loadFromOBJ(dbaseFileName.str());
+    // Decode base mesh
+    auto decoder = VirtualGeometryDecoder<double>::create(GeometryCodecId::DRACO);
+    decoder->decode(geometryBitstream, base);
 
-    if (!params.keepIntermediateFiles) {
-      std::remove(cbaseFileName.str().c_str());
-      std::remove(dbaseFileName.str().c_str());
+    // Save intermediate files
+    if (params.keepIntermediateFiles) {
+      std::stringstream filePath;
+      filePath << params.intermediateFilesPathPrefix << "gof_"
+               << _gofInfo.index << "_fr_" << frameIndex << "_base_dec.drc";
+      if (!save(filePath.str(), geometryBitstream))
+        return 1;
+      if (!base.saveToOBJ(removeExtension( filePath.str() + ".obj")))
+        return 1;
     }
 
     qpositions.resize(base.pointCount());
@@ -227,38 +225,27 @@ int32_t
 VMCDecoder::decompressDisplacementsVideo(
   const Bitstream& bitstream, const VMCDecoderParameters& params)
 {
-  std::stringstream fnameCompressDisp, fnameDispDec;
-  const auto width = _dispVideo.width();
-  const auto height = _dispVideo.height();
-  fnameCompressDisp << params.intermediateFilesPathPrefix << "GOF_"
-                    << _gofInfo.index << "_disp_dec.h265";
-  fnameDispDec << params.intermediateFilesPathPrefix << "GOF_"
-               << _gofInfo.index << "_disp_" << width << "x" << height
-               << "_dec.yuv";
+  // Get video bitstream
   uint32_t byteCountDispVideo = 0;
   bitstream.read(byteCountDispVideo, _byteCounter);
-  std::ofstream file(fnameCompressDisp.str(), std::ios::binary);
-  if (!file.is_open()) {
-    return -1;
-  }
-  file.write(
-    reinterpret_cast<const char*>(bitstream.buffer.data() + _byteCounter),
-    byteCountDispVideo);
-  file.close();
+  std::vector<uint8_t> videoBitstream(
+    bitstream.buffer.begin() + _byteCounter,
+    bitstream.buffer.begin() + _byteCounter + byteCountDispVideo);
   _byteCounter += byteCountDispVideo;
-  std::stringstream cmd;
-  cmd << params.geometryVideoDecoderPath << ' ';
-  cmd << "--BitstreamFile=" << fnameCompressDisp.str() << ' ';
-  cmd << "--ReconFile=" << fnameDispDec.str() << ' ';
-  std::cout << cmd.str() << std::endl;
-  system(cmd.str().c_str());
-  _dispVideo.load(fnameDispDec.str());
+  
+  // Decode video
+  auto decoder = VirtualVideoDecoder<uint16_t>::create(VideoCodecId::HM);
+  decoder->decode(videoBitstream, _dispVideo, 10);
 
-  if (!params.keepIntermediateFiles) {
-    std::remove(fnameCompressDisp.str().c_str());
-    std::remove(fnameDispDec.str().c_str());
+  // Save intermediate files
+  if (params.keepIntermediateFiles) {
+    auto dispPath = _dispVideo.createName(
+      params.intermediateFilesPathPrefix + "GOF_"
+        + std::to_string(_gofInfo.index) + "_disp_dec",
+      10);
+    save(removeExtension(dispPath) + ".bin", videoBitstream);
+    _dispVideo.save(dispPath);
   }
-
   return 0;
 }
 
@@ -270,70 +257,37 @@ VMCDecoder::decompressTextureVideo(
   VMCGroupOfFrames& gof,
   const VMCDecoderParameters& params)
 {
-  const auto width = _sps.widthTexVideo;
-  const auto height = _sps.heightTexVideo;
-  const auto frameCount = _sps.frameCount;
-  std::stringstream fnameCompressTexture;
-  fnameCompressTexture << params.intermediateFilesPathPrefix << "GOF_"
-                       << _gofInfo.index << "_texture_dec.h265";
-  std::stringstream fnameTextureYUV420Dec;
-  fnameTextureYUV420Dec << params.intermediateFilesPathPrefix << "GOF_"
-                        << _gofInfo.index << "_tex_" << width << "x" << height
-                        << "_420_" << _sps.textureVideoBitDepth
-                        << "bit_dec.yuv";
+  // get video bitstream
   uint32_t byteCountTexVideo = 0;
   bitstream.read(byteCountTexVideo, _byteCounter);
-  std::ofstream file(fnameCompressTexture.str(), std::ios::binary);
-  if (!file.is_open()) {
-    return -1;
-  }
-  file.write(
-    reinterpret_cast<const char*>(bitstream.buffer.data() + _byteCounter),
-    byteCountTexVideo);
-  file.close();
+  std::vector<uint8_t> videoBitstream(
+    bitstream.buffer.begin() + _byteCounter,
+    bitstream.buffer.begin() + _byteCounter + byteCountTexVideo);
   _byteCounter += byteCountTexVideo;
-  std::stringstream cmd;
-  cmd << params.textureVideoDecoderPath << ' ';
-  cmd << "--BitstreamFile=" << fnameCompressTexture.str() << ' ';
-  cmd << "--ReconFile=" << fnameTextureYUV420Dec.str() << ' ';
-  std::cout << cmd.str() << std::endl;
-  system(cmd.str().c_str());
+  
+  // Decode video  
+  FrameSequence<uint16_t> yuv, brg; 
+  auto decoder = VirtualVideoDecoder<uint16_t>::create(VideoCodecId::HM);
+  decoder->decode(videoBitstream, yuv, 10);
 
-  std::stringstream fnameTextureBGR444Dec;
-  fnameTextureBGR444Dec << params.intermediateFilesPathPrefix << "GOF_"
-                        << _gofInfo.index << "_tex_" << width << "x" << height
-                        << "_444_rec.bgrp";
-  cmd.str("");
-  cmd << params.textureVideoHDRToolPath
-      << " -f " << params.textureVideoHDRToolDecConfig
-      << " -p SourceFile=\"" << fnameTextureYUV420Dec.str() << '"'
-      << " -p SourceWidth=" << width
-      << " -p SourceHeight=" << height
-      << " -p NumberOfFrames=" << frameCount
-      << " -p OutputFile=\"" << fnameTextureBGR444Dec.str() << '"'
-      << " -p SourceBitDepthCmp0=" << _sps.textureVideoBitDepth
-      << " -p SourceBitDepthCmp1=" << _sps.textureVideoBitDepth
-      << " -p SourceBitDepthCmp2=" << _sps.textureVideoBitDepth << '\n';
-  std::cout << cmd.str() << std::endl;
-  system(cmd.str().c_str());
+  // Convert video
+  auto convert = vmesh::VirtualColourConverter<uint16_t>::create(1);
+  convert->convert(params.textureVideoHDRToolDecConfig, yuv, brg);
 
-  std::ifstream fileTextureVideoDec(fnameTextureBGR444Dec.str());
-  if (!fileTextureVideoDec.is_open()) {
-    return -1;
+  // Store result in 8 bits frames
+  for (int32_t f = 0; f < brg.frameCount(); ++f) 
+    gof.frame(f).outputTexture = brg[f];
+
+  // Save intermediate files
+  if (params.keepIntermediateFiles || true) {
+    vmesh::FrameSequence<uint8_t> brg8(brg);
+    auto videoPath = brg8.createName(
+      params.intermediateFilesPathPrefix + "GOF_"
+        + std::to_string(_gofInfo.index) + "_texture_dec",
+      8);
+    save(removeExtension(videoPath) + ".bin", videoBitstream);
+    brg8.save(videoPath);
   }
-  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-    auto& outTexture = gof.frame(frameIndex).outputTexture;
-    outTexture.resize(width, height, ColourSpace::BGR444p);
-    outTexture.load(fileTextureVideoDec);
-  }
-  fileTextureVideoDec.close();
-
-  if (!params.keepIntermediateFiles) {
-    std::remove(fnameCompressTexture.str().c_str());
-    std::remove(fnameTextureYUV420Dec.str().c_str());
-    std::remove(fnameTextureBGR444Dec.str().c_str());
-  }
-
   return 0;
 }
 

@@ -46,7 +46,7 @@
 #include "common.hpp"
 
 void
-test(
+hdrtoolsConvertion(
   int mode,
   const std::string inputPath,
   const int width,
@@ -59,10 +59,10 @@ test(
   std::string configPath0,
   std::string configPath1)
 {
-  auto recLibsPath = name(
+  auto recLibsPath = createVideoName(
     "conv_libs_" + std::to_string(mode), width, height, outputBitDepth,
     outputColourSpace);
-  auto recSoftPath = name(
+  auto recSoftPath = createVideoName(
     "conv_soft_" + std::to_string(mode), width, height, outputBitDepth,
     outputColourSpace);
 
@@ -147,19 +147,24 @@ test(
   // Remove files
   remove(recLibsPath.c_str());
   remove(recSoftPath.c_str());
+  
+  // Remove hdrtools tmp files
+  remove("log.txt");
+  remove("test_1920x1080_24p_420.yuv");
 }
 
 TEST(ColourConvert, HdrToolsUp)
 {
-  test(
+  hdrtoolsConvertion(
     1, "data/tex_512x512_10bits_p420.yuv", 512, 512, 2, 10, 8,
     vmesh::ColourSpace::YUV420p, vmesh::ColourSpace::BGR444p,
     "cfg/hdrconvert/yuv420tobgr444.cfg", "cfg/hdrconvert/yuv420tobgr444.cfg");
+  
 }
 
 TEST(ColourConvert, HdrToolsDown)
 {
-  test(
+  hdrtoolsConvertion(
     1, "data/tex_512x512_8bits_p444.bgr", 512, 512, 2, 8, 10,
     vmesh::ColourSpace::BGR444p, vmesh::ColourSpace::YUV420p,
     "cfg/hdrconvert/bgr444toyuv420.cfg", "cfg/hdrconvert/bgr444toyuv420.cfg");

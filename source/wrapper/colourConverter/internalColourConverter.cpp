@@ -655,7 +655,6 @@ InternalColourConverter<T>::convertYUV420ToRGB444(
   bool BGR )
 {
   printf("convertYUV420ToRGB444 byte %zu => %zu \n",srcNumByte,dstNumByte);
-  fflush(stdout);
   const auto width = src.width();
   const auto height = src.height();
   dst.resize(width, height, BGR? ColourSpace::BGR444p : ColourSpace::RGB444p);
@@ -664,8 +663,6 @@ InternalColourConverter<T>::convertYUV420ToRGB444(
   src[1].log( "src  Y");
   src[2].log( "src  Y");
   
-  printf("YUVtoFloatYUV \n");
-  fflush(stdout);
   YUVtoFloatYUV(src[0], YUV420[0], 0, srcNumByte);
   YUVtoFloatYUV(src[1], YUV420[1], 1, srcNumByte);
   YUVtoFloatYUV(src[2], YUV420[2], 1, srcNumByte);
@@ -673,22 +670,16 @@ InternalColourConverter<T>::convertYUV420ToRGB444(
   YUV420[0].logF("YUV420[0]");
   YUV420[1].logF("YUV420[1]");
   YUV420[2].logF("YUV420[2]");
-  printf("upsampling \n");
-  fflush(stdout);
   upsampling(YUV420[1], YUV444[1], srcNumByte == 1 ? 255 : 1023, filter);
   upsampling(YUV420[2], YUV444[2], srcNumByte == 1 ? 255 : 1023, filter);
   YUV420[0].logF("YUV444[0]");
   YUV444[1].logF("YUV444[1]");
   YUV444[2].logF("YUV444[2]");
-  printf("convertYUVToRGB \n");
-  fflush(stdout);
   convertYUVToRGB(
     YUV420[0], YUV444[1], YUV444[2], RGB444[0], RGB444[1], RGB444[2]);
   RGB444[0].logF("RGB444[0]");
   RGB444[1].logF("RGB444[1]");
   RGB444[2].logF("RGB444[2]");
-  printf("floatRGBToRGB \n");
-  fflush(stdout);
   floatRGBToRGB(RGB444[0], dst[BGR ?2 :0], dstNumByte);
   floatRGBToRGB(RGB444[1], dst[1], dstNumByte);
   floatRGBToRGB(RGB444[2], dst[BGR ?0 :2], dstNumByte);
@@ -696,8 +687,6 @@ InternalColourConverter<T>::convertYUV420ToRGB444(
   dst[0].log( "dst  Y");
   dst[1].log( "dst  Y");
   dst[2].log( "dst  Y");
-  printf("Done \n");
-  fflush(stdout);
 }
 
 template<typename T>
@@ -725,7 +714,6 @@ InternalColourConverter<T>::convertYUV444ToRGB444(
   size_t filter)
 {
   printf("convertYUV444ToRGB444 \n");
-  fflush(stdout);
   const auto width = src.width();
   const auto height = src.height();
   dst.resize(width, height, ColourSpace::RGB444p);

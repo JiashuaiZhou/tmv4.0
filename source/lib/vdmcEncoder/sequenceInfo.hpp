@@ -47,6 +47,10 @@ public:
   SequenceInfo() = default;
   ~SequenceInfo() = default;
 
+  VMCGroupOfFramesInfo& gof(int index) { return sequenceInfo_[index]; }
+  const VMCGroupOfFramesInfo& gof(int index) const { return sequenceInfo_[index]; }
+  VMCGroupOfFramesInfo& operator[]( int index ) { return sequenceInfo_[index]; }
+
   int generate(
     const int frameCount,
     const int startFrame,
@@ -61,6 +65,7 @@ public:
     const int maxGOFSize,
     const std::string groupOfFramesStructurePath);
     
+    int gofCount()const {return (int)sequenceInfo_.size();}
 private:
   int frameCount_ = 0;
   int startFrame_ = 0;

@@ -52,6 +52,15 @@ namespace vmesh {
 //============================================================================
 
 bool
+LoadImage(const std::string& fileName, const int f, Frame<uint8_t>& image)
+{
+  std::string name = vmesh::expandNum(fileName, f);
+  return LoadImage(name, image);
+}
+
+//============================================================================
+
+bool
 LoadImage(
   const std::string& fileName, Frame<uint8_t>& image)
 {

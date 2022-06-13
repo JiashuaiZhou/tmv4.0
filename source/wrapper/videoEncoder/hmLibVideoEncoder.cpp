@@ -60,7 +60,7 @@ hmLibVideoEncoder<T>::encode(
   cmd << " --FrameSkip=0";
   cmd << " --SourceWidth=" << width;
   cmd << " --SourceHeight=" << height;
-  cmd << " --ConformanceWindowMode=1 ";
+  // cmd << " --ConformanceWindowMode=1 ";
   cmd << " --FramesToBeEncoded=" << frameCount;
   // cmd << " --InputFile=" << params.srcYuvFileName_;
   // cmd << " --BitstreamFile=" << params.binFileName_;

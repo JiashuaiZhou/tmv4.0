@@ -203,6 +203,14 @@ TEST(HM, Disp)
     "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
 }
 
+TEST(HM, Disp2)
+{
+  encodeDecodeHM(
+    "disp", "data/GOF_0_disp_enc_256x160_10bits_p444.yuv", 256, 160, 10,
+    vmesh::ColourSpace::BGR444p, 1,
+    "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
+}
+
 TEST(HM, Texture)
 {
   encodeDecodeHM(

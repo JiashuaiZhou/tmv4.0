@@ -128,6 +128,10 @@ public:
     const VMCEncoderParameters& params);
 
 private:
+  void unifyVertices(
+    const vmesh::VMCGroupOfFramesInfo& gofInfo,
+    vmesh::VMCGroupOfFrames& gof,
+    const vmesh::VMCEncoderParameters& params);
   int32_t computeDracoMapping(
     TriangleMesh<double> base,
     std::vector<int32_t>& mapping,

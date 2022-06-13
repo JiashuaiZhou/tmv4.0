@@ -62,10 +62,8 @@ struct Parameters {
   std::string decodedTexturePath;
   std::string decodedMaterialLibPath;
 
-  int32_t startFrame;
-  int32_t frameCount;
-  int32_t groupOfFramesMaxSize;
-  double framerate;
+  int32_t startFrame =0; 
+  double framerate = 30.;
 
   vmesh::VMCDecoderParameters decParams;
 };
@@ -100,7 +98,6 @@ try {
 
   (po::Section("Common"))
   ("fstart",    params.startFrame, 1, "First frame number")
-  ("fcount",    params.frameCount, 1, "Number of frames")
   ("framerate", params.framerate, 30., "Frame rate")
 
   (po::Section("Decoder"))

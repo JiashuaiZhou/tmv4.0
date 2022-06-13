@@ -1048,6 +1048,8 @@ enum class ImageFormat
 
 bool LoadImage(
   const std::string& fileName, Frame<uint8_t>& image);
+bool LoadImage(
+  const std::string& fileName, int f, Frame<uint8_t>& image);
 
 bool SaveImage(
   const std::string& fileName,

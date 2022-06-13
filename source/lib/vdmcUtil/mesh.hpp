@@ -582,6 +582,11 @@ struct Material {
 template<typename T>
 class TriangleMesh {
 public:
+  bool loadFromOBJ(const std::string& fileName, int f)
+  {
+    std::string name = vmesh::expandNum(fileName, f);
+    return loadFromOBJ(name);
+  }
   bool loadFromOBJ(const std::string& fileName)
   {
     std::ifstream fin(fileName);

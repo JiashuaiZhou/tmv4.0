@@ -80,18 +80,10 @@ hdrtoolsConvertion(
   vmesh::FrameSequence<uint16_t> src(
     width, height, inputColourSpace, frameCount);
   if (inputBitDepth == 8) {
-    vmesh::FrameSequence<uint8_t> src8(
+    vmesh::FrameSequence<uint8_t> src8( 
       width, height, inputColourSpace, frameCount);
     src8.load(inputPath);
-    for (int f = 0; f < src8.frameCount(); f++) {
-      for (int c = 0; c < 3; c++) {
-        auto& planeSrc = src8.frame(f).plane(c);
-        auto& planeDst = src.frame(f).plane(c);
-        for (int i = 0; i < planeSrc.size(); i++) {
-          planeDst.data()[i] = planeSrc.data()[i];
-        }
-      }
-    }
+    src = src8;
   } else {
     src.load(inputPath);
   }
@@ -101,19 +93,7 @@ hdrtoolsConvertion(
   auto convert = vmesh::VirtualColourConverter<uint16_t>::create(mode);
   convert->convert(configPath0, src, rec);
   if (outputBitDepth == 8) {
-    vmesh::FrameSequence<uint8_t> rec8;
-    rec8.resize(
-      rec.width(), rec.height(), rec.colourSpace(), rec.frameCount());
-    for (int f = 0; f < rec.frameCount(); f++) {
-      for (int c = 0; c < 3; c++) {
-        auto& planeSrc = rec.frame(f).plane(c);
-        auto& planeDst = rec8.frame(f).plane(c);
-        for (int i = 0; i < planeSrc.size(); i++) {
-          planeDst.data()[i] = planeSrc.data()[i];
-        }
-      }
-    }
-    // Save bitstream, reconstructed and decoded
+    vmesh::FrameSequence<uint8_t> rec8( rec );
     rec8.save(recLibsPath);
   } else {
     rec.save(recLibsPath);

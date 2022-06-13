@@ -143,10 +143,12 @@ struct VMCGroupOfFramesInfo {
     return framesInfo[frameIndex];
   }
 
+  VMCFrameInfo& operator[]( int index ) { return framesInfo[index]; }
+
   int32_t startFrameIndex = -1;
   int32_t frameCount = -1;
   int32_t index = 0;
-  std::vector<vmesh::VMCFrameInfo> framesInfo;
+  std::vector<VMCFrameInfo> framesInfo;
 };
 
 //============================================================================
@@ -167,6 +169,8 @@ struct VMCGroupOfFrames {
   }
 
   int32_t frameCount() const { return int32_t(frames.size()); }
+
+  VMCFrame& operator[]( int index ) { return frames[index]; }
 
   VMCStats stats;
   std::vector<VMCFrame> frames;

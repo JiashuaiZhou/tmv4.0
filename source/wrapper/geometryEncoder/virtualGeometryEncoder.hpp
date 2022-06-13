@@ -42,11 +42,11 @@ struct GeometryEncoderParameters {
   std::string binFileName_ = {};
   std::string recFileName_ = {};
   std::string encoderConfig_ = {};
-  int32_t qp_;   // quantization bits for the position attribute, default=11.
-  int32_t qt_;   // quantization bits for the texture coordinate attribute, default=10.
-  int32_t qn_;   // quantization bits for the normal vector attribute, default=8.
-  int32_t qg_;   // quantization bits for any generic attribute, default=8.
-  int32_t cl_;   // compression level [0-10], most=10, least=0, default=7.
+  int32_t qp_ = 11;   // quantization bits for the position attribute, default=11.
+  int32_t qt_ = 10;   // quantization bits for the texture coordinate attribute, default=10.
+  int32_t qn_ = -1;   // quantization bits for the normal vector attribute, default=8.
+  int32_t qg_ = -1;   // quantization bits for any generic attribute, default=8.
+  int32_t cl_ = 10;   // compression level [0-10], most=10, least=0, default=7.
 };
 
 template <class T>

@@ -101,10 +101,10 @@ operator<<(std::ostream& out, VideoCodecId val)
 #if defined(USE_HM_VIDEO_CODEC)
   case VideoCodecId::HM: out << "HM"; break;
 #endif
-#if defined(USE_HM_VIDEO_CODEC)
+#if defined(USE_VTM_VIDEO_CODEC)
   case VideoCodecId::VTM: out << "VTM"; break;
 #endif
-#if defined(USE_HM_VIDEO_CODEC)
+#if defined(USE_FFMPEG_VIDEO_CODEC)
   case VideoCodecId::FFMPEG: out << "FFMPEG"; break;
 #endif
   case VideoCodecId::UNKNOWN_VIDEO_CODEC: out << "UNKNOWN"; break;

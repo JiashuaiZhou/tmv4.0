@@ -57,8 +57,7 @@ encode(
   vmesh::VMCEncoderParameters params;
   params.textureVideoHDRToolDecConfig = "cfg/hdrconvert/yuv420tobgr444.cfg"; 
   params.normalizeUV = 0;
-  params.keepIntermediateFiles = 1;
-
+  params.keepIntermediateFiles = 0;
   
   std::string binNewPath = "bistream_new.vdmc";
   std::string binNswPath = "bistream_nsw.vdmc";
@@ -166,7 +165,6 @@ encode(
   system(cmd.str().c_str());
 
 
-  disableSubProcessLog.enable();
 
   // Compute hashes
   //auto hashBinNew = hash(binNewPath);
@@ -177,6 +175,7 @@ encode(
   std::cout << "hashBinOsw = " << std::hex << hashBinOsw << "\n";
 
   // Compare hashes
+  disableSubProcessLog.enable();
   ASSERT_EQ(hashBinOsw, hashBinNsw) << "Old sw and new sw bin are differentes";
   // ASSERT_EQ(hashBinOsw, hashBinNew)      << "Old sw and new lib bin are differentes";
 
@@ -205,16 +204,19 @@ encode(
     // ASSERT_EQ(hashTexOsw, hashTexNew)  << "Old sw and new lib tex are differentes";
   }
 
-  // // Remove tmp files
-  // for (int f = 0; f < gofInfo.startFrameIndex; f++) {
-  //   remove(vmesh::expandNum(objNewPath, f).c_str());
-  //   remove(vmesh::expandNum(objNswPath, f).c_str());
-  //   remove(vmesh::expandNum(objOswPath, f).c_str());
-  //   remove(vmesh::expandNum(texNewPath, f).c_str());
-  //   remove(vmesh::expandNum(texNswPath, f).c_str());
-  //   remove(vmesh::expandNum(texOswPath, f).c_str());
-  //   remove(vmesh::expandNum(mtlPath, f).c_str());
-  // }
+  // Remove tmp files
+  remove(binNewPath.c_str());
+  remove(binNswPath.c_str());
+  remove(binOswPath.c_str());
+  for (int f = 0; f < framecount; f++) {
+    remove(vmesh::expandNum(objNewPath, f).c_str());
+    remove(vmesh::expandNum(objNswPath, f).c_str());
+    remove(vmesh::expandNum(objOswPath, f).c_str());
+    remove(vmesh::expandNum(texNewPath, f).c_str());
+    remove(vmesh::expandNum(texNswPath, f).c_str());
+    remove(vmesh::expandNum(texOswPath, f).c_str());
+    remove(vmesh::expandNum(mtlPath, f).c_str());
+  }
 }
 
 TEST(Encode, OneFrame)

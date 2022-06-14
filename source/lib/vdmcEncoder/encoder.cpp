@@ -50,13 +50,13 @@
 #include "virtualColourConverter.hpp"
 
 namespace vmesh {
-  
+
 //============================================================================
 
 static Vec3<double>
 computeNearestPointColour(
   const Vec3<double>& point0,
-  const Frame<uint8_t>& targetTexture,   // ColourSpace::BGR444p
+  const Frame<uint8_t>& targetTexture,  // ColourSpace::BGR444p
   const TriangleMesh<double>& targetMesh,
   const KdTree& kdtree,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangleTarget,
@@ -112,18 +112,17 @@ VMCEncoder::compressDisplacementsVideo(
   videoEncoderParams.qp_ = 8;
   vmesh::FrameSequence<uint16_t> rec;
   std::vector<uint8_t> videoBitstream;
-  auto encoder = vmesh::VirtualVideoEncoder<uint16_t>::create(vmesh::VideoCodecId::HM);
+  auto encoder =
+    vmesh::VirtualVideoEncoder<uint16_t>::create(vmesh::VideoCodecId::HM);
   encoder->encode(_dispVideo, videoEncoderParams, videoBitstream, rec);
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-        + std::to_string(_gofInfo.index) + "_disp_";
-    auto dispSrcPath = _dispVideo.createName( prefix + "enc", 10);
-    auto dispRecPath = _dispVideo.createName( prefix + "rec", 10);
-    _dispVideo.save(dispSrcPath );
-    rec.save(dispRecPath );
-    save(removeExtension(dispRecPath) + ".bin", videoBitstream);
+      + std::to_string(_gofInfo.index) + "_disp";
+    _dispVideo.save(_dispVideo.createName(prefix + "_enc", 10));
+    rec.save(rec.createName(prefix + "_rec", 10));
+    save(prefix + ".h265", videoBitstream);
   }
 
   bitstream.write((uint32_t)videoBitstream.size());
@@ -151,9 +150,7 @@ VMCEncoder::unifyVertices(
     frame.base.resizeNormalTriangles(0);
     frame.subdiv.resizeNormals(0);
     frame.subdiv.resizeNormalTriangles(0);
-    if (
-      params.unifyVertices
-      && params.subdivisionIterationCount == 0) {
+    if (params.unifyVertices && params.subdivisionIterationCount == 0) {
       auto& base = frame.base;
       auto& subdiv = frame.subdiv;
       assert(base.pointCount() == subdiv.pointCount());
@@ -198,9 +195,8 @@ VMCEncoder::unifyVertices(
   }
 }
 
-
 //----------------------------------------------------------------------------
-#if 1
+
 int32_t
 VMCEncoder::compressTextureVideo(
   VMCGroupOfFrames& gof,
@@ -209,260 +205,51 @@ VMCEncoder::compressTextureVideo(
 {
   const auto width = params.textureWidth;
   const auto height = params.textureHeight;
-  const auto frameCount = gof.frameCount();
-  std::stringstream fnameTextureBGR444, fnameTextureBGR444Rec;
-  fnameTextureBGR444 << params.intermediateFilesPathPrefix << "GOF_"
-                     << _gofInfo.index << "_tex_" << width << "x" << height
-                     << "_444.bgrp";
-  fnameTextureBGR444Rec << params.intermediateFilesPathPrefix << "GOF_"
-                        << _gofInfo.index << "_tex_" << width << "x" << height
-                        << "_444_rec.bgrp";
-
-  std::ofstream fileTextureVideo(fnameTextureBGR444.str());
-  if (!fileTextureVideo.is_open()) {
-    return -1;
-  }
-  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-    const auto& outTexture = gof.frame(frameIndex).outputTexture;
-    assert(outTexture.width() == width);
-    assert(outTexture.height() == height);
-    outTexture.save(fileTextureVideo);
-  }
-  fileTextureVideo.close();
-
-  std::stringstream fnameTextureYUV420, fnameTextureYUV420Rec;
-  fnameTextureYUV420 << params.intermediateFilesPathPrefix << "GOF_"
-                     << _gofInfo.index << "_tex_" << width << "x" << height
-                     << "_420_" << params.textureVideoBitDepth << "bit.yuv";
-  fnameTextureYUV420Rec << params.intermediateFilesPathPrefix << "GOF_"
-                        << _gofInfo.index << "_tex_" << width << "x" << height
-                        << "_420_" << params.textureVideoBitDepth
-                        << "bit_rec.yuv";
-
-  std::stringstream cmd;
-  cmd << params.textureVideoHDRToolPath
-      << " -f " << params.textureVideoHDRToolEncConfig
-      << " -p SourceFile=\"" << fnameTextureBGR444.str() << '"'
-      << " -p SourceWidth=" << width
-      << " -p SourceHeight=" << height
-      << " -p NumberOfFrames=" << frameCount
-      << " -p OutputFile=\"" << fnameTextureYUV420.str() << '"'
-      << " -p OutputBitDepthCmp0=" << params.textureVideoBitDepth
-      << " -p OutputBitDepthCmp1=" << params.textureVideoBitDepth
-      << " -p OutputBitDepthCmp2=" << params.textureVideoBitDepth
-      << " -p LogFile=\"\"" << '\n';
-  std::cout << cmd.str() << std::endl;
-  system(cmd.str().c_str());
-
-  std::stringstream fnameCompressTexture;
-  fnameCompressTexture << params.intermediateFilesPathPrefix << "GOF_"
-                       << _gofInfo.index << "_texture.h265";
-
-  cmd.str("");
-  cmd << params.textureVideoEncoderPath << ' ';
-  cmd << "-c " << params.textureVideoEncoderConfig << ' ';
-  cmd << "--InputFile=" << fnameTextureYUV420.str() << ' ';
-  cmd << "--InputBitDepth=" << params.textureVideoBitDepth << ' ';
-  cmd << "--InputChromaFormat=420 ";
-  cmd << "--OutputBitDepth=" << params.textureVideoBitDepth << ' ';
-  cmd << "--OutputBitDepthC=" << params.textureVideoBitDepth << ' ';
-  cmd << "--FrameRate=" << 30 << ' ';
-  cmd << "--FrameSkip=" << 0 << ' ';
-  cmd << "--SourceWidth=" << width << ' ';
-  cmd << "--SourceHeight=" << height << ' ';
-  cmd << "--FramesToBeEncoded=" << frameCount << ' ';
-  cmd << "--BitstreamFile=" << fnameCompressTexture.str() << ' ';
-  cmd << "--ReconFile=" << fnameTextureYUV420Rec.str() << ' ';
-  cmd << "--InternalBitDepth=10 ";
-  cmd << "--InternalBitDepthC=10 ";
-  cmd << "--QP=" << params.textureVideoQP;
-
-  std::cout << cmd.str() << std::endl;
-  system(cmd.str().c_str());
-  bitstream.append(fnameCompressTexture.str(), true);
-
-  cmd.str("");
-  cmd << params.textureVideoHDRToolPath
-      << " -f " << params.textureVideoHDRToolDecConfig
-      << " -p SourceFile=\"" << fnameTextureYUV420Rec.str() << '"'
-      << " -p SourceWidth=" << width
-      << " -p SourceHeight=" << height
-      << " -p NumberOfFrames=" << frameCount
-      << " -p OutputFile=\"" << fnameTextureBGR444Rec.str() << '"'
-      << " -p SourceBitDepthCmp0=" << params.textureVideoBitDepth
-      << " -p SourceBitDepthCmp1=" << params.textureVideoBitDepth
-      << " -p SourceBitDepthCmp2=" << params.textureVideoBitDepth
-      << " -p LogFile=\"\"" << '\n';
-  std::cout << cmd.str() << std::endl;
-  system(cmd.str().c_str());
-
-  std::ifstream fileTextureVideoRec(fnameTextureBGR444Rec.str());
-  if (!fileTextureVideoRec.is_open()) {
-    return -1;
-  }
-  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-    auto& outTexture = gof.frame(frameIndex).outputTexture;
-    assert(outTexture.width() == width);
-    assert(outTexture.height() == height);
-    outTexture.load(fileTextureVideoRec);
-  }
-  fileTextureVideoRec.close();
-
-  if (!params.keepIntermediateFiles) {
-    std::remove(fnameTextureBGR444.str().c_str());
-    std::remove(fnameTextureBGR444Rec.str().c_str());
-    std::remove(fnameTextureYUV420.str().c_str());
-    std::remove(fnameTextureYUV420Rec.str().c_str());
-    std::remove(fnameCompressTexture.str().c_str());
-  }
-
-  return 0;
-}
-#else
-int32_t
-VMCEncoder::compressTextureVideo(
-  VMCGroupOfFrames& gof,
-  Bitstream& bitstream,
-  const VMCEncoderParameters& params)
-{
-
   const auto frameCount = gof.frameCount();
 
   // convert BGR444 to YUV420
-  const auto width = params.textureWidth;
-  const auto height = params.textureHeight;
-    vmesh::FrameSequence<uint8_t> bgr8( 
-      width, height, ColourSpace::BGR444p, frameCount);
-  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-    bgr8[frameIndex] = gof.frame(frameIndex).outputTexture;
-  }
-  vmesh::FrameSequence<uint16_t> bgr(bgr8), yuv;
+  vmesh::FrameSequence<uint8_t> bgrSrc(
+    width, height, ColourSpace::BGR444p, frameCount);
+  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex)
+    bgrSrc[frameIndex] = gof.frame(frameIndex).outputTexture;
+  vmesh::FrameSequence<uint16_t> bgrSrc10(bgrSrc), yuvSrc;
   auto convert = vmesh::VirtualColourConverter<uint16_t>::create(1);
-  convert->convert(params.textureVideoHDRToolEncConfig, bgr, yuv);
+  convert->convert(params.textureVideoHDRToolEncConfig, bgrSrc10, yuvSrc);
 
-  // rec.save(recLibsPath);
-  //}
+  //Encode
+  vmesh::VideoEncoderParameters videoEncoderParams;
+  videoEncoderParams.encoderConfig_ = params.textureVideoEncoderConfig;
+  videoEncoderParams.inputBitDepth_ = params.textureVideoBitDepth;
+  videoEncoderParams.internalBitDepth_ = params.textureVideoBitDepth;
+  videoEncoderParams.outputBitDepth_ = params.textureVideoBitDepth;
+  videoEncoderParams.qp_ = params.textureVideoQP;
+  vmesh::FrameSequence<uint16_t> yuvRec;
+  std::vector<uint8_t> videoBitstream;
+  auto encoder =
+    vmesh::VirtualVideoEncoder<uint16_t>::create(vmesh::VideoCodecId::HM);
+  encoder->encode(yuvSrc, videoEncoderParams, videoBitstream, yuvRec);
+  bitstream.write((uint32_t)videoBitstream.size());
+  bitstream.append(videoBitstream);
 
-  std::stringstream fnameTextureBGR444, fnameTextureBGR444Rec;
-  // fnameTextureBGR444 << params.intermediateFilesPathPrefix << "GOF_"
-  //                    << _gofInfo.index << "_tex_" << width << "x" << height
-  //                    << "_444.bgrp";
-   fnameTextureBGR444Rec << params.intermediateFilesPathPrefix << "GOF_"
-                         << _gofInfo.index << "_tex_" << width << "x" << height
-                         << "_444_rec.bgrp";
+  // Convert Rec yuv to bgr
+  vmesh::FrameSequence<uint16_t> bgrRec;
+  convert->convert(params.textureVideoHDRToolDecConfig, yuvRec, bgrRec);
+  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex)
+    gof.frame(frameIndex).outputTexture = bgrRec[frameIndex];
 
-  // std::ofstream fileTextureVideo(fnameTextureBGR444.str());
-  // if (!fileTextureVideo.is_open()) {
-  //   return -1;
-  // }
-  // for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-  //   const auto& outTexture = gof.frame(frameIndex).outputTexture;
-  //   assert(outTexture.width() == width);
-  //   assert(outTexture.height() == height);
-  //   outTexture.save(fileTextureVideo);
-  // }
-  // fileTextureVideo.close();
-
-  // std::stringstream fnameTextureYUV420, fnameTextureYUV420Rec;
-  // fnameTextureYUV420 << params.intermediateFilesPathPrefix << "GOF_"
-  //                    << _gofInfo.index << "_tex_" << width << "x" << height
-  //                    << "_420_" << params.textureVideoBitDepth << "bit.yuv";
-  // fnameTextureYUV420Rec << params.intermediateFilesPathPrefix << "GOF_"
-  //                       << _gofInfo.index << "_tex_" << width << "x" << height
-  //                       << "_420_" << params.textureVideoBitDepth
-  //                       << "bit_rec.yuv";
-
-  std::stringstream cmd;
-  // cmd << params.textureVideoHDRToolPath
-  //     << " -f " << params.textureVideoHDRToolEncConfig
-  //     << " -p SourceFile=\"" << fnameTextureBGR444.str() << '"'
-  //     << " -p SourceWidth=" << width
-  //     << " -p SourceHeight=" << height
-  //     << " -p NumberOfFrames=" << frameCount
-  //     << " -p OutputFile=\"" << fnameTextureYUV420.str() << '"'
-  //     << " -p OutputBitDepthCmp0=" << params.textureVideoBitDepth
-  //     << " -p OutputBitDepthCmp1=" << params.textureVideoBitDepth
-  //     << " -p OutputBitDepthCmp2=" << params.textureVideoBitDepth
-  //     << " -p LogFile=\"\"" << '\n';
-  // std::cout << cmd.str() << std::endl;
-  // system(cmd.str().c_str());
-
+  // Save intermediate files
+  if (params.keepIntermediateFiles) {
+    vmesh::FrameSequence<uint8_t> bgrRec8(bgrRec);
     auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-                    + std::to_string( _gofInfo.index ) + "_tex_";
-  if( params.keepIntermediateFiles || true ){
-    bgr8.save( bgr8.createName( prefix, 8 ) );
-    bgr.save( bgr.createName( prefix, 10 ) );
-    yuv.save( yuv.createName( prefix, 10 ) );
-  }
-  auto fnameTextureYUV420 = yuv.createName(prefix + "enc", 10);
-  auto fnameTextureYUV420Rec = yuv.createName(prefix + "rec", 10);
-  auto fnameCompressTexture =
-    removeExtension(fnameTextureYUV420Rec) + ".h265";
-
-  // std::stringstream fnameCompressTexture;
-  // fnameCompressTexture << params.intermediateFilesPathPrefix << "GOF_"
-  //                      << _gofInfo.index << "_texture.h265";
-
-  cmd.str("");
-  cmd << params.textureVideoEncoderPath << ' ';
-  cmd << "-c " << params.textureVideoEncoderConfig << ' ';
-  cmd << "--InputFile=" << fnameTextureYUV420 << ' ';
-  cmd << "--InputBitDepth=" << params.textureVideoBitDepth << ' ';
-  cmd << "--InputChromaFormat=420 ";
-  cmd << "--OutputBitDepth=" << params.textureVideoBitDepth << ' ';
-  cmd << "--OutputBitDepthC=" << params.textureVideoBitDepth << ' ';
-  cmd << "--FrameRate=" << 30 << ' ';
-  cmd << "--FrameSkip=" << 0 << ' ';
-  cmd << "--SourceWidth=" << width << ' ';
-  cmd << "--SourceHeight=" << height << ' ';
-  cmd << "--FramesToBeEncoded=" << frameCount << ' ';
-  cmd << "--BitstreamFile=" << fnameCompressTexture<< ' ';
-  cmd << "--ReconFile=" << fnameTextureYUV420Rec << ' ';
-  cmd << "--InternalBitDepth=10 ";
-  cmd << "--InternalBitDepthC=10 ";
-  cmd << "--QP=" << params.textureVideoQP;
-
-  std::cout << cmd.str() << std::endl;
-  system(cmd.str().c_str());
-  bitstream.append(fnameCompressTexture, true);
-
-  cmd.str("");
-  cmd << params.textureVideoHDRToolPath
-      << " -f " << params.textureVideoHDRToolDecConfig
-      << " -p SourceFile=\"" << fnameTextureYUV420Rec << '"'
-      << " -p SourceWidth=" << width
-      << " -p SourceHeight=" << height
-      << " -p NumberOfFrames=" << frameCount
-      << " -p OutputFile=\"" << fnameTextureBGR444Rec.str() << '"'
-      << " -p SourceBitDepthCmp0=" << params.textureVideoBitDepth
-      << " -p SourceBitDepthCmp1=" << params.textureVideoBitDepth
-      << " -p SourceBitDepthCmp2=" << params.textureVideoBitDepth
-      << " -p LogFile=\"\"" << '\n';
-  std::cout << cmd.str() << std::endl;
-  system(cmd.str().c_str());
-
-  std::ifstream fileTextureVideoRec(fnameTextureBGR444Rec.str());
-  if (!fileTextureVideoRec.is_open()) {
-    return -1;
-  }
-  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-    auto& outTexture = gof.frame(frameIndex).outputTexture;
-    assert(outTexture.width() == width);
-    assert(outTexture.height() == height);
-    outTexture.load(fileTextureVideoRec);
-  }
-  fileTextureVideoRec.close();
-
-  if (!params.keepIntermediateFiles) {
-    std::remove(fnameTextureBGR444.str().c_str());
-    std::remove(fnameTextureBGR444Rec.str().c_str());
-    std::remove(fnameTextureYUV420.c_str());
-    std::remove(fnameTextureYUV420Rec.c_str());
-    std::remove(fnameCompressTexture.c_str());
+      + std::to_string(_gofInfo.index) + "_tex";
+    bgrSrc.save(bgrSrc.createName(prefix + "_enc", 8));
+    yuvSrc.save(yuvSrc.createName(prefix + "_enc", 10));
+    yuvRec.save(yuvRec.createName(prefix + "_rec", 10));
+    bgrRec8.save(bgrRec8.createName(prefix + "_rec", 8));
+    save(prefix + ".h265", videoBitstream);
   }
   return 0;
 }
-#endif
 
 //----------------------------------------------------------------------------
 
@@ -483,28 +270,23 @@ VMCEncoder::computeDracoMapping(
     base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
   }
 
-  // encode
+  // Encode
   GeometryEncoderParameters dracoParams;
   dracoParams.cl_ = 10;
   TriangleMesh<double> rec;
   std::vector<uint8_t> geometryBitstream;
-  auto encoder = vmesh::VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
+  auto encoder =
+    vmesh::VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
   encoder->encode(base, dracoParams, geometryBitstream, rec);
 
   // Save intermediate files
-  if (!params.keepIntermediateFiles) {
-  std::stringstream mappingFileName, cmappingFileName, rmappingFileName;
-  mappingFileName << params.intermediateFilesPathPrefix << "gof_"
-                  << _gofInfo.index << "_fr_" << frameIndex << "_mapping.obj";
-  cmappingFileName << params.intermediateFilesPathPrefix << "gof_"
-                   << _gofInfo.index << "_fr_" << frameIndex
-                   << "_cmapping.drc";
-  rmappingFileName << params.intermediateFilesPathPrefix << "gof_"
-                   << _gofInfo.index << "_fr_" << frameIndex
-                   << "_rmapping.obj";
-  base.saveToOBJ<int64_t>(mappingFileName.str());
-    rec.saveToOBJ<int64_t>(rmappingFileName.str());
-    save(cmappingFileName.str(), geometryBitstream);
+  if (params.keepIntermediateFiles) {
+    auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+      + std::to_string(_gofInfo.index) + "_fr_" + std::to_string(frameIndex)
+      + "_mapping";
+    base.saveToOBJ<int64_t>(prefix + "_enc.obj");
+    rec.saveToOBJ<int64_t>(prefix + "_rec.obj");
+    save(prefix + ".drc", geometryBitstream);
   }
 
   // Sub divide base
@@ -699,37 +481,35 @@ VMCEncoder::compressBaseMesh(
       base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
     }
 
-    // Encode 
+    // Encode
     GeometryEncoderParameters dracoParams;
     dracoParams.qp_ = params.qpPosition;
     dracoParams.qt_ = params.qpTexCoord;
     TriangleMesh<double> rec;
     std::vector<uint8_t> geometryBitstream;
-    auto encoder = vmesh::VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
+    auto encoder =
+      vmesh::VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
     encoder->encode(base, dracoParams, geometryBitstream, rec);
 
     // Save intermediate files
     std::stringstream qbaseFileName, cbaseFileName, rbaseFileName;
     if (params.keepIntermediateFiles) {
-      qbaseFileName << params.intermediateFilesPathPrefix << "gof_"
-                    << _gofInfo.index << "_fr_" << frameIndex << "_qbase.obj";
-      cbaseFileName << params.intermediateFilesPathPrefix << "gof_"
-                    << _gofInfo.index << "_fr_" << frameIndex << "_cbase.drc";
-      rbaseFileName << params.intermediateFilesPathPrefix << "gof_"
-                    << _gofInfo.index << "_fr_" << frameIndex << "_rbase.obj";
-      base.saveToOBJ<int64_t>(qbaseFileName.str());
-      rec.loadFromOBJ(rbaseFileName.str());
-      save(cbaseFileName.str(), geometryBitstream);
+      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+        + std::to_string(_gofInfo.index) + "_fr_" + std::to_string(frameIndex)
+        + "_base";
+      base.saveToOBJ<int64_t>(prefix + "_enc.obj");
+      rec.saveToOBJ<int64_t>(prefix + "_rec.obj");
+      save(prefix + ".drc", geometryBitstream);
     }
 
     // Store bitstream
     auto bitstreamByteCount0 = bitstream.size();
-    bitstream.write( (uint32_t)geometryBitstream.size());
+    bitstream.write((uint32_t)geometryBitstream.size());
     bitstream.append(geometryBitstream);
     stats.baseMeshByteCount += bitstream.size() - bitstreamByteCount0;
 
     // Round positions
-    base = rec; 
+    base = rec;
     qpositions.resize(base.pointCount());
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       auto& qpos = qpositions[v];
@@ -1034,7 +814,7 @@ VMCEncoder::transferTexture(
     }
   }
   if (params.textureTransferPaddingDilateIterationCount) {
-    Frame<uint8_t> tmpTexture ; // ColourSpace::BGR444p
+    Frame<uint8_t> tmpTexture;  // ColourSpace::BGR444p
     Plane<uint8_t> tmpOccupancy;
     for (int32_t it = 0;
          it < params.textureTransferPaddingDilateIterationCount; ++it) {
@@ -1070,7 +850,8 @@ VMCEncoder::compress(
   const auto widthDispVideo =
     params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
   auto heightDispVideo = 0;
-  _dispVideo.resize(widthDispVideo, heightDispVideo, ColourSpace::BGR444p, frameCount);
+  _dispVideo.resize(
+    widthDispVideo, heightDispVideo, ColourSpace::BGR444p, frameCount);
   auto& stats = gof.stats;
   stats.reset();
   stats.totalByteCount = bitstream.size();
@@ -1097,7 +878,8 @@ VMCEncoder::compress(
       heightDispVideo = std::max(
         heightDispVideo,
         geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
-      dispVideoFrame.resize(widthDispVideo, heightDispVideo, ColourSpace::BGR444p);
+      dispVideoFrame.resize(
+        widthDispVideo, heightDispVideo, ColourSpace::BGR444p);
       computeDisplacements(frame, params);
       computeForwardLinearLifting(
         frame.disp, frame.subdivInfoLevelOfDetails, frame.subdivEdges,
@@ -1109,7 +891,8 @@ VMCEncoder::compress(
   }
   if (params.encodeDisplacementsVideo) {
     // resize all the frame to the same resolution
-    _dispVideo.resize(widthDispVideo, heightDispVideo, ColourSpace::BGR444p, frameCount);
+    _dispVideo.resize(
+      widthDispVideo, heightDispVideo, ColourSpace::BGR444p, frameCount);
   } else {
     _dispVideo.resize(0, 0, ColourSpace::BGR444p, 0);
   }
@@ -1179,7 +962,7 @@ VMCEncoder::compress(
 int32_t
 VMCEncoder::computeDisplacementVideoFrame(
   const VMCFrame& frame,
-  Frame<uint16_t>& dispVideoFrame, // , ColourSpace::YUV444p
+  Frame<uint16_t>& dispVideoFrame,  // , ColourSpace::YUV444p
   const VMCEncoderParameters& params) const
 {
   const auto pixelsPerBlock =
@@ -1281,7 +1064,6 @@ VMCEncoder::encodeSequenceHeader(
   }
   return 0;
 }
-
 
 int32_t
 VMCEncoder::encodeFrameHeader(

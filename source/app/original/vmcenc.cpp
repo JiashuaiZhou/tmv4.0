@@ -283,8 +283,6 @@ loadGroupOfFrames(
   const auto lastFrame = startFrame + frameCount - 1;
   vmesh::vout << "Loading group of frames (" << startFrame << '-' << lastFrame
        << ") ";
-  printf("loadGroupOfFrames start Frame %d Last = %d count = %d  \n", startFrame, lastFrame, frameCount );
-  fflush(stdout);
   gof.resize(frameCount);
   for (int f = startFrame; f <= lastFrame; ++f) {
     const auto nameInputTexture = vmesh::expandNum(params.inputTexturePath, f);
@@ -306,6 +304,35 @@ loadGroupOfFrames(
 //============================================================================
 
 int32_t
+saveGroupOfFrames(
+  const vmesh::VMCGroupOfFramesInfo& gofInfo,
+  vmesh::VMCGroupOfFrames& gof,
+  const Parameters& params)
+{
+  if (
+    !params.reconstructedMeshPath.empty()
+    && !params.reconstructedTexturePath.empty()
+    && !params.reconstructedMaterialLibPath.empty()) {
+    for (int f = 0; f < gofInfo.frameCount; ++f) {
+      const auto n = gofInfo.startFrameIndex + f;
+      auto strObj = vmesh::expandNum(params.reconstructedMeshPath, n);
+      auto strTex = vmesh::expandNum(params.reconstructedTexturePath, n);
+      auto strMat = vmesh::expandNum(params.reconstructedMaterialLibPath, n);
+      SaveImage(strTex, gof[f].outputTexture);
+      vmesh::Material<double> material;
+      material.texture = vmesh::basename(strTex);
+      material.save(strMat);
+      gof[f].rec.setMaterialLibrary(strMat);
+      gof[f].rec.saveToOBJ(strObj);
+    }
+    return 0;
+  }
+  return -1;
+}
+
+//============================================================================
+
+int32_t
 compress(const Parameters& params)
 {
   vmesh::SequenceInfo sequenceInfo;
@@ -320,48 +347,34 @@ compress(const Parameters& params)
     vmesh::VMCGroupOfFrames gof;
     const auto& gofInfo = sequenceInfo[g];
     printf("loadGroupOfFrames GOF = %d / %zu \n", g, sequenceInfo.gofCount());
-
+    
+    // Load group of frame
     if (loadGroupOfFrames(gofInfo, gof, params)) {
       std::cerr << "Error: can't load group of frames!\n";
       return -1;
     }
-
+    
+    // Compress group of frame
     auto start = std::chrono::steady_clock::now();
     if (encoder.compress(gofInfo, gof, bitstream, params.encParams)) {
       std::cerr << "Error: can't compress group of frames!\n";
       return -1;
     }
-
     auto end = std::chrono::steady_clock::now();
     gof.stats.processingTimeInSeconds =
       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    const auto& stats = gof.stats;
-    totalStats += stats;
-    if (
-      !params.reconstructedMeshPath.empty()
-      && !params.reconstructedTexturePath.empty()
-      && !params.reconstructedMaterialLibPath.empty()) {
-      for (int fIndex = 0; fIndex < gofInfo.frameCount; ++fIndex) {
-        const auto fNum = gofInfo.startFrameIndex + fIndex;
-        auto nameRecMesh = vmesh::expandNum(params.reconstructedMeshPath, fNum);
-        auto nameRecTex = vmesh::expandNum(params.reconstructedTexturePath, fNum);
-        auto nameRecMat = vmesh::expandNum(params.reconstructedMaterialLibPath, fNum);
-        const auto& frame = gof.frame(fIndex);
-        SaveImage(nameRecTex, frame.outputTexture);
-        vmesh::Material<double> material;
-        material.texture = nameRecTex;
-        material.save(nameRecMat);
-        auto& recmesh = gof.frame(fIndex).rec;
-        recmesh.setMaterialLibrary(nameRecMat);
-        recmesh.saveToOBJ(nameRecMesh);
-      }
+    // Save reconsctructed models
+    if (saveGroupOfFrames(gofInfo, gof, params)) {
+      std::cerr << "Error: can't save rec group of frames!\n";
+      return -1;
     }
 
+    totalStats += gof.stats;
     if (vmesh::vout) {
       vmesh::vout << "\n------- Group of frames " << gofInfo.index
                   << " -----------\n";
-      stats.dump("GOF", params.framerate);
+      gof.stats.dump("GOF", params.framerate);
       vmesh::vout << "---------------------------------------\n";
     }
   }
@@ -369,6 +382,7 @@ compress(const Parameters& params)
   totalStats.dump("Sequence", params.framerate);
   std::cout << "---------------------------------------\n";
 
+  // save bistream
   if (bitstream.save(params.compressedStreamPath)) {
     std::cerr << "Error: can't save compressed bitstream!\n";
     return -1;

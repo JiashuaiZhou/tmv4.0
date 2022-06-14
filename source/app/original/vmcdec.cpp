@@ -158,6 +158,35 @@ catch (df::program_options_lite::ParseFailure& e) {
 //============================================================================
 
 int32_t
+saveGroupOfFrames(
+  const vmesh::VMCGroupOfFramesInfo& gofInfo,
+  vmesh::VMCGroupOfFrames& gof,
+  const Parameters& params)
+{
+  if (
+    !params.decodedMeshPath.empty()
+    && !params.decodedTexturePath.empty()
+    && !params.decodedMaterialLibPath.empty()) {
+    for (int f = 0; f < gofInfo.frameCount; ++f) {
+      const auto n = gofInfo.startFrameIndex + f;
+      auto strObj = vmesh::expandNum(params.decodedMeshPath, n);
+      auto strTex = vmesh::expandNum(params.decodedTexturePath, n);
+      auto strMat = vmesh::expandNum(params.decodedMaterialLibPath, n);
+      SaveImage(strTex, gof[f].outputTexture);
+      vmesh::Material<double> material;
+      material.texture = vmesh::basename(strTex);
+      material.save(strMat);
+      gof[f].rec.setMaterialLibrary(strMat);
+      gof[f].rec.saveToOBJ(strObj);
+    }
+    return 0;
+  }
+  return -1;
+}
+
+//============================================================================
+
+int32_t
 decompress(const Parameters& params)
 {
   vmesh::Bitstream bitstream;
@@ -169,57 +198,39 @@ decompress(const Parameters& params)
 
   vmesh::VMCDecoder decoder;
   vmesh::VMCGroupOfFramesInfo gofInfo;
-  vmesh::VMCGroupOfFrames gof;
   vmesh::VMCStats totalStats;
   totalStats.reset();
   size_t byteCounter = 0;
-  int32_t f = 0;
   gofInfo.index = 0;
   gofInfo.startFrameIndex = params.startFrame;
   while (byteCounter != bitstream.size()) {
+    vmesh::VMCGroupOfFrames gof;
+    
+    // Decompress
     auto start = std::chrono::steady_clock::now();
     if (decoder.decompress(
           bitstream, gofInfo, gof, byteCounter, params.decParams)) {
       std::cerr << "Error: can't decompress group of frames!\n";
       return -1;
-    }
-
+    }    
     auto end = std::chrono::steady_clock::now();
     gof.stats.processingTimeInSeconds =
       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    const auto& stats = gof.stats;
-    const auto startFrameGOF = f + params.startFrame;
-    const auto frameCountGOF = int32_t(stats.frameCount);
-    if (
-      !params.decodedMeshPath.empty() && !params.decodedTexturePath.empty()
-      && !params.decodedMaterialLibPath.empty()) {
-      for (int fIndex = 0; fIndex < frameCountGOF; ++fIndex) {
-        const auto fNum = startFrameGOF + fIndex;
-        auto nameDecMesh = vmesh::expandNum(params.decodedMeshPath, fNum);
-        auto nameDecTexture = vmesh::expandNum(params.decodedTexturePath, fNum);
-        auto nameDecMaterial = vmesh::expandNum(params.decodedMaterialLibPath, fNum);
-
-        const auto& frame = gof.frame(fIndex);
-        vmesh::SaveImage(nameDecTexture, frame.outputTexture);
-        vmesh::Material<double> material;
-        material.texture = nameDecTexture;
-        material.save(nameDecMaterial);
-        auto& recmesh = gof.frame(fIndex).rec;
-        recmesh.setMaterialLibrary(nameDecMaterial);
-        recmesh.saveToOBJ(nameDecMesh);
-      }
+    // Save reconsctructed models
+    if (saveGroupOfFrames(gofInfo, gof, params)) {
+      std::cerr << "Error: can't save dec group of frames!\n";
+      return -1;
     }
 
-    totalStats += stats;
-    f += stats.frameCount;
-    gofInfo.startFrameIndex += stats.frameCount;
+    totalStats += gof.stats;
+    gofInfo.startFrameIndex += gof.stats.frameCount;
     ++gofInfo.index;
 
     if (vmesh::vout) {
       vmesh::vout << "\n------- Group of frames " << gofInfo.index
            << " -----------\n";
-      stats.dump( "GOF", params.framerate);
+      gof.stats.dump( "GOF", params.framerate);
       vmesh::vout << "---------------------------------------\n";
     }
   }

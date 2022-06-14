@@ -37,7 +37,7 @@
 
 
 #ifdef USE_HM_VIDEO_CODEC
-#include "image.hpp"
+#include "util/image.hpp"
 
 
 #include <list>

@@ -795,8 +795,8 @@ Void hmLibVideoEncoderImpl<T>::xReadPicture( TComPicYuv* pic, FrameSequence<T>& 
              m_internalBitDepth[0] - m_outputBitDepth[0], m_inputColourSpaceConvert == IPCOLOURSPACE_RGBtoGBR );
 }
 
-template class vmesh::hmLibVideoEncoderImpl<uint8_t>;
-template class vmesh::hmLibVideoEncoderImpl<uint16_t>;
+template class hmLibVideoEncoderImpl<uint8_t>;
+template class hmLibVideoEncoderImpl<uint16_t>;
 
 } // namespace vmeh 
 

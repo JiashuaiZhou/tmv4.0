@@ -42,10 +42,10 @@
 #include <fstream> // looks like we need this too (edit by π)
 #include <program-options-lite/program_options_lite.h>
 
-#include "misc.hpp"
-#include "verbose.hpp"
+#include "util/misc.hpp"
+#include "util/verbose.hpp"
 #include "version.hpp"
-#include "bitstream.hpp"
+#include "util/bitstream.hpp"
 
 #include "virtualGeometryEncoder.hpp"
 

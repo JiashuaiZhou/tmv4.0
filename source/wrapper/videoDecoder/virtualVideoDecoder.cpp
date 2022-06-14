@@ -62,7 +62,7 @@ std::shared_ptr<VirtualVideoDecoder<T>> VirtualVideoDecoder<T>::create( VideoCod
   return nullptr;
 }
 
-template class vmesh::VirtualVideoDecoder<uint8_t>;
-template class vmesh::VirtualVideoDecoder<uint16_t>;
+template class VirtualVideoDecoder<uint8_t>;
+template class VirtualVideoDecoder<uint16_t>;
 
 }  // namespace vmesh

@@ -75,7 +75,7 @@ std::shared_ptr<VirtualGeometryEncoder<T>> VirtualGeometryEncoder<T>::create( Ge
   return nullptr;
 }
 
-template class vmesh::VirtualGeometryEncoder<float>;
-template class vmesh::VirtualGeometryEncoder<double>;
+template class VirtualGeometryEncoder<float>;
+template class VirtualGeometryEncoder<double>;
 
 } // namespace vmesh 

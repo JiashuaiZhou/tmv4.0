@@ -966,8 +966,8 @@ bool vtmLibVideoDecoderImpl<T>::isNewAccessUnit( bool                   newPictu
   return ret;
 }
 
-template class vmesh::vtmLibVideoDecoderImpl<uint8_t>;
-template class vmesh::vtmLibVideoDecoderImpl<uint16_t>;
+template class vtmLibVideoDecoderImpl<uint8_t>;
+template class vtmLibVideoDecoderImpl<uint16_t>;
 
 }  // namespace vmesh
 

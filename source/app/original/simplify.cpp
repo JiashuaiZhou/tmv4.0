@@ -38,12 +38,13 @@
 #include <string>
 #include <program-options-lite/program_options_lite.h>
 
-#include "mesh.hpp"
-#include "misc.hpp"
-#include "verbose.hpp"
+#include "util/mesh.hpp"
+#include "util/misc.hpp"
+#include "util/verbose.hpp"
 #include "version.hpp"
-#include "simplifyer.hpp"
 #include "vmc.hpp"
+#include "encoder.hpp"
+#include "geometryDecimate.hpp"
 
 //============================================================================
 
@@ -58,7 +59,7 @@ struct Parameters {
   std::string decimatedMeshPath;
   std::string mappedMeshPath;
   std::string referenceMeshPath;
-  vmesh::VMCSimplifyParameters params;
+  vmesh::VMCEncoderParameters params;
 };
 }  // namespace
 
@@ -163,8 +164,8 @@ main(int argc, char* argv[])
   }
 
   // Simplify 
-  vmesh::Simplifyer Simplifyer;
-  if (Simplifyer.simplify(frame, params.params )) {
+  vmesh::GeometryDecimate geometryDecimate;
+  if (geometryDecimate.decimate(frame, params.params )) {
     std::cerr << "Error: can't simplify mesh !\n";
     return 1;
   }

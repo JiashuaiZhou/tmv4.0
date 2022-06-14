@@ -83,8 +83,8 @@ void vtmLibVideoDecoder<T>::decode( std::vector<uint8_t>& bitstream,
   printf( "\n Total Time: %12.3f sec.\n", dResult );
 }
 
-template class vmesh::vtmLibVideoDecoder<uint8_t>;
-template class vmesh::vtmLibVideoDecoder<uint16_t>;
+template class vtmLibVideoDecoder<uint8_t>;
+template class vtmLibVideoDecoder<uint16_t>;
 
 }  // namespace vmesh
 

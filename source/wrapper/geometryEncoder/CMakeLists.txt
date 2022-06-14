@@ -7,10 +7,10 @@ project(${MYNAME} C CXX)
 file(GLOB SRC *.h *.cpp )
 
 include_directories( ${CMAKE_SOURCE_DIR}/dependencies 
-                     ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil 
+                     ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon 
                      . )
 
-set( LIBS vdmcUtil )
+set( LIBS vdmcCommon )
 
 # DRACO
 if( USE_DRACO_GEOMETRY_CODEC )

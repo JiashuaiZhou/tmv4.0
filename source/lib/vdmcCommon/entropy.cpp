@@ -32,8 +32,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "entropydirac.hpp"
-#include "entropyutils.hpp"
+#include "entropyDirac.hpp"
+#include "entropyUtils.hpp"
 
 using namespace vmesh; 
   

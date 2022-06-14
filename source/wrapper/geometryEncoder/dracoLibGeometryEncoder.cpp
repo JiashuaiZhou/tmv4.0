@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined(USE_DRACO_GEOMETRY_CODEC)
-#  include "mesh.hpp"
+#  include "util/mesh.hpp"
 #  include "dracoLibGeometryEncoder.hpp"
 
 #  include "draco/compression/encode.h"
@@ -50,7 +50,7 @@ DracoLibGeometryEncoder<T>::~DracoLibGeometryEncoder()
 
 template<typename T>
 std::unique_ptr<draco::Mesh>
-convert(vmesh::TriangleMesh<T>& src)
+convert(TriangleMesh<T>& src)
 {
   draco::TriangleSoupMeshBuilder meshBuilder;
   const int32_t triCount = src.triangleCount();
@@ -107,7 +107,7 @@ convert(vmesh::TriangleMesh<T>& src)
 
 template<typename T>
 void
-convert(std::unique_ptr<draco::Mesh>& src, vmesh::TriangleMesh<T>& dst)
+convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
 {
   draco::Mesh& mesh = *src;
   auto posAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::POSITION);
@@ -250,8 +250,8 @@ DracoLibGeometryEncoder<T>::encode(
   }
 }
 
-template class vmesh::DracoLibGeometryEncoder<float>;
-template class vmesh::DracoLibGeometryEncoder<double>;
+template class DracoLibGeometryEncoder<float>;
+template class DracoLibGeometryEncoder<double>;
 
 }  // namespace vmesh
 

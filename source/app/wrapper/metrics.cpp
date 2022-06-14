@@ -37,8 +37,8 @@
 #include <program-options-lite/program_options_lite.h>
 
 #include "metrics.hpp"
-#include "misc.hpp"
-#include "verbose.hpp"
+#include "util/misc.hpp"
+#include "util/verbose.hpp"
 #include "version.hpp"
 
 //============================================================================

@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined( USE_HM_VIDEO_CODEC )
-#include "image.hpp"
+#include "util/image.hpp"
 #include "virtualVideoDecoder.hpp"
 
 namespace vmesh {

@@ -55,7 +55,7 @@ std::shared_ptr<VirtualColourConverter<T>> VirtualColourConverter<T>::create( ui
   return nullptr;
 }
 
-template class vmesh::VirtualColourConverter<uint8_t>;
-template class vmesh::VirtualColourConverter<uint16_t>;
+template class VirtualColourConverter<uint8_t>;
+template class VirtualColourConverter<uint16_t>;
 
 } // namespace vmesh 

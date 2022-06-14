@@ -42,7 +42,7 @@
 #include "HDRConvert.H"
 #include "Input.H"
 #include "Output.H"
-#include "image.hpp"
+#include "util/image.hpp"
 #include "IOFunctions.H"
 #include "Convert.H"
 #include "ConvertColorFormat.H"
@@ -55,7 +55,7 @@
 #include "ToneMapping.H"
 #include "ProjectParameters.H"
 
-#include "image.hpp"
+#include "util/image.hpp"
 
 namespace vmesh {
 

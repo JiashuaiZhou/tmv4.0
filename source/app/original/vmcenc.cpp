@@ -36,13 +36,13 @@
 #include <chrono>
 #include <program-options-lite/program_options_lite.h>
 
-#include "bitstream.hpp"
+#include "util/bitstream.hpp"
 #include "encoder.hpp"
-#include "misc.hpp"
-#include "verbose.hpp"
+#include "util/misc.hpp"
+#include "util/verbose.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
-#include "vmcstats.hpp"
+#include "vmcStats.hpp"
 #include "sequenceInfo.hpp"
 
 //============================================================================
@@ -177,21 +177,6 @@ try {
   ("cscdecconfig", params.encParams.textureVideoHDRToolDecConfig, {},
    "HDRTools decode cfg")
 
-  (po::Section("External tools (Encoder)"))
-  ("gmenc", params.encParams.geometryMeshEncoderPath, {},
-   "Mesh encoder cmd")
-
-  ("gmdec", params.encParams.geometryMeshDecoderPath, {},
-   "Mesh decoder cmd")
-
-  ("gvenc", params.encParams.geometryVideoEncoderPath, {},
-   "Geometry video encoder cmd")
-
-  ("tvenc", params.encParams.textureVideoEncoderPath, {},
-   "Texture video encoder cmd")
-
-  ("csc", params.encParams.textureVideoHDRToolPath, {},
-   "HDRTools cmd")
   ;
   /* clang-format on */
 
@@ -224,26 +209,11 @@ try {
   if (params.subdivMeshPath.empty())
     err.error() << "subdivision mesh not specified\n";
 
-  if (params.encParams.geometryMeshEncoderPath.empty())
-    err.error() << "mesh encoder command not specified\n";
-
-  if (params.encParams.geometryMeshDecoderPath.empty())
-    err.error() << "mesh decoder command not specified\n";
-
-  if (params.encParams.geometryVideoEncoderPath.empty())
-    err.error() << "geometry video encoder command not specified\n";
-
   if (params.encParams.geometryVideoEncoderConfig.empty())
     err.error() << "geometry video config not specified\n";
 
-  if (params.encParams.textureVideoEncoderPath.empty())
-    err.error() << "texture video encoder command not specified\n";
-
   if (params.encParams.textureVideoEncoderConfig.empty())
     err.error() << "texture video encoder config not specified\n";
-
-  if (params.encParams.textureVideoHDRToolPath.empty())
-    err.error() << "hdrtools command not specified\n";
 
   if (params.encParams.textureVideoHDRToolEncConfig.empty())
     err.error() << "hdrtools encoder config not specified\n";
@@ -278,17 +248,17 @@ loadGroupOfFrames(
   vmesh::VMCGroupOfFrames& gof,
   const Parameters& params)
 {
-  const auto startFrame = gofInfo.startFrameIndex;
-  const auto frameCount = gofInfo.frameCount;
+  const auto startFrame = gofInfo.startFrameIndex_;
+  const auto frameCount = gofInfo.frameCount_;
   const auto lastFrame = startFrame + frameCount - 1;
-  vmesh::vout << "Loading group of frames (" << startFrame << '-' << lastFrame
+  std::cout << "Loading group of frames (" << startFrame << '-' << lastFrame
        << ") ";
   gof.resize(frameCount);
   for (int f = startFrame; f <= lastFrame; ++f) {
     const auto nameInputTexture = vmesh::expandNum(params.inputTexturePath, f);
     const auto findex = f - startFrame;
     auto& frame = gof.frames[findex];
-    vmesh::vout << '.' << std::flush;
+    std::cout << '.' << std::flush;
     if (
       !frame.input.loadFromOBJ(params.inputMeshPath, f)
       || !LoadImage(nameInputTexture, frame.inputTexture)
@@ -313,8 +283,8 @@ saveGroupOfFrames(
     !params.reconstructedMeshPath.empty()
     && !params.reconstructedTexturePath.empty()
     && !params.reconstructedMaterialLibPath.empty()) {
-    for (int f = 0; f < gofInfo.frameCount; ++f) {
-      const auto n = gofInfo.startFrameIndex + f;
+    for (int f = 0; f < gofInfo.frameCount_; ++f) {
+      const auto n = gofInfo.startFrameIndex_ + f;
       auto strObj = vmesh::expandNum(params.reconstructedMeshPath, n);
       auto strTex = vmesh::expandNum(params.reconstructedTexturePath, n);
       auto strMat = vmesh::expandNum(params.reconstructedMaterialLibPath, n);
@@ -356,7 +326,7 @@ compress(const Parameters& params)
     
     // Compress group of frame
     auto start = std::chrono::steady_clock::now();
-    if (encoder.compress(gofInfo, gof, bitstream, params.encParams)) {
+    if (encoder.compressOnly(gofInfo, gof, bitstream, params.encParams)) {
       std::cerr << "Error: can't compress group of frames!\n";
       return -1;
     }
@@ -372,7 +342,7 @@ compress(const Parameters& params)
 
     totalStats += gof.stats;
     if (vmesh::vout) {
-      vmesh::vout << "\n------- Group of frames " << gofInfo.index
+      vmesh::vout << "\n------- Group of frames " << gofInfo.index_
                   << " -----------\n";
       gof.stats.dump("GOF", params.framerate);
       vmesh::vout << "---------------------------------------\n";

@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef USE_VTM_VIDEO_CODEC
-#include "image.hpp"
+#include "util/image.hpp"
 #include "vtmLibVideoEncoder.hpp"
 #include "vtmLibVideoEncoderImpl.hpp"
 #include "EncoderLib/EncLibCommon.h"
@@ -169,8 +169,8 @@ void vtmLibVideoEncoder<T>::encode( FrameSequence<T>&            videoSrc,
   destroyROM();
 }
 
-template class vmesh::vtmLibVideoEncoder<uint8_t>;
-template class vmesh::vtmLibVideoEncoder<uint16_t>;
+template class vtmLibVideoEncoder<uint8_t>;
+template class vtmLibVideoEncoder<uint16_t>;
 
 } // namespace vmesh 
 

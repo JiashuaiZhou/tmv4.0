@@ -38,7 +38,7 @@
 #include <cstdio>
 #include <sstream>
 
-#include "bitstream.hpp"
+#include "util/bitstream.hpp"
 #include "contexts.hpp"
 #include "entropy.hpp"
 
@@ -147,7 +147,7 @@ VMCDecoder::decompressBaseMesh(
   if (decodeFrameHeader(bitstream, frameInfo)) {
     return -1;
   }
-  const auto frameIndex = frameInfo.frameIndex + _gofInfo.startFrameIndex;
+  const auto frameIndex = frameInfo.frameIndex + _gofInfo.startFrameIndex_;
   auto& base = frame.base;
   auto& qpositions = frame.qpositions;
   if (frameInfo.type == FrameType::INTRA) {
@@ -170,7 +170,7 @@ VMCDecoder::decompressBaseMesh(
     if (params.keepIntermediateFiles) {
       std::stringstream filePath;
       filePath << params.intermediateFilesPathPrefix << "gof_"
-               << _gofInfo.index << "_fr_" << frameIndex << "_base_dec.drc";
+               << _gofInfo.index_ << "_fr_" << frameIndex << "_base_dec.drc";
       if (!save(filePath.str(), geometryBitstream))
         return 1;
       if (!base.saveToOBJ(removeExtension( filePath.str() + ".obj")))
@@ -241,7 +241,7 @@ VMCDecoder::decompressDisplacementsVideo(
   if (params.keepIntermediateFiles) {
     auto dispPath = _dispVideo.createName(
       params.intermediateFilesPathPrefix + "GOF_"
-        + std::to_string(_gofInfo.index) + "_disp_dec",
+        + std::to_string(_gofInfo.index_) + "_disp_dec",
       10);
     save(removeExtension(dispPath) + ".bin", videoBitstream);
     _dispVideo.save(dispPath);
@@ -271,7 +271,7 @@ VMCDecoder::decompressTextureVideo(
   decoder->decode(videoBitstream, yuv, 10);
 
   // Convert video
-  auto convert = vmesh::VirtualColourConverter<uint16_t>::create(1);
+  auto convert = VirtualColourConverter<uint16_t>::create(1);
   convert->convert(params.textureVideoHDRToolDecConfig, yuv, brg);
 
   // Store result in 8 bits frames
@@ -280,10 +280,10 @@ VMCDecoder::decompressTextureVideo(
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    vmesh::FrameSequence<uint8_t> brg8(brg);
+    FrameSequence<uint8_t> brg8(brg);
     auto videoPath = brg8.createName(
       params.intermediateFilesPathPrefix + "GOF_"
-        + std::to_string(_gofInfo.index) + "_texture_dec",
+        + std::to_string(_gofInfo.index_) + "_texture_dec",
       8);
     save(removeExtension(videoPath) + ".bin", videoBitstream);
     brg8.save(videoPath);
@@ -302,8 +302,8 @@ VMCDecoder::decompress(
   const VMCDecoderParameters& params)
 {
   _byteCounter = byteCounter;
-  _gofInfo.index = gofInfo.index;
-  _gofInfo.startFrameIndex = gofInfo.startFrameIndex;
+  _gofInfo.index_ = gofInfo.index_;
+  _gofInfo.startFrameIndex_ = gofInfo.startFrameIndex_;
   auto& stats = gof.stats;
   stats.reset();
   stats.totalByteCount = _byteCounter;
@@ -312,12 +312,12 @@ VMCDecoder::decompress(
   }
   _dispVideo.resize(
     _sps.widthDispVideo, _sps.heightDispVideo, ColourSpace::YUV444p, _sps.frameCount);
-  _gofInfo.frameCount = _sps.frameCount;
-  _gofInfo.framesInfo.resize(_sps.frameCount);
+  _gofInfo.frameCount_ = _sps.frameCount;
+  _gofInfo.framesInfo_.resize(_sps.frameCount);
   gof.resize(_sps.frameCount);
   stats.frameCount = _sps.frameCount;
   for (int32_t frameIndex = 0; frameIndex < _sps.frameCount; ++frameIndex) {
-    auto& frameInfo = _gofInfo.framesInfo[frameIndex];
+    auto& frameInfo = _gofInfo.framesInfo_[frameIndex];
     auto& frame = gof.frame(frameIndex);
     frameInfo.frameIndex = frameIndex;
     decompressBaseMesh(bitstream, gof, frameInfo, frame, stats, params);

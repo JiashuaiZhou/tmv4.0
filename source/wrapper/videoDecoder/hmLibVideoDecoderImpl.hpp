@@ -32,7 +32,7 @@
  */
 #if defined(USE_HM_VIDEO_CODEC )
 
-#include "image.hpp"
+#include "util/image.hpp"
 
 #include <TLibCommon/TComList.h>
 #include <TLibCommon/TComPicYuv.h>

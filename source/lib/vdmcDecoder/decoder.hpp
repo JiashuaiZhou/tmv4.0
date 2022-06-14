@@ -39,8 +39,8 @@
 #include <string>
 
 #include "vmc.hpp"
-#include "vmcstats.hpp"
-#include "bitstream.hpp"
+#include "vmcStats.hpp"
+#include "util/bitstream.hpp"
 
 namespace vmesh {
 

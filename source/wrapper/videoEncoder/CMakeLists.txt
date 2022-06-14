@@ -6,8 +6,9 @@ project(${MYNAME} C CXX)
 
 file(GLOB SRC *.h  *.cpp ${HM_LIB_SOURCE_DIR}/TAppCommon/* )
 
-set( LIBS vdmcUtil )
-include_directories( . ${CMAKE_SOURCE_DIR}/source/lib/vdmcUtil )
+include_directories( . ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon )
+
+set( LIBS vdmcCommon )
 
 # HM
 if( USE_HM_VIDEO_CODEC )

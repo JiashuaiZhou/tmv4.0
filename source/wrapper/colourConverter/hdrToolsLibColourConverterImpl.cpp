@@ -889,7 +889,7 @@ void HdrToolsLibColourConverterImpl<T>::destroy() {
   }
 }
 
-template class vmesh::HdrToolsLibColourConverterImpl<uint8_t>;
-template class vmesh::HdrToolsLibColourConverterImpl<uint16_t>;
+template class HdrToolsLibColourConverterImpl<uint8_t>;
+template class HdrToolsLibColourConverterImpl<uint16_t>;
 
 #endif  //~USE_HDRTOOLS

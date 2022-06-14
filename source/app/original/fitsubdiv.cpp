@@ -43,11 +43,12 @@
 
 #include <program-options-lite/program_options_lite.h>
 
-#include "misc.hpp"
-#include "verbose.hpp"
+#include "util/misc.hpp"
+#include "util/verbose.hpp"
 #include "version.hpp"
-#include "mesh.hpp"
-#include "fitsubdiv.hpp"
+#include "util/mesh.hpp"
+#include "encoder.hpp"
+#include "geometryParametrization.hpp"
 
 //============================================================================
 
@@ -73,7 +74,7 @@ struct Parameters {
   std::string subdivMeshPath;
   std::string nsubdivMeshPath;
   
-  vmesh::VMCFitSubDivParameters params; 
+  vmesh::VMCEncoderParameters params; 
 };
 
 //============================================================================
@@ -249,19 +250,6 @@ catch (df::program_options_lite::ParseFailure& e) {
 
 //============================================================================
 
-bool
-LoadInputMeshes(
-  vmesh::TriangleMesh<double>& target,
-  vmesh::TriangleMesh<double>& source,
-  vmesh::TriangleMesh<double>& mapped,
-  vmesh::TriangleMesh<double>& mtarget,
-  const Parameters& params)
-{
-  return true;
-}
-
-//============================================================================
-
 int
 main(int argc, char* argv[])
 {
@@ -315,7 +303,7 @@ main(int argc, char* argv[])
     }
   }
 
-  vmesh::FitSubDiv fitsubdiv;
+  vmesh::GeometryParametrization fitsubdiv;
   fitsubdiv.generate( frame, params.params, mtarget, subdiv0 );
 
   // Save

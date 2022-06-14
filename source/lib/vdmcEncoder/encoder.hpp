@@ -38,9 +38,42 @@
 #include <cstdint>
 #include <string>
 
-#include "mesh.hpp"
+#include "util/mesh.hpp"
 #include "vmc.hpp"
-#include "bitstream.hpp"
+#include "util/bitstream.hpp"
+
+#include <UVAtlas.h>
+
+//============================================================================
+namespace DirectX {
+  static std::istream& operator>>(std::istream& in, UVATLAS& val)
+  {
+    std::string str;
+    in >> str;
+    if (str == "DEFAULT")
+      val = UVATLAS_DEFAULT;
+    else if (str == "FAST")
+      val = UVATLAS_GEODESIC_FAST;
+    else if (str == "QUALITY")
+      val = UVATLAS_GEODESIC_QUALITY;
+    else
+      in.setstate(std::ios::failbit);
+    return in;
+  }
+
+  //----------------------------------------------------------------------------
+
+  static std::ostream& operator<<(std::ostream& out, UVATLAS val)
+  {
+    switch (val) {
+    case UVATLAS_DEFAULT: out << "DEFAULT"; break;
+    case UVATLAS_GEODESIC_FAST: out << "FAST"; break;
+    case UVATLAS_GEODESIC_QUALITY: out << "QUALITY"; break;
+    default: out << int(val) << " (unknown)";
+    }
+    return out;
+  }
+}  // namespace DirectX
 
 //============================================================================
 
@@ -48,41 +81,56 @@ namespace vmesh {
   
 //============================================================================
 
+static std::istream&
+operator>>(std::istream& in, SmoothingMethod& val)
+{
+  unsigned int tmp;
+  in >> tmp;
+  val = SmoothingMethod(tmp);
+  return in;
+}
+
+//----------------------------------------------------------------------------
+
+static std::ostream&
+operator<<(std::ostream& out, SmoothingMethod val)
+{
+  switch (val) {
+  case SmoothingMethod::NONE: out << "0 (None)"; break;
+  case SmoothingMethod::VERTEX_CONSTRAINT:
+    out << "1 (Vertex constraint)";
+    break;
+  }
+  return out;
+}
+
+//============================================================================
+
 struct VMCEncoderParameters {
   // mesh
-  int32_t qpPosition;
-  int32_t qpTexCoord;
-  int32_t bitDepthPosition;
-  int32_t bitDepthTexCoord;
-  std::string geometryMeshEncoderPath;
-  std::string geometryMeshDecoderPath;
+  int32_t qpPosition = 10;
+  int32_t qpTexCoord = 8;
+  int32_t bitDepthPosition =12;
+  int32_t bitDepthTexCoord = 12;
 
   // geometry video
   int32_t geometryVideoBlockSize = 16;
   int32_t geometryVideoWidthInBlocks = 16;
   int32_t geometryVideoBitDepth = 10;
-  std::string geometryVideoEncoderPath;
-  std::string geometryVideoEncoderConfig;
+  std::string geometryVideoEncoderConfig ={};
 
   // texture video
   int32_t textureVideoBitDepth = 10;
-  int32_t textureVideoQP;
-  std::string textureVideoEncoderPath;
-  std::string textureVideoEncoderConfig;
-  std::string textureVideoHDRToolPath;
-  std::string textureVideoHDRToolEncConfig;
-  std::string textureVideoHDRToolDecConfig;
-
-  // subdivision
-  SubdivisionMethod subdivisionMethod =
-    SubdivisionMethod::MID_POINT;
-  int32_t subdivisionIterationCount;
+  int32_t textureVideoQP = 8;
+  std::string textureVideoEncoderConfig = {};
+  std::string textureVideoHDRToolEncConfig = {};
+  std::string textureVideoHDRToolDecConfig = {};
 
   // displacements
   DisplacementCoordinateSystem displacementCoordinateSystem =
     DisplacementCoordinateSystem::LOCAL;
-  bool encodeDisplacementsVideo;
-  bool encodeTextureVideo;
+  bool encodeDisplacementsVideo =true;
+  bool encodeTextureVideo =true;
 
   // lifting
   double liftingUpdateWeight = 0.125;
@@ -90,12 +138,11 @@ struct VMCEncoderParameters {
   bool liftingSkipUpdate = false;
   double liftingQuantizationBias[3];
   double liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
-
-  int32_t liftingQuantizationParameters[3];
+  int32_t liftingQuantizationParameters[3] ={16, 28, 28};
 
   // texture transfer
-  int32_t textureWidth;
-  int32_t textureHeight;
+  int32_t textureWidth = 2048;
+  int32_t textureHeight = 2048;
   int32_t textureTransferSamplingSubdivisionIterationCount = 3;
   int32_t textureTransferPaddingBoundaryIterationCount = 2;
   int32_t textureTransferPaddingDilateIterationCount = 2;
@@ -103,13 +150,51 @@ struct VMCEncoderParameters {
   double textureTransferPaddingSparseLinearThreshold = 0.05;  //0.005
 
   // input
-  bool unifyVertices;
-  bool invertOrientation;
-  bool normalizeUV;
+  bool unifyVertices = false;
+  bool invertOrientation = false;
+  bool normalizeUV = false;
 
   // output
   std::string intermediateFilesPathPrefix = {};
-  bool keepIntermediateFiles;
+  bool keepIntermediateFiles = false;
+
+  // GeometryDecimate  
+  int32_t texCoordQuantizationBits = 0;
+  int32_t minCCTriangleCount = 0;
+  double targetTriangleRatio = 0.125;
+  double triangleFlipThreshold = 0.3;
+  double trackedTriangleFlipThreshold = 0.1;
+  double trackedPointNormalFlipThreshold = 0.5;
+
+  // TextureParametrization  
+  size_t maxCharts = size_t();
+  float maxStretch = 0.16667f;
+  float gutter = 2.f;
+  size_t width = 512;
+  size_t height = 512;
+  DirectX::UVATLAS uvOptions = DirectX::UVATLAS_DEFAULT;
+
+  // GeometryParametrization
+  int geometrySamplingSubdivisionIterationCount = 3;
+  bool applyVertexUnification = true;
+  int32_t geometryFittingIterationCount = 16;
+  double geometrySmoothingCoeffcient = 0.25;
+  double geometrySmoothingCoeffcientDecayRatio = 0.75;
+  double geometryMissedVerticesSmoothingCoeffcient = 0.1;
+  int32_t geometryMissedVerticesSmoothingIterationCount = 10;
+  SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
+  int32_t subdivisionIterationCount = 3;
+  bool fitSubdivisionSurface = true;
+  double initialDeformNormalDeviationThreshold = 0.1;
+  int32_t initialDeformNNCount = 1;
+  bool initialDeformForceNormalDisplacement = false;
+  bool applySmoothingDeform = true;
+  SmoothingMethod smoothDeformSmoothingMethod =
+    SmoothingMethod::VERTEX_CONSTRAINT;
+  bool smoothDeformUpdateNormals = true;
+  double smoothDeformTriangleNormalFlipThreshold = -0.5;
+  bool smoothingDeformUseInitialGeometry = true;
+  bool smoothingDeformSmoothMotion = true;  
 };
 
 //============================================================================
@@ -121,6 +206,12 @@ public:
   VMCEncoder& operator=(const VMCEncoder& rhs) = delete;
   ~VMCEncoder() = default;
 
+  int32_t compressOnly(
+    const VMCGroupOfFramesInfo& gofInfo,
+    VMCGroupOfFrames& gof,
+    Bitstream& bitstream,
+    const VMCEncoderParameters& params);
+
   int32_t compress(
     const VMCGroupOfFramesInfo& gofInfo,
     VMCGroupOfFrames& gof,
@@ -129,9 +220,9 @@ public:
 
 private:
   void unifyVertices(
-    const vmesh::VMCGroupOfFramesInfo& gofInfo,
-    vmesh::VMCGroupOfFrames& gof,
-    const vmesh::VMCEncoderParameters& params);
+    const VMCGroupOfFramesInfo& gofInfo,
+    VMCGroupOfFrames& gof,
+    const VMCEncoderParameters& params);
   int32_t computeDracoMapping(
     TriangleMesh<double> base,
     std::vector<int32_t>& mapping,

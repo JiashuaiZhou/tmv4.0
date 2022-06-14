@@ -52,8 +52,8 @@ void hmLibVideoDecoder<T>::decode( std::vector<uint8_t>& bitstream,
   decoder.decode( bitstream, outputBitDepth, video );
 }
 
-template class vmesh::hmLibVideoDecoder<uint8_t>;
-template class vmesh::hmLibVideoDecoder<uint16_t>;
+template class hmLibVideoDecoder<uint8_t>;
+template class hmLibVideoDecoder<uint16_t>;
 
 }  // namespace vmesh
 

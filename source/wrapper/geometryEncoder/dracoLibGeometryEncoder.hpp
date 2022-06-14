@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined( USE_DRACO_GEOMETRY_CODEC )
-#include "mesh.hpp"
+#include "util/mesh.hpp"
 #include "virtualGeometryEncoder.hpp"
 
 namespace vmesh {

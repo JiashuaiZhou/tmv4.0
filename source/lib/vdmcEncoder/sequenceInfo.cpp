@@ -37,9 +37,9 @@
 #include <fstream>
 #include <string>
 
-#include "misc.hpp"
-#include "mesh.hpp"
-#include "vector.hpp"
+#include "util/misc.hpp"
+#include "util/mesh.hpp"
+#include "util/vector.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
 
@@ -171,30 +171,30 @@ SequenceInfo::generate(
       currentGofIndex = gofIndex;
       sequenceInfo_.resize(sequenceInfo_.size() + 1);
       auto& gofInfo = sequenceInfo_.back();
-      gofInfo.frameCount = 1;
-      gofInfo.startFrameIndex = frameIndex;
-      gofInfo.index = gofIndex;
+      gofInfo.frameCount_ = 1;
+      gofInfo.startFrameIndex_ = frameIndex;
+      gofInfo.index_ = gofIndex;
       VMCFrameInfo frameInfo;
-      frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex;
+      frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
       frameInfo.referenceFrameIndex = -1;
       frameInfo.type = FrameType::INTRA;
-      gofInfo.framesInfo.reserve(groupOfFramesMaxSize_);
-      gofInfo.framesInfo.push_back(frameInfo);
+      gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
+      gofInfo.framesInfo_.push_back(frameInfo);
     } else {
       auto& gofInfo = sequenceInfo_.back();
-      ++gofInfo.frameCount;
+      ++gofInfo.frameCount_;
       VMCFrameInfo frameInfo;
 
       if (referenceFrameIndex == frameIndex) {
-        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex;
+        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
         frameInfo.type = FrameType::INTRA;
       } else {
-        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex;
+        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
         frameInfo.type = FrameType::SKIP;
       }
-      gofInfo.framesInfo.push_back(frameInfo);
+      gofInfo.framesInfo_.push_back(frameInfo);
     }
   }
   return 0;
@@ -210,12 +210,12 @@ SequenceInfo::save(const std::string outputPath)
   }
   for (int gofIndex = 0; gofIndex < (int)sequenceInfo_.size(); gofIndex++) {
     auto& gofInfo = sequenceInfo_[gofIndex];
-    for (auto& frameInfo : gofInfo.framesInfo) {
-      auto frameIndex = frameInfo.frameIndex + gofInfo.startFrameIndex;
+    for (auto& frameInfo : gofInfo.framesInfo_) {
+      auto frameIndex = frameInfo.frameIndex + gofInfo.startFrameIndex_;
       auto refIndex = frameInfo.referenceFrameIndex == -1
-        ? frameInfo.frameIndex + gofInfo.startFrameIndex
-        : frameInfo.referenceFrameIndex + gofInfo.startFrameIndex;
-      fout << frameIndex << ' ' << refIndex << ' ' << gofInfo.index << '\n';
+        ? frameInfo.frameIndex + gofInfo.startFrameIndex_
+        : frameInfo.referenceFrameIndex + gofInfo.startFrameIndex_;
+      fout << frameIndex << ' ' << refIndex << ' ' << gofInfo.index_ << '\n';
     }
   }
   return 0;
@@ -239,9 +239,9 @@ SequenceInfo::load(
         std::min(groupOfFramesMaxSize_, frameCount_ - f);
       sequenceInfo_.resize(sequenceInfo_.size() + 1);
       auto& gofInfo = sequenceInfo_.back();
-      gofInfo.frameCount = frameCountGOF;
-      gofInfo.startFrameIndex = startFrameGOF;
-      gofInfo.index = gofIndex;
+      gofInfo.frameCount_ = frameCountGOF;
+      gofInfo.startFrameIndex_ = startFrameGOF;
+      gofInfo.index_ = gofIndex;
       gofInfo.resize(frameCountGOF);
       for (int32_t frameIndexInGOF = 0; frameIndexInGOF < frameCountGOF;
            ++frameIndexInGOF) {
@@ -285,30 +285,30 @@ SequenceInfo::load(
         currentGofIndex = gofIndex;
         sequenceInfo_.resize(sequenceInfo_.size() + 1);
         auto& gofInfo = sequenceInfo_.back();
-        gofInfo.frameCount = 1;
-        gofInfo.startFrameIndex = frameIndex;
-        gofInfo.index = gofIndex;
+        gofInfo.frameCount_ = 1;
+        gofInfo.startFrameIndex_ = frameIndex;
+        gofInfo.index_ = gofIndex;
         VMCFrameInfo frameInfo;
-        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex;
+        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
         frameInfo.type = FrameType::INTRA;
-        gofInfo.framesInfo.reserve(groupOfFramesMaxSize_);
-        gofInfo.framesInfo.push_back(frameInfo);
+        gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
+        gofInfo.framesInfo_.push_back(frameInfo);
       } else {
         auto& gofInfo = sequenceInfo_.back();
-        ++gofInfo.frameCount;
+        ++gofInfo.frameCount_;
         VMCFrameInfo frameInfo;
 
         if (referenceFrameIndex == frameIndex) {
-          frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex;
+          frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex = -1;
           frameInfo.type = FrameType::INTRA;
         } else {
-          frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex;
+          frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
           frameInfo.type = FrameType::SKIP;
         }
-        gofInfo.framesInfo.push_back(frameInfo);
+        gofInfo.framesInfo_.push_back(frameInfo);
       }
     }
     fin.close();

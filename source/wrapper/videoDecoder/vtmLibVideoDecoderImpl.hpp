@@ -32,7 +32,7 @@
  */
 #if defined( USE_VTM_VIDEO_CODEC )
 
-#include "image.hpp"
+#include "util/image.hpp"
 
 #include "vtmLibVideoDecoderCfg.hpp"
 

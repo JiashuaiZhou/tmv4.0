@@ -36,13 +36,13 @@
 #include <chrono>
 #include <program-options-lite/program_options_lite.h>
 
-#include "bitstream.hpp"
+#include "util/bitstream.hpp"
 #include "decoder.hpp"
-#include "misc.hpp"
-#include "verbose.hpp"
+#include "util/misc.hpp"
+#include "util/verbose.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
-#include "vmcstats.hpp"
+#include "vmcStats.hpp"
 
 //============================================================================
 
@@ -167,8 +167,8 @@ saveGroupOfFrames(
     !params.decodedMeshPath.empty()
     && !params.decodedTexturePath.empty()
     && !params.decodedMaterialLibPath.empty()) {
-    for (int f = 0; f < gofInfo.frameCount; ++f) {
-      const auto n = gofInfo.startFrameIndex + f;
+    for (int f = 0; f < gofInfo.frameCount_; ++f) {
+      const auto n = gofInfo.startFrameIndex_ + f;
       auto strObj = vmesh::expandNum(params.decodedMeshPath, n);
       auto strTex = vmesh::expandNum(params.decodedTexturePath, n);
       auto strMat = vmesh::expandNum(params.decodedMaterialLibPath, n);
@@ -201,8 +201,8 @@ decompress(const Parameters& params)
   vmesh::VMCStats totalStats;
   totalStats.reset();
   size_t byteCounter = 0;
-  gofInfo.index = 0;
-  gofInfo.startFrameIndex = params.startFrame;
+  gofInfo.index_ = 0;
+  gofInfo.startFrameIndex_ = params.startFrame;
   while (byteCounter != bitstream.size()) {
     vmesh::VMCGroupOfFrames gof;
     
@@ -224,11 +224,11 @@ decompress(const Parameters& params)
     }
 
     totalStats += gof.stats;
-    gofInfo.startFrameIndex += gof.stats.frameCount;
-    ++gofInfo.index;
+    gofInfo.startFrameIndex_ += gof.stats.frameCount;
+    ++gofInfo.index_;
 
     if (vmesh::vout) {
-      vmesh::vout << "\n------- Group of frames " << gofInfo.index
+      vmesh::vout << "\n------- Group of frames " << gofInfo.index_
            << " -----------\n";
       gof.stats.dump( "GOF", params.framerate);
       vmesh::vout << "---------------------------------------\n";

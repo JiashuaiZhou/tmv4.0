@@ -1381,8 +1381,8 @@ void vtmLibVideoEncoderImpl<T>::xReadPicture( PelUnitBuf* pic, FrameSequence<T>&
              m_inputColourSpaceConvert == IPCOLOURSPACE_RGBtoGBR );
 }
 
-template class vmesh::vtmLibVideoEncoderImpl<uint8_t>;
-template class vmesh::vtmLibVideoEncoderImpl<uint16_t>;
+template class vtmLibVideoEncoderImpl<uint8_t>;
+template class vtmLibVideoEncoderImpl<uint16_t>;
 
 } // namespace vmesh
 

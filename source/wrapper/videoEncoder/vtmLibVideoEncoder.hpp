@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef USE_VTM_VIDEO_CODEC
-#include "image.hpp"
+#include "util/image.hpp"
 #include "virtualVideoEncoder.hpp"
 
 namespace vmesh {

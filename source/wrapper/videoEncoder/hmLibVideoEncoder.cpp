@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined( USE_HM_VIDEO_CODEC )
-#include "image.hpp"
+#include "util/image.hpp"
 #include "hmLibVideoEncoder.hpp"
 #include "hmLibVideoEncoderImpl.hpp"
 
@@ -102,8 +102,8 @@ hmLibVideoEncoder<T>::encode(
   encoder.encode( videoSrc, cmd.str(), bitstream, videoRec );
 }
 
-template class vmesh::hmLibVideoEncoder<uint8_t>;
-template class vmesh::hmLibVideoEncoder<uint16_t>;
+template class hmLibVideoEncoder<uint8_t>;
+template class hmLibVideoEncoder<uint16_t>;
 
 } // namespace vmesh 
 

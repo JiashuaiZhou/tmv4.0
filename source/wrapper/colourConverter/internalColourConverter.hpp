@@ -32,7 +32,7 @@
  */
 
 #include "virtualColourConverter.hpp"
-#include "image.hpp"
+#include "util/image.hpp"
 
 namespace vmesh {
 

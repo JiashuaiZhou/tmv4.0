@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "internalColourConverter.hpp"
-#include "image.hpp"
+#include "util/image.hpp"
 
 namespace vmesh {
 
@@ -638,7 +638,7 @@ InternalColourConverter<T>::convertYUV420ToRGB444(
   size_t filter,
   bool BGR)
 {
-  dst.resize(src.width(), src.height(), BGR ? vmesh::ColourSpace::BGR444p : vmesh::ColourSpace::RGB444p, src.frameCount());
+  dst.resize(src.width(), src.height(), BGR ? ColourSpace::BGR444p : ColourSpace::RGB444p, src.frameCount());
   for (int i = 0; i < src.frameCount(); i++) {
     convertYUV420ToRGB444(src[i], dst[i], srcNumByte, dstNumByte, filter, BGR);
   }
@@ -949,7 +949,7 @@ InternalColourConverter<T>::upsample(
   }
 }
 
-template class vmesh::InternalColourConverter<uint8_t>;
-template class vmesh::InternalColourConverter<uint16_t>;
+template class InternalColourConverter<uint8_t>;
+template class InternalColourConverter<uint16_t>;
 
 }  // namespace vmesh

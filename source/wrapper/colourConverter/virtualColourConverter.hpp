@@ -32,7 +32,7 @@
  */
 #pragma once
 
-#include "image.hpp"
+#include "util/image.hpp"
 namespace vmesh {
 
 template <class T>

@@ -363,8 +363,8 @@ void hmLibVideoDecoderImpl<T>::xWritePicture( const pcc_hm::TComPicYuv* pic, Fra
     m_internalBitDepths - m_outputBitDepth[0], format, false /*m_bRGB2GBR */ );
 }
 
-template class vmesh::hmLibVideoDecoderImpl<uint8_t>;
-template class vmesh::hmLibVideoDecoderImpl<uint16_t>;
+template class hmLibVideoDecoderImpl<uint8_t>;
+template class hmLibVideoDecoderImpl<uint16_t>;
 
 }  // namespace vmesh
 

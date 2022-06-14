@@ -39,9 +39,9 @@
 
 #include <program-options-lite/program_options_lite.h>
 
-#include "misc.hpp"
-#include "mesh.hpp"
-#include "vector.hpp"
+#include "util/misc.hpp"
+#include "util/mesh.hpp"
+#include "util/vector.hpp"
 #include "version.hpp"
 #include "sequenceInfo.hpp"
 

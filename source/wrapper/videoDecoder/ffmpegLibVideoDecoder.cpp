@@ -189,8 +189,8 @@ void ffmpegLibVideoDecoder<T>::decode( std::vector<uint8_t>& bitstream,
   decodeStream( bitstream, video );
 }
 
-template class vmesh::ffmpegLibVideoDecoder<uint8_t>;
-template class vmesh::ffmpegLibVideoDecoder<uint16_t>;
+template class ffmpegLibVideoDecoder<uint8_t>;
+template class ffmpegLibVideoDecoder<uint16_t>;
 
 }  // namespace vmesh
 

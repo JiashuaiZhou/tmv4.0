@@ -32,7 +32,7 @@
  */
 #if defined(USE_DRACO_GEOMETRY_CODEC)
 
-#include "mesh.hpp"
+#include "util/mesh.hpp"
 #include "dracoLibGeometryDecoder.hpp"
 
 #include "draco/compression/decode.h"
@@ -50,7 +50,7 @@ DracoLibGeometryDecoder<T>::~DracoLibGeometryDecoder()
 
 template<typename T>
 void
-convert(std::unique_ptr<draco::Mesh>& src, vmesh::TriangleMesh<T>& dst)
+convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
 {
   draco::Mesh& mesh = *src;
   auto posAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::POSITION);
@@ -155,8 +155,8 @@ DracoLibGeometryDecoder<T>::decode(
   }    
 }
 
-template class vmesh::DracoLibGeometryDecoder<float>;
-template class vmesh::DracoLibGeometryDecoder<double>;
+template class DracoLibGeometryDecoder<float>;
+template class DracoLibGeometryDecoder<double>;
 
 }  // namespace vmesh
 

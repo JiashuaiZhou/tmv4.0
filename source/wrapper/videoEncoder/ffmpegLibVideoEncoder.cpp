@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined( USE_FFMPEG_VIDEO_CODEC )
-#include "image.hpp"
+#include "util/image.hpp"
 #include "ffmpegLibVideoEncoder.hpp"
 #include "ffmpegLibVideoDecoder.hpp"
 
@@ -164,8 +164,8 @@ void ffmpegLibVideoEncoder<T>::encode( FrameSequence<T>&            videoSrc,
           videoRec.height() );
 }
 
-template class vmesh::ffmpegLibVideoEncoder<uint8_t>;
-template class vmesh::ffmpegLibVideoEncoder<uint16_t>;
+template class ffmpegLibVideoEncoder<uint8_t>;
+template class ffmpegLibVideoEncoder<uint16_t>;
 
 }  // namespace vmesh
 

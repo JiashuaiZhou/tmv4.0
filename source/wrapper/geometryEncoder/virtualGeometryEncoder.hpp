@@ -32,7 +32,7 @@
  */
 #pragma once 
 
-#include "mesh.hpp"
+#include "util/mesh.hpp"
 
 namespace vmesh {
 

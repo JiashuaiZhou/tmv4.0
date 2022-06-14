@@ -35,11 +35,11 @@
 
 #include "triangleMeshDecimator.hpp"
 
-#include "matrix.hpp"
-#include "mesh.hpp"
-#include "misc.hpp"
-#include "mutablepriorityheap.hpp"
-#include "triangle.hpp"
+#include "util/matrix.hpp"
+#include "util/mesh.hpp"
+#include "util/misc.hpp"
+#include "util/mutablepriorityheap.hpp"
+#include "util/triangle.hpp"
 
 namespace vmesh {
 

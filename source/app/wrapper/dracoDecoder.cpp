@@ -36,9 +36,9 @@
 #include <chrono>
 #include <program-options-lite/program_options_lite.h>
 
-#include "verbose.hpp"
+#include "util/verbose.hpp"
 #include "version.hpp"
-#include "bitstream.hpp"
+#include "util/bitstream.hpp"
 
 #include "virtualGeometryDecoder.hpp"
 

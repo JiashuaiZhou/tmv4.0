@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "virtualColourConverter.hpp"
-#include "image.hpp"
+#include "util/image.hpp"
 
 #if defined( USE_HDRTOOLS )
 

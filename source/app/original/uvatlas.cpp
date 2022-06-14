@@ -49,10 +49,11 @@
 #include <memory>
 #include <program-options-lite/program_options_lite.h>
 
-#include "mesh.hpp"
-#include "misc.hpp"
+#include "util/mesh.hpp"
+#include "util/misc.hpp"
 
-#include "reparametrization.hpp"
+#include "encoder.hpp"
+#include "textureParametrization.hpp"
 
 namespace {
 struct Parameters {
@@ -61,7 +62,7 @@ struct Parameters {
   std::string input;
   std::string output;
 
-  vmesh::VMCReparametrizationParameters params;
+  vmesh::VMCEncoderParameters params;
 };
 }  // namespace
 
@@ -161,9 +162,9 @@ main(int argc, char* argv[])
     return 1;
   }
 
-  // Reparametrization
-  vmesh::Reparametrization reparametrization;
-  reparametrization.generate(frame, params.params);
+  // TextureParametrization
+  vmesh::TextureParametrization textureParametrization;
+  textureParametrization.generate(frame, params.params);
 
   // Save decimate texture model
   const auto& outputName = vmesh::expandNum(params.output, params.fnum);

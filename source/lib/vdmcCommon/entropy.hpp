@@ -35,8 +35,8 @@
 
 #pragma once
 
-#include "entropydirac.hpp"
-#include "entropyutils.hpp"
+#include "entropyDirac.hpp"
+#include "entropyUtils.hpp"
 
 namespace vmesh {
 using EntropyEncoder = EntropyEncoderWrapper<dirac::ArithmeticEncoder>;

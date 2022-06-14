@@ -36,8 +36,8 @@
 #pragma once
 
 #include "entropy.hpp"
-#include "misc.hpp"
-#include "vector.hpp"
+#include "util/misc.hpp"
+#include "util/vector.hpp"
 #include <schroedinger/schroarith.h>
 
 namespace vmesh {

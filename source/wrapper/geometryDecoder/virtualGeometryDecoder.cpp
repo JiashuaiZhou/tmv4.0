@@ -51,7 +51,7 @@ std::shared_ptr<VirtualGeometryDecoder<T>> VirtualGeometryDecoder<T>::create( Ge
   return nullptr;
 }
 
-template class vmesh::VirtualGeometryDecoder<float>;
-template class vmesh::VirtualGeometryDecoder<double>;
+template class VirtualGeometryDecoder<float>;
+template class VirtualGeometryDecoder<double>;
 
 } // namespace vmesh 

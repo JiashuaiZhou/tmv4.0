@@ -668,14 +668,12 @@ VMCEncoder::transferTexture(
     params.textureTransferSamplingSubdivisionIterationCount);
   frame.outputTexture.resize(
     params.textureWidth, params.textureHeight, ColourSpace::BGR444p);
-  frame.outputTextureOccupancy.resize(
-    params.textureWidth, params.textureHeight);
+    
   if (params.invertOrientation) {
     frame.rec.invertOrientation();
   }
   const auto ret = transferTexture(
-    targetMesh, frame.rec, frame.inputTexture, frame.outputTexture,
-    frame.outputTextureOccupancy, params);
+    targetMesh, frame.rec, frame.inputTexture, frame.outputTexture, params);
   if (params.invertOrientation) {
     frame.rec.invertOrientation();
   }
@@ -688,19 +686,15 @@ VMCEncoder::transferTexture(
   const TriangleMesh<double>& sourceMesh,
   const Frame<uint8_t>& targetTexture,  // , ColourSpace::BGR444p
   Frame<uint8_t>& outputTexture,        // , ColourSpace::BGR444p
-  Plane<uint8_t>& occupancy,
   const VMCEncoderParameters& params)
 {
   if (
     !targetMesh.pointCount() || !sourceMesh.pointCount()
     || targetMesh.triangleCount() != targetMesh.texCoordTriangleCount()
     || sourceMesh.triangleCount() != sourceMesh.texCoordTriangleCount()
-    || outputTexture.width() <= 0 || outputTexture.height() <= 0
-    || outputTexture.width() != occupancy.width()
-    || outputTexture.height() != occupancy.height()) {
+    || outputTexture.width() <= 0 || outputTexture.height() <= 0) {
     return -1;
   }
-  occupancy.fill(uint8_t(0));
 
   StaticAdjacencyInformation<int32_t> vertexToTriangleTarget;
   ComputeVertexToTriangle(
@@ -718,6 +712,9 @@ VMCEncoder::transferTexture(
   const auto sTriangleCount = sourceMesh.triangleCount();
   Plane<int32_t> triangleMap;
   triangleMap.resize(oWidth, oHeight);
+  Plane<uint8_t> occupancy;
+  occupancy.resize(oWidth, oHeight);
+  occupancy.fill(uint8_t(0));
 
   for (int32_t t = 0; t < sTriangleCount; ++t) {
     const auto& triUV = sourceMesh.texCoordTriangle(t);

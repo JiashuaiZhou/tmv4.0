@@ -126,7 +126,6 @@ struct VMCFrame {
   std::vector<SubdivisionLevelInfo> subdivInfoLevelOfDetails;
   Frame<uint8_t> inputTexture;   // ColourSpace::BGR444p
   Frame<uint8_t> outputTexture;  // ColourSpace::BGR444p
-  Plane<uint8_t> outputTextureOccupancy;
 };
 
 //============================================================================

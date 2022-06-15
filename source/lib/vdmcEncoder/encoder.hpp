@@ -275,8 +275,7 @@ private:
     const TriangleMesh<double>& targetMesh,
     const TriangleMesh<double>& sourceMesh,
     const Frame<uint8_t>& targetTexture,  // ColourSpace::BGR444p
-    Frame<uint8_t>& outputTexture,  // ColourSpace::BGR444p
-    Plane<uint8_t>& occupancy,
+    Frame<uint8_t>& outputTexture,        // ColourSpace::BGR444p
     const VMCEncoderParameters& params);
 
 private:

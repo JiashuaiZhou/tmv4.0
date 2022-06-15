@@ -54,20 +54,15 @@
 
 namespace vmesh {
 
-// NOTE: fix issue and debug function. 
-#define DEBUG_WRITE_READ_OBJ( obj, name ) {\
-  auto tmp = std::string( name );  \
-  obj.saveToOBJ(tmp); \
-  obj.clear(); \
-  obj.loadFromOBJ(tmp); \
-  std::remove( tmp.c_str() ); \
-}
-#define DEBUG_WRITE_READ_OBJ_INT64( obj, name ) {\
-  auto tmp = std::string( name );  \
-  obj.saveToOBJ<int64_t>(tmp); \
-  obj.clear(); \
-  obj.loadFromOBJ(tmp); \
-  std::remove( tmp.c_str() ); \
+// NOTE: fix issue and debug function.
+template<typename T>
+void
+writeAndReadMeshInObjFiles(TriangleMesh<T>& obj, const std::string name)
+{
+  obj.saveToOBJ(name);
+  obj.clear();
+  obj.loadFromOBJ(name);
+  std::remove(name.c_str());
 }
 
 //============================================================================
@@ -288,9 +283,12 @@ VMCEncoder::computeDracoMapping(
   for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
     base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
   }
-
-
-  DEBUG_WRITE_READ_OBJ_INT64(base, "base_int64.obj" );
+  // Bug fix
+  if (params.forceWriteReadIntermediateModels) {
+    auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
+      + std::to_string(frameIndex);
+    writeAndReadMeshInObjFiles(base, prefix + "base.obj");
+  }
 
   // Encode
   GeometryEncoderParameters dracoParams;
@@ -311,7 +309,7 @@ VMCEncoder::computeDracoMapping(
     save(prefix + ".drc", geometryBitstream);
   }
 
-  // Sub divide base
+  // Geometry parametrisation base
   auto fsubdiv0 = base;
   fsubdiv0.subdivideMidPoint(params.subdivisionIterationCount);
   std::vector<int32_t> texCoordToPoint0;
@@ -336,8 +334,12 @@ VMCEncoder::computeDracoMapping(
     map0[vertex0] = texCoordToPoint0[v];
   }
 
-  // Sub divide rec
-  DEBUG_WRITE_READ_OBJ( rec, "fsubdiv1.obj"); 
+  // Geometry parametrisation rec  
+  if (params.forceWriteReadIntermediateModels) {
+    auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
+      + std::to_string(frameIndex);
+    writeAndReadMeshInObjFiles( rec, prefix + "fsubdiv1.obj"); 
+  }
   auto fsubdiv1 = rec;
   fsubdiv1.subdivideMidPoint(params.subdivisionIterationCount);
   const auto pointCount1 = fsubdiv1.pointCount();
@@ -533,7 +535,11 @@ VMCEncoder::compressBaseMesh(
 
     // Round positions
     base = rec;
-    DEBUG_WRITE_READ_OBJ(base, "new_base.obj");
+    if (params.forceWriteReadIntermediateModels) {
+    auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
+      + std::to_string(frameIndex);
+      writeAndReadMeshInObjFiles(base, prefix + "new_base.obj");
+    }
     qpositions.resize(base.pointCount());
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       auto& qpos = qpositions[v];
@@ -1014,38 +1020,44 @@ VMCEncoder::compress(
       std::cerr << "Error: can't simplify mesh !\n";
       return 1;
     }    
-    // Debug 
-    DEBUG_WRITE_READ_OBJ( frame.mapped, prefix + "_mapped.obj" );
-    DEBUG_WRITE_READ_OBJ( frame.reference, prefix + "_reference.obj" );
-    DEBUG_WRITE_READ_OBJ( frame.decimate, prefix + "_decimate.obj" );
+    // Bug fix
+    if (params.forceWriteReadIntermediateModels) {
+      writeAndReadMeshInObjFiles(frame.mapped, prefix + "_mapped.obj");
+      writeAndReadMeshInObjFiles(frame.reference, prefix + "_reference.obj");
+      writeAndReadMeshInObjFiles(frame.decimate, prefix + "_decimate.obj");
+    }
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       frame.mapped.saveToOBJ(prefix + "_mapped.obj");
       frame.reference.saveToOBJ(prefix + "_reference.obj");
       frame.decimate.saveToOBJ(prefix + "_decimate.obj");
     }
-    
+
     // TextureParametrization
     std::cout << "TextureParametrization \n";
     textureParametrization.generate(frame, params);  // create decimateTexture
-    // Debug 
-    DEBUG_WRITE_READ_OBJ( frame.decimateTexture, prefix + "_decimateTexture.obj" );    
+    // Bug fix
+    if (params.forceWriteReadIntermediateModels) {
+      writeAndReadMeshInObjFiles(
+        frame.decimateTexture, prefix + "_decimateTexture.obj");
+    }
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       frame.decimateTexture.saveToOBJ(prefix + "_decimateTexture.obj");
-    }    
+    }
 
     // Fitsubdiv
     std::cout << "Fitsubdiv \n";
     GeometryParametrization fitsubdiv;
     TriangleMesh<double> mtarget;
     TriangleMesh<double> subdiv0;
-    fitsubdiv.generate(frame, params, mtarget, subdiv0);  
-    // Debug 
-    DEBUG_WRITE_READ_OBJ( frame.base, prefix + "_base.obj" );    
-    DEBUG_WRITE_READ_OBJ( frame.subdiv, prefix + "_subdiv.obj" );    
-    DEBUG_WRITE_READ_OBJ( frame.nsubdiv, prefix + "_nsubdiv.obj" );    
-
+    fitsubdiv.generate(frame, params, mtarget, subdiv0);
+    // Bug fix
+    if (params.forceWriteReadIntermediateModels) {
+      writeAndReadMeshInObjFiles(frame.base, prefix + "_base.obj");
+      writeAndReadMeshInObjFiles(frame.subdiv, prefix + "_subdiv.obj");
+      writeAndReadMeshInObjFiles(frame.nsubdiv, prefix + "_nsubdiv.obj");
+    }
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       frame.decimateTexture.saveToOBJ(prefix + "_reparamDecimateTexture.obj");

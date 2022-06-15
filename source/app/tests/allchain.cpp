@@ -123,18 +123,18 @@ performAllChain(
   const double framerate= 30.;
   vmesh::VMCEncoderParameters params;
 
-  // Simplify
+  // Geometry dedimate
   params.targetTriangleRatio = 0.03;
   params.minCCTriangleCount = 8;
   params.texCoordQuantizationBits = 13;
 
-  // Reparametrisation
+  // Texture parametrization
   params.width = 2048;
   params.height = 2048;
   params.uvOptions = DirectX::UVATLAS_GEODESIC_QUALITY;
   params.gutter = 32;
   
-  // Fit sub div
+  // Geometry parametrization
   params.geometrySamplingSubdivisionIterationCount = 3;
   params.geometryFittingIterationCount = 16;
   params.geometrySmoothingCoeffcient = 0.25;

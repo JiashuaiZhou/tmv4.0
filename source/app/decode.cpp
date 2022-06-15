@@ -62,8 +62,8 @@ struct Parameters {
   std::string decodedTexturePath;
   std::string decodedMaterialLibPath;
 
-  int32_t startFrame =0; 
-  double framerate = 30.;
+  int32_t startFrame = 0; 
+  double framerate   = 30.;
 
   vmesh::VMCDecoderParameters decParams;
 };
@@ -80,31 +80,45 @@ try {
   /* clang-format off */
   po::Options opts;
   opts.addOptions()
-  ("help", print_help, false, "This help text")
-  ("config,c", po::parseConfigFile, "Configuration file name")
-  ("verbose,v", params.verbose, true, "Verbose output")
+  ("help",      print_help,                     false,  "This help text")
+  ("config,c",  po::parseConfigFile,                    "Configuration file name")
+  ("verbose,v", params.verbose,                 true,   "Verbose output")
+
+  (po::Section("Input"))
+    ("compressed", params.compressedStreamPath, {},     "Compressed bitstream")
+
+  (po::Section("Output"))
+    ("decmat",  params.decodedMaterialLibPath,  {},     "Decoded materials")
+    ("decmesh", params.decodedMeshPath,         {},     "Decoded mesh")
+    ("dectex",  params.decodedTexturePath,      {},     "Decoded texture")
 
   (po::Section("General"))
-  ("compressed", params.compressedStreamPath, {}, "Compressed bitstream")
-
-  (po::Section("Output (Decoder)"))
-  ("decmat",  params.decodedMaterialLibPath, {},   "Decoded materials")
-  ("decmesh", params.decodedMeshPath, {},   "Decoded mesh")
-  ("dectex",  params.decodedTexturePath, {},   "Decoded texture")
-  ("intermediateFilesPathPrefix", params.decParams.intermediateFilesPathPrefix, {},
-   "Intermediate files path prefix")
-  ("keep",    params.decParams.keepIntermediateFiles, false,
-   "Keep intermediate files")
-
-  (po::Section("Common"))
-  ("fstart",    params.startFrame, 1, "First frame number")
-  ("framerate", params.framerate, 30., "Frame rate")
+    ("fstart",   
+      params.startFrame, 
+      params.startFrame,
+      "First frame number")
+    ("framerate", 
+      params.framerate, 
+      params.framerate, 
+      "Frame rate")
+    ("keep",    
+      params.decParams.keepIntermediateFiles, 
+      params.decParams.keepIntermediateFiles, 
+      "Keep intermediate files")
+    ("intermediateFilesPathPrefix", 
+      params.decParams.intermediateFilesPathPrefix, 
+      params.decParams.intermediateFilesPathPrefix,
+      "Intermediate files path prefix")
 
   (po::Section("Decoder"))
-  ("normuv", params.decParams.normalizeUV, true,
-   "Normalize uv texture coordinates")
-  ("cscdecconfig", params.decParams.textureVideoHDRToolDecConfig, {},
-   "HDRTools decode cfg")
+    ("normuv",
+      params.decParams.normalizeUV, 
+      params.decParams.normalizeUV,
+      "Normalize uv texture coordinates")
+    ("cscdecconfig", 
+      params.decParams.textureVideoHDRToolDecConfig, 
+      params.decParams.textureVideoHDRToolDecConfig,
+      "HDRTools decode cfg")
   ;
   /* clang-format on */
 
@@ -143,8 +157,8 @@ try {
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
   po::dumpCfg(std::cout, opts, "General", 4);
-  po::dumpCfg(std::cout, opts, "Output (Decoder)", 4);
-  po::dumpCfg(std::cout, opts, "Common", 4);
+  po::dumpCfg(std::cout, opts, "Output", 4);
+  po::dumpCfg(std::cout, opts, "General", 4);
   po::dumpCfg(std::cout, opts, "Decoder", 4);
   std::cout << '\n';
   return true;

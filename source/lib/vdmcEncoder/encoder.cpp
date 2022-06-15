@@ -534,7 +534,6 @@ VMCEncoder::compressBaseMesh(
     // Round positions
     base = rec;
     DEBUG_WRITE_READ_OBJ(base, "new_base.obj");
-
     qpositions.resize(base.pointCount());
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       auto& qpos = qpositions[v];
@@ -682,6 +681,7 @@ VMCEncoder::transferTexture(
   }
   return ret;
 }
+
 int32_t
 VMCEncoder::transferTexture(
   const TriangleMesh<double>& targetMesh,

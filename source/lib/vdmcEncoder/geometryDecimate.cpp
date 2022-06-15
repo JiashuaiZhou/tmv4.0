@@ -53,14 +53,15 @@ namespace vmesh {
 //============================================================================
 
 bool 
-GeometryDecimate::decimate( VMCFrame& frame, const VMCEncoderParameters& params ) {
-  if (!unifyVertices(frame.input)) {
+GeometryDecimate::decimate( VMCFrame& frame, const VMCEncoderParameters& params ) {  
+  frame.reference = frame.input;
+  if (!unifyVertices(frame.reference)) {
     std::cerr << "Error: can't unify vertices!\n";
     return 1;
   }
 
   if (!decimate(
-        frame.input, frame.decimate, frame.mapped, params )) {
+        frame.reference, frame.decimate, frame.mapped, params )) {
     std::cerr << "Error: can't simplify mesh!\n";
     return 1;
   }
@@ -74,8 +75,6 @@ GeometryDecimate::decimate( VMCFrame& frame, const VMCEncoderParameters& params 
     std::cerr << "Error: can't remove small connected components!\n";
     return 1;
   }
-
-  frame.reference = frame.input;
   frame.reference.scaleTextureCoordinates( params.texCoordQuantizationBits );
   return 0;
 }

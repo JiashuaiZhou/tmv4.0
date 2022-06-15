@@ -116,16 +116,16 @@ struct VMCFrame {
   TriangleMesh<double> decimate;
   TriangleMesh<double> decimateTexture;
   TriangleMesh<double> base;
-  TriangleMesh<double> subdiv;  
-  TriangleMesh<double> nsubdiv;  
-  TriangleMesh<double> rec;  
+  TriangleMesh<double> subdiv;
+  TriangleMesh<double> nsubdiv;
+  TriangleMesh<double> rec;
   std::vector<int32_t> mapping;
   std::vector<Vec3<int32_t>> qpositions;
   std::vector<Vec3<double>> disp;
   std::vector<int64_t> subdivEdges;
   std::vector<SubdivisionLevelInfo> subdivInfoLevelOfDetails;
-  Frame<uint8_t> inputTexture;  // ColourSpace::BGR444p
-  Frame<uint8_t> outputTexture; // ColourSpace::BGR444p
+  Frame<uint8_t> inputTexture;   // ColourSpace::BGR444p
+  Frame<uint8_t> outputTexture;  // ColourSpace::BGR444p
   Plane<uint8_t> outputTextureOccupancy;
 };
 

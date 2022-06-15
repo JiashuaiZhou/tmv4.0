@@ -376,11 +376,14 @@ performAllChain(
     return;
   }
 
+  disableSubProcessLog.enable();
   // // Compute hashes
   auto hashBinOsw = hash(binOswPath);  
   auto hashBinNew = hash(binNewPath);
-  std::cout << "hashBinOsw = " << std::hex << hashBinOsw << "\n";
-  std::cout << "hashBinNew = " << std::hex << hashBinNew << "\n";
+  if( !disableSubProcessLog.disableLog()  ){
+    std::cout << "hashBinOsw = " << std::hex << hashBinOsw << "\n";
+    std::cout << "hashBinNew = " << std::hex << hashBinNew << "\n";
+  }
   ASSERT_EQ(hashBinOsw, hashBinNew) << "Old sw and new sw bin are differentes";
   for (int f = 0; f < frameCount; f++) {
     auto hashObjNew = hash(vmesh::expandNum(objNewPath, f));    

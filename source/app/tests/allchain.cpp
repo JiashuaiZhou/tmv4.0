@@ -158,7 +158,7 @@ performAllChain(
 
   // Encoder
   params.textureVideoHDRToolDecConfig = "cfg/hdrconvert/yuv420tobgr444.cfg";   
-  params.keepIntermediateFiles = 1;  
+  params.keepIntermediateFiles = 0;  
   params.qpPosition = 11;
   params.qpTexCoord = 10;
   params.liftingQuantizationParameters[0] = 39;

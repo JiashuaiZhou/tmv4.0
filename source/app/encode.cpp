@@ -342,7 +342,7 @@ try {
       "Output texture height")
   
   (po::Section("Bug fix"))    
-    ("cscdecconfig", 
+    ("forceWriteReadIntermediateModels", 
       params.encParams.forceWriteReadIntermediateModels, 
       params.encParams.forceWriteReadIntermediateModels, 
       "HDRTools decode cfg")
@@ -371,12 +371,6 @@ try {
 
   if (params.inputTexturePath.empty())
     err.error() << "input texture not specified\n";
-
-  if (params.baseMeshPath.empty())
-    err.error() << "base mesh not specified\n";
-
-  if (params.subdivMeshPath.empty())
-    err.error() << "subdivision mesh not specified\n";
 
   if (params.encParams.geometryVideoEncoderConfig.empty())
     err.error() << "geometry video config not specified\n";
@@ -465,7 +459,7 @@ saveGroupOfFrames(
       vmesh::Material<double> material;
       material.texture = vmesh::basename(strTex);
       material.save(strMat);
-      gof[f].rec.setMaterialLibrary(strMat);
+      gof[f].rec.setMaterialLibrary(vmesh::basename(strMat));
       gof[f].rec.saveToOBJ(strObj);
     }
     return 0;

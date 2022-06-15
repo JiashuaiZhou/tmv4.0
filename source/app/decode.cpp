@@ -190,7 +190,7 @@ saveGroupOfFrames(
       vmesh::Material<double> material;
       material.texture = vmesh::basename(strTex);
       material.save(strMat);
-      gof[f].rec.setMaterialLibrary(strMat);
+      gof[f].rec.setMaterialLibrary(vmesh::basename(strMat));
       gof[f].rec.saveToOBJ(strObj);
     }
     return 0;
@@ -216,8 +216,7 @@ decompress(const Parameters& params)
   size_t byteCounter = 0;
   gofInfo.index_ = 0;
   gofInfo.startFrameIndex_ = params.startFrame;
-  while (byteCounter != bitstream.size()) {
-    
+  while (byteCounter != bitstream.size()) {    
     // Decompress
     vmesh::VMCGroupOfFrames gof;
     auto start = std::chrono::steady_clock::now();
@@ -226,6 +225,7 @@ decompress(const Parameters& params)
       std::cerr << "Error: can't decompress group of frames!\n";
       return -1;
     }    
+    printf("gof.stats.frameCount = %d \n",gof.stats.frameCount);
     auto end = std::chrono::steady_clock::now();
     gof.stats.processingTimeInSeconds =
       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();

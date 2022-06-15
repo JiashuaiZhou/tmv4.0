@@ -176,7 +176,7 @@ saveGroupOfFrames(
       vmesh::Material<double> material;
       material.texture = vmesh::basename(strTex);
       material.save(strMat);
-      gof[f].rec.setMaterialLibrary(strMat);
+      gof[f].rec.setMaterialLibrary(vmesh::basename(strMat));
       gof[f].rec.saveToOBJ(strObj);
     }
     return 0;

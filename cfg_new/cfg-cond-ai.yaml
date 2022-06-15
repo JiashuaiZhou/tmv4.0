@@ -1,0 +1,97 @@
+---
+categories:
+  ai:
+    cond-id: 1
+    # the list of tools to generate configurations for
+    tools: [ encoder, decoder, mmetric ]
+
+    # NB: common options are in cfg-tools.yaml
+    encoder:
+      # configuration for HM
+      - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg
+      - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg
+
+    # sequences to code in this condition, and their overridden options/vars
+    #  pp: sets per-rate decimation parameter
+    sequences:
+      basketball_player:
+        seq-id: 3
+        pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.36, r5: 0.48 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - tvqp: { r1: 41, r2: 38, r3: 30, r4: 29, r5: 25 }
+          - dqp: { r1: "43,55,55", r2: "25,37,37", r3: "23,35,35", r4: "28,40,40", r5: "30,42,42" }
+
+      dancer:
+        seq-id: 4
+        pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.36, r5: 0.48 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - tvqp: { r1: 42, r2: 39, r3: 31, r4: 30, r5: 26 }
+          - dqp: { r1: "42,54,54", r2: "24,36,36", r3: "23,35,35", r4: "28,40,40", r5: "28,40,40" }
+
+      football:
+        seq-id: 7
+        pp: { r1: 0.03, r2: 0.06, r3: 0.12, r4: 0.48, r5: 0.72 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 2, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - tvqp: { r1: 44, r2: 37, r3: 41, r4: 41, r5: 36 }
+          - dqp: { r1: "40,52,52", r2: "34,46,46", r3: "26,38,38", r4: "30,42,42", r5: "27,39,39" }
+          - texwidth: { r3: 4096, r4: 4096, r5: 4096 }
+          - texheight: { r3: 4096, r4: 4096, r5: 4096 }
+
+      levi:
+        seq-id: 8
+        pp: { r1: 0.03, r2: 0.12, r3: 0.12, r4: 0.24, r5: 0.48 }
+        encoder:
+          - it: { r1: 3, r2: 2, r3: 2, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - tvqp: { r1: 38, r2: 40, r3: 35, r4: 32, r5: 30 }
+          - dqp: { r1: "39,51,51", r2: "34,46,46", r3: "30,42,42", r4: "30,42,42", r5: "28,40,40" }
+          - texwidth: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
+          - texheight: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
+
+      longdress:
+        seq-id: 1
+        pp: { r1: 0.03, r2: 0.06, r3: 0.36, r4: 0.48, r5: 1.00 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 0, r4: 0, r5: 0 }
+          - gqp: 10
+          - tvqp: { r1: 47, r2: 43, r3: 42, r4: 41, r5: 39 }
+          - dqp: { r1: "30,42,42", r2: "26,38,38", r3: "32,44,44", r4: "26,38,38", r5: "34,46,46" }
+          - unifvertices: { r5: 1 }
+
+      mitch:
+        seq-id: 5
+        pp: { r1: 0.03, r2: 0.06, r3: 0.48, r4: 0.72, r5: 0.72 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 0, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 12, r4: 12, r5: 12 }
+          - tvqp: { r1: 42, r2: 39, r3: 45, r4: 42, r5: 38 }
+          - dqp: { r1: "28,40,40", r2: "28,40,40", r3: "30,42,42", r4: "30,42,42", r5: "30,42,42" }
+          - texwidth: { r3: 4096, r4: 4096, r5: 4096 }
+          - texheight: { r3: 4096, r4: 4096, r5: 4096 }
+
+      soldier:
+        seq-id: 2
+        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.48, r5: 1.00 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - gqp: 10
+          - tvqp: { r1: 43, r2: 40, r3: 36, r4: 36, r5: 34 }
+          - dqp: { r1: "31,43,43", r2: "24,36,36", r3: "24,36,36", r4: "27,39,39", r5: "34,46,46" }
+          - unifvertices: { r5: 1 }
+
+      thomas:
+        seq-id: 6
+        pp: { r1: 0.06, r2: 0.06, r3: 0.48, r4: 0.60, r5: 0.60 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 0, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 12, r4: 12, r5: 12 }
+          - tvqp: { r1: 40, r2: 36, r3: 41, r4: 38, r5: 35 }
+          - dqp: { r1: "30,42,42", r2: "27,39,39", r3: "28,40,40", r4: "28,40,40", r5: "28,40,40" }
+          - texwidth: { r3: 4096, r4: 4096, r5: 4096 }
+          - texheight: { r3: 4096, r4: 4096, r5: 4096 }

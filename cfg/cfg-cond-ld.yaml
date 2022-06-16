@@ -10,6 +10,14 @@ categories:
       - base:      ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
       - subdiv:    ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
       - gofstruct: ${src-dir}_r${pp}_ld/${src-dir}.gof
+      # some sequences are intra coded (except for video)
+      - - !conditional '${no_fitsubdiv_inter}'
+        - base:      ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
+        - subdiv:    ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+        # if encoder should ignore subdivision, use subdiv=base
+        - - !conditional '${pp} > 0.24 and ${pp} < 1.0'
+          - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
+        - gofstruct: ""
       # if pp not set, or no decimation, use input sequence
       - - !conditional 'not defined ${pp} or ${pp} == 1.0'
         - base:      ${seq-prefix}${src-dir}/${src-mesh}
@@ -19,11 +27,43 @@ categories:
       # configuration for HM
       - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ld-main10.cfg
       - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ld.cfg
+      - - !conditional '${no_fitsubdiv_inter}'
+        - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg
 
     # sequences to code in this condition, and their overridden options/vars
     sequences:
+      basketball_player:
+        no_fitsubdiv_inter: 1
+        pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.36, r5: 0.48 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - tvqp: { r1: 41, r2: 38, r3: 30, r4: 29, r5: 25 }
+          - dqp: { r1: "43,55,55", r2: "25,37,37", r3: "23,35,35", r4: "28,40,40", r5: "30,42,42" }
+
+      dancer:
+        no_fitsubdiv_inter: 1
+        pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.48, r5: 0.48 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - tvqp: { r1: 42, r2: 39, r3: 32, r4: 32, r5: 26 }
+          - dqp: { r1: "42,54,54", r2: "24,36,36", r3: "21,33,33", r4: "28,40,40", r5: "28,40,40" }
+
+      football:
+        no_fitsubdiv_inter: 1
+        pp: { r1: 0.03, r2: 0.06, r3: 0.24, r4: 0.48, r5: 0.72 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 2, r4: 0, r5: 0 }
+          - gqp: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - tvqp: { r1: 44, r2: 37, r3: 43, r4: 41, r5: 36 }
+          - dqp: { r1: "40,52,52", r2: "34,46,46", r3: "26,38,38", r4: "30,42,42", r5: "27,39,39" }
+          - texwidth: { r3: 4096, r4: 4096, r5: 4096 }
+          - texheight: { r3: 4096, r4: 4096, r5: 4096 }
+
       levi:
         fitsubdiv_with_mapping: 1
+        no_fitsubdiv_inter: { r5: 1 }
         pp: { r1: 0.03, r2: 0.12, r3: 0.12, r4: 0.24, r5: 0.48 }
         encoder:
           - it: { r1: 3, r2: 2, r3: 2, r4: 2, r5: 0 }
@@ -32,14 +72,18 @@ categories:
           - dqp: { r1: "34,46,46", r2: "32,44,44", r3: "30,42,42", r4: "24,36,36", r5: "28,40,40" }
           - texwidth: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
           - texheight: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
-        # r5 in the CfP submission uses all-intra config (not just no inter)
-        r5:
-          encoder:
-            - base:   ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
-            - subdiv: ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
-            - gofstruct: ""
-            - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg
-            - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg
+          # r5 in the CfP submission uses all-intra config (not just no inter)
+          - gvencconfig: { r5: "${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg" }
+
+      longdress:
+        no_fitsubdiv_inter: 1
+        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.24, r5: 1.00 }
+        encoder:
+          - it: { r1: 3, r2: 3, r3: 3, r4: 2, r5: 0 }
+          - gqp: 10
+          - tvqp: { r1: 49, r2: 44, r3: 40, r4: 40, r5: 40 }
+          - dqp: { r1: "32,44,44", r2: "27,39,39", r3: "27,39,39", r4: "28,40,40", r5: "34,46,46" }
+          - unifvertices: { r5: 1 }
 
       mitch:
         fitsubdiv_with_mapping: 1

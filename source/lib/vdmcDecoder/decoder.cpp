@@ -46,8 +46,6 @@
 #include "virtualVideoDecoder.hpp"
 #include "virtualColourConverter.hpp"
 
-using namespace vmesh;
-
 namespace vmesh {
 
 //============================================================================

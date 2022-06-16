@@ -4,7 +4,7 @@ scriptdir := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 # By default, assume that these tools are on the path
 export GENGOF ?= gengof
 export SIMPLIFY ?= simplify
-export UUVATLAS ?= uvatlas
+export UVATLAS ?= uvatlas
 export FITSUBDIV ?= fitsubdiv
 export VMC ?= vmc
 export MMETRIC ?= mm
@@ -22,4 +22,5 @@ $(dirs):
 	-$(MAKE) -f $(scriptdir)/Makefile.vmesh-step -C $@ $(MAKECMDGOALS)
 
 # Parallel dispatch to each job directory
-%:: $(dirs)
+.PHONY: $(MAKECMDGOALS)
+$(MAKECMDGOALS): $(dirs)

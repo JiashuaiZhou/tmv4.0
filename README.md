@@ -72,9 +72,11 @@ To generate the configuration files,
 mpeg-vmesh-tm$ ../scripts/gen-cfg.sh --outdir=experiment
 ```
 
+#### Using Makefile.vmesh-step
+
 An example script (`scripts/Makefile.vmesh-step`) demonstrates how
-to launch the toolchain for a single.  The VERBOSE=1 make variable causes
-the detailed command execution to be output.
+to launch the toolchain for a single job in the configured experiment.
+The VERBOSE=1 make variable causes the detailed command execution to be output.
 
 ```console
 mpeg-vmesh-tm$ make -f $PWD/scripts/Makefile.vmesh-step  \
@@ -100,4 +102,21 @@ mpeg-vmesh-tm$ make -f $PWD/scripts/Makefile.vmesh-step  \
   [decode]  levi_voxelised.vmesh.decoded.stamp
   [metric]  levi_voxelised.vmesh.decoded.ibsm_mmetric.csv
   [metric]  levi_voxelised.vmesh.decoded.pcc_mmetric.csv
+```
+
+#### Alternative
+
+The example script (`scripts/vmesh-step.sh`) forgoes dependency tracking and
+parallel builds:
+
+```console
+mpeg-vmesh-tm$ env \
+    GENGOF=$PWD/build/vmesh/gengof \
+    SIMPLIFY=$PWD/build/vmesh/simplify \
+    UVATLAS=$PWD/build/vmesh/uvatlas \
+    FITSUBDIV=$PWD/build/vmesh/fitsubdiv \
+    VMC=$PWD/build/vmesh/vmc \
+    MMETRIC=path/to/mm.1.0.1 \
+    $PWD/scripts/vmesh-step.sh -C experiment/ai/levi/r1/
+...
 ```

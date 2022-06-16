@@ -87,7 +87,7 @@ tools:
     # step 4a, subdivision and fitting (for inter frames)
     fitsubdiv_inter:
       # only export configuration if there is any decimation
-      - !conditional 'defined ${pp} and ${pp} < 1.0'
+      - !conditional 'defined ${pp} and ${pp} < 1.0 and !${no_fitsubdiv_inter}'
 
       # outputs
       - base:    ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
@@ -138,7 +138,7 @@ tools:
     fitsubdiv_choose:
       # only export configuration if there is any decimation
       # NB: when pp=1.0, encoder uses the sequence gof file
-      - !conditional 'defined ${pp} and ${pp} < 1.0'
+      - !conditional 'defined ${pp} and ${pp} < 1.0 and !${no_fitsubdiv_inter}'
 
       - maxAllowedD2PSNRLoss: 1.0
 

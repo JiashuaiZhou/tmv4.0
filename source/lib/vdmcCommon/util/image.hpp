@@ -430,7 +430,7 @@ public:
   }
   bool load(const std::string& fin)
   {
-    std::ifstream is(fin);
+    std::ifstream is(fin, std::ios::binary);
     if (!is.is_open()) {
       return false;
     }
@@ -439,7 +439,7 @@ public:
   }
   bool save(const std::string& fout) const
   {
-    std::ofstream os(fout);
+    std::ofstream os(fout, std::ios::binary);
     if (!os.is_open()) {
       return false;
     }
@@ -641,7 +641,7 @@ public:
   }
   bool load(const std::string& fin)
   {
-    std::ifstream is(fin);
+    std::ifstream is(fin, std::ios::binary);
     if (!is.is_open()) {
       return false;
     }
@@ -651,7 +651,7 @@ public:
 
   bool save(const std::string& fout) const
   {
-    std::ofstream os(fout);
+    std::ofstream os(fout, std::ios::binary);
     if (!os.is_open()) {
       return false;
     }

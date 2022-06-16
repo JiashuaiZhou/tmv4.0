@@ -80,31 +80,31 @@ try {
   /* clang-format off */
   po::Options opts;
   opts.addOptions()
-  ("help", print_help, false, "This help text")
-  ("config,c", po::parseConfigFile, "Configuration file name")
-  ("verbose,v", params.verbose, true, "Verbose output")
+    ("help", print_help, false, "This help text")
+    ("config,c", po::parseConfigFile, "Configuration file name")
+    ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("General"))
-  ("compressed", params.compressedStreamPath, {}, "Compressed bitstream")
+    ("compressed", params.compressedStreamPath, {}, "Compressed bitstream")
 
   (po::Section("Output (Decoder)"))
-  ("decmat",  params.decodedMaterialLibPath, {},   "Decoded materials")
-  ("decmesh", params.decodedMeshPath, {},   "Decoded mesh")
-  ("dectex",  params.decodedTexturePath, {},   "Decoded texture")
-  ("intermediateFilesPathPrefix", params.decParams.intermediateFilesPathPrefix, {},
-   "Intermediate files path prefix")
-  ("keep",    params.decParams.keepIntermediateFiles, false,
-   "Keep intermediate files")
+    ("decmat",  params.decodedMaterialLibPath, {},   "Decoded materials")
+    ("decmesh", params.decodedMeshPath, {},   "Decoded mesh")
+    ("dectex",  params.decodedTexturePath, {},   "Decoded texture")
+    ("intermediateFilesPathPrefix", params.decParams.intermediateFilesPathPrefix, {},
+    "Intermediate files path prefix")
+    ("keep",    params.decParams.keepIntermediateFiles, false,
+    "Keep intermediate files")
 
   (po::Section("Common"))
-  ("fstart",    params.startFrame, 1, "First frame number")
-  ("framerate", params.framerate, 30., "Frame rate")
+    ("fstart",    params.startFrame, 1, "First frame number")
+    ("framerate", params.framerate, 30., "Frame rate")
 
   (po::Section("Decoder"))
-  ("normuv", params.decParams.normalizeUV, true,
-   "Normalize uv texture coordinates")
-  ("cscdecconfig", params.decParams.textureVideoHDRToolDecConfig, {},
-   "HDRTools decode cfg")
+    ("normuv", params.decParams.normalizeUV, true,
+    "Normalize uv texture coordinates")
+    ("cscdecconfig", params.decParams.textureVideoHDRToolDecConfig, {},
+    "HDRTools decode cfg")
   ;
   /* clang-format on */
 

@@ -38,6 +38,11 @@
 
 #include "util/image.hpp"
 
+struct TestParameters {
+  bool verbose;
+  std::string meshPath;
+};
+
 struct DisableSubProcessLog {  
   private :
     bool disableLog_ = true;
@@ -90,9 +95,6 @@ struct DisableSubProcessLog {
     }
   }
 };
-
-extern DisableSubProcessLog disableSubProcessLog;
-
 
 static std::string
 grep(std::string filename, std::string keyword)
@@ -195,3 +197,6 @@ static bool checkSoftwarePath(){
   return ret;
 }
 
+
+extern DisableSubProcessLog disableSubProcessLog;
+extern TestParameters       testParams;

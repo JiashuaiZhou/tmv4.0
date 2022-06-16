@@ -55,7 +55,6 @@
 #include "encoder.hpp"
 #include "textureParametrization.hpp"
 
-namespace {
 struct Parameters {
   // frame number for expansion in input/output filenames
   int fnum;
@@ -64,7 +63,6 @@ struct Parameters {
 
   vmesh::VMCEncoderParameters params;
 };
-}  // namespace
 
 //============================================================================
 

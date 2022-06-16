@@ -45,12 +45,8 @@
 #include "version.hpp"
 #include "sequenceInfo.hpp"
 
-using namespace std;
-using namespace vmesh;
-
 //============================================================================
 
-namespace {
 struct Parameters {
   std::string inputPath;
   std::string outputPath;
@@ -58,7 +54,6 @@ struct Parameters {
   int32_t frameCount;
   int32_t maxGOFSize = 32;
 };
-}  // namespace
 
 //============================================================================
 
@@ -72,22 +67,22 @@ try {
   /* clang-format off */
   po::Options opts;
   opts.addOptions()
-  ("help", print_help, false, "this help text")
-  ("config,c", po::parseConfigFile, "configuration file name")
+    ("help", print_help, false, "this help text")
+    ("config,c", po::parseConfigFile, "configuration file name")
 
   (po::Section("Input/Output"))
-  ("input,i", params.inputPath, {}, "Input mesh")
-  ("output,o", params.outputPath, {}, "Group of frame structure")
+    ("input,i", params.inputPath, {}, "Input mesh")
+    ("output,o", params.outputPath, {}, "Group of frame structure")
 
   (po::Section("Gof"))
-  ("startFrame", params.startFrame, 1, "First frame index")
-  ("frameCount", params.frameCount, 300, "Number of frames")
+    ("startFrame", params.startFrame, 1, "First frame index")
+    ("frameCount", params.frameCount, 300, "Number of frames")
   ;
   /* clang-format on */
 
   po::setDefaults(opts);
   po::ErrorReporter err;
-  const list<const char*>& argv_unhandled =
+  const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (const auto arg : argv_unhandled)
@@ -109,10 +104,10 @@ try {
     return false;
 
   // Dump the complete derived configuration
-  cout << "+ Configuration parameters\n";
-  po::dumpCfg(cout, opts, "Input/Output", 4);
-  po::dumpCfg(cout, opts, "Gof", 4);
-  cout << '\n';
+  std::cout << "+ Configuration parameters\n";
+  po::dumpCfg(std::cout, opts, "Input/Output", 4);
+  po::dumpCfg(std::cout, opts, "Gof", 4);
+  std::cout << '\n';
 
   return true;
 }
@@ -127,14 +122,14 @@ catch (df::program_options_lite::ParseFailure& e) {
 int
 main(int argc, char* argv[])
 {
-  cout << "MPEG VMESH version " << ::vmesh::version << '\n';
+  std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
   if (!parseParameters(argc, argv, params))
     return 1;
 
   if (params.frameCount < 1) {
-    cerr << "Error: frameCount < 1\n";
+    std::cerr << "Error: frameCount < 1\n";
     return 1;
   }
   vmesh::SequenceInfo sequenceInfo;

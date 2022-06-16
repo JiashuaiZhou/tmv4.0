@@ -48,7 +48,6 @@
 
 //============================================================================
 
-namespace {
 struct Parameters {
   bool verbose;
 
@@ -61,7 +60,6 @@ struct Parameters {
   std::string referenceMeshPath;
   vmesh::VMCEncoderParameters params;
 };
-}  // namespace
 
 //============================================================================
 

@@ -49,6 +49,21 @@ void create(
     const int maxGOFSize,
     const std::string inputPath)
 {
+  // Check input parameters
+  for(int i=0;i<frameCount;i++)
+  {
+    if( ! exists( vmesh::expandNum( inputPath, startFrame + i ) ) ){      
+      printf(
+        " Please set --meshPath input parameter \n"
+        " Example:  \n"
+        "  --meshPath=contents/voxelized/levi_voxelized/levi_fr%04d_qp12_qt13.obj \n");
+        FAIL() << "src meshes can't be load. \n"
+               << "please set --meshPath input parameter\n"
+               << " Example:  \n"
+               << "  --meshPath=contents/voxelized/levi_voxelized/levi_fr%04d_qp12_qt13.obj \n";                    
+      return;
+    }
+  }
   disableSubProcessLog.disable();
   std::string gofNewPath = "gof_new.gof";
   std::string gofSavPath = "gof_sav.gof";
@@ -113,11 +128,7 @@ void create(
   remove( gofSavPath.c_str() );
 }
 
-
-TEST(Gengof, create)
+TEST(Gengof, Create)
 {
-  create(
-    150, 0, 32,
-    "/home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/"
-    "levi_voxelized/levi_fr%04d_qp12_qt13.obj");
+  create(150, 0, 32, testParams.meshPath );
 }

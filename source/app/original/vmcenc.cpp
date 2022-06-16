@@ -78,104 +78,103 @@ try {
   /* clang-format off */
   po::Options opts;
   opts.addOptions()
-  ("help", print_help, false, "This help text")
-  ("config,c", po::parseConfigFile, "Configuration file name")
-  ("verbose,v", params.verbose, true, "Verbose output")
+    ("help", print_help, false, "This help text")
+    ("config,c", po::parseConfigFile, "Configuration file name")
+    ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("General"))
-
-  ("compressed", params.compressedStreamPath, {}, "Compressed bitstream")
+    ("compressed", params.compressedStreamPath, {}, "Compressed bitstream")
 
   (po::Section("Input (Encoder)"))
-  ("imesh",  params.inputMeshPath,    {}, "Input mesh")
-  ("itex",   params.inputTexturePath, {}, "Input texture")
-  ("base",   params.baseMeshPath,     {}, "Base mesh")
-  ("subdiv", params.subdivMeshPath,   {}, "Subdiv mesh")
+    ("imesh",  params.inputMeshPath,    {}, "Input mesh")
+    ("itex",   params.inputTexturePath, {}, "Input texture")
+    ("base",   params.baseMeshPath,     {}, "Base mesh")
+    ("subdiv", params.subdivMeshPath,   {}, "Subdiv mesh")
 
   (po::Section("Output (Encoder)"))
-  ("recmat",  params.reconstructedMaterialLibPath, {},
-   "Reconstructed materials")
+    ("recmat",  params.reconstructedMaterialLibPath, {},
+    "Reconstructed materials")
 
-  ("recmesh", params.reconstructedMeshPath, {},
-   "Reconstructed mesh")
+    ("recmesh", params.reconstructedMeshPath, {},
+    "Reconstructed mesh")
 
-  ("rectex",  params.reconstructedTexturePath, {},
-   "Reconstructed texture")
+    ("rectex",  params.reconstructedTexturePath, {},
+    "Reconstructed texture")
 
-  ("intermediateFilesPathPrefix", params.encParams.intermediateFilesPathPrefix, {},
-   "Intermediate files path prefix")
+    ("intermediateFilesPathPrefix", params.encParams.intermediateFilesPathPrefix, {},
+    "Intermediate files path prefix")
 
-  ("keep",    params.encParams.keepIntermediateFiles, false,
-   "Keep intermediate files")
+    ("keep",    params.encParams.keepIntermediateFiles, false,
+    "Keep intermediate files")
 
   (po::Section("Common"))
-  ("fstart",    params.startFrame, 1, "First frame number")
-  ("fcount",    params.frameCount, 1, "Number of frames")
-  ("framerate", params.framerate, 30., "Frame rate")
+    ("fstart",    params.startFrame, 1, "First frame number")
+    ("fcount",    params.frameCount, 1, "Number of frames")
+    ("framerate", params.framerate, 30., "Frame rate")
 
   (po::Section("Encoder"))
-  ("gofmax", params.groupOfFramesMaxSize, 32,
-   "Maximum group of frames size")
+    ("gofmax", params.groupOfFramesMaxSize, 32,
+    "Maximum group of frames size")
 
-  ("gofstruct", params.groupOfFramesStructurePath, {},
-   "Prediction structure file")
+    ("gofstruct", params.groupOfFramesStructurePath, {},
+    "Prediction structure file")
 
-  ("it", params.encParams.subdivisionIterationCount, 2,
-   "Subdivision iteration count")
+    ("it", params.encParams.subdivisionIterationCount, 2,
+    "Subdivision iteration count")
 
-  ("gqp", params.encParams.qpPosition, 10,
-   "Quantization bits for base mesh positions")
+    ("gqp", params.encParams.qpPosition, 10,
+    "Quantization bits for base mesh positions")
 
-  ("tqp", params.encParams.qpTexCoord, 8,
-   "Quantization bits for base mesh texture coordinates")
+    ("tqp", params.encParams.qpTexCoord, 8,
+    "Quantization bits for base mesh texture coordinates")
 
-  ("dqp", params.encParams.liftingQuantizationParameters, {16, 28, 28},
-   "Quantization parameter for displacements")
+    ("dqp", params.encParams.liftingQuantizationParameters, {16, 28, 28},
+    "Quantization parameter for displacements")
 
-  ("dqb", params.encParams.liftingQuantizationBias, {1./3., 1./3., 1./3},
-   "Quantization bias for displacements")
+    ("dqb", params.encParams.liftingQuantizationBias, {1./3., 1./3., 1./3},
+    "Quantization bias for displacements")
 
-  ("tvqp", params.encParams.textureVideoQP, 28,
-   "Quantization parameter for texture video")
+    ("tvqp", params.encParams.textureVideoQP, 28,
+    "Quantization parameter for texture video")
 
-  ("gdepth", params.encParams.bitDepthPosition, 12,
-   "Input positions bit depth")
+    ("gdepth", params.encParams.bitDepthPosition, 12,
+    "Input positions bit depth")
 
-  ("tdepth", params.encParams.bitDepthTexCoord, 12,
-   "Input texture coordinates bit depth")
+    ("tdepth", params.encParams.bitDepthTexCoord, 12,
+    "Input texture coordinates bit depth")
 
-  ("texwidth", params.encParams.textureWidth, 2048,
-   "Output texture width")
+    ("texwidth", params.encParams.textureWidth, 2048,
+    "Output texture width")
 
-  ("texheight", params.encParams.textureHeight, 2048,
-   "Output texture height")
+    ("texheight", params.encParams.textureHeight, 2048,
+    "Output texture height")
 
-  ("invorient", params.encParams.invertOrientation, false,
-   "Invert triangles orientation")
+    ("invorient", params.encParams.invertOrientation, false,
+    "Invert triangles orientation")
 
-  ("unifvertices", params.encParams.unifyVertices, false,
-   "Unify duplicated vertices")
+    ("unifvertices", params.encParams.unifyVertices, false,
+    "Unify duplicated vertices")
 
-  ("encdisp", params.encParams.encodeDisplacementsVideo, true,
-   "Encode displacements video")
+    ("encdisp", params.encParams.encodeDisplacementsVideo, true,
+    "Encode displacements video")
 
-  ("enctex", params.encParams.encodeTextureVideo, true,
-   "Encode texture video")
+    ("enctex", params.encParams.encodeTextureVideo, true,
+    "Encode texture video")
 
-  ("normuv", params.encParams.normalizeUV, true,
-   "Normalize uv texture coordinates")
-   
-  ("gvencconfig", params.encParams.geometryVideoEncoderConfig, {},
-   "Geometry video cfg")
-   
-  ("tvencconfig", params.encParams.textureVideoEncoderConfig, {},
-   "Texture video cfg")
+    ("normuv", params.encParams.normalizeUV, true,
+    "Normalize uv texture coordinates")
+    
+    ("gvencconfig", params.encParams.geometryVideoEncoderConfig, {},
+    "Geometry video cfg")
+    
+    ("tvencconfig", params.encParams.textureVideoEncoderConfig, {},
+    "Texture video cfg")
 
-  ("cscencconfig", params.encParams.textureVideoHDRToolEncConfig, {},
-   "HDRTools encode cfg")
+    ("cscencconfig", params.encParams.textureVideoHDRToolEncConfig, {},
+    "HDRTools encode cfg")
 
-  ("cscdecconfig", params.encParams.textureVideoHDRToolDecConfig, {},
-   "HDRTools decode cfg")
+    ("cscdecconfig", params.encParams.textureVideoHDRToolDecConfig, {},
+    "HDRTools decode cfg")
 
   ;
   /* clang-format on */

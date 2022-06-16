@@ -42,7 +42,59 @@
 #include <gtest/gtest.h>
 #include "common.hpp"
 
+#include <program-options-lite/program_options_lite.h>
+
 DisableSubProcessLog disableSubProcessLog;
+TestParameters testParams;
+//============================================================================
+
+static bool
+parseParameters(int argc, char* argv[])
+try {
+  namespace po = df::program_options_lite;
+
+  bool print_help = false;
+
+  /* clang-format off */
+  po::Options opts;
+  opts.addOptions()
+    ("help",      print_help,            false, "this help text")    
+    ("verbose,v", testParams.verbose,    true,  "Verbose output")
+    ("meshPath",   testParams.meshPath, {},     "Path to levi_voxelized folder contening levi meshes")
+  ;
+  /* clang-format on */
+
+  po::setDefaults(opts);
+  po::ErrorReporter err;
+  const std::list<const char*>& argv_unhandled =
+    po::scanArgv(opts, argc, (const char**)argv, err);
+
+  for (const auto arg : argv_unhandled)
+    err.warn() << "Unhandled argument ignored: " << arg << '\n';
+
+  if ( print_help) {
+    std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
+    po::doHelp(std::cout, opts, 78);
+    return false;
+  }
+
+  if (err.is_errored)
+    return false;
+
+  // Dump the complete derived configuration
+  std::cout << "+ Configuration parameters\n";
+  po::dumpCfg(std::cout, opts);
+  std::cout << '\n';
+
+  return true;
+}
+catch (df::program_options_lite::ParseFailure& e) {
+  std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
+            << e.val << "\".\n";
+  return false;
+}
+
+//============================================================================
 
 int
 main(int argc, char* argv[])
@@ -51,21 +103,15 @@ main(int argc, char* argv[])
 
   // this is mandatory to print floats with full precision
   std::cout.precision( std::numeric_limits<float>::max_digits10 );
-  
+
   ::testing::InitGoogleTest(&argc, argv);
 
-  for (int i = 0; i < argc; i++) {
-    std::cout << i << ":" << argv[i] << std::endl;
-    if (std::strcmp( argv[i], "--verbose") == 0)
-    {
-      printf("disableSubProcessLog \n");
-      fflush(stdout);
-      disableSubProcessLog.switchOnLog();
-      printf("disableSubProcessLog done \n");
-      fflush(stdout);
-    }
-  }
+  if (!parseParameters(argc, argv))
+    return 1;
 
+  if( testParams.verbose )
+    disableSubProcessLog.switchOnLog();  
+  
   return RUN_ALL_TESTS();
   return 0;
 }

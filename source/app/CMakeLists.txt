@@ -127,6 +127,7 @@ if( BUILD_TEST_APPS )
                               tests/encode.cpp
                               tests/allchain.cpp
                     LIBRARIES gtest_main 
+                              po
                               vdmcCommon 
                               vdmcEncoder 
                               vdmcDecoder 

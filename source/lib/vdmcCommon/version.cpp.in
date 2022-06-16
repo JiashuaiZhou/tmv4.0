@@ -1,5 +1,5 @@
 #include "version.hpp"
 
 namespace vmesh {
-const char version[] = "vdmc+v@VDMC_VERSION_MAJOR@.@VDMC_VERSION_MINOR@+@VERSION@";
+const char version[] = "vdmc+v@VERSION_MAJOR@.@VERSION_MINOR@+@VERSION@";
 }

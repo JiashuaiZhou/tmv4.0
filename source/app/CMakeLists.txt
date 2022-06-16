@@ -3,7 +3,6 @@
 add_library(po STATIC "${PROJECT_SOURCE_DIR}/dependencies/program-options-lite/program_options_lite.cpp" )
 target_include_directories(po INTERFACE "${PROJECT_SOURCE_DIR}/dependencies/" )
 
-
 ########################### Main applications ###########################
 
 # Encode

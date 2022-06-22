@@ -6,7 +6,7 @@ sequences:
     src-tex: basketball_player_fr%04d.png
     src-mesh: basketball_player_fr%04d_qp12_qt12.obj
     first-frame: 1
-    num-frames: 2
+    num-frames: 300
     src-geom-bits: 12
     src-texcoord-bits: 12
     src-min-pos: -725.812988 -483.908997 -586.02002
@@ -25,7 +25,7 @@ sequences:
     src-tex: dancer_fr%04d.png
     src-mesh: dancer_fr%04d_qp12_qt12.obj
     first-frame: 1
-    num-frames: 2
+    num-frames: 300
     src-geom-bits: 12
     src-texcoord-bits: 12
     src-min-pos: -902.244995 -486.196991 -670.518005
@@ -44,7 +44,7 @@ sequences:
     src-tex: football_fr%04d.png
     src-mesh: football_fr%04d_qp12_qt13.obj
     first-frame: 445
-    num-frames: 2
+    num-frames: 300
     src-geom-bits: 12
     src-texcoord-bits: 13
     src-min-pos: 0.00728459982 -0.00232295995 -0.0394272991
@@ -63,7 +63,7 @@ sequences:
     src-tex: levi_fr%04d.png
     src-mesh: levi_fr%04d_qp12_qt13.obj
     first-frame: 0
-    num-frames: 2
+    num-frames: 150
     src-geom-bits: 12
     src-texcoord-bits: 13
     src-min-pos: -0.780686975 -0.0424938016 -0.594317973
@@ -82,7 +82,7 @@ sequences:
     src-tex: longdress_fr%04d.png
     src-mesh: longdress_fr%04d_qp10_qt12.obj
     first-frame: 1051
-    num-frames: 2
+    num-frames: 300
     src-geom-bits: 10
     src-texcoord-bits: 12
     src-min-pos: -0.475553989 -1.4576 -0.284981996
@@ -101,7 +101,7 @@ sequences:
     src-tex: mitch_fr%04d.png
     src-mesh: mitch_fr%04d_qp12_qt13.obj
     first-frame: 1
-    num-frames: 2
+    num-frames: 300
     src-geom-bits: 12
     src-texcoord-bits: 13
     src-min-pos: -588.255981 5.80515003 -469.799011
@@ -120,7 +120,7 @@ sequences:
     src-tex: soldier_fr%04d.png
     src-mesh: soldier_fr%04d_qp10_qt12.obj
     first-frame: 536
-    num-frames: 2
+    num-frames: 300
     src-geom-bits: 10
     src-texcoord-bits: 12
     src-min-pos: -0.366236001 1.10722005 0.224947006
@@ -139,7 +139,7 @@ sequences:
     src-tex: thomas_fr%04d.png
     src-mesh: thomas_fr%04d_qp12_qt13.obj
     first-frame: 618
-    num-frames: 2
+    num-frames: 300
     src-geom-bits: 12
     src-texcoord-bits: 13
     src-min-pos: -265.006989 -4.04448986 -248.710999

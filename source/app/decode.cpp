@@ -36,13 +36,15 @@
 #include <chrono>
 #include <program-options-lite/program_options_lite.h>
 
-#include "util/bitstream.hpp"
-#include "decoder.hpp"
 #include "util/misc.hpp"
 #include "util/verbose.hpp"
+#include "util/bitstream.hpp"
+#include "util/memory.hpp"
+#include "decoder.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
 #include "vmcStats.hpp"
+#include "sequenceInfo.hpp"
 
 //============================================================================
 
@@ -250,7 +252,10 @@ decompress(const Parameters& params)
 
   std::cout << "\n------- All frames -----------\n";
   totalStats.dump( "Sequence", params.framerate);
-  std::cout << "---------------------------------------\n";
+  std::cout << "Sequence peak memory " << vmesh::getPeakMemory() << " KB\n";
+  std::cout << "---------------------------------------\n";  
+  
+  std::cout << "\nAll frames have been decoded. \n";
   return 0;
 }
 

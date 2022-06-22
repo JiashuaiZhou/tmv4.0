@@ -36,10 +36,11 @@
 #include <chrono>
 #include <program-options-lite/program_options_lite.h>
 
-#include "util/bitstream.hpp"
-#include "encoder.hpp"
 #include "util/misc.hpp"
 #include "util/verbose.hpp"
+#include "util/bitstream.hpp"
+#include "util/memory.hpp"
+#include "encoder.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
 #include "vmcStats.hpp"
@@ -536,6 +537,7 @@ compress(const Parameters& params)
   }
   std::cout << "\n------- All frames -----------\n";
   totalStats.dump("Sequence", params.framerate);
+  std::cout << "Sequence peak memory " << vmesh::getPeakMemory() << " KB\n";
   std::cout << "---------------------------------------\n";
 
   // save bistream
@@ -543,7 +545,7 @@ compress(const Parameters& params)
     std::cerr << "Error: can't save compressed bitstream!\n";
     return -1;
   }
-
+  std::cout << "\nAll frames have been encoded. \n";
   return 0;
 }
 

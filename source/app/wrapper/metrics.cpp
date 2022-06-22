@@ -186,6 +186,9 @@ main(int argc, char* argv[])
 {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
+  // this is mandatory to print floats with full precision
+  std::cout.precision( std::numeric_limits<float>::max_digits10 );
+  
   Parameters params;
   if (!parseParameters(argc, argv, params))
     return 1;

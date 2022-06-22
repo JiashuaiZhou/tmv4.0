@@ -183,47 +183,49 @@ VMCMetrics::compute(
       true,         // useFixedPoint,
       false);       // colorSpaceConversion
 
-    // Reindex
-    const std::string sort = "oriented";
-    std::cout << "Reindex" << std::endl;
-    std::cout << "  sort = " << sort << std::endl;
-    if (sort == "none") {
-      mm::reindex(dequantize[i], reindex[i]);
-    } else if (
-      sort == "vertex" || sort == "oriented" || sort == "unoriented") {
-      mm::reorder(dequantize[i], sort, reindex[i]);
-    } else {
-      std::cout << "Error: invalid sorting method " << sort << std::endl;
-    }
+    if( params.computePcc || params.computePcqm ){
+      // Reindex
+      const std::string sort = "oriented";
+      std::cout << "Reindex" << std::endl;
+      std::cout << "  sort = " << sort << std::endl;
+      if (sort == "none") {
+        mm::reindex(dequantize[i], reindex[i]);
+      } else if (
+        sort == "vertex" || sort == "oriented" || sort == "unoriented") {
+        mm::reorder(dequantize[i], sort, reindex[i]);
+      } else {
+        std::cout << "Error: invalid sorting method " << sort << std::endl;
+      }
 
-    const bool useNormal = true;
-    const bool bilinear = true;
-    const bool hideProgress = true;
-    const size_t nbSamplesMin = 0;
-    const size_t nbSamplesMax = 0;
-    const size_t maxIterations = 10;
-    const bool useFixedPoint = true;
-    std::cout << "Sampling in GRID mode" << std::endl;
-    std::cout << "  Grid Size = " << params.gridSize << std::endl;
-    std::cout << "  Use Normal = " << useNormal << std::endl;
-    std::cout << "  Bilinear = " << bilinear << std::endl;
-    std::cout << "  hideProgress = " << hideProgress << std::endl;
-    std::cout << "  nbSamplesMin = " << nbSamplesMin << std::endl;
-    std::cout << "  nbSamplesMax = " << nbSamplesMax << std::endl;
-    std::cout << "  maxIterations = " << maxIterations << std::endl;
-    std::cout << "  useFixedPoint = " << useFixedPoint << std::endl;
-    std::cout << "  using contrained mode with gridSize " << std::endl;
-    mm::Sample::meshToPcGrid(
-      reindex[i],                // input
-      sampled[i],                // output
-      i == 0 ? srcMap : recMap,  // map
-      params.gridSize,           // grid res
-      bilinear,                  // bilinear
-      !hideProgress,             // lowprogress
-      useNormal,                 // use normal
-      useFixedPoint,             // useFixedPoint
-      minPos,                    // minPos
-      maxPos);                   // maxPos
+      const bool useNormal = true;
+      const bool bilinear = true;
+      const bool hideProgress = true;
+      const size_t nbSamplesMin = 0;
+      const size_t nbSamplesMax = 0;
+      const size_t maxIterations = 10;
+      const bool useFixedPoint = true;
+      std::cout << "Sampling in GRID mode" << std::endl;
+      std::cout << "  Grid Size = " << params.gridSize << std::endl;
+      std::cout << "  Use Normal = " << useNormal << std::endl;
+      std::cout << "  Bilinear = " << bilinear << std::endl;
+      std::cout << "  hideProgress = " << hideProgress << std::endl;
+      std::cout << "  nbSamplesMin = " << nbSamplesMin << std::endl;
+      std::cout << "  nbSamplesMax = " << nbSamplesMax << std::endl;
+      std::cout << "  maxIterations = " << maxIterations << std::endl;
+      std::cout << "  useFixedPoint = " << useFixedPoint << std::endl;
+      std::cout << "  using contrained mode with gridSize " << std::endl;
+      mm::Sample::meshToPcGrid(
+        reindex[i],                // input
+        sampled[i],                // output
+        i == 0 ? srcMap : recMap,  // map
+        params.gridSize,           // grid res
+        bilinear,                  // bilinear
+        !hideProgress,             // lowprogress
+        useNormal,                 // use normal
+        useFixedPoint,             // useFixedPoint
+        minPos,                    // minPos
+        maxPos);                   // maxPos
+    }
   }
 
   // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName+"_source.obj", srcModel  ); }
@@ -257,11 +259,11 @@ VMCMetrics::compute(
   std::cout << "  dropDuplicates = " << pccParams.dropDuplicates << std::endl;
   std::cout << "  averageNormals = " << pccParams.bAverageNormals << std::endl;
 
-  printf(
-    "Triangle numbers = %9zu / %9zu \n", sampled[0].getTriangleCount(),
-    sampled[1].getTriangleCount());
+  // printf(
+  //   "Triangle numbers = %9zu / %9zu \n", sampled[0].getTriangleCount(),
+  //   sampled[1].getTriangleCount());
 
-  if( params.computePcc )
+  if( params.computePcc ){
     compare->pcc(
       sampled[0],  // modelA
       sampled[1],  // modelB
@@ -270,6 +272,7 @@ VMCMetrics::compute(
       pccParams,   // params
       outPcc[0],   // outputA
       outPcc[1]);  // outputB
+  }
 
   // // PCQM
   if( params.computePcqm ) {

@@ -4,19 +4,19 @@ CURDIR=$( cd "$( dirname "$0" )" && pwd );
 MAINDIR=$( dirname ${CURDIR} )
 echo -e "\033[0;32mCreate configuration files: ${CURDIR} \033[0m";
 
-OUTDIR="experiments";
+OUTDIR="generatedConfigFiles";
 SEQDIR=""
 print_usage()
 {
-  echo "$0 execute encoding/decoding/metrics/rendering "
+  echo "$0 Create configuration files: "
   echo "";
   echo "    Usage:" 
   echo "       -o|--outdir=: configured directory       (default: $OUTDIR )";      
-  echo "       -s|--seqdir=: source sequence directory  (default: $SEQDIR )";             
+  echo "       -s|--seqdir=: source sequence directory  (default: $SEQDIR )";
   echo "";
   echo "    Examples:";
   echo "      - $0  "; 
-  echo "      - $0 -d test -s /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/";  
+  echo "      - $0 --outdir=generatedConfigFiles --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/";  
   echo "    ";
   if [ "$#" != 2 ] ; then echo -e "ERROR: $1 \n"; fi
   exit 0;
@@ -24,16 +24,17 @@ print_usage()
 while [[ $# -gt 0 ]] ; do  
   C=$1; if [[ "$C" =~ [=] ]] ; then V=${C#*=}; elif [[ $2 == -* ]] ; then  V=""; else V=$2; shift; fi;
   case "$C" in    
-    -o|--outdir=*   ) OUTDIR=$( cd "$V" && pwd );;
-    -s|--seqdir=*   ) SEQDIR=$( cd "$V" && pwd );;
+    -o|--outdir=*   ) OUTDIR=$V;;
+    -s|--seqdir=*   ) SEQDIR=$V;;
     -h|--help       ) print_usage ;;
     *               ) print_usage "unsupported arguments: $C ";;
   esac
   shift;
 done
-
 if [ "${OUTDIR}" != "" ] ; then mkdir -p ${OUTDIR}; fi
 if [ "$SEQDIR" == "" ] || [ ! -d ${SEQDIR} ] ; then print_usage "SEQDIR = \"${SEQDIR}\" not exists"; fi
+OUTDIR=$( cd "$OUTDIR" && pwd )
+SEQDIR=$( cd "$SEQDIR" && pwd )
 
 CFGDIR=${MAINDIR}/cfg_new
 CFGSITE=${CFGDIR}/cfg-site.yaml

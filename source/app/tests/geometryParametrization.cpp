@@ -54,7 +54,7 @@ intra(
   disableSubProcessLog.disable();
   // Parameters 
   vmesh::VMCEncoderParameters params;
-  params.subdivisionIterationCount = 3;
+  params.geometryParametrizationSubdivisionIterationCount = 3;
   params.applySmoothingDeform = true;
   params.initialDeformForceNormalDisplacement = false;
   params.applyVertexUnification = true;
@@ -85,7 +85,7 @@ intra(
       << "  --base=" << baseOswPath 
       << "  --subdiv=" << subdOswPath
       << "  --nsubdiv=" << nsubOswPath
-      << "  --it=" << params.subdivisionIterationCount
+      << "  --it=" << params.geometryParametrizationSubdivisionIterationCount
       << "  --sdeform=" << params.applySmoothingDeform
       << "  --forceNormalDisp=" << params.initialDeformForceNormalDisplacement
       << "  --unifyVertices=" << params.applyVertexUnification
@@ -111,7 +111,7 @@ intra(
       << "  --base=" << baseNswPath 
       << "  --subdiv=" << subdNswPath 
       << "  --nsubdiv=" << nsubNswPath
-      << "  --it=" << params.subdivisionIterationCount 
+      << "  --it=" << params.geometryParametrizationSubdivisionIterationCount 
       << "  --sdeform=" << params.applySmoothingDeform 
       << "  --forceNormalDisp=" << params.initialDeformForceNormalDisplacement
       << "  --unifyVertices=" << params.applyVertexUnification

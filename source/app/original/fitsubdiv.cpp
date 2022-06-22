@@ -112,7 +112,7 @@ try {
    "Apply deformation refinement stage")
 
   ("it",
-   params.params.subdivisionIterationCount, 3,
+   params.params.geometryParametrizationSubdivisionIterationCount, 3,
    "Subdivision iteration count")
 
   ("forceNormalDisp",

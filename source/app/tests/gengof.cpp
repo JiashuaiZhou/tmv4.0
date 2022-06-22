@@ -72,7 +72,7 @@ void create(
 
   // Generate gof structure new 
   vmesh::SequenceInfo sequenceInfo;
-  sequenceInfo.generate( frameCount, startFrame, maxGOFSize, inputPath );
+  sequenceInfo.generate( frameCount, startFrame, maxGOFSize, true, inputPath );
   sequenceInfo.save( gofNewPath );
 
   // Reload sequence info

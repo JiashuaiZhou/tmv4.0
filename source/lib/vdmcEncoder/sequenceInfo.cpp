@@ -54,147 +54,178 @@ SequenceInfo::generate(
   const int frameCount,
   const int startFrame,
   const int maxGOFSize,
+  const bool analyzeGof,
   const std::string& inputPath)
 {
   startFrame_ = startFrame;
   frameCount_ = frameCount;
   groupOfFramesMaxSize_ = maxGOFSize;
-  TriangleMesh<double> mesh0, mesh1;
-  auto frameIndex0 = startFrame;
-  std::vector<Vec3<int32_t>> predStructure(frameCount);
-  predStructure[0] = Vec3<int32_t>(frameIndex0, frameIndex0, 0);
-  int32_t interFrameCount = 0;
-  for (int32_t f = 1; f < frameCount; ++f) {
-    const auto frameIndex1 = startFrame + f;
-    if (1) {
-      const auto& name = expandNum(inputPath, frameIndex1);
-      if (!mesh1.loadFromOBJ(name)) {
-        std::cerr << "Error: can't load frame" << frameIndex1 << ' ' << name
-                  << '\n';
-        return 1;
+  if (!analyzeGof) {
+    int32_t currentGofIndex = -1;
+    for (int32_t f = 0; f < frameCount_; ++f) {
+      const auto frameIndex = startFrame + f;
+      const auto gofIndex = f / groupOfFramesMaxSize_;
+      if (gofIndex != currentGofIndex) {
+        currentGofIndex = gofIndex;
+        sequenceInfo_.resize(sequenceInfo_.size() + 1);
+        auto& gofInfo = sequenceInfo_.back();
+        gofInfo.frameCount_ = 1;
+        gofInfo.startFrameIndex_ = frameIndex;
+        gofInfo.index_ = gofIndex;
+        VMCFrameInfo frameInfo;
+        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
+        frameInfo.referenceFrameIndex = -1;
+        frameInfo.type = FrameType::INTRA;
+        gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
+        gofInfo.framesInfo_.push_back(frameInfo);
+      } else {
+        auto& gofInfo = sequenceInfo_.back();
+        ++gofInfo.frameCount_;
+        VMCFrameInfo frameInfo;
+        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
+        frameInfo.referenceFrameIndex = -1;
+        frameInfo.type = FrameType::INTRA;
+        gofInfo.framesInfo_.push_back(frameInfo);
       }
     }
+  } else {
+    TriangleMesh<double> mesh0, mesh1;
+    auto frameIndex0 = startFrame;
+    std::vector<Vec3<int32_t>> predStructure(frameCount);
+    predStructure[0] = Vec3<int32_t>(frameIndex0, frameIndex0, 0);
+    int32_t interFrameCount = 0;
+    for (int32_t f = 1; f < frameCount; ++f) {
+      const auto frameIndex1 = startFrame + f;
+      if (1) {
+        const auto& name = expandNum(inputPath, frameIndex1);
+        if (!mesh1.loadFromOBJ(name)) {
+          std::cerr << "Error: can't load frame" << frameIndex1 << ' ' << name
+                    << '\n';
+          return 1;
+        }
+      }
 
-    bool same = false;
-    if (
-      mesh1.pointCount() == mesh0.pointCount()
-      && mesh1.triangleCount() == mesh0.triangleCount()
-      && mesh1.pointCount() == mesh0.texCoordCount()
-      && mesh1.triangleCount() == mesh0.texCoordTriangleCount()) {
-      same = true;
-      const auto texCoordCount = mesh0.texCoordCount();
-      for (int32_t v = 0; same && v < texCoordCount; ++v) {
-        const auto& texCoord0 = mesh0.texCoord(v);
-        const auto& texCoord1 = mesh1.texCoord(v);
-        for (int32_t k = 0; k < 2; ++k) {
-          if (texCoord0[k] != texCoord1[k]) {
-            same = false;
-            break;
+      bool same = false;
+      if (
+        mesh1.pointCount() == mesh0.pointCount()
+        && mesh1.triangleCount() == mesh0.triangleCount()
+        && mesh1.pointCount() == mesh0.texCoordCount()
+        && mesh1.triangleCount() == mesh0.texCoordTriangleCount()) {
+        same = true;
+        const auto texCoordCount = mesh0.texCoordCount();
+        for (int32_t v = 0; same && v < texCoordCount; ++v) {
+          const auto& texCoord0 = mesh0.texCoord(v);
+          const auto& texCoord1 = mesh1.texCoord(v);
+          for (int32_t k = 0; k < 2; ++k) {
+            if (texCoord0[k] != texCoord1[k]) {
+              same = false;
+              break;
+            }
+          }
+        }
+        const auto triangleCount = mesh0.triangleCount();
+        for (int32_t t = 0; same && t < triangleCount; ++t) {
+          const auto& tri0 = mesh0.triangle(t);
+          const auto& tri1 = mesh1.triangle(t);
+          const auto& triTexCoord0 = mesh0.texCoordTriangle(t);
+          const auto& triTexCoord1 = mesh1.texCoordTriangle(t);
+          for (int32_t k = 0; k < 3; ++k) {
+            if (tri0[k] != tri1[k] || triTexCoord0[k] != triTexCoord1[k]) {
+              same = false;
+              break;
+            }
           }
         }
       }
-      const auto triangleCount = mesh0.triangleCount();
-      for (int32_t t = 0; same && t < triangleCount; ++t) {
-        const auto& tri0 = mesh0.triangle(t);
-        const auto& tri1 = mesh1.triangle(t);
-        const auto& triTexCoord0 = mesh0.texCoordTriangle(t);
-        const auto& triTexCoord1 = mesh1.texCoordTriangle(t);
-        for (int32_t k = 0; k < 3; ++k) {
-          if (tri0[k] != tri1[k] || triTexCoord0[k] != triTexCoord1[k]) {
-            same = false;
-            break;
-          }
-        }
+      if (!same) {
+        frameIndex0 = frameIndex1;
+        mesh0 = mesh1;
+      } else {
+        std::cout << interFrameCount++ << ' ' << frameIndex0 << " -> "
+                  << frameIndex1 << '\n';
       }
-    }
-    if (!same) {
-      frameIndex0 = frameIndex1;
-      mesh0 = mesh1;
-    } else {
-      std::cout << interFrameCount++ << ' ' << frameIndex0 << " -> "
-                << frameIndex1 << '\n';
-    }
-    predStructure[f] = Vec3<int32_t>(frameIndex1, frameIndex0, 0);
-  }
-
-  int32_t framesInGOF = 0;
-  int32_t startFrameIndexGOF = startFrame;
-  int32_t counterGOF = 0;
-  for (int32_t f = 0; f < frameCount;) {
-    const auto refFrameIndex = predStructure[f][1];
-    int32_t coherentFrameCount = 0;
-    while (coherentFrameCount <= maxGOFSize
-           && f + coherentFrameCount < frameCount
-           && predStructure[f + coherentFrameCount][1] == refFrameIndex) {
-      ++coherentFrameCount;
+      predStructure[f] = Vec3<int32_t>(frameIndex1, frameIndex0, 0);
     }
 
-    if (framesInGOF + coherentFrameCount <= maxGOFSize) {
-      framesInGOF += coherentFrameCount;
-    } else {
+    int32_t framesInGOF = 0;
+    int32_t startFrameIndexGOF = startFrame;
+    int32_t counterGOF = 0;
+    for (int32_t f = 0; f < frameCount;) {
+      const auto refFrameIndex = predStructure[f][1];
+      int32_t coherentFrameCount = 0;
+      while (coherentFrameCount <= maxGOFSize
+             && f + coherentFrameCount < frameCount
+             && predStructure[f + coherentFrameCount][1] == refFrameIndex) {
+        ++coherentFrameCount;
+      }
+
+      if (framesInGOF + coherentFrameCount <= maxGOFSize) {
+        framesInGOF += coherentFrameCount;
+      } else {
+        const auto start = startFrameIndexGOF;
+        const auto end = startFrameIndexGOF + framesInGOF;
+        assert(start >= startFrame);
+        assert(end <= startFrame + frameCount_);
+        std::cout << "GOf[" << counterGOF << "] " << start << " -> " << end
+                  << ' ' << framesInGOF << '\n';
+        for (int32_t t = start; t < end; ++t) {
+          predStructure[t - startFrame][2] = counterGOF;
+        }
+        startFrameIndexGOF = startFrame + f;
+        framesInGOF = coherentFrameCount;
+        ++counterGOF;
+      }
+      f += coherentFrameCount;
+    }
+    if (framesInGOF) {
       const auto start = startFrameIndexGOF;
       const auto end = startFrameIndexGOF + framesInGOF;
       assert(start >= startFrame);
-      assert(end <= startFrame + frameCount_);
+      assert(end <= startFrame + frameCount);
       std::cout << "GOf[" << counterGOF << "] " << start << " -> " << end
                 << ' ' << framesInGOF << '\n';
       for (int32_t t = start; t < end; ++t) {
         predStructure[t - startFrame][2] = counterGOF;
       }
-      startFrameIndexGOF = startFrame + f;
-      framesInGOF = coherentFrameCount;
       ++counterGOF;
     }
-    f += coherentFrameCount;
-  }
-  if (framesInGOF) {
-    const auto start = startFrameIndexGOF;
-    const auto end = startFrameIndexGOF + framesInGOF;
-    assert(start >= startFrame);
-    assert(end <= startFrame + frameCount);
-    std::cout << "GOf[" << counterGOF << "] " << start << " -> " << end << ' '
-              << framesInGOF << '\n';
-    for (int32_t t = start; t < end; ++t) {
-      predStructure[t - startFrame][2] = counterGOF;
-    }
-    ++counterGOF;
-  }
 
-  int32_t currentGofIndex = -1;
-  for (int32_t t = 0; t < frameCount_; ++t) {
-    const auto& pred = predStructure[t];
-    const auto frameIndex = pred[0];
-    const auto referenceFrameIndex = pred[1];
-    const auto gofIndex = pred[2];
-    assert(referenceFrameIndex <= frameIndex);
-    if (gofIndex != currentGofIndex) {
-      currentGofIndex = gofIndex;
-      sequenceInfo_.resize(sequenceInfo_.size() + 1);
-      auto& gofInfo = sequenceInfo_.back();
-      gofInfo.frameCount_ = 1;
-      gofInfo.startFrameIndex_ = frameIndex;
-      gofInfo.index_ = gofIndex;
-      VMCFrameInfo frameInfo;
-      frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
-      frameInfo.referenceFrameIndex = -1;
-      frameInfo.type = FrameType::INTRA;
-      gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
-      gofInfo.framesInfo_.push_back(frameInfo);
-    } else {
-      auto& gofInfo = sequenceInfo_.back();
-      ++gofInfo.frameCount_;
-      VMCFrameInfo frameInfo;
-
-      if (referenceFrameIndex == frameIndex) {
+    int32_t currentGofIndex = -1;
+    for (int32_t t = 0; t < frameCount_; ++t) {
+      const auto& pred = predStructure[t];
+      const auto frameIndex = pred[0];
+      const auto referenceFrameIndex = pred[1];
+      const auto gofIndex = pred[2];
+      assert(referenceFrameIndex <= frameIndex);
+      if (gofIndex != currentGofIndex) {
+        currentGofIndex = gofIndex;
+        sequenceInfo_.resize(sequenceInfo_.size() + 1);
+        auto& gofInfo = sequenceInfo_.back();
+        gofInfo.frameCount_ = 1;
+        gofInfo.startFrameIndex_ = frameIndex;
+        gofInfo.index_ = gofIndex;
+        VMCFrameInfo frameInfo;
         frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
         frameInfo.type = FrameType::INTRA;
+        gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
+        gofInfo.framesInfo_.push_back(frameInfo);
       } else {
-        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
-        frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
-        frameInfo.type = FrameType::SKIP;
+        auto& gofInfo = sequenceInfo_.back();
+        ++gofInfo.frameCount_;
+        VMCFrameInfo frameInfo;
+
+        if (referenceFrameIndex == frameIndex) {
+          frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
+          frameInfo.referenceFrameIndex = -1;
+          frameInfo.type = FrameType::INTRA;
+        } else {
+          frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
+          frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
+          frameInfo.type = FrameType::SKIP;
+        }
+        gofInfo.framesInfo_.push_back(frameInfo);
       }
-      gofInfo.framesInfo_.push_back(frameInfo);
     }
   }
   return 0;

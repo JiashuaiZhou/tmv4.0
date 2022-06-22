@@ -134,10 +134,16 @@ static inline size_t hash( const std::string& name){
   return 0xffffffffffffffff;
 }
 
+// const std::string g_hmEncoderPath =
+//   "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderHighBitDepthStatic";
+// const std::string g_hmDecoderPath =
+//   "externaltools/hm-16.21+scm-8.8/bin/TAppDecoderHighBitDepthStatic";
+
 const std::string g_hmEncoderPath =
-  "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderHighBitDepthStatic";
+  "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderStatic";
 const std::string g_hmDecoderPath =
-  "externaltools/hm-16.21+scm-8.8/bin/TAppDecoderHighBitDepthStatic";
+  "externaltools/hm-16.21+scm-8.8/bin/TAppDecoderStatic";
+
 const std::string g_hdrConvertPath =
   "externaltools/hdrtools/build/bin/HDRConvert";
 const std::string g_dracoEncoderPath = "build/Release/bin/draco_encoder";

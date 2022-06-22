@@ -119,7 +119,7 @@ try {
     ("gofstruct", params.groupOfFramesStructurePath, {},
     "Prediction structure file")
 
-    ("it", params.encParams.subdivisionIterationCount, 2,
+    ("it", params.encParams.liftingSubdivisionIterationCount, 2,
     "Subdivision iteration count")
 
     ("gqp", params.encParams.qpPosition, 10,
@@ -267,6 +267,7 @@ loadGroupOfFrames(
       return -1;
     }
   }
+  std::cout << "\n" << std::flush;
   return 0;
 }
 

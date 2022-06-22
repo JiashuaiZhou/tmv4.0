@@ -38,6 +38,7 @@
 #  include "draco/compression/decode.h"
 #  include "draco/core/data_buffer.h"
 #  include "draco/mesh/triangle_soup_mesh_builder.h"
+#include "draco/io/obj_encoder.h"
 
 namespace vmesh {
 
@@ -52,57 +53,96 @@ template<typename T>
 std::unique_ptr<draco::Mesh>
 convert(TriangleMesh<T>& src)
 {
-  draco::TriangleSoupMeshBuilder meshBuilder;
   const int32_t triCount = src.triangleCount();
-  meshBuilder.Start(src.triangleCount());
-  const auto hasTexCoords = src.texCoordTriangleCount() > 0;
-  const auto hasNormals = src.normalCount() > 0;
-  const auto hasColors = src.colourCount() > 0;
+  const int32_t pointCount = src.pointCount();
+  const int32_t texCoordCount = src.texCoordCount();
+  const int32_t normalCount = src.normalCount();
+  const int32_t colourCount = src.colourCount();
   int posAtt = -1, nrmAtt = -1, colAtt = -1, texAtt = -1;
-  posAtt = meshBuilder.AddAttribute(
-    draco::GeometryAttribute::POSITION, 3, draco::DT_INT32);
-  if (hasNormals) {
-    nrmAtt = meshBuilder.AddAttribute(
-      draco::GeometryAttribute::NORMAL, 3, draco::DT_INT32);
+
+  // Add attributes if they are present in the input data.
+  const bool use_identity_mapping = false;
+  auto mesh = std::unique_ptr<draco::Mesh>(new draco::Mesh());
+  mesh->SetNumFaces(triCount);
+  mesh->set_num_points(3 * triCount);
+
+  draco::GeometryAttribute va;
+  va.Init(draco::GeometryAttribute::POSITION, nullptr, 3, draco::DT_INT32, false,
+          sizeof(int32_t) * 3, 0);
+  posAtt = mesh->AddAttribute(va, use_identity_mapping, pointCount);
+
+  if (normalCount > 0) {
+    draco::GeometryAttribute va;
+    va.Init(
+      draco::GeometryAttribute::NORMAL, nullptr, 3, draco::DT_INT32, false,
+      sizeof(int32_t) * 3, 0);
+    nrmAtt = mesh->AddAttribute(va, use_identity_mapping, normalCount);
   }
-  if (hasColors) {
-    colAtt = meshBuilder.AddAttribute(
-      draco::GeometryAttribute::COLOR, 3, draco::DT_INT32);
+  if (colourCount > 0) {
+    draco::GeometryAttribute va;
+    va.Init(
+      draco::GeometryAttribute::NORMAL, nullptr, 3, draco::DT_INT32, false,
+      sizeof(int32_t) * 3, 0);
+    colAtt = mesh->AddAttribute(va, use_identity_mapping, colourCount);
   }
-  if (hasTexCoords) {
-    texAtt = meshBuilder.AddAttribute(
-      draco::GeometryAttribute::TEX_COORD, 2, draco::DT_INT32);
+  if (texCoordCount > 0) {
+    draco::GeometryAttribute va;
+    va.Init(
+      draco::GeometryAttribute::TEX_COORD, nullptr, 2, draco::DT_INT32, false,
+      sizeof(int32_t) * 2, 0);
+    texAtt = mesh->AddAttribute(va, use_identity_mapping, texCoordCount);
   }
-  draco::FaceIndex faceIndex;
-  for (int32_t i = 0; i < triCount; i++, faceIndex++) {
-    Vec3<int32_t> pos0(src.point(src.triangle(i).x()));
-    Vec3<int32_t> pos1(src.point(src.triangle(i).y()));
-    Vec3<int32_t> pos2(src.point(src.triangle(i).z()));
-    meshBuilder.SetAttributeValuesForFace(
-      posAtt, faceIndex, pos0.data(), pos1.data(), pos2.data());      
-    if (hasColors) {
-      Vec3<int32_t> col0(src.colour(src.triangle(i).x()));
-      Vec3<int32_t> col1(src.colour(src.triangle(i).y()));
-      Vec3<int32_t> col2(src.colour(src.triangle(i).z()));
-      meshBuilder.SetAttributeValuesForFace(
-        colAtt, faceIndex, col0.data(), col1.data(), col2.data());
+
+  draco::AttributeValueIndex posIndex(0);
+  draco::AttributeValueIndex colIndex(0);
+  draco::AttributeValueIndex nrmIndex(0);
+  draco::AttributeValueIndex texIndex(0);
+  for (int32_t i = 0; i < pointCount; i++) {
+    Vec3<int32_t> pos(src.point(i));
+    mesh->attribute(posAtt)->SetAttributeValue(posIndex++, pos.data());
+  }
+  if (normalCount > 0) {
+    for (int32_t i = 0; i < normalCount; i++) {
+      Vec3<int32_t> nrm(src.normal(i));
+      mesh->attribute(nrmAtt)->SetAttributeValue(nrmIndex++, nrm.data());
     }
-    if (hasNormals) {
-      Vec3<int32_t> nrm0(src.normal(src.normalTriangle(i).x()));
-      Vec3<int32_t> nrm1(src.normal(src.normalTriangle(i).y()));
-      Vec3<int32_t> nrm2(src.normal(src.normalTriangle(i).z()));
-      meshBuilder.SetAttributeValuesForFace(
-        nrmAtt, faceIndex, nrm0.data(), nrm1.data(), nrm2.data());
-    }
-    if (hasTexCoords) {
-      Vec2<int32_t> tex0(src.texCoord(src.texCoordTriangle(i).x()));
-      Vec2<int32_t> tex1(src.texCoord(src.texCoordTriangle(i).y()));
-      Vec2<int32_t> tex2(src.texCoord(src.texCoordTriangle(i).z()));
-      meshBuilder.SetAttributeValuesForFace(
-        texAtt, faceIndex, tex0.data(), tex1.data(), tex2.data());
+  }
+  if (colourCount > 0) {
+    for (int32_t i = 0; i < colourCount; i++) {
+      Vec3<int32_t> col(src.colour(i));
+      mesh->attribute(colAtt)->SetAttributeValue(colIndex++, col.data());
     }
   }
-  return meshBuilder.Finalize();
+  if (texCoordCount > 0) {
+    for (int32_t i = 0; i < texCoordCount; i++) {
+      Vec2<int32_t> tex(src.texCoord(i));
+      mesh->attribute(texAtt)->SetAttributeValue(texIndex++, tex.data());
+    }
+  }
+  for (int32_t i = 0; i < triCount; i++) {
+    draco::Mesh::Face face;
+    Vec3<int32_t> tri(src.triangle(i));
+    for (int c = 0; c < 3; ++c) {
+      face[c] = 3 * i + c;
+      mesh->attribute(posAtt)->SetPointMapEntry(
+        face[c], draco::AttributeValueIndex(tri[c]));
+    }
+    if (texCoordCount > 0) {
+      Vec3<int32_t> tex(src.texCoordTriangle(i));
+      for (int c = 0; c < 3; ++c)
+        mesh->attribute(texAtt)->SetPointMapEntry(
+          face[c], draco::AttributeValueIndex(tex[c]));
+    }
+    if (normalCount > 0) {
+      Vec3<int32_t> nrm(src.normalTriangle(i));
+      for (int c = 0; c < 3; ++c)
+        mesh->attribute(nrmAtt)->SetPointMapEntry(
+          face[c], draco::AttributeValueIndex(nrm[c]));
+    }
+    mesh->SetFace(draco::FaceIndex(i), face);
+  }
+  mesh->DeduplicatePointIds();
+  return mesh;
 }
 
 template<typename T>
@@ -186,7 +226,8 @@ DracoLibGeometryEncoder<T>::encode(
   GeometryEncoderParameters& params,
   std::vector<uint8_t>& bitstream,
   TriangleMesh<T>& rec)
-{
+
+{  
   // Load draco mesh
   auto mesh = convert(src);
 

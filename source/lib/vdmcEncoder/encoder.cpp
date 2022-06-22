@@ -126,8 +126,7 @@ VMCEncoder::compressDisplacementsVideo(
   videoEncoderParams.qp_ = 8;
   FrameSequence<uint16_t> rec;
   std::vector<uint8_t> videoBitstream;
-  auto encoder =
-    VirtualVideoEncoder<uint16_t>::create(VideoCodecId::HM);
+  auto encoder = VirtualVideoEncoder<uint16_t>::create(VideoCodecId::HM);
   encoder->encode(_dispVideo, videoEncoderParams, videoBitstream, rec);
 
   // Save intermediate files
@@ -164,7 +163,11 @@ VMCEncoder::unifyVertices(
     frame.base.resizeNormalTriangles(0);
     frame.subdiv.resizeNormals(0);
     frame.subdiv.resizeNormalTriangles(0);
-    if (params.unifyVertices && params.subdivisionIterationCount == 0) {
+    printf(
+      "liftingSubdivisionIterationCount = %d \n",
+      params.liftingSubdivisionIterationCount);
+    if (params.unifyVertices && params.liftingSubdivisionIterationCount == 0) {
+      printf("unifyVertices \n");
       auto& base = frame.base;
       auto& subdiv = frame.subdiv;
       assert(base.pointCount() == subdiv.pointCount());
@@ -177,6 +180,7 @@ VMCEncoder::unifyVertices(
       const auto& frameInfo = gofInfo.frameInfo(findex);
       auto& umapping = umappings[findex];
       if (frameInfo.type == FrameType::INTRA) {
+        printf("INTRA \n");
         UnifyVertices(
           base.points(), base.triangles(), upoints, utriangles, umapping);
         std::swap(base.points(), upoints);
@@ -192,6 +196,7 @@ VMCEncoder::unifyVertices(
         subdiv.triangles() = base.triangles();
         subdiv.texCoordTriangles() = base.texCoordTriangles();
       } else {
+        printf("INTER \n");
         umapping = umappings[frameInfo.referenceFrameIndex];
         const auto& refFrame = gof.frames[frameInfo.referenceFrameIndex];
         upoints = base.points();
@@ -239,8 +244,7 @@ VMCEncoder::compressTextureVideo(
   videoEncoderParams.qp_ = params.textureVideoQP;
   FrameSequence<uint16_t> yuvRec;
   std::vector<uint8_t> videoBitstream;
-  auto encoder =
-    VirtualVideoEncoder<uint16_t>::create(VideoCodecId::HM);
+  auto encoder = VirtualVideoEncoder<uint16_t>::create(VideoCodecId::HM);
   encoder->encode(yuvSrc, videoEncoderParams, videoBitstream, yuvRec);
   bitstream.write((uint32_t)videoBitstream.size());
   bitstream.append(videoBitstream);
@@ -274,6 +278,19 @@ VMCEncoder::computeDracoMapping(
   const int32_t frameIndex,
   const VMCEncoderParameters& params) const
 {
+  // // Bug fix
+  // if (params.forceWriteReadIntermediateModels) {
+  //   auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
+  //     + std::to_string(frameIndex);
+  //   // Bug in r5 : writeAndReadMeshInObjFiles(base, prefix + "base.obj");
+  // }
+  // Save intermediate files
+  if (params.keepIntermediateFiles) {
+    auto prefix = "GOF_"
+      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
+      + "_mapping_src.obj";
+    base.saveToOBJ<int64_t>(prefix);
+  }
   // Scale
   const auto scalePosition = 1 << (18 - params.bitDepthPosition);
   const auto scaleTexCoord = 1 << 18;
@@ -283,16 +300,18 @@ VMCEncoder::computeDracoMapping(
   for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
     base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
   }
-  // Bug fix
-  if (params.forceWriteReadIntermediateModels) {
-    auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
-      + std::to_string(frameIndex);
-    writeAndReadMeshInObjFiles(base, prefix + "base.obj");
+  // Save intermediate files
+  if (params.keepIntermediateFiles) {
+    auto prefix = "GOF_"
+      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
+      + "_mapping_scale.obj";
+    base.saveToOBJ<int64_t>(prefix);
   }
 
   // Encode
   GeometryEncoderParameters dracoParams;
   dracoParams.cl_ = 10;
+
   TriangleMesh<double> rec;
   std::vector<uint8_t> geometryBitstream;
   auto encoder =
@@ -310,8 +329,11 @@ VMCEncoder::computeDracoMapping(
   }
 
   // Geometry parametrisation base
+  printf(
+    "subdivideMidPoint 1: liftingSubdivisionIterationCount = %d \n",
+    params.liftingSubdivisionIterationCount);
   auto fsubdiv0 = base;
-  fsubdiv0.subdivideMidPoint(params.subdivisionIterationCount);
+  fsubdiv0.subdivideMidPoint(params.liftingSubdivisionIterationCount);
   std::vector<int32_t> texCoordToPoint0;
   fsubdiv0.computeTexCoordToPointMapping(texCoordToPoint0);
   struct ArrayHasher {
@@ -334,14 +356,17 @@ VMCEncoder::computeDracoMapping(
     map0[vertex0] = texCoordToPoint0[v];
   }
 
-  // Geometry parametrisation rec  
+  // Geometry parametrisation rec
   if (params.forceWriteReadIntermediateModels) {
     auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
       + std::to_string(frameIndex);
-    writeAndReadMeshInObjFiles( rec, prefix + "fsubdiv1.obj"); 
+    writeAndReadMeshInObjFiles(rec, prefix + "fsubdiv1.obj");
   }
   auto fsubdiv1 = rec;
-  fsubdiv1.subdivideMidPoint(params.subdivisionIterationCount);
+  printf(
+    "subdivideMidPoint 2: liftingSubdivisionIterationCount = %d \n",
+    params.liftingSubdivisionIterationCount);
+  fsubdiv1.subdivideMidPoint(params.liftingSubdivisionIterationCount);
   const auto pointCount1 = fsubdiv1.pointCount();
   mapping.resize(pointCount1, -1);
   std::vector<bool> tags(pointCount1, false);
@@ -485,6 +510,14 @@ VMCEncoder::compressBaseMesh(
   auto& subdiv = frame.subdiv;
   auto& mapping = frame.mapping;
   auto& qpositions = frame.qpositions;
+  // Save intermediate files
+  if (params.keepIntermediateFiles) {
+    auto prefix = "GOF_"
+      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
+      + "_base_src.obj";
+    base.saveToOBJ<int64_t>(prefix);
+  }
+  printf("%04d: frameInfo.type = %d \n", frameIndex, frameInfo.type);
   if (frameInfo.type == FrameType::INTRA) {
     const auto texCoordBBox = base.texCoordBoundingBox();
     const auto delta = texCoordBBox.max - texCoordBBox.min;
@@ -497,6 +530,13 @@ VMCEncoder::compressBaseMesh(
       }
     }
     computeDracoMapping(base, mapping, frameIndex, params);
+    
+    if (params.keepIntermediateFiles) {
+      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+        + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
+        + "_post_mapping";
+      base.saveToOBJ(prefix + "_base.obj");
+    }
 
     // quantize base mesh
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
@@ -504,20 +544,40 @@ VMCEncoder::compressBaseMesh(
     }
     for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
       base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
+    }    
+
+    if (params.keepIntermediateFiles) {
+      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+        + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
+        + "_post_mapping";
+      base.saveToOBJ(prefix + "_base_quant.obj");
     }
 
     // Encode
+    if (params.forceWriteReadIntermediateModels) {
+      auto prefix = params.intermediateFilesPathPrefix + "fr_"
+        + std::to_string(frameIndex);
+      writeAndReadMeshInObjFiles(base, prefix + "base_before_enc.obj");
+    }
     GeometryEncoderParameters dracoParams;
     dracoParams.qp_ = params.qpPosition;
     dracoParams.qt_ = params.qpTexCoord;
+    
+    printf("draco param: \n");
+    printf(" - qp = %d \n", params.qpPosition);
+    printf(" - qt = %d \n", params.qpTexCoord);
     TriangleMesh<double> rec;
     std::vector<uint8_t> geometryBitstream;
     auto encoder =
       VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
     encoder->encode(base, dracoParams, geometryBitstream, rec);
-
+    if (params.forceWriteReadIntermediateModels) {
+      auto prefix = params.intermediateFilesPathPrefix + "fr_"
+        + std::to_string(frameIndex);
+      writeAndReadMeshInObjFiles(rec, prefix + "new_base.obj");
+    }
+    
     // Save intermediate files
-    std::stringstream qbaseFileName, cbaseFileName, rbaseFileName;
     if (params.keepIntermediateFiles) {
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
         + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
@@ -535,11 +595,6 @@ VMCEncoder::compressBaseMesh(
 
     // Round positions
     base = rec;
-    if (params.forceWriteReadIntermediateModels) {
-    auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
-      + std::to_string(frameIndex);
-      writeAndReadMeshInObjFiles(base, prefix + "new_base.obj");
-    }
     qpositions.resize(base.pointCount());
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       auto& qpos = qpositions[v];
@@ -582,8 +637,11 @@ VMCEncoder::compressBaseMesh(
     base.setPoint(v, base.point(v) * iscalePosition);
   }
 
+  printf(
+    "subdivideBaseMesh: liftingSubdivisionIterationCount = %d \n",
+    params.liftingSubdivisionIterationCount);
   subdivideBaseMesh(
-    frame, params.subdivisionMethod, params.subdivisionIterationCount);
+    frame, params.subdivisionMethod, params.liftingSubdivisionIterationCount);
   const auto& rec = frame.rec;
 
   auto rsubdiv = rec;
@@ -621,6 +679,7 @@ VMCEncoder::computeDisplacements(
       disp[v] = subdiv.point(v) - rec.point(v);
     }
   }
+
   return 0;
 }
 
@@ -674,7 +733,7 @@ VMCEncoder::transferTexture(
     params.textureTransferSamplingSubdivisionIterationCount);
   frame.outputTexture.resize(
     params.textureWidth, params.textureHeight, ColourSpace::BGR444p);
-    
+
   if (params.invertOrientation) {
     frame.rec.invertOrientation();
   }
@@ -1007,74 +1066,114 @@ VMCEncoder::compress(
   stats.reset();
   stats.totalByteCount = bitstream.size();
 
-  GeometryDecimate geometryDecimate;  
-  TextureParametrization textureParametrization;
-  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-    auto& frame = gof.frame(frameIndex);
-    auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex);
+  if (params.baseIsSrc && params.subdivIsBase) {
+    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+      const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
+      auto& frame = gof.frame(frameIndex);
+      if (params.baseIsSrc)
+        frame.base = frame.input;
+      if (params.subdivIsBase)
+        frame.subdiv = frame.base;
+    }
+  } else {    
+    GeometryDecimate geometryDecimate;
+    TextureParametrization textureParametrization;
+    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+      auto& frame = gof.frame(frameIndex);
+      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+        + std::to_string(_gofInfo.index_) + "_fr_"
+        + std::to_string(frameIndex);
 
-    // Simplify 
-    std::cout << "Simplify \n";
-    if (geometryDecimate.decimate(frame, params )) {  // Create mapped, reference and decimate
-      std::cerr << "Error: can't simplify mesh !\n";
-      return 1;
-    }    
-    // Bug fix
-    if (params.forceWriteReadIntermediateModels) {
-      writeAndReadMeshInObjFiles(frame.mapped, prefix + "_mapped.obj");
-      writeAndReadMeshInObjFiles(frame.reference, prefix + "_reference.obj");
-      writeAndReadMeshInObjFiles(frame.decimate, prefix + "_decimate.obj");
-    }
-    // Save intermediate files
-    if (params.keepIntermediateFiles) {
-      frame.mapped.saveToOBJ(prefix + "_mapped.obj");
-      frame.reference.saveToOBJ(prefix + "_reference.obj");
-      frame.decimate.saveToOBJ(prefix + "_decimate.obj");
-    }
+      // Simplify
+      std::cout << "Simplify \n";
+      if (geometryDecimate.decimate(
+            frame, params)) {  // Create mapped, reference and decimate
+        std::cerr << "Error: can't simplify mesh !\n";
+        return 1;
+      }
+      // Bug fix
+      if (params.forceWriteReadIntermediateModels) {
+        writeAndReadMeshInObjFiles(frame.mapped, prefix + "_mapped.obj");
+        writeAndReadMeshInObjFiles(frame.reference, prefix + "_reference.obj");
+        writeAndReadMeshInObjFiles(frame.decimate, prefix + "_decimate.obj");
+      }
+      // Save intermediate files
+      if (params.keepIntermediateFiles) {
+        frame.mapped.saveToOBJ(prefix + "_mapped.obj");
+        frame.reference.saveToOBJ(prefix + "_reference.obj");
+        frame.decimate.saveToOBJ(prefix + "_decimate.obj");
+      }
 
-    // TextureParametrization
-    std::cout << "TextureParametrization \n";
-    textureParametrization.generate(frame, params);  // create decimateTexture
-    // Bug fix
-    if (params.forceWriteReadIntermediateModels) {
-      writeAndReadMeshInObjFiles(
-        frame.decimateTexture, prefix + "_decimateTexture.obj");
-    }
-    // Save intermediate files
-    if (params.keepIntermediateFiles) {
-      frame.decimateTexture.saveToOBJ(prefix + "_decimateTexture.obj");
-    }
+      // TextureParametrization
+      std::cout << "TextureParametrization \n";
+      textureParametrization.generate(
+        frame, params);  // create decimateTexture
+      // Bug fix
+      if (params.forceWriteReadIntermediateModels) {
+        writeAndReadMeshInObjFiles(
+          frame.decimateTexture, prefix + "_decimateTexture.obj");
+      }
+      // Save intermediate files
+      if (params.keepIntermediateFiles) {
+        frame.decimateTexture.saveToOBJ(prefix + "_decimateTexture.obj");
+      }
 
-    // Fitsubdiv
-    std::cout << "Fitsubdiv \n";
-    GeometryParametrization fitsubdiv;
-    TriangleMesh<double> mtarget;
-    TriangleMesh<double> subdiv0;
-    fitsubdiv.generate(frame, params, mtarget, subdiv0);
-    // Bug fix
-    if (params.forceWriteReadIntermediateModels) {
-      writeAndReadMeshInObjFiles(frame.base, prefix + "_base.obj");
-      writeAndReadMeshInObjFiles(frame.subdiv, prefix + "_subdiv.obj");
-      writeAndReadMeshInObjFiles(frame.nsubdiv, prefix + "_nsubdiv.obj");
-    }
-    // Save intermediate files
-    if (params.keepIntermediateFiles) {
-      frame.decimateTexture.saveToOBJ(prefix + "_reparamDecimateTexture.obj");
-      frame.base.saveToOBJ(prefix + "_base.obj");
-      frame.subdiv.saveToOBJ(prefix + "_subdiv.obj");
-      frame.nsubdiv.saveToOBJ(prefix + "_nsubdiv.obj");
+      // Fitsubdiv
+      std::cout << "Fitsubdiv \n";
+      GeometryParametrization fitsubdiv;
+      TriangleMesh<double> mtarget;
+      TriangleMesh<double> subdiv0;
+      fitsubdiv.generate(frame, params, mtarget, subdiv0);
+      // Bug fix
+      if (params.forceWriteReadIntermediateModels) {
+        writeAndReadMeshInObjFiles(frame.base, prefix + "_base.obj");
+        writeAndReadMeshInObjFiles(frame.subdiv, prefix + "_subdiv.obj");
+        writeAndReadMeshInObjFiles(frame.nsubdiv, prefix + "_nsubdiv.obj");
+      }
+      // Save intermediate files
+      if (params.keepIntermediateFiles) {
+        frame.decimateTexture.saveToOBJ(
+          prefix + "_reparamDecimateTexture.obj");
+        frame.base.saveToOBJ(prefix + "_base.obj");
+        frame.subdiv.saveToOBJ(prefix + "_subdiv.obj");
+        frame.nsubdiv.saveToOBJ(prefix + "_nsubdiv.obj");
+      }
     }
   }
-
-  // Compress 
+  // Compress
   std::cout << "Compress \n";
+
+  if (params.subdivIsBase)
+    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+      auto& frame = gof.frame(frameIndex);
+      frame.subdiv = frame.base;
+    }
+  // Save intermediate files
+  if (params.keepIntermediateFiles) {
+    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+      const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
+      auto& frame = gof.frame(frameIndex);
+      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+        + std::to_string(_gofInfo.index_) + "_fr_"
+        + std::to_string(frameIndex);
+      frame.base.saveToOBJ(prefix + "_base_src.obj");
+      frame.subdiv.saveToOBJ(prefix + "_subdiv_src.obj");
+    }
+  }
   unifyVertices(gofInfo, gof, params);
 
   Bitstream bitstreamCompressedMeshes;
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
     auto& frame = gof.frame(frameIndex);
+    // Save intermediate files
+    if (params.keepIntermediateFiles) {
+      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+        + std::to_string(_gofInfo.index_) + "_fr_"
+        + std::to_string(frameIndex);
+      frame.base.saveToOBJ(prefix + "_base_uni.obj");
+      frame.subdiv.saveToOBJ(prefix + "_subdiv_uni.obj");
+    }
     auto& dispVideoFrame = _dispVideo.frame(frameIndex);
     compressBaseMesh(
       gof, frameInfo, frame, bitstreamCompressedMeshes, stats, params);
@@ -1110,7 +1209,7 @@ VMCEncoder::compress(
     _dispVideo.resize(0, 0, ColourSpace::YUV444p, 0);
   }
 
-  // write sequence header                                   
+  // write sequence header
   if (encodeSequenceHeader(gof, bitstream, params)) {
     return -1;
   }
@@ -1126,8 +1225,8 @@ VMCEncoder::compress(
   }
   stats.displacementsByteCount =
     bitstream.size() - stats.displacementsByteCount;
-    
-  // Reconstruct 
+
+  // Reconstruct
   if (params.encodeTextureVideo) {
     std::cout << "Generating texture maps ";
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
@@ -1160,7 +1259,7 @@ VMCEncoder::compress(
   }
   stats.textureByteCount = bitstream.size() - stats.textureByteCount;
   stats.totalByteCount = bitstream.size() - stats.totalByteCount;
-  
+
   // Normalize UV coordinate
   if (!params.normalizeUV) {
     const auto scale = (1 << params.bitDepthTexCoord) - 1.0;
@@ -1254,8 +1353,12 @@ VMCEncoder::encodeSequenceHeader(
   const uint8_t geometryVideoBlockSize = params.geometryVideoBlockSize;
   const uint8_t bitDepth = uint8_t(
     (params.bitDepthPosition - 1) + ((params.bitDepthTexCoord - 1) << 4));
+
+  printf(
+    "sps: liftingSubdivisionIterationCount = %d \n",
+    params.liftingSubdivisionIterationCount);
   const uint8_t subdivInfo = uint8_t(params.subdivisionMethod)
-    + ((params.subdivisionIterationCount) << 4);
+    + ((params.liftingSubdivisionIterationCount) << 4);
   const uint8_t qpBaseMesh =
     uint8_t((params.qpPosition - 1) + ((params.qpTexCoord - 1) << 4));
   const uint8_t liftingQPs[3] = {
@@ -1306,3 +1409,4 @@ VMCEncoder::encodeFrameHeader(
 //============================================================================
 
 }  // namespace vmesh
+ 

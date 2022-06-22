@@ -117,18 +117,18 @@ GeometryParametrization::generate(
       return false;
     }
   }
-
+  printf("FitMesh: geometryParametrizationSubdivisionIterationCount = %d \n",params.geometryParametrizationSubdivisionIterationCount);
   if (
-    params.subdivisionIterationCount
+    params.geometryParametrizationSubdivisionIterationCount
     && !FitMesh(target, mapped, motion, deformed, params)) {
     std::cerr << "Error: can't fit mesh!\n";
     return false;
   }
 
   base = usource;
-  if (params.fitSubdivisionSurface && params.subdivisionIterationCount) {
+  if (params.fitSubdivisionSurface && params.geometryParametrizationSubdivisionIterationCount) {
     std::cout << "Fitting subdiv ...\n";
-    FitMidPointSubdivision(deformed, base, params.subdivisionIterationCount);
+    FitMidPointSubdivision(deformed, base, params.geometryParametrizationSubdivisionIterationCount);
   }
 
   auto subdiv = base;
@@ -516,13 +516,14 @@ GeometryParametrization::Subdivide(TriangleMesh<double>& mesh, const VMCEncoderP
 {
   std::cout << "Subdividing Mesh...\n";
   auto start = std::chrono::steady_clock::now();
-
+  printf("Subdivide: geometryParametrizationSubdivisionIterationCount = %d \n",params.geometryParametrizationSubdivisionIterationCount);
+  
   mesh.computeNormals();
-  if (params.subdivisionIterationCount) {
+  if (params.geometryParametrizationSubdivisionIterationCount) {
     std::vector<SubdivisionLevelInfo> infoLevelOfDetails;
     std::vector<int64_t> subdivEdges;
     mesh.subdivideMidPoint(
-      params.subdivisionIterationCount, &infoLevelOfDetails, &subdivEdges);
+      params.geometryParametrizationSubdivisionIterationCount, &infoLevelOfDetails, &subdivEdges);
     mesh.resizeNormals(mesh.pointCount());
     interpolateSubdivision(
       mesh.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);

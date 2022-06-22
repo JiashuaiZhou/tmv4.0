@@ -6,9 +6,9 @@ set(VDMC_VERSION_MAJOR 1 )
 set(VDMC_VERSION_MINOR 0 )
 
 # Video encoder and decoder:
-OPTION( USE_HM_VIDEO_CODEC       "Use HM video encoder and decoder"       TRUE )  # 0
-OPTION( USE_VTM_VIDEO_CODEC      "Use VTM video encoder and decoder"      TRUE )  # 1
-OPTION( USE_FFMPEG_VIDEO_CODEC   "Use FFMPEG video encoder and decoder"   TRUE )  # 2
+OPTION( USE_HM_VIDEO_CODEC       "Use HM video encoder and decoder"       TRUE  )  # 0
+OPTION( USE_VTM_VIDEO_CODEC      "Use VTM video encoder and decoder"      FALSE )  # 1
+OPTION( USE_FFMPEG_VIDEO_CODEC   "Use FFMPEG video encoder and decoder"   FALSE )  # 2
 
 # Geometry encoder and decoder:
 OPTION( USE_DRACO_GEOMETRY_CODEC "Use draco geometry encoder and decoder" TRUE )  # 0

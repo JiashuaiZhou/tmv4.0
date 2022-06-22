@@ -24,7 +24,7 @@ tools:
 
       # Geometry parametrization
       # iteration count depends upon decimation level:
-      - it: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
+      - subdivIt: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
 
       - sdeform: 1
       - forceNormalDisp: 0

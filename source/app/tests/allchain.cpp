@@ -80,6 +80,7 @@ loadGroupOfFrames(
       return -1;
     }
   }
+  std::cout << "\n" << std::flush;
   return 0;
 } 
 
@@ -145,7 +146,7 @@ performAllChain(
   params.smoothDeformTriangleNormalFlipThreshold = -0.5;
   params.fitSubdivisionSurface = true;
   params.smoothingDeformSmoothMotion = false;
-  params.subdivisionIterationCount = 3;
+  params.geometryParametrizationSubdivisionIterationCount = 3;
   params.applySmoothingDeform = true;
   params.initialDeformForceNormalDisplacement = false;
   params.applyVertexUnification = true;
@@ -161,6 +162,7 @@ performAllChain(
   params.keepIntermediateFiles = 0;  
   params.qpPosition = 11;
   params.qpTexCoord = 10;
+  params.liftingSubdivisionIterationCount = 2;
   params.liftingQuantizationParameters[0] = 39;
   params.liftingQuantizationParameters[1] = 51;
   params.liftingQuantizationParameters[2] = 51;
@@ -247,7 +249,7 @@ performAllChain(
       << "  --base=" << baseOswPath 
       << "  --subdiv=" << subdivOswPath
       << "  --nsubdiv=" << nsubdivOswPath
-      << "  --it=" << params.subdivisionIterationCount
+      << "  --it=" << params.geometryParametrizationSubdivisionIterationCount
       << "  --sdeform=" << params.applySmoothingDeform
       << "  --forceNormalDisp=" << params.initialDeformForceNormalDisplacement
       << "  --unifyVertices=" << params.applyVertexUnification
@@ -282,7 +284,7 @@ performAllChain(
       << "  --fcount="       << frameCount
       << "  --framerate="    << framerate
       << "  --keep="         << params.keepIntermediateFiles
-      << "  --it="           << params.subdivisionIterationCount
+      << "  --it="           << params.liftingSubdivisionIterationCount
       << "  --gqp="          << params.qpPosition
       << "  --tqp="          << params.qpTexCoord
       << "  --dqp=\""        << params.liftingQuantizationParameters[0] << "," 
@@ -328,7 +330,7 @@ performAllChain(
 
   // Generate gof structure
   vmesh::SequenceInfo sequenceInfo;
-  sequenceInfo.generate(frameCount, startFrame, groupOfFramesMaxSize, srcPath);
+  sequenceInfo.generate(frameCount, startFrame, groupOfFramesMaxSize, true, srcPath);
 
   vmesh::VMCEncoder encoder;
   vmesh::Bitstream bitstream;

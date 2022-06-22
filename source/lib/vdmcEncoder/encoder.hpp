@@ -110,8 +110,12 @@ struct VMCEncoderParameters {
   // mesh
   int32_t qpPosition = 10;
   int32_t qpTexCoord = 8;
-  int32_t bitDepthPosition =12;
+  int32_t bitDepthPosition = 12;
   int32_t bitDepthTexCoord = 12;
+
+  // Gof analysis
+  int32_t groupOfFramesMaxSize = 32;
+  bool    analyzeGof = false;
 
   // geometry video
   int32_t geometryVideoBlockSize = 16;
@@ -143,6 +147,7 @@ struct VMCEncoderParameters {
   // texture transfer
   int32_t textureWidth = 2048;
   int32_t textureHeight = 2048;
+  int32_t liftingSubdivisionIterationCount = 2; 
   int32_t textureTransferSamplingSubdivisionIterationCount = 3;
   int32_t textureTransferPaddingBoundaryIterationCount = 2;
   int32_t textureTransferPaddingDilateIterationCount = 2;
@@ -175,6 +180,8 @@ struct VMCEncoderParameters {
   DirectX::UVATLAS uvOptions = DirectX::UVATLAS_DEFAULT;
 
   // GeometryParametrization
+  bool baseIsSrc    = false;
+  bool subdivIsBase = false;
   int geometrySamplingSubdivisionIterationCount = 3;
   bool applyVertexUnification = true;
   int32_t geometryFittingIterationCount = 16;
@@ -183,7 +190,7 @@ struct VMCEncoderParameters {
   double geometryMissedVerticesSmoothingCoeffcient = 0.1;
   int32_t geometryMissedVerticesSmoothingIterationCount = 10;
   SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
-  int32_t subdivisionIterationCount = 3;
+  int32_t geometryParametrizationSubdivisionIterationCount = 3;
   bool fitSubdivisionSurface = true;
   double initialDeformNormalDeviationThreshold = 0.1;
   int32_t initialDeformNNCount = 1;

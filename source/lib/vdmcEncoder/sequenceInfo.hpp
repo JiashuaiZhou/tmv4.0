@@ -55,6 +55,7 @@ public:
     const int frameCount,
     const int startFrame,
     const int maxGOFSize,
+    const bool analyzeGof,
     const std::string& inputPath);
 
   int save(const std::string outputPath);

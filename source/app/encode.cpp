@@ -60,7 +60,6 @@ struct Parameters {
   std::string reconstructedMaterialLibPath = {};
   int32_t startFrame = 0;
   int32_t frameCount = 1;
-  int32_t groupOfFramesMaxSize = 32;
   double framerate = 30.;
   vmesh::VMCEncoderParameters encParams;
 };
@@ -122,10 +121,6 @@ try {
       params.framerate, 
       params.framerate, 
       "Frame rate")  
-    ("gofmax", 
-      params.groupOfFramesMaxSize, 
-      params.groupOfFramesMaxSize, 
-      "Maximum group of frames size")
     ("keep", 
       params.encParams.keepIntermediateFiles, 
       params.encParams.keepIntermediateFiles, 
@@ -135,6 +130,16 @@ try {
       params.encParams.intermediateFilesPathPrefix, 
       "Intermediate files path prefix")
 
+  (po::Section("Gof analysis"))
+    ("gofmax", 
+      params.encParams.groupOfFramesMaxSize, 
+      params.encParams.groupOfFramesMaxSize, 
+      "Maximum group of frames size")
+    ("analyzeGof", 
+      params.encParams.analyzeGof, 
+      params.encParams.analyzeGof, 
+      "Analyze group of frames")
+  
   (po::Section("Geometry decimate"))
     ("target", 
       params.encParams.targetTriangleRatio, 
@@ -176,13 +181,21 @@ try {
       "texture height")
    
   (po::Section("Geometry parametrization"))
+      ("baseIsSrc", 
+      params.encParams.baseIsSrc, 
+      params.encParams.baseIsSrc, 
+      "Base models are src models")
+    ("subdivIsBase", 
+      params.encParams.subdivIsBase, 
+      params.encParams.subdivIsBase, 
+      "Subdiv models are src models")
     ("sdeform", 
       params.encParams.applySmoothingDeform, 
       params.encParams.applySmoothingDeform, 
       "Apply deformation refinement stage")
-    ("it", 
-      params.encParams.subdivisionIterationCount, 
-      params.encParams.subdivisionIterationCount, 
+    ("subdivIt", 
+      params.encParams.geometryParametrizationSubdivisionIterationCount, 
+      params.encParams.geometryParametrizationSubdivisionIterationCount, 
       "Subdivision iteration count")
     ("forceNormalDisp", 
       params.encParams.initialDeformForceNormalDisplacement, 
@@ -318,10 +331,10 @@ try {
       "Encode texture video")
       
   (po::Section("Lifting"))
-    ("it", 
-      params.encParams.subdivisionIterationCount, 
-      params.encParams.subdivisionIterationCount,       
-      "Subdivision iteration count")
+    ("liftingIt", 
+      params.encParams.liftingSubdivisionIterationCount, 
+      params.encParams.liftingSubdivisionIterationCount,       
+      "Lifting subdivision iteration count")
     ("dqp", 
       params.encParams.liftingQuantizationParameters, 
        {16, 28, 28},
@@ -435,6 +448,7 @@ loadGroupOfFrames(
       return -1;
     }
   }
+  std::cout << "\n" << std::flush;
   return 0;
 } 
 
@@ -475,10 +489,12 @@ compress(const Parameters& params)
   // Generate gof structure
   vmesh::SequenceInfo sequenceInfo;
   sequenceInfo.generate(
-    params.frameCount, params.startFrame, params.groupOfFramesMaxSize,
+    params.frameCount, params.startFrame,
+    params.encParams.groupOfFramesMaxSize, params.encParams.analyzeGof,
     params.inputMeshPath);
   if (params.encParams.keepIntermediateFiles)
-    sequenceInfo.save(params.encParams.intermediateFilesPathPrefix + "gof.txt");
+    sequenceInfo.save(
+      params.encParams.intermediateFilesPathPrefix + "gof.txt");
 
   vmesh::VMCEncoder encoder;
   vmesh::Bitstream bitstream;

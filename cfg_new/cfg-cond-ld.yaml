@@ -7,6 +7,7 @@ categories:
 
     # NB: common options are in cfg-tools.yaml
     encoder:
+      - analyzeGof: 1
       # preprocessed data
       - base:      ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
       - subdiv:    ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj

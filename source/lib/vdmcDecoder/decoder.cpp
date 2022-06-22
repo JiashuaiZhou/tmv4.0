@@ -165,14 +165,12 @@ VMCDecoder::decompressBaseMesh(
     decoder->decode(geometryBitstream, base);
 
     // Save intermediate files
-    if (params.keepIntermediateFiles) {
-      std::stringstream filePath;
-      filePath << params.intermediateFilesPathPrefix << "gof_"
-               << _gofInfo.index_ << "_fr_" << frameIndex << "_base_dec.drc";
-      if (!save(filePath.str(), geometryBitstream))
-        return 1;
-      if (!base.saveToOBJ(removeExtension( filePath.str() + ".obj")))
-        return 1;
+    if (params.keepIntermediateFiles) {      
+      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+        + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
+        + "_base";
+      base.saveToOBJ<int64_t>(prefix + "_dec.obj");
+      save(prefix + ".drc", geometryBitstream);
     }
 
     qpositions.resize(base.pointCount());

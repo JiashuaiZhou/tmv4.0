@@ -108,79 +108,79 @@ try {
 
   (po::Section("Subdiv"))
   ("sdeform",
-   params.params.applySmoothingDeform, true,
+   params.params.intraGeoParams.applySmoothingDeform, true,
    "Apply deformation refinement stage")
 
   ("it",
-   params.params.geometryParametrizationSubdivisionIterationCount, 3,
+   params.params.intraGeoParams.geometryParametrizationSubdivisionIterationCount, 3,
    "Subdivision iteration count")
 
   ("forceNormalDisp",
-   params.params.initialDeformForceNormalDisplacement, false,
+   params.params.intraGeoParams.initialDeformForceNormalDisplacement, false,
    "Force displacements to aligned with the surface normals")
 
   ("unifyVertices",
-   params.params.applyVertexUnification, true,
+   params.params.intraGeoParams.applyVertexUnification, true,
    "Unify duplicated vertices")
 
   ("deformNNCount",
-   params.params.initialDeformNNCount, 1,
+   params.params.intraGeoParams.initialDeformNNCount, 1,
    "Number of nearest neighbours used during the initial deformation stage")
 
   ("deformNormalThres",
-   params.params.initialDeformNormalDeviationThreshold, 0.1,
+   params.params.intraGeoParams.initialDeformNormalDeviationThreshold, 0.1,
    "Maximum allowed normal deviation during the initial deformation stage")
 
   ("sampIt",
-   params.params.geometrySamplingSubdivisionIterationCount, 3,
+   params.params.intraGeoParams.geometrySamplingSubdivisionIterationCount, 3,
    "Number of subdivision iterations used for geometry sampling")
 
   ("fitIt",
-   params.params.geometryFittingIterationCount, 16,
+   params.params.intraGeoParams.geometryFittingIterationCount, 16,
    "Number of iterations used during the deformation refinement stage")
 
   ("smoothCoeff",
-   params.params.geometrySmoothingCoeffcient, 0.25,
+   params.params.intraGeoParams.geometrySmoothingCoeffcient, 0.25,
    "Initial smoothing coefficient used to smooth the deformed mesh "
    "during deformation refinement")
 
   ("smoothDecay",
-   params.params.geometrySmoothingCoeffcientDecayRatio, 0.75,
+   params.params.intraGeoParams.geometrySmoothingCoeffcientDecayRatio, 0.75,
    "Decay factor applied to intial smoothing coefficient after every "
    "iteration of deformation refinement")
 
   ("smoothMissedCoeff",
-   params.params.geometryMissedVerticesSmoothingCoeffcient, 0.1,
+   params.params.intraGeoParams.geometryMissedVerticesSmoothingCoeffcient, 0.1,
    "Smoothing coefficient applied to the missed vertices")
 
   ("smoothMissedIt",
-   params.params.geometryMissedVerticesSmoothingIterationCount, 10,
+   params.params.intraGeoParams.geometryMissedVerticesSmoothingIterationCount, 10,
    "Number of iterations when smoothing the positions of the missed vertices")
 
   ("smoothMethod",
-   params.params.smoothDeformSmoothingMethod, vmesh::SmoothingMethod::VERTEX_CONSTRAINT,
+   params.params.intraGeoParams.smoothDeformSmoothingMethod, vmesh::SmoothingMethod::VERTEX_CONSTRAINT,
    "Smoothing method to be applied when smoothing the deformed mesh during"
    "the deformation refinement stage")
 
   ("deformUpdateNormals",
-   params.params.smoothDeformUpdateNormals, true,
+   params.params.intraGeoParams.smoothDeformUpdateNormals, true,
    "Recompute normals after each iteration of deformation refinement")
 
   ("deformFlipThres",
-   params.params.smoothDeformTriangleNormalFlipThreshold, -0.5,
+   params.params.intraGeoParams.smoothDeformTriangleNormalFlipThreshold, -0.5,
    "Threshold to detect triangle normals flip")
 
   ("useInitialGeom",
-   params.params.smoothingDeformUseInitialGeometry, true,
+   params.params.intraGeoParams.smoothingDeformUseInitialGeometry, true,
    "Use the initial geometry during the the deformation refinement stage")
 
   ("fitSubdiv",
-   params.params.fitSubdivisionSurface, true,
+   params.params.intraGeoParams.fitSubdivisionSurface, true,
    "Update the positions of the decimated mesh to minimize displacements "
    "between the subdivided mesh and the deformed mesh")
 
   ("smoothMotion",
-   params.params.smoothingDeformSmoothMotion, true,
+   params.params.intraGeoParams.smoothingDeformSmoothMotion, true,
    "Apply smoothing to motion instead of vertex positions")
   ;
   /* clang-format on */
@@ -304,7 +304,7 @@ main(int argc, char* argv[])
   }
 
   vmesh::GeometryParametrization fitsubdiv;
-  fitsubdiv.generate( frame, params.params, mtarget, subdiv0 );
+  fitsubdiv.generate( frame, params.params.intraGeoParams, mtarget, subdiv0 );
 
   // Save
   if (!params.baseMeshPath.empty()) {

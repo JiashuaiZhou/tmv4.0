@@ -106,6 +106,29 @@ operator<<(std::ostream& out, SmoothingMethod val)
 
 //============================================================================
 
+struct GeometryParametrizationParameters{
+  int geometrySamplingSubdivisionIterationCount = 3;
+  bool applyVertexUnification = true;
+  int32_t geometryFittingIterationCount = 16;
+  double geometrySmoothingCoeffcient = 0.25;
+  double geometrySmoothingCoeffcientDecayRatio = 0.75;
+  double geometryMissedVerticesSmoothingCoeffcient = 0.1;
+  int32_t geometryMissedVerticesSmoothingIterationCount = 10;
+  SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
+  int32_t geometryParametrizationSubdivisionIterationCount = 3;
+  bool fitSubdivisionSurface = true;
+  double initialDeformNormalDeviationThreshold = 0.1;
+  int32_t initialDeformNNCount = 1;
+  bool initialDeformForceNormalDisplacement = false;
+  bool applySmoothingDeform = true;
+  SmoothingMethod smoothDeformSmoothingMethod =
+    SmoothingMethod::VERTEX_CONSTRAINT;
+  bool smoothDeformUpdateNormals = true;
+  double smoothDeformTriangleNormalFlipThreshold = -0.5;
+  bool smoothingDeformUseInitialGeometry = true;
+  bool smoothingDeformSmoothMotion = true;  
+};
+
 struct VMCEncoderParameters {
   // mesh
   int32_t qpPosition = 10;
@@ -182,26 +205,9 @@ struct VMCEncoderParameters {
   // GeometryParametrization
   bool baseIsSrc    = false;
   bool subdivIsBase = false;
-  int geometrySamplingSubdivisionIterationCount = 3;
-  bool applyVertexUnification = true;
-  int32_t geometryFittingIterationCount = 16;
-  double geometrySmoothingCoeffcient = 0.25;
-  double geometrySmoothingCoeffcientDecayRatio = 0.75;
-  double geometryMissedVerticesSmoothingCoeffcient = 0.1;
-  int32_t geometryMissedVerticesSmoothingIterationCount = 10;
-  SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
-  int32_t geometryParametrizationSubdivisionIterationCount = 3;
-  bool fitSubdivisionSurface = true;
-  double initialDeformNormalDeviationThreshold = 0.1;
-  int32_t initialDeformNNCount = 1;
-  bool initialDeformForceNormalDisplacement = false;
-  bool applySmoothingDeform = true;
-  SmoothingMethod smoothDeformSmoothingMethod =
-    SmoothingMethod::VERTEX_CONSTRAINT;
-  bool smoothDeformUpdateNormals = true;
-  double smoothDeformTriangleNormalFlipThreshold = -0.5;
-  bool smoothingDeformUseInitialGeometry = true;
-  bool smoothingDeformSmoothMotion = true;  
+  float maxAllowedD2PSNRLoss = 1.f;
+  GeometryParametrizationParameters intraGeoParams;
+  GeometryParametrizationParameters interGeoParams;
 
   // Bug fix 
   bool forceWriteReadIntermediateModels = true;

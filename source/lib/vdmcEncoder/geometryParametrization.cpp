@@ -54,7 +54,7 @@ namespace vmesh {
 bool
 GeometryParametrization::generate(
   VMCFrame& frame,
-  const VMCEncoderParameters& params,
+  const GeometryParametrizationParameters& params,
   TriangleMesh<double>& mtarget,
   TriangleMesh<double>& subdiv0)
 {
@@ -167,7 +167,7 @@ GeometryParametrization::CheckTriangleNormalInversion(
   const TriangleMesh<double>& output,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
   const std::vector<Vec3<double>>& initialTriangleNormals,
-  const VMCEncoderParameters& params)
+  const GeometryParametrizationParameters& params)
 {
   const auto& tadj = vertexToTriangle.neighbours();
   const auto start = vertexToTriangle.neighboursStartIndex(vindex);
@@ -219,7 +219,7 @@ GeometryParametrization::UpdateMissedVertices(
   std::vector<int32_t>& vadj,
   std::vector<int8_t>& vtags,
   std::vector<int8_t>& ttags,
-  const VMCEncoderParameters& params)
+  const GeometryParametrizationParameters& params)
 {
   if (params.geometryMissedVerticesSmoothingIterationCount <= 0) {
     return;
@@ -281,7 +281,7 @@ GeometryParametrization::InitialDeform(
   const TriangleMesh<double>& mapped,
   const TriangleMesh<double>& motion,
   TriangleMesh<double>& output,
-  const VMCEncoderParameters& params)
+  const GeometryParametrizationParameters& params)
 {
   StaticAdjacencyInformation<int32_t> vertexToTriangleMapped;
   ComputeVertexToTriangle(
@@ -361,7 +361,7 @@ void
 GeometryParametrization::InitialDeform(
   const TriangleMesh<double>& target,
   TriangleMesh<double>& output,
-  const VMCEncoderParameters& params)
+  const GeometryParametrizationParameters& params)
 {
   StaticAdjacencyInformation<int32_t> vertexToTriangleTarget;
   ComputeVertexToTriangle(
@@ -441,7 +441,7 @@ GeometryParametrization::Deform(
   const std::vector<Vec3<double>>& initialPositions,
   const std::vector<Vec3<double>>& initialTriangleNormals,
   TriangleMesh<double>& output,
-  const VMCEncoderParameters& params)
+  const GeometryParametrizationParameters& params)
 {
   const auto pointCount = output.pointCount();
   const auto triangleCount = output.triangleCount();
@@ -512,7 +512,7 @@ GeometryParametrization::Deform(
 //----------------------------------------------------------------------------
 
 bool
-GeometryParametrization::Subdivide(TriangleMesh<double>& mesh, const VMCEncoderParameters& params)
+GeometryParametrization::Subdivide(TriangleMesh<double>& mesh, const GeometryParametrizationParameters& params)
 {
   std::cout << "Subdividing Mesh...\n";
   auto start = std::chrono::steady_clock::now();
@@ -545,7 +545,7 @@ GeometryParametrization::FitMesh(
   TriangleMesh<double>& mapped,
   const TriangleMesh<double>& motion,
   TriangleMesh<double>& deformed,
-  const VMCEncoderParameters& params)
+  const GeometryParametrizationParameters& params)
 {
   std::cout << "Deforming Mesh...\n";
   auto start = std::chrono::steady_clock::now();

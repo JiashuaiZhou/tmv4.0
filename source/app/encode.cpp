@@ -74,6 +74,9 @@ try {
 
   bool print_help = false;
 
+  auto& encParams = params.encParams;
+  auto& intraGeoParams = params.encParams.intraGeoParams;
+  auto& interGeoParams = params.encParams.interGeoParams;
   /* clang-format off */
   po::Options opts;
   opts.addOptions()
@@ -123,242 +126,327 @@ try {
       params.framerate, 
       "Frame rate")  
     ("keep", 
-      params.encParams.keepIntermediateFiles, 
-      params.encParams.keepIntermediateFiles, 
+      encParams.keepIntermediateFiles, 
+      encParams.keepIntermediateFiles, 
       "Keep intermediate files")
     ("intermediateFilesPathPrefix", 
-      params.encParams.intermediateFilesPathPrefix, 
-      params.encParams.intermediateFilesPathPrefix, 
+      encParams.intermediateFilesPathPrefix, 
+      encParams.intermediateFilesPathPrefix, 
       "Intermediate files path prefix")
 
   (po::Section("Gof analysis"))
     ("gofmax", 
-      params.encParams.groupOfFramesMaxSize, 
-      params.encParams.groupOfFramesMaxSize, 
+      encParams.groupOfFramesMaxSize, 
+      encParams.groupOfFramesMaxSize, 
       "Maximum group of frames size")
     ("analyzeGof", 
-      params.encParams.analyzeGof, 
-      params.encParams.analyzeGof, 
+      encParams.analyzeGof, 
+      encParams.analyzeGof, 
       "Analyze group of frames")
   
   (po::Section("Geometry decimate"))
     ("target", 
-      params.encParams.targetTriangleRatio, 
-      params.encParams.targetTriangleRatio, 
+      encParams.targetTriangleRatio, 
+      encParams.targetTriangleRatio, 
       "Target triangle count ratio")
     ("qt", 
-      params.encParams.texCoordQuantizationBits, 
-      params.encParams.texCoordQuantizationBits, 
+      encParams.texCoordQuantizationBits, 
+      encParams.texCoordQuantizationBits, 
       "texture coordinate quantization bits")
     ("cctcount", 
-      params.encParams.minCCTriangleCount, 
-      params.encParams.minCCTriangleCount, 
+      encParams.minCCTriangleCount, 
+      encParams.minCCTriangleCount, 
       "minimum triangle count per connected component")
 
   (po::Section("Texture parametrization"))
     ("quality", 
-      params.encParams.uvOptions, 
-      params.encParams.uvOptions,       
+      encParams.uvOptions, 
+      encParams.uvOptions,       
       "Quality level of DEFAULT, FAST or QUALITY")
     ("maxCharts", 
-      params.encParams.maxCharts, 
-      params.encParams.maxCharts, 
+      encParams.maxCharts, 
+      encParams.maxCharts, 
       "Maximum number of charts to generate")
     ("stretch", 
-      params.encParams.maxStretch, 
-      params.encParams.maxStretch,       
+      encParams.maxStretch, 
+      encParams.maxStretch,       
       "Maximum amount of stretch 0 to 1")
     ("gutter", 
-      params.encParams.gutter, 
-      params.encParams.gutter, 
+      encParams.gutter, 
+      encParams.gutter, 
       "Gutter width betwen charts in texels")
     ("width", 
-      params.encParams.width, 
-      params.encParams.width,       
+      encParams.width, 
+      encParams.width,       
       "texture width")
     ("height", 
-      params.encParams.height, 
-      params.encParams.height,       
+      encParams.height, 
+      encParams.height,       
       "texture height")
    
   (po::Section("Geometry parametrization"))
       ("baseIsSrc", 
-      params.encParams.baseIsSrc, 
-      params.encParams.baseIsSrc, 
+      encParams.baseIsSrc, 
+      encParams.baseIsSrc, 
       "Base models are src models")
     ("subdivIsBase", 
-      params.encParams.subdivIsBase, 
-      params.encParams.subdivIsBase, 
+      encParams.subdivIsBase, 
+      encParams.subdivIsBase, 
       "Subdiv models are src models")
-    ("sdeform", 
-      params.encParams.applySmoothingDeform, 
-      params.encParams.applySmoothingDeform, 
+    ("maxAllowedD2PSNRLoss", 
+      encParams.maxAllowedD2PSNRLoss, 
+      encParams.maxAllowedD2PSNRLoss, 
+      "Maximum allowed D2 PSNR Loss")
+      
+      
+  (po::Section("Intra geometry parametrization"))
+    ("ai_sdeform", 
+      intraGeoParams.applySmoothingDeform, 
+      intraGeoParams.applySmoothingDeform, 
       "Apply deformation refinement stage")
-    ("subdivIt", 
-      params.encParams.geometryParametrizationSubdivisionIterationCount, 
-      params.encParams.geometryParametrizationSubdivisionIterationCount, 
+    ("ai_subdivIt", 
+      intraGeoParams.geometryParametrizationSubdivisionIterationCount, 
+      intraGeoParams.geometryParametrizationSubdivisionIterationCount, 
       "Subdivision iteration count")
-    ("forceNormalDisp", 
-      params.encParams.initialDeformForceNormalDisplacement, 
-      params.encParams.initialDeformForceNormalDisplacement,       
+    ("ai_forceNormalDisp", 
+      intraGeoParams.initialDeformForceNormalDisplacement, 
+      intraGeoParams.initialDeformForceNormalDisplacement,       
       "Force displacements to aligned with the surface normals")
-    ("unifyVertices", 
-      params.encParams.applyVertexUnification, 
-      params.encParams.applyVertexUnification, 
+    ("ai_unifyVertices", 
+      intraGeoParams.applyVertexUnification, 
+      intraGeoParams.applyVertexUnification, 
       "Unify duplicated vertices")
-    ("deformNNCount", 
-      params.encParams.initialDeformNNCount, 
-      params.encParams.initialDeformNNCount, 
+    ("ai_deformNNCount", 
+      intraGeoParams.initialDeformNNCount, 
+      intraGeoParams.initialDeformNNCount, 
       "Number of nearest neighbours used during the initial deformation stage")
-    ("deformNormalThres",
-      params.encParams.initialDeformNormalDeviationThreshold, 
-      params.encParams.initialDeformNormalDeviationThreshold, 
+    ("ai_deformNormalThres",
+      intraGeoParams.initialDeformNormalDeviationThreshold, 
+      intraGeoParams.initialDeformNormalDeviationThreshold, 
       "Maximum allowed normal deviation during the initial deformation stage")
-    ("sampIt", 
-      params.encParams.geometrySamplingSubdivisionIterationCount, 
-      params.encParams.geometrySamplingSubdivisionIterationCount, 
+    ("ai_sampIt", 
+      intraGeoParams.geometrySamplingSubdivisionIterationCount, 
+      intraGeoParams.geometrySamplingSubdivisionIterationCount, 
       "Number of subdivision iterations used for geometry sampling")
-    ("fitIt", 
-      params.encParams.geometryFittingIterationCount,
-      params.encParams.geometryFittingIterationCount, 
+    ("ai_fitIt", 
+      intraGeoParams.geometryFittingIterationCount,
+      intraGeoParams.geometryFittingIterationCount, 
       "Number of iterations used during the deformation refinement stage")
-    ("smoothCoeff", 
-      params.encParams.geometrySmoothingCoeffcient, 
-      params.encParams.geometrySmoothingCoeffcient, 
+    ("ai_smoothCoeff", 
+      intraGeoParams.geometrySmoothingCoeffcient, 
+      intraGeoParams.geometrySmoothingCoeffcient, 
       "Initial smoothing coefficient used to smooth the deformed mesh "
       "during deformation refinement")
-    ("smoothDecay", 
-      params.encParams.geometrySmoothingCoeffcientDecayRatio, 
-      params.encParams.geometrySmoothingCoeffcientDecayRatio, 
+    ("ai_smoothDecay", 
+      intraGeoParams.geometrySmoothingCoeffcientDecayRatio, 
+      intraGeoParams.geometrySmoothingCoeffcientDecayRatio, 
       "Decay factor applied to intial smoothing coefficient after every "
       "iteration of deformation refinement")
-    ("smoothMissedCoeff", 
-      params.encParams.geometryMissedVerticesSmoothingCoeffcient, 
-      params.encParams.geometryMissedVerticesSmoothingCoeffcient, 
+    ("ai_smoothMissedCoeff", 
+      intraGeoParams.geometryMissedVerticesSmoothingCoeffcient, 
+      intraGeoParams.geometryMissedVerticesSmoothingCoeffcient, 
       "Smoothing coefficient applied to the missed vertices")
-    ("smoothMissedIt", 
-      params.encParams.geometryMissedVerticesSmoothingIterationCount,
-      params.encParams.geometryMissedVerticesSmoothingIterationCount,
+    ("ai_smoothMissedIt", 
+      intraGeoParams.geometryMissedVerticesSmoothingIterationCount,
+      intraGeoParams.geometryMissedVerticesSmoothingIterationCount,
       "Number of iterations when smoothing the positions of the missed vertices")
-    ("smoothMethod", 
-      params.encParams.smoothDeformSmoothingMethod, 
-      params.encParams.smoothDeformSmoothingMethod, 
+    ("ai_smoothMethod", 
+      intraGeoParams.smoothDeformSmoothingMethod, 
+      intraGeoParams.smoothDeformSmoothingMethod, 
       "Smoothing method to be applied when smoothing the deformed mesh during"
       "the deformation refinement stage")
-    ("deformUpdateNormals", 
-      params.encParams.smoothDeformUpdateNormals, 
-      params.encParams.smoothDeformUpdateNormals, 
+    ("ai_deformUpdateNormals", 
+      intraGeoParams.smoothDeformUpdateNormals, 
+      intraGeoParams.smoothDeformUpdateNormals, 
       "Recompute normals after each iteration of deformation refinement")
-    ("deformFlipThres", 
-      params.encParams.smoothDeformTriangleNormalFlipThreshold, 
-      params.encParams.smoothDeformTriangleNormalFlipThreshold, 
+    ("ai_deformFlipThres", 
+      intraGeoParams.smoothDeformTriangleNormalFlipThreshold, 
+      intraGeoParams.smoothDeformTriangleNormalFlipThreshold, 
       "Threshold to detect triangle normals flip")
-    ("useInitialGeom", 
-      params.encParams.smoothingDeformUseInitialGeometry, 
-      params.encParams.smoothingDeformUseInitialGeometry, 
+    ("ai_useInitialGeom", 
+      intraGeoParams.smoothingDeformUseInitialGeometry, 
+      intraGeoParams.smoothingDeformUseInitialGeometry, 
       "Use the initial geometry during the the deformation refinement stage")
-    ("fitSubdiv", 
-      params.encParams.fitSubdivisionSurface, 
-      params.encParams.fitSubdivisionSurface, 
+    ("ai_fitSubdiv", 
+      intraGeoParams.fitSubdivisionSurface, 
+      intraGeoParams.fitSubdivisionSurface, 
       "Update the positions of the decimated mesh to minimize displacements "
       "between the subdivided mesh and the deformed mesh")
-    ("smoothMotion", 
-      params.encParams.smoothingDeformSmoothMotion, 
-      params.encParams.smoothingDeformSmoothMotion, 
+    ("ai_smoothMotion", 
+      intraGeoParams.smoothingDeformSmoothMotion, 
+      intraGeoParams.smoothingDeformSmoothMotion, 
+      "Apply smoothing to motion instead of vertex positions")
+
+  (po::Section("Inter geometry parametrization"))
+    ("ld_sdeform", 
+      intraGeoParams.applySmoothingDeform, 
+      intraGeoParams.applySmoothingDeform, 
+      "Apply deformation refinement stage")
+    ("ld_subdivIt", 
+      intraGeoParams.geometryParametrizationSubdivisionIterationCount, 
+      intraGeoParams.geometryParametrizationSubdivisionIterationCount, 
+      "Subdivision iteration count")
+    ("ld_forceNormalDisp", 
+      intraGeoParams.initialDeformForceNormalDisplacement, 
+      intraGeoParams.initialDeformForceNormalDisplacement,       
+      "Force displacements to aligned with the surface normals")
+    ("ld_unifyVertices", 
+      intraGeoParams.applyVertexUnification, 
+      intraGeoParams.applyVertexUnification, 
+      "Unify duplicated vertices")
+    ("ld_deformNNCount", 
+      intraGeoParams.initialDeformNNCount, 
+      intraGeoParams.initialDeformNNCount, 
+      "Number of nearest neighbours used during the initial deformation stage")
+    ("ld_deformNormalThres",
+      intraGeoParams.initialDeformNormalDeviationThreshold, 
+      intraGeoParams.initialDeformNormalDeviationThreshold, 
+      "Maximum allowed normal deviation during the initial deformation stage")
+    ("ld_sampIt", 
+      intraGeoParams.geometrySamplingSubdivisionIterationCount, 
+      intraGeoParams.geometrySamplingSubdivisionIterationCount, 
+      "Number of subdivision iterations used for geometry sampling")
+    ("ld_fitIt", 
+      intraGeoParams.geometryFittingIterationCount,
+      intraGeoParams.geometryFittingIterationCount, 
+      "Number of iterations used during the deformation refinement stage")
+    ("ld_smoothCoeff", 
+      intraGeoParams.geometrySmoothingCoeffcient, 
+      intraGeoParams.geometrySmoothingCoeffcient, 
+      "Initial smoothing coefficient used to smooth the deformed mesh "
+      "during deformation refinement")
+    ("ld_smoothDecay", 
+      intraGeoParams.geometrySmoothingCoeffcientDecayRatio, 
+      intraGeoParams.geometrySmoothingCoeffcientDecayRatio, 
+      "Decay factor applied to intial smoothing coefficient after every "
+      "iteration of deformation refinement")
+    ("ld_smoothMissedCoeff", 
+      intraGeoParams.geometryMissedVerticesSmoothingCoeffcient, 
+      intraGeoParams.geometryMissedVerticesSmoothingCoeffcient, 
+      "Smoothing coefficient applied to the missed vertices")
+    ("ld_smoothMissedIt", 
+      intraGeoParams.geometryMissedVerticesSmoothingIterationCount,
+      intraGeoParams.geometryMissedVerticesSmoothingIterationCount,
+      "Number of iterations when smoothing the positions of the missed vertices")
+    ("ld_smoothMethod", 
+      intraGeoParams.smoothDeformSmoothingMethod, 
+      intraGeoParams.smoothDeformSmoothingMethod, 
+      "Smoothing method to be applied when smoothing the deformed mesh during"
+      "the deformation refinement stage")
+    ("ld_deformUpdateNormals", 
+      intraGeoParams.smoothDeformUpdateNormals, 
+      intraGeoParams.smoothDeformUpdateNormals, 
+      "Recompute normals after each iteration of deformation refinement")
+    ("ld_deformFlipThres", 
+      intraGeoParams.smoothDeformTriangleNormalFlipThreshold, 
+      intraGeoParams.smoothDeformTriangleNormalFlipThreshold, 
+      "Threshold to detect triangle normals flip")
+    ("ld_useInitialGeom", 
+      intraGeoParams.smoothingDeformUseInitialGeometry, 
+      intraGeoParams.smoothingDeformUseInitialGeometry, 
+      "Use the initial geometry during the the deformation refinement stage")
+    ("ld_fitSubdiv", 
+      intraGeoParams.fitSubdivisionSurface, 
+      intraGeoParams.fitSubdivisionSurface, 
+      "Update the positions of the decimated mesh to minimize displacements "
+      "between the subdivided mesh and the deformed mesh")
+    ("ld_smoothMotion", 
+      intraGeoParams.smoothingDeformSmoothMotion, 
+      intraGeoParams.smoothingDeformSmoothMotion, 
       "Apply smoothing to motion instead of vertex positions")
 
   (po::Section("Mesh"))
     ("gqp", 
-      params.encParams.qpPosition, 
-      params.encParams.qpPosition, 
+      encParams.qpPosition, 
+      encParams.qpPosition, 
       "Quantization bits for base mesh positions")
     ("tqp", 
-      params.encParams.qpTexCoord, 
-      params.encParams.qpTexCoord, 
+      encParams.qpTexCoord, 
+      encParams.qpTexCoord, 
       "Quantization bits for base mesh texture coordinates")
     ("gdepth", 
-      params.encParams.bitDepthPosition, 
-      params.encParams.bitDepthPosition, 
+      encParams.bitDepthPosition, 
+      encParams.bitDepthPosition, 
       "Input positions bit depth")
     ("tdepth", 
-      params.encParams.bitDepthTexCoord, 
-      params.encParams.bitDepthTexCoord, 
+      encParams.bitDepthTexCoord, 
+      encParams.bitDepthTexCoord, 
       "Input texture coordinates bit depth")    
     ("invorient", 
-      params.encParams.invertOrientation, 
-      params.encParams.invertOrientation, 
+      encParams.invertOrientation, 
+      encParams.invertOrientation, 
       "Invert triangles orientation")
     ("unifvertices", 
-      params.encParams.unifyVertices, 
-      params.encParams.unifyVertices, 
+      encParams.unifyVertices, 
+      encParams.unifyVertices, 
       "Unify duplicated vertices")
     ("normuv", 
-      params.encParams.normalizeUV, 
-      params.encParams.normalizeUV, 
+      encParams.normalizeUV, 
+      encParams.normalizeUV, 
       "Normalize uv texture coordinates")    
 
   (po::Section("Geometry video"))
     ("gvencconfig", 
-      params.encParams.geometryVideoEncoderConfig, 
-      params.encParams.geometryVideoEncoderConfig, 
+      encParams.geometryVideoEncoderConfig, 
+      encParams.geometryVideoEncoderConfig, 
       "Geometry video cfg")    
         
   (po::Section("Texture video"))
     ("tvencconfig", 
-      params.encParams.textureVideoEncoderConfig, 
-      params.encParams.textureVideoEncoderConfig, 
+      encParams.textureVideoEncoderConfig, 
+      encParams.textureVideoEncoderConfig, 
       "Texture video cfg")
     ("cscencconfig", 
-      params.encParams.textureVideoHDRToolEncConfig, 
-      params.encParams.textureVideoHDRToolEncConfig, 
+      encParams.textureVideoHDRToolEncConfig, 
+      encParams.textureVideoHDRToolEncConfig, 
       "HDRTools encode cfg")
     ("cscdecconfig", 
-      params.encParams.textureVideoHDRToolDecConfig, 
-      params.encParams.textureVideoHDRToolDecConfig, 
+      encParams.textureVideoHDRToolDecConfig, 
+      encParams.textureVideoHDRToolDecConfig, 
       "HDRTools decode cfg")    
     ("tvqp", 
-      params.encParams.textureVideoQP, 
-      params.encParams.textureVideoQP, 
+      encParams.textureVideoQP, 
+      encParams.textureVideoQP, 
       "Quantization parameter for texture video")
   
   (po::Section("Displacements"))
     ("encdisp", 
-      params.encParams.encodeDisplacementsVideo, 
-      params.encParams.encodeDisplacementsVideo, 
+      encParams.encodeDisplacementsVideo, 
+      encParams.encodeDisplacementsVideo, 
       "Encode displacements video")
     ("enctex", 
-      params.encParams.encodeTextureVideo, 
-      params.encParams.encodeTextureVideo, 
+      encParams.encodeTextureVideo, 
+      encParams.encodeTextureVideo, 
       "Encode texture video")
       
   (po::Section("Lifting"))
     ("liftingIt", 
-      params.encParams.liftingSubdivisionIterationCount, 
-      params.encParams.liftingSubdivisionIterationCount,       
+      encParams.liftingSubdivisionIterationCount, 
+      encParams.liftingSubdivisionIterationCount,       
       "Lifting subdivision iteration count")
     ("dqp", 
-      params.encParams.liftingQuantizationParameters, 
+      encParams.liftingQuantizationParameters, 
        {16, 28, 28},
       "Quantization parameter for displacements")
     ("dqb", 
-      params.encParams.liftingQuantizationBias,
+      encParams.liftingQuantizationBias,
       {1./3., 1./3., 1./3},
       "Quantization bias for displacements")
 
   (po::Section("Texture transfer"))
     ("texwidth", 
-      params.encParams.textureWidth, 
-      params.encParams.textureWidth, 
+      encParams.textureWidth, 
+      encParams.textureWidth, 
       "Output texture width")
     ("texheight", 
-      params.encParams.textureHeight, 
-      params.encParams.textureHeight, 
+      encParams.textureHeight, 
+      encParams.textureHeight, 
       "Output texture height")
   
   (po::Section("Bug fix"))    
     ("forceWriteReadIntermediateModels", 
-      params.encParams.forceWriteReadIntermediateModels, 
-      params.encParams.forceWriteReadIntermediateModels, 
+      encParams.forceWriteReadIntermediateModels, 
+      encParams.forceWriteReadIntermediateModels, 
       "HDRTools decode cfg")
   ;
   /* clang-format on */
@@ -386,16 +474,16 @@ try {
   if (params.inputTexturePath.empty())
     err.error() << "input texture not specified\n";
 
-  if (params.encParams.geometryVideoEncoderConfig.empty())
+  if (encParams.geometryVideoEncoderConfig.empty())
     err.error() << "geometry video config not specified\n";
 
-  if (params.encParams.textureVideoEncoderConfig.empty())
+  if (encParams.textureVideoEncoderConfig.empty())
     err.error() << "texture video encoder config not specified\n";
 
-  if (params.encParams.textureVideoHDRToolEncConfig.empty())
+  if (encParams.textureVideoHDRToolEncConfig.empty())
     err.error() << "hdrtools encoder config not specified\n";
 
-  if (params.encParams.textureVideoHDRToolDecConfig.empty())
+  if (encParams.textureVideoHDRToolDecConfig.empty())
     err.error() << "hdrtools decoder config not specified\n";
 
   if (err.is_errored)
@@ -409,6 +497,8 @@ try {
   po::dumpCfg(std::cout, opts, "Geometry decimate", 4);
   po::dumpCfg(std::cout, opts, "Texture parametrization", 4);
   po::dumpCfg(std::cout, opts, "Geometry parametrization", 4);  
+  po::dumpCfg(std::cout, opts, "Intra geometry parametrization", 4);  
+  po::dumpCfg(std::cout, opts, "Inter geometry parametrization", 4);  
   po::dumpCfg(std::cout, opts, "Mesh", 4);
   po::dumpCfg(std::cout, opts, "Geometry video", 4);
   po::dumpCfg(std::cout, opts, "Texture video", 4);

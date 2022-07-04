@@ -38,9 +38,8 @@ sitecfg="${src_cfg_dir:-}cfg-site.yaml"
 # configs may have different definitions of one category.
 cfg_all=(
 	cfg-cond-ai.yaml
-	# cfg-cond-ld.yaml
+	cfg-cond-ld.yaml
 )
-
 
 do_one_cfgset() {
 	local what=$1

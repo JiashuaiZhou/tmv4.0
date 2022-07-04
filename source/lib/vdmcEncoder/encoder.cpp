@@ -641,7 +641,7 @@ VMCEncoder::compressBaseMesh(
     "subdivideBaseMesh: liftingSubdivisionIterationCount = %d \n",
     params.liftingSubdivisionIterationCount);
   subdivideBaseMesh(
-    frame, params.subdivisionMethod, params.liftingSubdivisionIterationCount);
+    frame, params.intraGeoParams.subdivisionMethod, params.liftingSubdivisionIterationCount);
   const auto& rec = frame.rec;
 
   auto rsubdiv = rec;
@@ -1123,7 +1123,7 @@ VMCEncoder::compress(
       GeometryParametrization fitsubdiv;
       TriangleMesh<double> mtarget;
       TriangleMesh<double> subdiv0;
-      fitsubdiv.generate(frame, params, mtarget, subdiv0);
+      fitsubdiv.generate(frame, params.intraGeoParams, mtarget, subdiv0);
       // Bug fix
       if (params.forceWriteReadIntermediateModels) {
         writeAndReadMeshInObjFiles(frame.base, prefix + "_base.obj");
@@ -1357,7 +1357,7 @@ VMCEncoder::encodeSequenceHeader(
   printf(
     "sps: liftingSubdivisionIterationCount = %d \n",
     params.liftingSubdivisionIterationCount);
-  const uint8_t subdivInfo = uint8_t(params.subdivisionMethod)
+  const uint8_t subdivInfo = uint8_t(params.intraGeoParams.subdivisionMethod)
     + ((params.liftingSubdivisionIterationCount) << 4);
   const uint8_t qpBaseMesh =
     uint8_t((params.qpPosition - 1) + ((params.qpTexCoord - 1) << 4));

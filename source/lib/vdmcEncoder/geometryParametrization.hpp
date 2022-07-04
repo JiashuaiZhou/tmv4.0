@@ -46,7 +46,7 @@
 
 namespace vmesh {
 
-struct VMCEncoderParameters;
+struct GeometryParametrizationParameters;
 
 //============================================================================
 
@@ -57,7 +57,7 @@ public:
 
   bool generate(
     VMCFrame& frame,
-    const VMCEncoderParameters& params,
+    const GeometryParametrizationParameters& params,
     TriangleMesh<double>& mtarget,
     TriangleMesh<double>& subdiv0);
 
@@ -67,7 +67,7 @@ private:
     const TriangleMesh<double>& output,
     const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
     const std::vector<Vec3<double>>& initialTriangleNormals,
-    const VMCEncoderParameters& params);
+    const GeometryParametrizationParameters& params);
 
   void FitMesh(
     const TriangleMesh<double>& target,
@@ -82,35 +82,35 @@ private:
     std::vector<int32_t>& vadj,
     std::vector<int8_t>& vtags,
     std::vector<int8_t>& ttags,
-    const VMCEncoderParameters& params);
+    const GeometryParametrizationParameters& params);
 
   void InitialDeform(
     const TriangleMesh<double>& target,
     const TriangleMesh<double>& mapped,
     const TriangleMesh<double>& motion,
     TriangleMesh<double>& output,
-    const VMCEncoderParameters& params);
+    const GeometryParametrizationParameters& params);
 
   void InitialDeform(
     const TriangleMesh<double>& target,
     TriangleMesh<double>& output,
-    const VMCEncoderParameters& params);
+    const GeometryParametrizationParameters& params);
 
   void Deform(
     const TriangleMesh<double>& target,
     const std::vector<Vec3<double>>& initialPositions,
     const std::vector<Vec3<double>>& initialTriangleNormals,
     TriangleMesh<double>& output,
-    const VMCEncoderParameters& params);
+    const GeometryParametrizationParameters& params);
 
-  bool Subdivide(TriangleMesh<double>& mesh, const VMCEncoderParameters& params);
+  bool Subdivide(TriangleMesh<double>& mesh, const GeometryParametrizationParameters& params);
 
   bool FitMesh(
     const TriangleMesh<double>& target,
     TriangleMesh<double>& mapped,
     const TriangleMesh<double>& motion,
     TriangleMesh<double>& deformed,
-    const VMCEncoderParameters& params);
+    const GeometryParametrizationParameters& params);
 
   bool RemoveDuplicatedTriangles(TriangleMesh<double>& mesh);
 

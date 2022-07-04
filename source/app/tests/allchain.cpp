@@ -136,26 +136,26 @@ performAllChain(
   params.gutter = 32;
   
   // Geometry parametrization
-  params.geometrySamplingSubdivisionIterationCount = 3;
-  params.geometryFittingIterationCount = 16;
-  params.geometrySmoothingCoeffcient = 0.25;
-  params.geometrySmoothingCoeffcientDecayRatio = 0.75;
-  params.geometryMissedVerticesSmoothingCoeffcient = 0.1;
-  params.geometryMissedVerticesSmoothingIterationCount = 10;
-  params.smoothDeformUpdateNormals = true;
-  params.smoothDeformTriangleNormalFlipThreshold = -0.5;
-  params.fitSubdivisionSurface = true;
-  params.smoothingDeformSmoothMotion = false;
-  params.geometryParametrizationSubdivisionIterationCount = 3;
-  params.applySmoothingDeform = true;
-  params.initialDeformForceNormalDisplacement = false;
-  params.applyVertexUnification = true;
-  params.initialDeformNormalDeviationThreshold = -2.0;
-  params.initialDeformNNCount = 1;
-  params.smoothDeformTriangleNormalFlipThreshold = -2.0;
-  params.smoothingDeformUseInitialGeometry = true;
-  params.smoothingDeformSmoothMotion = false;
-  params.smoothDeformSmoothingMethod = vmesh::SmoothingMethod::VERTEX_CONSTRAINT;
+  params.intraGeoParams.geometrySamplingSubdivisionIterationCount = 3;
+  params.intraGeoParams.geometryFittingIterationCount = 16;
+  params.intraGeoParams.geometrySmoothingCoeffcient = 0.25;
+  params.intraGeoParams.geometrySmoothingCoeffcientDecayRatio = 0.75;
+  params.intraGeoParams.geometryMissedVerticesSmoothingCoeffcient = 0.1;
+  params.intraGeoParams.geometryMissedVerticesSmoothingIterationCount = 10;
+  params.intraGeoParams.smoothDeformUpdateNormals = true;
+  params.intraGeoParams.smoothDeformTriangleNormalFlipThreshold = -0.5;
+  params.intraGeoParams.fitSubdivisionSurface = true;
+  params.intraGeoParams.smoothingDeformSmoothMotion = false;
+  params.intraGeoParams.geometryParametrizationSubdivisionIterationCount = 3;
+  params.intraGeoParams.applySmoothingDeform = true;
+  params.intraGeoParams.initialDeformForceNormalDisplacement = false;
+  params.intraGeoParams.applyVertexUnification = true;
+  params.intraGeoParams.initialDeformNormalDeviationThreshold = -2.0;
+  params.intraGeoParams.initialDeformNNCount = 1;
+  params.intraGeoParams.smoothDeformTriangleNormalFlipThreshold = -2.0;
+  params.intraGeoParams.smoothingDeformUseInitialGeometry = true;
+  params.intraGeoParams.smoothingDeformSmoothMotion = false;
+  params.intraGeoParams.smoothDeformSmoothingMethod = vmesh::SmoothingMethod::VERTEX_CONSTRAINT;
 
   // Encoder
   params.textureVideoHDRToolDecConfig = "cfg/hdrconvert/yuv420tobgr444.cfg";   
@@ -249,18 +249,18 @@ performAllChain(
       << "  --base=" << baseOswPath 
       << "  --subdiv=" << subdivOswPath
       << "  --nsubdiv=" << nsubdivOswPath
-      << "  --it=" << params.geometryParametrizationSubdivisionIterationCount
-      << "  --sdeform=" << params.applySmoothingDeform
-      << "  --forceNormalDisp=" << params.initialDeformForceNormalDisplacement
-      << "  --unifyVertices=" << params.applyVertexUnification
+      << "  --it=" << params.intraGeoParams.geometryParametrizationSubdivisionIterationCount
+      << "  --sdeform=" << params.intraGeoParams.applySmoothingDeform
+      << "  --forceNormalDisp=" << params.intraGeoParams.initialDeformForceNormalDisplacement
+      << "  --unifyVertices=" << params.intraGeoParams.applyVertexUnification
       << "  --deformNormalThres="
-      << params.initialDeformNormalDeviationThreshold
-      << "  --deformNNCount=" << params.initialDeformNNCount
+      << params.intraGeoParams.initialDeformNormalDeviationThreshold
+      << "  --deformNNCount=" << params.intraGeoParams.initialDeformNNCount
       << "  --deformFlipThres="
-      << params.smoothDeformTriangleNormalFlipThreshold
-      << "  --useInitialGeom=" << params.smoothingDeformUseInitialGeometry
-      << "  --smoothMotion=" << params.smoothingDeformSmoothMotion
-      << "  --smoothMethod=" << (int)params.smoothDeformSmoothingMethod;
+      << params.intraGeoParams.smoothDeformTriangleNormalFlipThreshold
+      << "  --useInitialGeom=" << params.intraGeoParams.smoothingDeformUseInitialGeometry
+      << "  --smoothMotion=" << params.intraGeoParams.smoothingDeformSmoothMotion
+      << "  --smoothMethod=" << (int)params.intraGeoParams.smoothDeformSmoothingMethod;
   /* clang-format on */
   if (disableSubProcessLog.disableLog())
     cmd << " 2>&1 > /dev/null";

@@ -54,16 +54,16 @@ intra(
   disableSubProcessLog.disable();
   // Parameters 
   vmesh::VMCEncoderParameters params;
-  params.geometryParametrizationSubdivisionIterationCount = 3;
-  params.applySmoothingDeform = true;
-  params.initialDeformForceNormalDisplacement = false;
-  params.applyVertexUnification = true;
-  params.initialDeformNormalDeviationThreshold = -2.0;
-  params.initialDeformNNCount = 1;
-  params.smoothDeformTriangleNormalFlipThreshold = -2.0;
-  params.smoothingDeformUseInitialGeometry = true;
-  params.smoothingDeformSmoothMotion = false;
-  params.smoothDeformSmoothingMethod = vmesh::SmoothingMethod::VERTEX_CONSTRAINT;
+  params.intraGeoParams.geometryParametrizationSubdivisionIterationCount = 3;
+  params.intraGeoParams.applySmoothingDeform = true;
+  params.intraGeoParams.initialDeformForceNormalDisplacement = false;
+  params.intraGeoParams.applyVertexUnification = true;
+  params.intraGeoParams.initialDeformNormalDeviationThreshold = -2.0;
+  params.intraGeoParams.initialDeformNNCount = 1;
+  params.intraGeoParams.smoothDeformTriangleNormalFlipThreshold = -2.0;
+  params.intraGeoParams.smoothingDeformUseInitialGeometry = true;
+  params.intraGeoParams.smoothingDeformSmoothMotion = false;
+  params.intraGeoParams.smoothDeformSmoothingMethod = vmesh::SmoothingMethod::VERTEX_CONSTRAINT;
 
   std::string baseNewPath = "baseMeshNew.obj";
   std::string baseNswPath = "baseMeshNsw.obj";
@@ -85,18 +85,18 @@ intra(
       << "  --base=" << baseOswPath 
       << "  --subdiv=" << subdOswPath
       << "  --nsubdiv=" << nsubOswPath
-      << "  --it=" << params.geometryParametrizationSubdivisionIterationCount
-      << "  --sdeform=" << params.applySmoothingDeform
-      << "  --forceNormalDisp=" << params.initialDeformForceNormalDisplacement
-      << "  --unifyVertices=" << params.applyVertexUnification
+      << "  --it=" << params.intraGeoParams.geometryParametrizationSubdivisionIterationCount
+      << "  --sdeform=" << params.intraGeoParams.applySmoothingDeform
+      << "  --forceNormalDisp=" << params.intraGeoParams.initialDeformForceNormalDisplacement
+      << "  --unifyVertices=" << params.intraGeoParams.applyVertexUnification
       << "  --deformNormalThres="
-      << params.initialDeformNormalDeviationThreshold
-      << "  --deformNNCount=" << params.initialDeformNNCount
+      << params.intraGeoParams.initialDeformNormalDeviationThreshold
+      << "  --deformNNCount=" << params.intraGeoParams.initialDeformNNCount
       << "  --deformFlipThres="
-      << params.smoothDeformTriangleNormalFlipThreshold
-      << "  --useInitialGeom=" << params.smoothingDeformUseInitialGeometry
-      << "  --smoothMotion=" << params.smoothingDeformSmoothMotion
-      << "  --smoothMethod=" << (int)params.smoothDeformSmoothingMethod;
+      << params.intraGeoParams.smoothDeformTriangleNormalFlipThreshold
+      << "  --useInitialGeom=" << params.intraGeoParams.smoothingDeformUseInitialGeometry
+      << "  --smoothMotion=" << params.intraGeoParams.smoothingDeformSmoothMotion
+      << "  --smoothMethod=" << (int)params.intraGeoParams.smoothDeformSmoothingMethod;
   if (disableSubProcessLog.disableLog())
     cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
@@ -111,17 +111,17 @@ intra(
       << "  --base=" << baseNswPath 
       << "  --subdiv=" << subdNswPath 
       << "  --nsubdiv=" << nsubNswPath
-      << "  --it=" << params.geometryParametrizationSubdivisionIterationCount 
-      << "  --sdeform=" << params.applySmoothingDeform 
-      << "  --forceNormalDisp=" << params.initialDeformForceNormalDisplacement
-      << "  --unifyVertices=" << params.applyVertexUnification
+      << "  --it=" << params.intraGeoParams.geometryParametrizationSubdivisionIterationCount 
+      << "  --sdeform=" << params.intraGeoParams.applySmoothingDeform 
+      << "  --forceNormalDisp=" << params.intraGeoParams.initialDeformForceNormalDisplacement
+      << "  --unifyVertices=" << params.intraGeoParams.applyVertexUnification
       << "  --deformNormalThres="
-      << params.initialDeformNormalDeviationThreshold 
-      << "  --deformNNCount=" << params.initialDeformNNCount 
-      << "  --deformFlipThres=" << params.smoothDeformTriangleNormalFlipThreshold
-      << "  --useInitialGeom=" << params.smoothingDeformUseInitialGeometry 
-      << "  --smoothMotion=" << params.smoothingDeformSmoothMotion 
-      << "  --smoothMethod=" << (int)params.smoothDeformSmoothingMethod;
+      << params.intraGeoParams.initialDeformNormalDeviationThreshold 
+      << "  --deformNNCount=" << params.intraGeoParams.initialDeformNNCount 
+      << "  --deformFlipThres=" << params.intraGeoParams.smoothDeformTriangleNormalFlipThreshold
+      << "  --useInitialGeom=" << params.intraGeoParams.smoothingDeformUseInitialGeometry 
+      << "  --smoothMotion=" << params.intraGeoParams.smoothingDeformSmoothMotion 
+      << "  --smoothMethod=" << (int)params.intraGeoParams.smoothDeformSmoothingMethod;
   if (disableSubProcessLog.disableLog())
     cmd << " 2>&1 > /dev/null";
   printf("cmd = %s \n", cmd.str().c_str());
@@ -151,7 +151,7 @@ intra(
   }
 
   vmesh::GeometryParametrization fitsubdiv;
-  fitsubdiv.generate( frame, params, mtarget, subdiv0 );
+  fitsubdiv.generate( frame, params.intraGeoParams, mtarget, subdiv0 );
 
   // Save
   if (!frame.base.saveToOBJ(baseNewPath)) {

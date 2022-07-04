@@ -22,28 +22,43 @@ tools:
       - quality: QUALITY
       - gutter: $eval{ 1 << (${src-texcoord-bits} - 8) }
 
-      # Geometry parametrization
-      # iteration count depends upon decimation level:
-      - subdivIt: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
-
-      - sdeform: 1
-      - forceNormalDisp: 0
-      - unifyVertices: 1
-      - deformNormalThres: -2.0
-      - deformNNCount: 1
-      - deformFlipThres: -2.0
-      - useInitialGeom: 1
-      - smoothMotion: 0
-      - smoothMethod: 1
-
-      # For inter conditions w/o mapping, use fitsubdiv_inter threshold.
-      # NB: does not apply when mapping is performed.
-      # NB: the fitsubdiv_intra results are not always the same for ai and ld
-      #     conditions due to the following (for soldier)
+      # Intra geometry parametrization
+      - ai_subdivIt: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
+      - ai_sdeform: 1
+      - ai_forceNormalDisp: 0
+      - ai_unifyVertices: 1
+      - ai_deformNormalThres: -2.0
+      - ai_deformNNCount: 1
+      - ai_deformFlipThres: -2.0
+      - ai_useInitialGeom: 1
+      - ai_smoothMotion: 0
+      - ai_smoothMethod: 1
       - - !conditional 'defined ${fitsubdiv_with_mapping} and !${fitsubdiv_with_mapping}'
-        - deformNormalThres: 0.8660254
+        - ai_deformNormalThres: 0.8660254
 
-      # common options
+      # Inter geometry parametrization
+      - - !conditional 'defined ${pp} and ${pp} < 1.0 and ( defined ${fitsubdiv_inter} and ${fitsubdiv_inter})'
+        - ld_subdivIt: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
+        - ld_sdeform: 1
+        - ld_forceNormalDisp: 0
+        - ld_deformFlipThres: -0.5
+        - ld_useInitialGeom: 1
+        - ld_smoothMotion: 0
+        - ld_smoothMethod: 1
+        # - ld_withMapping: ${fitsubdiv_with_mapping}
+        - - !conditional '!${fitsubdiv_with_mapping}'
+          - ld_unifyVertices: 0
+          - ld_deformNNCount: 512
+          - ld_deformNormalThres: 0.8660254
+        - - !conditional '${fitsubdiv_with_mapping}'
+          - ld_unifyVertices: 1
+          - ld_deformNNCount: 1
+          - ld_deformNormalThres: -2.0
+        # Choose geometry parametrization
+        - maxAllowedD2PSNRLoss: 1.0 
+  
+
+      # Common options
       - invorient: 0
       - tqp: 10
       - gofmax: 32

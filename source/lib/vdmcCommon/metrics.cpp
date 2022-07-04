@@ -79,7 +79,16 @@ convert(const TriangleMesh<double>& src, mm::Model& dst)
       dst.trianglesuv[3 * i + 1] = texCoordsTri[i][1];
       dst.trianglesuv[3 * i + 2] = texCoordsTri[i][2];
     }
-  }  
+  }   
+  if( src.normals().size() > 0 ){
+    const auto& normals = src.normals();    
+    dst.normals.resize(normals.size() * 3);
+    for (size_t i = 0; i < normals.size(); i++) {
+      dst.normals[3 * i + 0] = normals[i][0];
+      dst.normals[3 * i + 1] = normals[i][1];
+      dst.normals[3 * i + 2] = normals[i][2];
+    }
+  }
 }
 
 void
@@ -107,8 +116,10 @@ VMCMetrics::compute(
     compare = std::make_shared<mm::Compare>();
   }
   for (int32_t i = 0; i < gof.frameCount(); i++) {
-    mm::Model srcModel, recModel;
-    mm::Image srcImage, recImage;
+    mm::Model srcModel;
+    mm::Model recModel;
+    mm::Image srcImage;
+    mm::Image recImage;
 
     auto& frame = gof.frame(i);
     convert(frame.input, srcModel);
@@ -118,13 +129,13 @@ VMCMetrics::compute(
     convert(frame.outputTexture, recImage);
 
     compute(
-      srcModel,                    // Scr object
-      recModel,                    // Rec object
-      srcImage,                    // Scr map
-      recImage,                    // Rec map
+      srcModel,                         // Scr object
+      recModel,                         // Rec object
+      srcImage,                         // Scr map
+      recImage,                         // Rec map
       "src_mlib_" + std::to_string(i),  // Scr name
       "rec_mlib_" + std::to_string(i),  // Rec name
-      params);                     // params
+      params);                          // params
   }
   // display();
 }
@@ -164,7 +175,11 @@ VMCMetrics::compute(
     glm::vec2 zero2( 0, 0 ),one2( 1, 1 );
     glm::vec3 zero3( 0, 0, 0 );
 
-    std::cout << "Dequantize" << std::endl;
+    std::cout << "De-quantizing" << std::endl;
+    std::cout << "  qp = " << params.qp << std::endl;
+    std::cout << "  qt = " << params.qt << std::endl;
+    std::cout << "  qn = " <<  0 << std::endl;
+    std::cout << "  qc = " << 0<< std::endl;
     mm::Dequantize::dequantize(
       model,        // input
       dequantize[i],// output
@@ -250,20 +265,20 @@ VMCMetrics::compute(
   pccParams.dropDuplicates = 2;
   pccParams.bAverageNormals = true;
 
-  std::cout << "Compare models using MPEG PCC distortion metric" << std::endl;
-  std::cout << "  singlePass = " << pccParams.singlePass << std::endl;
-  std::cout << "  hausdorff = " << pccParams.hausdorff << std::endl;
-  std::cout << "  color = " << pccParams.bColor << std::endl;
-  std::cout << "  resolution = " << pccParams.resolution << std::endl;
-  std::cout << "  neighborsProc = " << pccParams.neighborsProc << std::endl;
-  std::cout << "  dropDuplicates = " << pccParams.dropDuplicates << std::endl;
-  std::cout << "  averageNormals = " << pccParams.bAverageNormals << std::endl;
 
   // printf(
   //   "Triangle numbers = %9zu / %9zu \n", sampled[0].getTriangleCount(),
   //   sampled[1].getTriangleCount());
 
   if( params.computePcc ){
+    std::cout << "Compare models using MPEG PCC distortion metric" << std::endl;
+    std::cout << "  singlePass = " << pccParams.singlePass << std::endl;
+    std::cout << "  hausdorff = " << pccParams.hausdorff << std::endl;
+    std::cout << "  color = " << pccParams.bColor << std::endl;
+    std::cout << "  resolution = " << pccParams.resolution << std::endl;
+    std::cout << "  neighborsProc = " << pccParams.neighborsProc << std::endl;
+    std::cout << "  dropDuplicates = " << pccParams.dropDuplicates << std::endl;
+    std::cout << "  averageNormals = " << pccParams.bAverageNormals << std::endl;
     compare->pcc(
       sampled[0],  // modelA
       sampled[1],  // modelB
@@ -291,14 +306,24 @@ VMCMetrics::compute(
 
   // IBSM
   if (params.computeIbsm) {
+
     mm::Model outIbsm[2];
     const unsigned int ibsmResolution = 2048;
     const unsigned int ibsmCameraCount = 16;
     const glm::vec3 ibsmCamRotParams = {0.0F, 0.0F, 0.0F};
-    const std::string ibsmRenderer = "gl12_ibsm";
+    const std::string ibsmRenderer = "sw_raster";
     const std::string ibsmOutputPrefix = "";
     const bool ibsmDisableReordering = false;
     const bool ibsmDisableCulling = false;
+    std::cout << "Compare models using IBSM distortion metric" << std::endl;
+    std::cout << "  ibsmRenderer = " << ibsmRenderer << std::endl;
+    std::cout << "  ibsmCameraCount = " << ibsmCameraCount << std::endl;
+    std::cout << "  ibsmCameraRotation = " << ibsmCamRotParams[0] << " "
+              << ibsmCamRotParams[1] << " " << ibsmCamRotParams[2] << " "
+              << std::endl;
+    std::cout << "  ibsmResolution = " << ibsmResolution << std::endl;
+    std::cout << "  ibsmDisableCulling = " << ibsmDisableCulling << std::endl;
+    std::cout << "  ibsmOutputPrefix = " << "" << std::endl;
 
     compare->ibsm(
       dequantize[0],          // modelA

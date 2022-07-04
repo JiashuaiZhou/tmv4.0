@@ -26,7 +26,7 @@ MMETRIC=${DEPDIR}/mpeg-pcc-mmetric
 if [ ! -d ${MMETRIC} ] 
 then 
   echo -e "\033[0;32mClone: ${MMETRIC} \033[0m";
-  git clone http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git -b  1_0_1 ${MMETRIC} 
+  git clone http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git -b 1_0_1 ${MMETRIC} 
 fi    
 echo -e "\033[0;32mBuild: ${MMETRIC} \033[0m";
 cd ${MMETRIC}

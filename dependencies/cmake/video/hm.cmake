@@ -23,11 +23,11 @@ if( NOT EXISTS "${HM_DIR}/PATCHED" )
   file( WRITE ${HM_DIR}/PATCHED "HM patched with: " ${HM_PATCH} )   
 endif()
 
-function(add_hm_library module)
+function(add_hm_library module )
   file(GLOB cppSourceFiles "${HM_LIB_SOURCE_DIR}/${module}/*.cpp")
   file(GLOB cSourceFiles "${HM_LIB_SOURCE_DIR}/${module}/*.c")
   file(GLOB headerFiles "${HM_LIB_SOURCE_DIR}/${module}/*.h")
-  add_library(${module} ${cppSourceFiles} ${cSourceFiles} ${headerFiles})
+  add_library(${module} ${cppSourceFiles} ${cSourceFiles} ${headerFiles} )
   set_property(TARGET ${module} PROPERTY CXX_CLANG_TIDY) # no clang-tidy
   add_library(VPCC::${module} ALIAS ${module})
 endfunction()
@@ -47,5 +47,11 @@ target_compile_options(TLibCommon PUBLIC "$<$<CXX_COMPILER_ID:GNU>:-w>")
 add_hm_library(TLibDecoder)
 target_link_libraries(TLibDecoder PUBLIC TLibCommon)
  
-add_hm_library(TLibEncoder)
+file(GLOB sourceFiles "${HM_LIB_SOURCE_DIR}/Utilities/TVideoIOYuv.*" 
+                      "${HM_LIB_SOURCE_DIR}/TLibEncoder/*.cpp"
+                      "${HM_LIB_SOURCE_DIR}/TLibEncoder/*.c"
+                      "${HM_LIB_SOURCE_DIR}/TLibEncoder/*.h" )
+add_library(TLibEncoder ${sourceFiles} )
+set_property(TARGET TLibEncoder PROPERTY CXX_CLANG_TIDY) # no clang-tidy
+add_library(VPCC::TLibEncoder ALIAS TLibEncoder)
 target_link_libraries(TLibEncoder PUBLIC TLibCommon )  

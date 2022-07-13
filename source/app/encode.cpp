@@ -551,6 +551,7 @@ saveGroupOfFrames(
   vmesh::VMCGroupOfFrames& gof,
   const Parameters& params)
 {
+  int ret = 0;
   if (
     !params.reconstructedMeshPath.empty()
     && !params.reconstructedTexturePath.empty()
@@ -560,16 +561,18 @@ saveGroupOfFrames(
       auto strObj = vmesh::expandNum(params.reconstructedMeshPath, n);
       auto strTex = vmesh::expandNum(params.reconstructedTexturePath, n);
       auto strMat = vmesh::expandNum(params.reconstructedMaterialLibPath, n);
-      SaveImage(strTex, gof[f].outputTexture);
+      if( !SaveImage(strTex, gof[f].outputTexture) )
+        ret = -1;
       vmesh::Material<double> material;
       material.texture = vmesh::basename(strTex);
-      material.save(strMat);
+      if( !material.save(strMat) )
+        ret = -1;
       gof[f].rec.setMaterialLibrary(vmesh::basename(strMat));
-      gof[f].rec.saveToOBJ(strObj);
-    }
-    return 0;
+      if( !gof[f].rec.saveToOBJ(strObj) )      
+        ret = -1;
+    }    
   }
-  return -1;
+  return ret;
 }
 
 //============================================================================

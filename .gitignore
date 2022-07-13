@@ -42,6 +42,9 @@ dependencies/ffmpeg
 # External tools
 /externaltools/
 
+# pipeline configuration files
+/generatedConfigFiles/
+
 # Temp files
 /*.yuv
 /*.bgr

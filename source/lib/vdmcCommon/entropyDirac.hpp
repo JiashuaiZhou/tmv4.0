@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <stdexcept>
 
 namespace vmesh {
 namespace dirac {

@@ -17,12 +17,12 @@ OPTION( USE_DRACO_GEOMETRY_CODEC "Use draco geometry encoder and decoder" TRUE )
 OPTION( USE_HDRTOOLS             "Use HDRTools for color conversions"     TRUE )
 
 # Use HM optimized RDO
-OPTION( USE_HM_PCC_RDO           "Use HM optimized RDO "                  TRUE )
+OPTION( USE_HM_PCC_RDO           "Use HM optimized RDO "                  FALSE )
 
 # Test applications
 OPTION( BUILD_ORIGINAL_APPS      "Build original applications"            TRUE )
 OPTION( BUILD_WRAPPER_APPS       "Build wrapper applications"             TRUE )
-OPTION( BUILD_TEST_APPS          "Build test applications"                TRUE )
+OPTION( BUILD_TEST_APPS          "Build test applications"                FALSE )
 
 # Building options
 set(CMAKE_CXX_STANDARD          17)

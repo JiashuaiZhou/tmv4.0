@@ -56,7 +56,7 @@
 #if EXTENSION_360_VIDEO
 #include "TAppEncHelper360/TExt360AppEncTop.h"
 #endif
-#include "TAppCommon/program_options_lite.h"
+#include "Utilities/program_options_lite.h"
 
 namespace vmesh {
 

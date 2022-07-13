@@ -16,7 +16,7 @@ print_usage()
   echo "";
   echo "    Examples:";
   echo "      - $0  "; 
-  echo "      - $0 --outdir=generatedConfigFiles --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/";  
+  echo "      - $0 --outdir=generatedConfigFiles --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/";  
   echo "    ";
   if [ "$#" != 2 ] ; then echo -e "ERROR: $1 \n"; fi
   exit 0;

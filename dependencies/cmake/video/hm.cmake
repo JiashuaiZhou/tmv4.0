@@ -1,4 +1,4 @@
-set( HM_VERSION         HM-16.20+SCM-8.8 )
+set( HM_VERSION         HM-16.21+SCM-8.8 )
 set( HM_DIR             ${CMAKE_SOURCE_DIR}/dependencies/hm/ )
 set( HM_LIB_SOURCE_DIR  ${HM_DIR}/source/Lib )
 
@@ -13,8 +13,9 @@ if( NOT EXISTS "${HM_DIR}/PATCHED" )
   if( USE_HM_PCC_RDO )
     set( HM_PATCH ${CMAKE_SOURCE_DIR}/dependencies/patches/hm/HM-16.20+SCM-8.8_with_RDO.patch )
   else()
-    set( HM_PATCH ${CMAKE_SOURCE_DIR}/dependencies/patches/hm/HM-16.20+SCM-8.8.patch )
+    set( HM_PATCH ${CMAKE_SOURCE_DIR}/dependencies/patches/hm/HM-16.21+SCM-8.8.patch )
   endif()
+  message("Apply patch: ${HM_PATCH}")
   execute_process( COMMAND git apply ${HM_PATCH} --whitespace=nowarn WORKING_DIRECTORY ${HM_DIR} RESULT_VARIABLE ret )
   if( NOT ${ret} EQUAL "0")
     message( FATAL_ERROR "Error during the HM patch process.")
@@ -43,11 +44,8 @@ target_compile_definitions(TLibCommon PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:_CRT_SEC
 target_compile_options(TLibCommon PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-w>")
 target_compile_options(TLibCommon PUBLIC "$<$<CXX_COMPILER_ID:GNU>:-w>")
   
-add_hm_library(TLibVideoIO)
-target_link_libraries(TLibVideoIO PUBLIC TLibCommon)
-
 add_hm_library(TLibDecoder)
 target_link_libraries(TLibDecoder PUBLIC TLibCommon)
  
 add_hm_library(TLibEncoder)
-target_link_libraries(TLibEncoder PUBLIC TLibCommon TLibVideoIO )
+target_link_libraries(TLibEncoder PUBLIC TLibCommon )  

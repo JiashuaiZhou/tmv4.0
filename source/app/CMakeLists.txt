@@ -79,7 +79,7 @@ if( BUILD_ORIGINAL_APPS )
                               ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder )
 
   # Uvatlas
-  create_executable( NAME      uvatlas 
+  create_executable( NAME      uvatlasapp
                     SOURCES   original/uvatlas.cpp
                     LIBRARIES po vdmcCommon vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon

@@ -32,8 +32,9 @@
  */
 #if defined( USE_HM_VIDEO_CODEC )
 
-#include "hmLibVideoDecoder.hpp"
 #include "hmLibVideoDecoderImpl.hpp"
+#include "hmLibVideoDecoder.hpp"
+
 
 namespace vmesh {
 

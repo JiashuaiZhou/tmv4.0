@@ -43,7 +43,7 @@
 #include <limits>
 #include "TLibCommon/TComRom.h"
 #include "hmLibVideoEncoderCfg.hpp"
-#include "TAppCommon/program_options_lite.h"
+#include "Utilities/program_options_lite.h"
 #include "TLibEncoder/TEncRateCtrl.h"
 #ifdef WIN32
 #define strdup _strdup

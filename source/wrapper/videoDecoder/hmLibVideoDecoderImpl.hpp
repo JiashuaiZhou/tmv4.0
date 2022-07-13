@@ -32,13 +32,14 @@
  */
 #if defined(USE_HM_VIDEO_CODEC )
 
-#include "util/image.hpp"
-
 #include <TLibCommon/TComList.h>
 #include <TLibCommon/TComPicYuv.h>
 #include <TLibDecoder/AnnexBread.h>
 #include <TLibDecoder/NALread.h>
 #include <TLibDecoder/TDecTop.h>
+
+#include "util/image.hpp"
+#include <array>
 
 namespace vmesh {
 

@@ -34,12 +34,6 @@
 
 #include "hmLibVideoDecoderImpl.hpp"
 
-#include <TLibCommon/TComList.h>
-#include <TLibCommon/TComPicYuv.h>
-#include <TLibDecoder/AnnexBread.h>
-#include <TLibDecoder/NALread.h>
-#include <TLibDecoder/TDecTop.h>
-
 namespace vmesh {
 using namespace pcc_hm;
 

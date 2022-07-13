@@ -4,7 +4,9 @@ get_filename_component(MYNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 string(REPLACE " " "_" MYNAME ${MYNAME})
 project(${MYNAME} C CXX)
 
-file(GLOB SRC *.h  *.cpp ${HM_LIB_SOURCE_DIR}/TAppCommon/* )
+file(GLOB SRC *.h  *.cpp 
+              ${HM_LIB_SOURCE_DIR}/Utilities/*.cpp
+              ${HM_LIB_SOURCE_DIR}/Utilities/*.h )
 
 include_directories( . ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon )
 

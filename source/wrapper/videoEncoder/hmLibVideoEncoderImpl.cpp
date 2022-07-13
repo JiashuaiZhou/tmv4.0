@@ -149,10 +149,10 @@ Void hmLibVideoEncoderImpl<T>::encode( FrameSequence<T>&    videoSrc,
            ( !m_isField && ( m_iFrameRcvd == m_framesToBeEncoded ) );
     // call encoding function for one frame
     if ( m_isField ) {
-      m_cTEncTop.encode( bEos, pcPicYuvOrg, &cPicYuvTrueOrg, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded,
+      m_cTEncTop.encode( bEos, pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded,
                          m_isTopFieldFirst );
     } else {
-      m_cTEncTop.encode( bEos, pcPicYuvOrg, &cPicYuvTrueOrg, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
+      m_cTEncTop.encode( bEos, pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
     }
     // write bistream to file if necessary
     if ( iNumEncoded > 0 ) {

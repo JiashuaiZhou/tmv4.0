@@ -34,8 +34,8 @@ pwd
 if [ ! -d ./deps/glfw/ ] ; then ./build-deps.sh ; fi
 if [ ! -d build ] ; then mkdir build; fi
 cd build 
-cmake3 ..
-cmake3 --build . --config Release --parallel 20
+${CMAKE} ..
+${CMAKE} --build . --config Release --parallel 20
 
 cd ${CURDIR}
 

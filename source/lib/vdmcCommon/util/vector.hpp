@@ -43,6 +43,11 @@
 #include <ostream>
 #include <vector>
 
+#if defined(WIN32) || defined(_WIN32)
+#  define NOMINMAX
+#  include <Windows.h>
+#endif
+
 namespace vmesh {
 
 //============================================================================

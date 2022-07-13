@@ -29,6 +29,7 @@ do
     doc       ) make -C "${CURDIR}/doc/"; exit 0;;
     debug     ) MODE=Debug; CMAKE_FLAGS+=("-DCMAKE_C_FLAGS=\"-g3\"" "-DCMAKE_CXX_FLAGS=\"-g3\"" );;
     release   ) MODE=Release;;
+	test      ) CMAKE_FLAGS+=( "-DBUILD_TEST_APPS=TRUE" ) ;;
     format    ) FORMAT=1;;
     tidy      ) TIDY=1;;
     *         ) echo "ERROR: arguments \"$i\" not supported: option = [debug|release]"; exit 1;;
@@ -54,6 +55,10 @@ then
 fi 
 
 echo -e "\033[0;32mBuild: ${CURDIR} \033[0m";
-if ! ${CMAKE} --build "${CURDIR}/build/${MODE}" --config ${MODE} --parallel "${NUMBER_OF_PROCESSORS}" ; then exit 1; fi 
+if ! ${CMAKE} --build "${CURDIR}/build/${MODE}" --config ${MODE} --parallel "${NUMBER_OF_PROCESSORS}" ;
+then
+  echo -e "\033[1;31mfailed \033[0m"
+  exit 1;
+fi 
 echo -e "\033[0;32mdone \033[0m";
 

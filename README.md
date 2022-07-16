@@ -18,6 +18,7 @@ $ git am < ../../patches/dxmesh-0002-*.patch
 
 $ cd dependencies/uvatlas
 $ git am < ../../patches/uvatlas-0001-*.patch
+$ git am < ../../patches/uvatlas-0002-*.patch
 ```
 
 

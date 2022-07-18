@@ -135,6 +135,8 @@ struct VMCEncoderParameters {
   int32_t qpTexCoord = 8;
   int32_t bitDepthPosition = 12;
   int32_t bitDepthTexCoord = 12;
+  double minPosition[3] = {0, 0, 0};
+  double maxPosition[3] = {0, 0, 0};
 
   // Gof analysis
   int32_t groupOfFramesMaxSize = 32;
@@ -205,6 +207,8 @@ struct VMCEncoderParameters {
   // GeometryParametrization
   bool baseIsSrc    = false;
   bool subdivIsBase = false;
+  bool subdivInter  = false;
+  bool subdivInterWithMapping = false;
   float maxAllowedD2PSNRLoss = 1.f;
   GeometryParametrizationParameters intraGeoParams;
   GeometryParametrizationParameters interGeoParams;

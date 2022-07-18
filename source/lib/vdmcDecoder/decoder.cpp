@@ -149,6 +149,7 @@ VMCDecoder::decompressBaseMesh(
   auto& base = frame.base;
   auto& qpositions = frame.qpositions;
   if (frameInfo.type == FrameType::INTRA) {
+    printf("Inter index = %d n",frameInfo.frameIndex );
     auto bitstreamByteCount0 = _byteCounter;
     uint32_t byteCountBaseMesh = 0;
     bitstream.read(byteCountBaseMesh, _byteCounter);
@@ -187,6 +188,7 @@ VMCDecoder::decompressBaseMesh(
       base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
     }
   } else {
+    printf("Inter index = %d ref = %d \n",frameInfo.frameIndex,frameInfo.referenceFrameIndex);
     const auto& refFrame = gof.frame(frameInfo.referenceFrameIndex);
     base = refFrame.base;
     auto bitstreamByteCount0 = _byteCounter;

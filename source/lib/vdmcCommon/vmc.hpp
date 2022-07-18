@@ -114,7 +114,13 @@ struct VMCFrame {
   TriangleMesh<double> reference;
   TriangleMesh<double> mapped;
   TriangleMesh<double> decimate;
-  TriangleMesh<double> decimateTexture;
+  TriangleMesh<double> decimateTexture;  
+  TriangleMesh<double> baseIntra;
+  TriangleMesh<double> subdivIntra;
+  TriangleMesh<double> nsubdivIntra;
+  TriangleMesh<double> baseInter;
+  TriangleMesh<double> subdivInter;
+  TriangleMesh<double> nsubdivInter;
   TriangleMesh<double> base;
   TriangleMesh<double> subdiv;
   TriangleMesh<double> nsubdiv;
@@ -133,6 +139,7 @@ struct VMCFrame {
 struct VMCFrameInfo {
   int32_t frameIndex = -1;
   int32_t referenceFrameIndex = -1;
+  int32_t previousFrameIndex = -1;
   int32_t patchCount = 1;
   FrameType type = FrameType::INTRA;
 };
@@ -156,6 +163,20 @@ struct VMCGroupOfFramesInfo {
 
   VMCFrameInfo& operator[]( int index ) { return framesInfo_[index]; }
 
+  void trace() const
+  {
+    printf(
+      "  - Gof %2d: frameCount = %d startFrame = %d \n", index_, frameCount_,
+      startFrameIndex_);
+    for (auto& frameInfo : framesInfo_) {
+      printf(
+        "    - Frame %2d: frameIndex = %d refIndex = %d type = %s \n", index_,
+        frameInfo.frameIndex, frameInfo.referenceFrameIndex,
+        frameInfo.type == FrameType::INTRA     ? "Intra"
+          : frameInfo.type == FrameType::INTER ? "Inter"
+                                               : "Skip");
+    }
+  }
   int32_t startFrameIndex_ = -1;
   int32_t frameCount_ = -1;
   int32_t index_ = 0;

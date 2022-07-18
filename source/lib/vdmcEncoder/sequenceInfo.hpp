@@ -67,6 +67,8 @@ public:
     const std::string groupOfFramesStructurePath);
     
     int gofCount()const {return (int)sequenceInfo_.size();}
+
+    void trace();
 private:
   int frameCount_ = 0;
   int startFrame_ = 0;

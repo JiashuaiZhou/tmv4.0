@@ -53,17 +53,36 @@ namespace vmesh {
 
 bool
 GeometryParametrization::generate(
-  VMCFrame& frame,
+  TriangleMesh<double>& target,
+  TriangleMesh<double>& source,
+  TriangleMesh<double>& mapped,
+  const TriangleMesh<double>& mtarget,
+  const TriangleMesh<double>& subdiv0,
   const GeometryParametrizationParameters& params,
-  TriangleMesh<double>& mtarget,
-  TriangleMesh<double>& subdiv0)
+  TriangleMesh<double>& base,
+  TriangleMesh<double>& deformed,
+  TriangleMesh<double>& ndeformed)
 {
-  auto& target = frame.reference;
-  auto& source = frame.decimateTexture;
-  auto& mapped = frame.mapped;
-  auto& deformed = frame.subdiv;
-  auto& ndeformed= frame.nsubdiv;
-  auto& base = frame.base;
+  // // Input
+  // auto& target = frame.reference;
+  // auto& source = frame.decimateTexture;  // change inter 
+  // auto& mapped = frame.mapped;           // 
+
+  // // Without mapping 
+  // // subdiv0 : ld frame - 1 subdiv
+  // // souce   : ld frame - 1 base 
+  // // target  : ld frame - 1 reference
+
+  // // With mapping
+  // // target  : ai RNUM reference 
+  // // source  : ai RNUM decimate tex
+  // // mapped  : ai RNUM mapped
+  // // mtarget :    FNUM input
+
+  // // ouput
+  // auto& base     = isIntra ? frame.baseIntra :    frame.baseInter;
+  // auto& deformed = isIntra ? frame.subdivIntra :  frame.subdivInter;
+  // auto& ndeformed= isIntra ? frame.nsubdivIntra : frame.nsubdivInter;
 
   source.resizeNormalTriangles(0);
   source.resizeNormals(0);
@@ -117,7 +136,8 @@ GeometryParametrization::generate(
       return false;
     }
   }
-  printf("FitMesh: geometryParametrizationSubdivisionIterationCount = %d \n",params.geometryParametrizationSubdivisionIterationCount);
+  printf("FitMesh: geometryParametrizationSubdivisionIterationCount = %d \n",
+    params.geometryParametrizationSubdivisionIterationCount);
   if (
     params.geometryParametrizationSubdivisionIterationCount
     && !FitMesh(target, mapped, motion, deformed, params)) {

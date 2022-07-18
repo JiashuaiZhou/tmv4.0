@@ -13,16 +13,23 @@ categories:
       #     However, some base meshes in the CfP submission were generated with
       #     it>0, causing the base mesh to be fitted to the subdivision result
       #     even though the sequence wasn't coded with the subdivision mesh.
-      - - !conditional '${pp} >= 0.24 and ${pp} < 1.0'
+      # - - !conditional 'not defined ${fitsubdiv_inter} or ${fitsubdiv_inter} == 0'
+      - - !conditional '${pp} > 0.24 and ${pp} < 1.0'
         - subdivIsBase: 1
       # if pp not set, or no decimation, use input sequence
       - - !conditional 'not defined ${pp} or ${pp} == 1.0'
         - baseIsSrc:    1 
-        - subdivIsBase: 1 
+        - subdivIsBase: 1    
+          
+      - - !conditional 'defined ${fitsubdiv_inter}'
+        - subdivInter: ${fitsubdiv_inter}
 
       # configuration for HM
       - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ld-main10.cfg
-      - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ld.cfg
+      - - !conditional 'defined ${fitsubdiv_inter} and ${fitsubdiv_inter} == 1'
+        - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ld.cfg
+      - - !conditional 'not defined ${fitsubdiv_inter} or ${fitsubdiv_inter} == 0'
+        - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg
 
     # sequences to code in this condition, and their overridden options/vars    
     sequences:

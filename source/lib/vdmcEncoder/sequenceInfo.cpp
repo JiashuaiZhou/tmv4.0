@@ -57,6 +57,7 @@ SequenceInfo::generate(
   const bool analyzeGof,
   const std::string& inputPath)
 {
+  printf("SequenceInfo generate analyzeGof = %d \n",analyzeGof);
   startFrame_ = startFrame;
   frameCount_ = frameCount;
   groupOfFramesMaxSize_ = maxGOFSize;
@@ -91,20 +92,23 @@ SequenceInfo::generate(
   } else {
     TriangleMesh<double> mesh0, mesh1;
     auto frameIndex0 = startFrame;
+    const auto& name = expandNum(inputPath, frameIndex0);
+    if (!mesh0.loadFromOBJ(name)) {
+      std::cerr << "Error: can't load frame" << frameIndex0 << ' ' << name
+                << '\n';
+      return 1;
+    }
     std::vector<Vec3<int32_t>> predStructure(frameCount);
     predStructure[0] = Vec3<int32_t>(frameIndex0, frameIndex0, 0);
     int32_t interFrameCount = 0;
     for (int32_t f = 1; f < frameCount; ++f) {
-      const auto frameIndex1 = startFrame + f;
-      if (1) {
-        const auto& name = expandNum(inputPath, frameIndex1);
-        if (!mesh1.loadFromOBJ(name)) {
-          std::cerr << "Error: can't load frame" << frameIndex1 << ' ' << name
-                    << '\n';
-          return 1;
-        }
+      const auto frameIndex1 = startFrame + f;      
+      const auto& name = expandNum(inputPath, frameIndex1);
+      if (!mesh1.loadFromOBJ(name)) {
+        std::cerr << "Error: can't load frame" << frameIndex1 << ' ' << name
+                  << '\n';
+        return 1;
       }
-
       bool same = false;
       if (
         mesh1.pointCount() == mesh0.pointCount()
@@ -145,6 +149,7 @@ SequenceInfo::generate(
                   << frameIndex1 << '\n';
       }
       predStructure[f] = Vec3<int32_t>(frameIndex1, frameIndex0, 0);
+      printf("Analyse => index = %3d ref = %3d \n",frameIndex1, frameIndex0);
     }
 
     int32_t framesInGOF = 0;
@@ -218,10 +223,12 @@ SequenceInfo::generate(
         if (referenceFrameIndex == frameIndex) {
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex = -1;
+          frameInfo.previousFrameIndex = -1;
           frameInfo.type = FrameType::INTRA;
         } else {
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
-          frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
+          frameInfo.referenceFrameIndex = referenceFrameIndex - gofInfo.startFrameIndex_;
+          frameInfo.previousFrameIndex = frameInfo.frameIndex - 1;
           frameInfo.type = FrameType::SKIP;
         }
         gofInfo.framesInfo_.push_back(frameInfo);
@@ -346,6 +353,16 @@ SequenceInfo::load(
     return 0;
   }
   return -1;
+}
+
+void SequenceInfo::trace(){
+  int gofIndex = 0;
+  printf(
+    "SequenceInfo: frameCount = %d startFrame = %d \n", frameCount_,
+    startFrame_);
+  for (auto& seqInfo : sequenceInfo_) {
+    seqInfo.trace();
+  }
 }
 
 }  // namespace vmesh

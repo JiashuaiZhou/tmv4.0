@@ -347,8 +347,9 @@ namespace df
       auto begin = it->second;
       auto end =
         it_next == opts.sections.end() ? opts.opt_list.end() : it_next->second;
-
-      dumpCfgRange(out, begin, end, indent);
+    
+      out << section << ":" << std::endl;
+      dumpCfgRange(out, begin, end, indent + 2);
     }
 
     struct OptionWriter

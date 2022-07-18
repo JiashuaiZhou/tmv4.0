@@ -48,6 +48,8 @@ class Image;
 }  // namespace mm
 
 namespace vmesh {
+template<typename T>
+class Frame;
 
 //============================================================================
 
@@ -79,6 +81,13 @@ public:
   void compute(
     const VMCGroupOfFrames& gof, const VMCMetricsParameters& params);
 
+  void compute(
+    const TriangleMesh<double>& srcModel,
+    const TriangleMesh<double>& recModel,
+    const Frame<uint8_t>& srcMap,
+    const Frame<uint8_t>& recMap,
+    const VMCMetricsParameters& params);
+  
   void display();
   
   std::vector<double> getPccResults();
@@ -94,6 +103,7 @@ private:
     const std::string& srcName,
     const std::string& recName,
     const VMCMetricsParameters& params);
+
   std::shared_ptr<mm::Compare> compare;
 };
 

@@ -56,10 +56,15 @@ public:
   ~GeometryParametrization() = default;
 
   bool generate(
-    VMCFrame& frame,
+    TriangleMesh<double>& target,
+    TriangleMesh<double>& source,
+    TriangleMesh<double>& mapped,
+    const TriangleMesh<double>& mtarget,
+    const TriangleMesh<double>& subdiv0,
     const GeometryParametrizationParameters& params,
-    TriangleMesh<double>& mtarget,
-    TriangleMesh<double>& subdiv0);
+    TriangleMesh<double>& base,
+    TriangleMesh<double>& deformed,
+    TriangleMesh<double>& ndeformed);
 
 private:
   bool CheckTriangleNormalInversion(

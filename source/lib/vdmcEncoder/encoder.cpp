@@ -44,6 +44,7 @@
 #include "entropy.hpp"
 #include "util/kdtree.hpp"
 #include "vmc.hpp"
+#include "metrics.hpp"
 #include "geometryDecimate.hpp"
 #include "textureParametrization.hpp"
 #include "geometryParametrization.hpp"
@@ -196,9 +197,11 @@ VMCEncoder::unifyVertices(
         subdiv.triangles() = base.triangles();
         subdiv.texCoordTriangles() = base.texCoordTriangles();
       } else {
-        printf("INTER \n");
-        umapping = umappings[frameInfo.referenceFrameIndex];
-        const auto& refFrame = gof.frames[frameInfo.referenceFrameIndex];
+        printf(
+          "INTER: Index = %d ref = %d Previous = %d \n", frameInfo.frameIndex,
+          frameInfo.referenceFrameIndex, frameInfo.previousFrameIndex);
+        umapping = umappings[frameInfo.previousFrameIndex ];
+        const auto& refFrame = gof.frames[frameInfo.previousFrameIndex ];
         upoints = base.points();
         base = refFrame.base;
         for (int32_t vindex = 0; vindex < pointCount0; ++vindex) {
@@ -513,12 +516,13 @@ VMCEncoder::compressBaseMesh(
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto prefix = "GOF_"
-      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
-      + "_base_src.obj";
-    base.saveToOBJ<int64_t>(prefix);
+      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex);
+    base.saveToOBJ<int64_t>(prefix  + "_base_compress.obj");
+    subdiv.saveToOBJ<int64_t>(prefix  + "_subdiv_compress.obj");
   }
   printf("%04d: frameInfo.type = %d \n", frameIndex, frameInfo.type);
-  if (frameInfo.type == FrameType::INTRA) {
+  if (frameInfo.type == FrameType::INTRA) {    
+    printf("Intra: \n");
     const auto texCoordBBox = base.texCoordBoundingBox();
     const auto delta = texCoordBBox.max - texCoordBBox.min;
     const auto d = std::max(delta[0], delta[1]);
@@ -607,8 +611,14 @@ VMCEncoder::compressBaseMesh(
       base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
     }
   } else {
+    printf("Inter: \n");
+    printf(
+      "frameInfo: index = %d ref = %d previous = %d \n", frameInfo.frameIndex,
+      frameInfo.referenceFrameIndex, frameInfo.previousFrameIndex );
+    fflush(stdout);
+
     // quantize base mesh
-    const auto& refFrame = gof.frame(frameInfo.referenceFrameIndex);
+    const auto& refFrame = gof.frame( frameInfo.referenceFrameIndex );
     mapping = refFrame.mapping;
     const auto pointCountRecBaseMesh = refFrame.base.pointCount();
     qpositions.resize(pointCountRecBaseMesh);
@@ -1054,6 +1064,7 @@ VMCEncoder::compress(
   const VMCEncoderParameters& params)
 {
   _gofInfo = gofInfo;
+  _gofInfo.trace();
   const int32_t frameCount = _gofInfo.frameCount_;
   const int32_t pixelsPerBlock =
     params.geometryVideoBlockSize * params.geometryVideoBlockSize;
@@ -1068,12 +1079,15 @@ VMCEncoder::compress(
 
   if (params.baseIsSrc && params.subdivIsBase) {
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
+      auto& frameInfo = _gofInfo.frameInfo(frameIndex);
       auto& frame = gof.frame(frameIndex);
       if (params.baseIsSrc)
         frame.base = frame.input;
-      if (params.subdivIsBase)
+      if (params.subdivIsBase) {
         frame.subdiv = frame.base;
+        if( params.subdivInter && frameInfo.referenceFrameIndex != -1 ) 
+          frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
+      }
     }
   } else {    
     GeometryDecimate geometryDecimate;
@@ -1086,6 +1100,11 @@ VMCEncoder::compress(
 
       // Simplify
       std::cout << "Simplify \n";
+      // Save intermediate files
+      if (params.keepIntermediateFiles) {
+        auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex);
+        frame.input.saveToOBJ<int64_t>(prefix  + "_simp_input.obj");
+      }
       if (geometryDecimate.decimate(
             frame, params)) {  // Create mapped, reference and decimate
         std::cerr << "Error: can't simplify mesh !\n";
@@ -1118,31 +1137,160 @@ VMCEncoder::compress(
         frame.decimateTexture.saveToOBJ(prefix + "_decimateTexture.obj");
       }
 
-      // Fitsubdiv
-      std::cout << "Fitsubdiv \n";
-      GeometryParametrization fitsubdiv;
-      TriangleMesh<double> mtarget;
-      TriangleMesh<double> subdiv0;
-      fitsubdiv.generate(frame, params.intraGeoParams, mtarget, subdiv0);
+      // Fitsubdiv Intra
+      std::cout << "Fitsubdiv Intra \n";
+      GeometryParametrization fitsubdivIntra;
+      TriangleMesh<double> mtargetIntra;
+      TriangleMesh<double> subdiv0Intra;
+      fitsubdivIntra.generate(
+        frame.reference,        // target
+        frame.decimateTexture,  // source
+        frame.mapped,           // mapped
+        mtargetIntra,           // mtarget
+        subdiv0Intra,           // subdiv0
+        params.intraGeoParams,  // params
+        frame.baseIntra,        // base
+        frame.subdivIntra,      // deformed
+        frame.nsubdivIntra);    // ndeformed
+      
       // Bug fix
       if (params.forceWriteReadIntermediateModels) {
-        writeAndReadMeshInObjFiles(frame.base, prefix + "_base.obj");
-        writeAndReadMeshInObjFiles(frame.subdiv, prefix + "_subdiv.obj");
-        writeAndReadMeshInObjFiles(frame.nsubdiv, prefix + "_nsubdiv.obj");
+        writeAndReadMeshInObjFiles(frame.baseIntra, prefix + "_intra_base.obj");
+        writeAndReadMeshInObjFiles(frame.subdivIntra, prefix + "_intra_subdiv.obj");
+        writeAndReadMeshInObjFiles(frame.nsubdivIntra, prefix + "_intra_nsubdiv.obj");
       }
       // Save intermediate files
       if (params.keepIntermediateFiles) {
         frame.decimateTexture.saveToOBJ(
           prefix + "_reparamDecimateTexture.obj");
-        frame.base.saveToOBJ(prefix + "_base.obj");
-        frame.subdiv.saveToOBJ(prefix + "_subdiv.obj");
-        frame.nsubdiv.saveToOBJ(prefix + "_nsubdiv.obj");
+        frame.baseIntra.saveToOBJ(prefix + "_intra_base.obj");
+        frame.subdivIntra.saveToOBJ(prefix + "_intra_subdiv.obj");
+        frame.nsubdivIntra.saveToOBJ(prefix + "_intra_nsubdiv.obj");
+      }
+      bool chooseIntra = true;
+      auto& frameInfo = _gofInfo.frameInfo(frameIndex);
+      if ( params.subdivInter && frameIndex > 0 && 
+      ( (!params.subdivInterWithMapping) || frameInfo.referenceFrameIndex != -1 ) )
+      {
+        // Fitsubdiv Inter
+        std::cout << "Fitsubdiv Inter: withMapping = " << params.subdivInterWithMapping << "\n";
+        GeometryParametrization fitsubdivInter;
+        if( params.subdivInterWithMapping ){
+          // With mapping
+          // mtarget :    FNUM input
+          // target  : ai RNUM reference
+          // source  : ai RNUM decimate tex
+          // mapped  : ai RNUM mapped
+          printf("frameInfo.referenceFrameIndex = %d \n",frameInfo.referenceFrameIndex);
+          fflush(stdout);
+          auto& ref = gof.frame( frameInfo.referenceFrameIndex );
+          TriangleMesh<double> mappedInter, subdiv0Inter;    
+          fitsubdivInter.generate(
+            ref.reference,          // target
+            ref.decimateTexture,    // source
+            ref.mapped,             // mapped
+            frame.input,            // mtarget
+            subdiv0Inter,           // subdiv0
+            params.interGeoParams,  // params
+            frame.baseInter,        // base
+            frame.subdivInter,      // deformed
+            frame.nsubdivInter);    // ndeformed
+        } else {
+          // Without mapping 
+          // subdiv0 : ld frame - 1 subdiv
+          // souce   : ld frame - 1 base 
+          // target  : ld frame - 1 reference
+          auto& ref = gof.frame(frameIndex - 1); 
+          TriangleMesh<double> mappedInter, mtargetInter;    
+          fitsubdivInter.generate(
+            frame.reference,        // target
+            ref.base,               // source
+            mappedInter,            // mapped
+            mtargetInter,           // mtarget
+            ref.subdiv,             // subdiv0
+            params.interGeoParams,  // params
+            frame.baseInter,        // base
+            frame.subdivInter,      // deformed
+            frame.nsubdivInter);    // ndeformed
+        }
+        
+        // Bug fix
+        if (params.forceWriteReadIntermediateModels) {
+          writeAndReadMeshInObjFiles(frame.baseInter, prefix + "_inter_base.obj");
+          writeAndReadMeshInObjFiles(frame.subdivInter, prefix + "_inter_subdiv.obj");
+          writeAndReadMeshInObjFiles(frame.nsubdivInter, prefix + "_inter_nsubdiv.obj");
+        }
+        // Save intermediate files
+        if (params.keepIntermediateFiles) {
+          frame.decimateTexture.saveToOBJ(
+            prefix + "_reparamDecimateTexture.obj");
+          frame.baseInter.saveToOBJ(prefix + "_inter_base.obj");
+          frame.subdivInter.saveToOBJ(prefix + "_inter_subdiv.obj");
+          frame.nsubdivInter.saveToOBJ(prefix + "_inter_nsubdiv.obj");
+        }
+
+        // ComputeMetric/Decision      
+        VMCMetrics metricsIntra, metricsInter;
+        VMCMetricsParameters metricParams;
+        metricParams.computePcc = true;
+        metricParams.qp = params.qpPosition;
+        metricParams.qt = params.qpTexCoord;
+        for(int c=0;c<3;c++){
+          metricParams.minPosition[c] = params.minPosition[c]; 
+          metricParams.maxPosition[c] = params.maxPosition[c]; 
+        } 
+        metricsIntra.compute( frame.input, 
+                              frame.subdivIntra,
+                              frame.inputTexture,
+                              frame.inputTexture,
+                              metricParams );
+        metricsInter.compute( frame.input, 
+                              frame.subdivInter,
+                              frame.inputTexture,
+                              frame.inputTexture,
+                              metricParams );
+        auto metIntra =  metricsIntra.getPccResults();
+        auto metInter =  metricsInter.getPccResults();
+        int pos = 1;
+        if (metIntra[pos] - metInter[pos] > params.maxAllowedD2PSNRLoss) {
+          // intra
+          printf(
+            "Frame %3d: choose Intra: met %8.4f - %8.4f = %8.4f > %8.4f \n",
+            frameIndex, metIntra[pos], metInter[pos], metIntra[pos] - metInter[pos],
+            params.maxAllowedD2PSNRLoss);
+          chooseIntra = true;
+        } else {
+          // inter
+          printf(
+            "Frame %3d: choose Inter: met %8.4f - %8.4f = %8.4f > %8.4f \n",
+            frameIndex, metIntra[pos], metInter[pos], metIntra[pos] - metInter[pos],
+            params.maxAllowedD2PSNRLoss);
+          chooseIntra = false;
+        }
+      }
+      if (chooseIntra) {
+        frame.base = frame.baseIntra;
+        frame.subdiv = frame.subdivIntra;
+        frame.nsubdiv = frame.nsubdivIntra;
+        frameInfo.type = FrameType::INTRA;   
+        frameInfo.referenceFrameIndex = -1;
+      } else {
+        auto& frameInfo = _gofInfo.frameInfo( frameIndex );
+        frameInfo.type = FrameType::SKIP;        
+        // if( !params.subdivInterWithMapping ){
+          frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;      
+          printf("update referenceFrameIndex = %d = %d - 1 \n",
+            frameInfo.referenceFrameIndex, frameInfo.frameIndex );  
+        // }
+        frame.base = frame.baseInter;
+        frame.subdiv = frame.subdivInter;
+        frame.nsubdiv = frame.nsubdivInter;
       }
     }
   }
+
   // Compress
   std::cout << "Compress \n";
-
   if (params.subdivIsBase)
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       auto& frame = gof.frame(frameIndex);
@@ -1156,8 +1304,8 @@ VMCEncoder::compress(
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
         + std::to_string(_gofInfo.index_) + "_fr_"
         + std::to_string(frameIndex);
-      frame.base.saveToOBJ(prefix + "_base_src.obj");
-      frame.subdiv.saveToOBJ(prefix + "_subdiv_src.obj");
+      frame.base.saveToOBJ(prefix + "_base_org.obj");
+      frame.subdiv.saveToOBJ(prefix + "_subdiv_org.obj");
     }
   }
   unifyVertices(gofInfo, gof, params);

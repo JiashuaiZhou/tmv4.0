@@ -15,6 +15,8 @@ tools:
       - qt: ${src-texcoord-bits}      
       - target: ${pp}
       - cctcount: 8
+      - minPosition: ${src-min-pos}
+      - maxPosition: ${src-max-pos}
 
       # Texture parametrization
       - width:  $eval{ 1 << ${src-texcoord-bits} - 1 }
@@ -45,19 +47,18 @@ tools:
         - ld_useInitialGeom: 1
         - ld_smoothMotion: 0
         - ld_smoothMethod: 1
-        # - ld_withMapping: ${fitsubdiv_with_mapping}
         - - !conditional '!${fitsubdiv_with_mapping}'
           - ld_unifyVertices: 0
           - ld_deformNNCount: 512
           - ld_deformNormalThres: 0.8660254
         - - !conditional '${fitsubdiv_with_mapping}'
+          - subdivInterWithMapping: 1
           - ld_unifyVertices: 1
           - ld_deformNNCount: 1
           - ld_deformNormalThres: -2.0
         # Choose geometry parametrization
         - maxAllowedD2PSNRLoss: 1.0 
   
-
       # Common options
       - invorient: 0
       - tqp: 10

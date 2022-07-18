@@ -107,6 +107,7 @@ LOGIBSM=${NAME}_ibsm.log
 if [ ! -f ${LOGENC} ]
 then 
   echo -e "\033[0;32mEncode: ${NAME} \033[0m";
+  startTime=$( date +%s.%N )
   CMD="$ENCODER \
         --config=${CFGSUBDIR}/encoder.cfg \
         --fcount=${FRAMECOUNT} \
@@ -116,15 +117,20 @@ then
         --recmat=${NAME}_%04d_rec.mtl \
         2>&1 > ${LOGENC} ";
   formatCmd "$CMD" "-- -c >"
-  eval $CMD
+  eval $CMD    
+  endTime=$( date +%s.%N )
+  encTime=$( echo "$endTime - $startTime" | bc )
+  echo "$encTime" > ${NAME}_enctime.log
 else 
   echo "${LOGENC} already exist"
+  encTime=$( cat ${NAME}_enctime.log )
 fi
 
 # Decoder
 if [ ! -f ${LOGDEC} ]
 then 
   echo -e "\033[0;32mDecode: ${NAME} \033[0m";
+  startTime=$( date +%s.%N )
   CMD="$DECODER \
     --config=${CFGSUBDIR}/decoder.cfg \
     --compressed=${VDMC} \
@@ -134,8 +140,12 @@ then
     > ${LOGDEC} ";
   formatCmd "$CMD" "-- -c >"
   eval $CMD
+  endTime=$( date +%s.%N )
+  decTime=$( echo "$endTime - $startTime" | bc )
+  echo "$decTime" > ${NAME}_dectime.log
 else 
   echo "${LOGDEC} already exist"
+  decTime=$( cat ${NAME}_dectime.log )
 fi
 
 # Metrics
@@ -192,7 +202,6 @@ then
 else 
   echo "${LOGIBSM} already exist"
 fi
-
 
 if [ ! -f ${LOGPCC} ]
 then 
@@ -313,6 +322,8 @@ GRIDV=$( cat ${LOGPCC} | grep -m${FRAMECOUNT} "c\[2\],PSNRF"         | awk 'NR =
 IBSMG=$( cat ${LOGIBSM} | grep -m${FRAMECOUNT} "GEO PSNR ="           | awk 'NR == 1 { sum=0 } { if ( $4=="inf" ) sum+=999.99; else sum+=$4; } END {printf "%f\n", sum/NR}')
 IBSMY=$( cat ${LOGIBSM} | grep -m${FRAMECOUNT} "Y   PSNR ="           | awk 'NR == 1 { sum=0 } { if ( $4=="inf" ) sum+=999.99; else sum+=$4; } END {printf "%f\n", sum/NR}')
 
+echo "EncTime            : ${encTime}"
+echo "DecTime            : ${decTime}"
 echo "NbOutputFaces      : ${NBOUTPUTFACES}"
 echo "TotalBitstreamBits : ${TOTALSIZEBITS}"
 echo "GridD1             : ${GRIDD1}"

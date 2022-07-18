@@ -304,7 +304,17 @@ main(int argc, char* argv[])
   }
 
   vmesh::GeometryParametrization fitsubdiv;
-  fitsubdiv.generate( frame, params.params.intraGeoParams, mtarget, subdiv0 );
+  fitsubdiv.generate(
+    frame.reference,               //
+    frame.decimateTexture,         //
+    frame.mapped,                  //
+    mtarget,                       //
+    subdiv0,                       //
+    params.params.intraGeoParams,  //
+    frame.base,                    //
+    frame.subdiv,                  //
+    frame.nsubdiv                  //
+  );
 
   // Save
   if (!params.baseMeshPath.empty()) {

@@ -139,6 +139,33 @@ VMCMetrics::compute(
   }
   // display();
 }
+void
+VMCMetrics::compute(
+  const TriangleMesh<double>& srcMesh,
+  const TriangleMesh<double>& recMesh,
+  const Frame<uint8_t>& srcMap,
+  const Frame<uint8_t>& recMap,
+  const VMCMetricsParameters& params)
+{
+  if (!compare) {
+    compare = std::make_shared<mm::Compare>();
+  }
+  mm::Model srcModel, recModel;
+  mm::Image srcImage, recImage;
+  convert(srcMesh, srcModel);
+  convert(recMesh, recModel);
+  convert(srcMap, srcImage);
+  convert(recMap, recImage);
+
+  compute(
+    srcModel,  // Scr object
+    recModel,  // Rec object
+    srcImage,  // Scr map
+    recImage,  // Rec map
+    "",        // Scr name
+    "",        // Rec name
+    params);   // params
+}
 
 void
 VMCMetrics::compute(

@@ -17,8 +17,8 @@ categories:
         - subdivIsBase: 1
       # if pp not set, or no decimation, use input sequence
       - - !conditional 'not defined ${pp} or ${pp} == 1.0'
-        - baseIsSrc:    1 
-        - subdivIsBase: 1 
+        - baseIsSrc:    1
+        - subdivIsBase: 1
 
       # configuration for HM
       - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg

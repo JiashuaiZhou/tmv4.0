@@ -55,16 +55,20 @@ namespace vmesh {
 bool 
 GeometryDecimate::decimate( VMCFrame& frame, const VMCEncoderParameters& params ) {  
   frame.reference = frame.input;
+
+  frame.input.saveToOBJ<int64_t>("simp_input.obj");
   if (!unifyVertices(frame.reference)) {
     std::cerr << "Error: can't unify vertices!\n";
     return 1;
   }
+  frame.reference.saveToOBJ<int64_t>("simp_unified.obj");
 
   if (!decimate(
         frame.reference, frame.decimate, frame.mapped, params )) {
     std::cerr << "Error: can't simplify mesh!\n";
     return 1;
   }
+  frame.reference.saveToOBJ<int64_t>("simp_decimate.obj");
 
   if (!removeDuplicatedTriangles(frame.decimate)) {
     std::cerr << "Error: can't remove duplicated triangles!\n";

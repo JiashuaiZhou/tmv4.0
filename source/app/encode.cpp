@@ -157,6 +157,14 @@ try {
       encParams.minCCTriangleCount, 
       encParams.minCCTriangleCount, 
       "minimum triangle count per connected component")
+    ("minPosition", 
+      encParams.minPosition, 
+      { 0.0, 0.0, 0.0 }, 
+      "Min position")
+    ("maxPosition", 
+      encParams.maxPosition, 
+      { 0.0, 0.0, 0.0 }, 
+      "Max position")
 
   (po::Section("Texture parametrization"))
     ("quality", 
@@ -193,12 +201,19 @@ try {
       encParams.subdivIsBase, 
       encParams.subdivIsBase, 
       "Subdiv models are src models")
+    ("subdivInter", 
+      encParams.subdivInter, 
+      encParams.subdivInter, 
+      "Subdiv inter")
+    ("subdivInterWithMapping", 
+      encParams.subdivInterWithMapping, 
+      encParams.subdivInterWithMapping, 
+      "Subdiv inter with mapping")
     ("maxAllowedD2PSNRLoss", 
       encParams.maxAllowedD2PSNRLoss, 
       encParams.maxAllowedD2PSNRLoss, 
       "Maximum allowed D2 PSNR Loss")
-      
-      
+            
   (po::Section("Intra geometry parametrization"))
     ("ai_sdeform", 
       intraGeoParams.applySmoothingDeform, 
@@ -279,80 +294,80 @@ try {
 
   (po::Section("Inter geometry parametrization"))
     ("ld_sdeform", 
-      intraGeoParams.applySmoothingDeform, 
-      intraGeoParams.applySmoothingDeform, 
+      interGeoParams.applySmoothingDeform, 
+      interGeoParams.applySmoothingDeform, 
       "Apply deformation refinement stage")
     ("ld_subdivIt", 
-      intraGeoParams.geometryParametrizationSubdivisionIterationCount, 
-      intraGeoParams.geometryParametrizationSubdivisionIterationCount, 
+      interGeoParams.geometryParametrizationSubdivisionIterationCount, 
+      interGeoParams.geometryParametrizationSubdivisionIterationCount, 
       "Subdivision iteration count")
     ("ld_forceNormalDisp", 
-      intraGeoParams.initialDeformForceNormalDisplacement, 
-      intraGeoParams.initialDeformForceNormalDisplacement,       
+      interGeoParams.initialDeformForceNormalDisplacement, 
+      interGeoParams.initialDeformForceNormalDisplacement,       
       "Force displacements to aligned with the surface normals")
     ("ld_unifyVertices", 
-      intraGeoParams.applyVertexUnification, 
-      intraGeoParams.applyVertexUnification, 
+      interGeoParams.applyVertexUnification, 
+      interGeoParams.applyVertexUnification, 
       "Unify duplicated vertices")
     ("ld_deformNNCount", 
-      intraGeoParams.initialDeformNNCount, 
-      intraGeoParams.initialDeformNNCount, 
+      interGeoParams.initialDeformNNCount, 
+      interGeoParams.initialDeformNNCount, 
       "Number of nearest neighbours used during the initial deformation stage")
     ("ld_deformNormalThres",
-      intraGeoParams.initialDeformNormalDeviationThreshold, 
-      intraGeoParams.initialDeformNormalDeviationThreshold, 
+      interGeoParams.initialDeformNormalDeviationThreshold, 
+      interGeoParams.initialDeformNormalDeviationThreshold, 
       "Maximum allowed normal deviation during the initial deformation stage")
     ("ld_sampIt", 
-      intraGeoParams.geometrySamplingSubdivisionIterationCount, 
-      intraGeoParams.geometrySamplingSubdivisionIterationCount, 
+      interGeoParams.geometrySamplingSubdivisionIterationCount, 
+      interGeoParams.geometrySamplingSubdivisionIterationCount, 
       "Number of subdivision iterations used for geometry sampling")
     ("ld_fitIt", 
-      intraGeoParams.geometryFittingIterationCount,
-      intraGeoParams.geometryFittingIterationCount, 
+      interGeoParams.geometryFittingIterationCount,
+      interGeoParams.geometryFittingIterationCount, 
       "Number of iterations used during the deformation refinement stage")
     ("ld_smoothCoeff", 
-      intraGeoParams.geometrySmoothingCoeffcient, 
-      intraGeoParams.geometrySmoothingCoeffcient, 
+      interGeoParams.geometrySmoothingCoeffcient, 
+      interGeoParams.geometrySmoothingCoeffcient, 
       "Initial smoothing coefficient used to smooth the deformed mesh "
       "during deformation refinement")
     ("ld_smoothDecay", 
-      intraGeoParams.geometrySmoothingCoeffcientDecayRatio, 
-      intraGeoParams.geometrySmoothingCoeffcientDecayRatio, 
+      interGeoParams.geometrySmoothingCoeffcientDecayRatio, 
+      interGeoParams.geometrySmoothingCoeffcientDecayRatio, 
       "Decay factor applied to intial smoothing coefficient after every "
       "iteration of deformation refinement")
     ("ld_smoothMissedCoeff", 
-      intraGeoParams.geometryMissedVerticesSmoothingCoeffcient, 
-      intraGeoParams.geometryMissedVerticesSmoothingCoeffcient, 
+      interGeoParams.geometryMissedVerticesSmoothingCoeffcient, 
+      interGeoParams.geometryMissedVerticesSmoothingCoeffcient, 
       "Smoothing coefficient applied to the missed vertices")
     ("ld_smoothMissedIt", 
-      intraGeoParams.geometryMissedVerticesSmoothingIterationCount,
-      intraGeoParams.geometryMissedVerticesSmoothingIterationCount,
+      interGeoParams.geometryMissedVerticesSmoothingIterationCount,
+      interGeoParams.geometryMissedVerticesSmoothingIterationCount,
       "Number of iterations when smoothing the positions of the missed vertices")
     ("ld_smoothMethod", 
-      intraGeoParams.smoothDeformSmoothingMethod, 
-      intraGeoParams.smoothDeformSmoothingMethod, 
+      interGeoParams.smoothDeformSmoothingMethod, 
+      interGeoParams.smoothDeformSmoothingMethod, 
       "Smoothing method to be applied when smoothing the deformed mesh during"
       "the deformation refinement stage")
     ("ld_deformUpdateNormals", 
-      intraGeoParams.smoothDeformUpdateNormals, 
-      intraGeoParams.smoothDeformUpdateNormals, 
+      interGeoParams.smoothDeformUpdateNormals, 
+      interGeoParams.smoothDeformUpdateNormals, 
       "Recompute normals after each iteration of deformation refinement")
     ("ld_deformFlipThres", 
-      intraGeoParams.smoothDeformTriangleNormalFlipThreshold, 
-      intraGeoParams.smoothDeformTriangleNormalFlipThreshold, 
+      interGeoParams.smoothDeformTriangleNormalFlipThreshold, 
+      interGeoParams.smoothDeformTriangleNormalFlipThreshold, 
       "Threshold to detect triangle normals flip")
     ("ld_useInitialGeom", 
-      intraGeoParams.smoothingDeformUseInitialGeometry, 
-      intraGeoParams.smoothingDeformUseInitialGeometry, 
+      interGeoParams.smoothingDeformUseInitialGeometry, 
+      interGeoParams.smoothingDeformUseInitialGeometry, 
       "Use the initial geometry during the the deformation refinement stage")
     ("ld_fitSubdiv", 
-      intraGeoParams.fitSubdivisionSurface, 
-      intraGeoParams.fitSubdivisionSurface, 
+      interGeoParams.fitSubdivisionSurface, 
+      interGeoParams.fitSubdivisionSurface, 
       "Update the positions of the decimated mesh to minimize displacements "
       "between the subdivided mesh and the deformed mesh")
     ("ld_smoothMotion", 
-      intraGeoParams.smoothingDeformSmoothMotion, 
-      intraGeoParams.smoothingDeformSmoothMotion, 
+      interGeoParams.smoothingDeformSmoothMotion, 
+      interGeoParams.smoothingDeformSmoothMotion, 
       "Apply smoothing to motion instead of vertex positions")
 
   (po::Section("Mesh"))
@@ -447,7 +462,7 @@ try {
     ("forceWriteReadIntermediateModels", 
       encParams.forceWriteReadIntermediateModels, 
       encParams.forceWriteReadIntermediateModels, 
-      "HDRTools decode cfg")
+      "Force truncation of the precision of the intermediate mesh files")
   ;
   /* clang-format on */
 
@@ -498,7 +513,8 @@ try {
   po::dumpCfg(std::cout, opts, "Texture parametrization", 4);
   po::dumpCfg(std::cout, opts, "Geometry parametrization", 4);  
   po::dumpCfg(std::cout, opts, "Intra geometry parametrization", 4);  
-  po::dumpCfg(std::cout, opts, "Inter geometry parametrization", 4);  
+  if( encParams.subdivInter )
+    po::dumpCfg(std::cout, opts, "Inter geometry parametrization", 4);  
   po::dumpCfg(std::cout, opts, "Mesh", 4);
   po::dumpCfg(std::cout, opts, "Geometry video", 4);
   po::dumpCfg(std::cout, opts, "Texture video", 4);

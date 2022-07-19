@@ -1090,7 +1090,14 @@ VMCEncoder::compress(
           frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
       }
     }
-  } else {    
+  } else {
+    // Note: This part could be removed later but to match with the CFP submission
+    // # with mapping enabled, it is inter, unless the previous frame was
+    // # decided to be intra rather than inter.
+    // # this implements a bug in the CfP submission whereby a mode decision that
+    // # changes inter to intra forces the rest of the subgof to be intra too
+    // # for fitsubdiv_with_mapping=1
+    bool forceSubGofRestToIntra = false;
     GeometryDecimate geometryDecimate;
     TextureParametrization textureParametrization;
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
@@ -1170,11 +1177,16 @@ VMCEncoder::compress(
       }
       bool chooseIntra = true;
       auto& frameInfo = _gofInfo.frameInfo(frameIndex);
-      if ( params.subdivInter && frameIndex > 0 && 
-      ( (!params.subdivInterWithMapping) || frameInfo.referenceFrameIndex != -1 ) )
-      {
+
+      if (frameInfo.type == FrameType::INTRA)
+        forceSubGofRestToIntra = false;
+      if (
+        params.subdivInter && frameIndex > 0
+        && ((!params.subdivInterWithMapping) || frameInfo.referenceFrameIndex != -1)
+        && (!forceSubGofRestToIntra)) {
         // Fitsubdiv Inter
-        std::cout << "Fitsubdiv Inter: withMapping = " << params.subdivInterWithMapping << "\n";
+        std::cout << "Fitsubdiv Inter: withMapping = "
+                  << params.subdivInterWithMapping << "\n";
         GeometryParametrization fitsubdivInter;
         if( params.subdivInterWithMapping ){
           // With mapping
@@ -1260,6 +1272,8 @@ VMCEncoder::compress(
             frameIndex, metIntra[pos], metInter[pos], metIntra[pos] - metInter[pos],
             params.maxAllowedD2PSNRLoss);
           chooseIntra = true;
+          if( params.subdivInterWithMapping ) 
+            forceSubGofRestToIntra = true;
         } else {
           // inter
           printf(

@@ -274,15 +274,7 @@ fitsubdiv_inter_and_choose () {
 # A frame is an intra frame if:
 function is_intra_frame {
     # If the input gof says so:
-    [[ $FNUM == $RNUM ]] && return 0
-    # without mapping enabled, all non-initial gof frames are inter
-    is_fitsubdiv_without_mapping && return 1
-    # with mapping enabled, it is inter, unless the previous frame was
-    # decided to be intra rather than inter.
-    # this implements a bug in the CfP submission whereby a mode decision that
-    # changes inter to intra forces the rest of the subgof to be intra too
-    # for fitsubdiv_with_mapping=1
-    [[ $RNUM -ne $REF ]]
+    [[ $FNUM -eq $RNUM ]]
 }
 
 ##

@@ -515,16 +515,9 @@ INTER = $(call neq,$(FRAMENUM),$(RFNUM))
 # The frame in the reference buffer from the previous frame
 refbuf_framenum_prev = $(shell cat $(call var_or_error,PREV))
 
-# this implements a bug in the CfP submission whereby a mode decision that
-# changes inter to intra forces the rest of the subgof to be intra too
-# for fitsubdiv_with_mapping=1
-define bug_intra_kills_subgof
-$(if ${ld_ins_mtarget},$(call eq,$(refbuf_framenum_prev),$(RFNUM)),1)
-endef
-
 # mode decision test
 define inter_wins
-$(and $(INTER),$(bug_intra_kills_subgof),\
+$(and $(INTER),\
     $(findstring inter,\
     $(call shell_w_error,$(cmp_mmetric_psnrs_csv) $(filter %.csv,$^))))
 endef

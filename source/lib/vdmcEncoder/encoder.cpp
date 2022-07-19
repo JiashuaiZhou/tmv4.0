@@ -518,10 +518,12 @@ VMCEncoder::compressBaseMesh(
     auto prefix = "GOF_"
       + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex);
     base.saveToOBJ<int64_t>(prefix  + "_base_compress.obj");
-    subdiv.saveToOBJ<int64_t>(prefix  + "_subdiv_compress.obj");
+    subdiv.saveToOBJ<int64_t>(prefix + "_subdiv_compress.obj");
   }
-  printf("%04d: frameInfo.type = %d \n", frameIndex, frameInfo.type);
-  if (frameInfo.type == FrameType::INTRA) {    
+  printf(
+    "Frame %4d: type = %s \n", frameIndex,
+    frameInfo.type == FrameType::INTRA ? "Intra" : "Inter");
+  if (frameInfo.type == FrameType::INTRA) {
     printf("Intra: \n");
     const auto texCoordBBox = base.texCoordBoundingBox();
     const auto delta = texCoordBBox.max - texCoordBBox.min;
@@ -611,10 +613,9 @@ VMCEncoder::compressBaseMesh(
       base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
     }
   } else {
-    printf("Inter: \n");
     printf(
-      "frameInfo: index = %d ref = %d previous = %d \n", frameInfo.frameIndex,
-      frameInfo.referenceFrameIndex, frameInfo.previousFrameIndex );
+      "Inter: index = %d ref = %d \n", frameInfo.frameIndex,
+      frameInfo.referenceFrameIndex);
     fflush(stdout);
 
     // quantize base mesh
@@ -1233,8 +1234,8 @@ VMCEncoder::compress(
         VMCMetrics metricsIntra, metricsInter;
         VMCMetricsParameters metricParams;
         metricParams.computePcc = true;
-        metricParams.qp = params.qpPosition;
-        metricParams.qt = params.qpTexCoord;
+        metricParams.qp = params.bitDepthPosition;
+        metricParams.qt = params.bitDepthTexCoord;
         for(int c=0;c<3;c++){
           metricParams.minPosition[c] = params.minPosition[c]; 
           metricParams.maxPosition[c] = params.maxPosition[c]; 

@@ -170,7 +170,7 @@ struct VMCGroupOfFramesInfo {
       startFrameIndex_);
     for (auto& frameInfo : framesInfo_) {
       printf(
-        "    - Frame %2d: frameIndex = %d refIndex = %d type = %s \n", index_,
+        "    - frameIndex = %3d refIndex = %3d type = %s \n", 
         frameInfo.frameIndex, frameInfo.referenceFrameIndex,
         frameInfo.type == FrameType::INTRA     ? "Intra"
           : frameInfo.type == FrameType::INTER ? "Inter"

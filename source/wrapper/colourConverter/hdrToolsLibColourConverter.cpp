@@ -51,8 +51,8 @@ void HdrToolsLibColourConverter<T>::convert( std::string        configFile,
   HdrToolsLibColourConverterImpl<T> converter;
   converter.convert( configFile, videoSrc, videoDst );
 }
-
+namespace vmesh{
 template class HdrToolsLibColourConverter<uint8_t>;
 template class HdrToolsLibColourConverter<uint16_t>;
-
+}
 #endif  //~USE_HDRTOOLS

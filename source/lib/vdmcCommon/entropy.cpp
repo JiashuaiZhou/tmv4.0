@@ -35,9 +35,8 @@
 #include "entropyDirac.hpp"
 #include "entropyUtils.hpp"
 
-using namespace vmesh; 
-  
+namespace vmesh {
 template class EntropyEncoderWrapper<dirac::ArithmeticEncoder>;
 template class EntropyDecoderWrapper<dirac::ArithmeticDecoder>;
-
+}
 

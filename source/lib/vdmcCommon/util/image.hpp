@@ -529,8 +529,8 @@ public:
     size_t       widthChroma  = _width / chromaSubsample;
     size_t       heightChroma = _height / chromaSubsample;
     Pel*         ptr[2][3]    = {{Y, U, V}, {V, Y, U}};
-    const size_t width[3]     = {_width, widthChroma, widthChroma};
-    const size_t heightSrc[3] = {_height, heightChroma, heightChroma};
+    const size_t width[3]     = {(size_t)_width, widthChroma, widthChroma};
+    const size_t heightSrc[3] = {(size_t)_height, heightChroma, heightChroma};
     const size_t heightDst[3] = {heightY, heightC, heightC};
     const size_t stride[3]    = {strideY, strideC, strideC};
     printf( "copy image: Shift = %d (%4zux%4zu => %4zux%4zu S=%4zu C: %4zux%4zu rgb2bgr = %d ) \n", shiftbits, _width,

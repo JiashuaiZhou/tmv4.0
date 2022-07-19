@@ -888,8 +888,9 @@ void HdrToolsLibColourConverterImpl<T>::destroy() {
     m_outDisplayGammaAdjust = NULL;
   }
 }
-
+namespace vmesh{
 template class HdrToolsLibColourConverterImpl<uint8_t>;
 template class HdrToolsLibColourConverterImpl<uint16_t>;
+}
 
 #endif  //~USE_HDRTOOLS

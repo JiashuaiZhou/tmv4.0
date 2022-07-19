@@ -43,7 +43,6 @@
 #  include <limits>
 #  include "TLibCommon/TComRom.h"
 #  include "hmLibVideoEncoderCfg.hpp"
-#  include "Utilities/program_options_lite.h"
 #  include "TLibEncoder/TEncRateCtrl.h"
 #  ifdef WIN32
 #    define strdup _strdup
@@ -52,10 +51,32 @@
 #  define MACRO_TO_STRING_HELPER(val) #  val
 #  define MACRO_TO_STRING(val) MACRO_TO_STRING_HELPER(val)
 
+namespace pcc_hm {
+template<class T1, class T2>
+static inline istream&
+operator>>(std::istream& in, std::map<T1, T2>& map)
+{
+  T1 key;
+  T2 value;
+  try {
+    in >> key;
+    in >> value;
+  }
+  catch (...) {
+    in.setstate(ios::failbit);
+  }
+
+  map[key] = value;
+  return in;
+}
+}
+#  include "Utilities/program_options_lite.h"
+
 using namespace std;
 using namespace pcc_hm;
 
 namespace po = pcc_hm::df::program_options_lite;
+
 
 enum UIProfileName  // this is used for determining profile strings, where
                     // multiple profiles map to a single profile idc with
@@ -664,25 +685,6 @@ namespace Level {
       strToLevel, sizeof(strToLevel) / sizeof(*strToLevel), in, level);
   }
 }  // namespace Level
-
-template<class T1, class T2>
-static inline istream&
-operator>>(std::istream& in, std::map<T1, T2>& map)
-{
-  T1 key;
-  T2 value;
-  try {
-    in >> key;
-    in >> value;
-  }
-  catch (...) {
-    in.setstate(ios::failbit);
-  }
-
-  map[key] = value;
-  return in;
-}
-
 
 }  // namespace pcc_hm
 

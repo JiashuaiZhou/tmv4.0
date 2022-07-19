@@ -29,7 +29,7 @@ do
     doc       ) make -C "${CURDIR}/doc/"; exit 0;;
     debug     ) MODE=Debug; CMAKE_FLAGS+=("-DCMAKE_C_FLAGS=\"-g3\"" "-DCMAKE_CXX_FLAGS=\"-g3\"" );;
     release   ) MODE=Release;;
-	test      ) CMAKE_FLAGS+=( "-DBUILD_TEST_APPS=TRUE" ) ;;
+	  test      ) CMAKE_FLAGS+=( "-DBUILD_TEST_APPS=TRUE" ) ;;
     format    ) FORMAT=1;;
     tidy      ) TIDY=1;;
     *         ) echo "ERROR: arguments \"$i\" not supported: option = [debug|release]"; exit 1;;
@@ -41,6 +41,7 @@ CMAKE_FLAGS+=( "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON" )
 CMAKE_FLAGS+=( "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CURDIR}/build/${MODE}/bin" )
 CMAKE_FLAGS+=( "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=${CURDIR}/build/${MODE}/lib" )
 CMAKE_FLAGS+=( "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CURDIR}/build/${MODE}/lib" )
+# CMAKE_FLAGS+=( "-DCMAKE_CXX_FLAGS=-stdlib=libc++" )
 
 echo -e "\033[0;32mCmake: ${CURDIR}: CMAKE_FLAGS = ${CMAKE_FLAGS[@]}\033[0m";
 ${CMAKE} -H${CURDIR} -B"${CURDIR}/build/${MODE}" "${CMAKE_FLAGS[@]}"

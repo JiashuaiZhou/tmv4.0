@@ -48,10 +48,14 @@ while [[ $# -gt 0 ]] ; do
   shift;
 done
 
+# set encoder/decoder/mertric path
 ENCODER=${MAINDIR}/build/Release/bin/encode   
 DECODER=${MAINDIR}/build/Release/bin/decode
 METRICS=${MAINDIR}/externaltools/mpeg-pcc-mmetric/build/mm
-
+if [ ! -f "${ENCODER}" ] ; then ENCODER=${MAINDIR}/build/Release/bin/Release/encode.exe; fi
+if [ ! -f "${DECODER}" ] ; then DECODER=${MAINDIR}/build/Release/bin/Release/decode.exe; fi
+if [ ! -f "${METRICS}" ] ; then METRICS=${MAINDIR}/externaltools/mpeg-pcc-mmetric/bin/mm.exe; fi
+   
 # check parameters
 for NAME in $ENCODER $DECODER $METRICS ;  
 do  
@@ -94,8 +98,8 @@ then
 fi
 if [ "$OUTDIR" == "" ] ; then OUTDIR=$CFGDIR; elif [ ! -d $OUTDIR ] ; then mkdir -p $OUTDIR; fi
 
-NAME=$( basename $CFGDIR )
-NAME=$( printf "${OUTDIR}/${NAME}_F%03d" $FRAMECOUNT )
+NAME=$( basename "$CFGSUBDIR" )
+NAME=$( printf "${OUTDIR}/${NAME}_F%03d" "$FRAMECOUNT" )
 VDMC=${NAME}.vdmc
 
 LOGENC=${NAME}_enc.log
@@ -119,7 +123,7 @@ then
   formatCmd "$CMD" "-- -c >"
   eval $CMD    
   endTime=$( date +%s.%N )
-  encTime=$( echo "$endTime - $startTime" | bc )
+  encTime=$( awk -v endTime=$endTime  -v startTime=$startTime 'BEGIN {print endTime - startTime}' ) 
   echo "$encTime" > ${NAME}_enctime.log
 else 
   echo "${LOGENC} already exist"
@@ -140,8 +144,8 @@ then
     > ${LOGDEC} ";
   formatCmd "$CMD" "-- -c >"
   eval $CMD
-  endTime=$( date +%s.%N )
-  decTime=$( echo "$endTime - $startTime" | bc )
+  decTime=$( date +%s.%N )
+  decTime=$( awk -v decTime=$decTime  -v startTime=$startTime 'BEGIN {print decTime - startTime}' ) 
   echo "$decTime" > ${NAME}_dectime.log
 else 
   echo "${LOGDEC} already exist"
@@ -152,15 +156,15 @@ fi
 if [ ! -f ${LOGIBSM} ]
 then 
   echo -e "\033[0;32mMetrics IBSM: ${NAME} \033[0m";
-  start=$(       cat ${CFGSUBDIR}/mmetric.cfg | grep "fstart:" | awk '{print $2}' )
-  fcount=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "fcount:" | awk '{print $2}' )
-  srcMesh=$(     cat ${CFGSUBDIR}/mmetric.cfg | grep "srcMesh:" | awk '{print $2}' )
-  srcTex=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "srcTex:" | awk '{print $2}' )
-  qp=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "qp:" | awk '{print $2}' )
-  qt=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "qt:" | awk '{print $2}' )
+  start=$(       cat ${CFGSUBDIR}/mmetric.cfg | grep "fstart:"      | awk '{print $2}' )
+  fcount=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "fcount:"      | awk '{print $2}' )
+  srcMesh=$(     cat ${CFGSUBDIR}/mmetric.cfg | grep "srcMesh:"     | awk '{print $2}' )
+  srcTex=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "srcTex:"      | awk '{print $2}' )
+  qp=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "qp:"          | awk '{print $2}' )
+  qt=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "qt:"          | awk '{print $2}' )
   minPosition=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "minPosition:" | awk '{print $2" "$3" "$4}' )
   maxPosition=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "maxPosition:" | awk '{print $2" "$3" "$4}' )
-  gridSize=$(    cat ${CFGSUBDIR}/mmetric.cfg | grep "gridSize:" | awk '{print $2}' )
+  gridSize=$(    cat ${CFGSUBDIR}/mmetric.cfg | grep "gridSize:"    | awk '{print $2}' )
   last=$(( start + FRAMECOUNT - 1 ))
   CMD="$METRICS \
     sequence \
@@ -218,9 +222,9 @@ then
   last=$(( start + FRAMECOUNT - 1 ))
   IFS=" " read -r -a posMin <<< "$minPosition"
   IFS=" " read -r -a posMax <<< "$maxPosition"
-  dimX=$( echo "${posMax[0]} - ${posMin[0]}" | bc )
-  dimY=$( echo "${posMax[1]} - ${posMin[1]}" | bc )
-  dimZ=$( echo "${posMax[2]} - ${posMin[2]}" | bc )
+  dimX=$( awk -v a=${posMax[0]} -v b=${posMin[0]} 'BEGIN {print a - b}' )
+  dimY=$( awk -v a=${posMax[1]} -v b=${posMin[1]} 'BEGIN {print a - b}' )
+  dimZ=$( awk -v a=${posMax[2]} -v b=${posMin[2]} 'BEGIN {print a - b}' )
   function getMax() { awk -v n1="$1" -v n2="$2" 'BEGIN {print (n1>n2?n1:n2)}'; }
   RESOLUTION=$( getMax $dimX $dimY )
   RESOLUTION=$( getMax $dimZ $RESOLUTION )
@@ -297,7 +301,7 @@ then
       --inputModelA   ID:ref_pc \
       --inputModelB   ID:dis_pc \
       --resolution    ${RESOLUTION} \
-      --outputCsv     $${LOGPCC%.???}.csv  \
+      --outputCsv     ${LOGPCC%.???}.csv  \
     > ${LOGPCC}"   
   formatCmd "$CMD" "-- -c > compare dequantize sequence END"
   eval $CMD

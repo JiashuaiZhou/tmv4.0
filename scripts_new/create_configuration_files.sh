@@ -36,6 +36,10 @@ if [ "$SEQDIR" == "" ] || [ ! -d ${SEQDIR} ] ; then print_usage "SEQDIR = \"${SE
 OUTDIR=$( cd "$OUTDIR" && pwd )
 SEQDIR=$( cd "$SEQDIR" && pwd )
 
+# Update windows path
+MAINDIR=${MAINDIR/\/c\//C:\/}
+SEQDIR=${SEQDIR/\/c\//C:\/}
+
 CFGDIR=${MAINDIR}/cfg_new
 CFGSITE=${CFGDIR}/cfg-site.yaml
 rm ${CFGSITE} -f

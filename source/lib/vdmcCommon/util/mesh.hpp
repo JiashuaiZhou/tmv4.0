@@ -43,7 +43,7 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 #include "util/box.hpp"
@@ -1552,7 +1552,7 @@ RemoveDuplicatedTriangles(
   };
 
   const auto triangleCount = int32_t(trianglesInput.size());
-  std::unordered_map<Triangle, TriangleInfo, HashTriangle> uniqueTriangles;
+  std::map<Triangle, TriangleInfo> uniqueTriangles;
   const auto* neighbours = vertexToTriangle.neighbours();
   for (int32_t t = 0; t < triangleCount; ++t) {
     const auto tri = orderComponents(trianglesInput[t]);
@@ -1655,7 +1655,7 @@ UnifyVertices(
   pointsOutput.reserve(pointsInput.size());
   trianglesOutput.resize(0);
   trianglesOutput.reserve(trianglesInput.size());
-  std::unordered_map<Vec3<T>, int32_t, HashVector3<T>> uniquePoints;
+  std::map<Vec3<T>, int32_t> uniquePoints;
   mapping.resize(pointCount0);
 
   int32_t pointCounter = 0;
@@ -2297,7 +2297,7 @@ template<class T1, class T2>
 void
 computeForwardLinearLifting(
   std::vector<T1>& signal,
-  const std::vector<SubdivisionLevelInfo>& infoLevelOfDetails,
+  const std::vector<vmesh::SubdivisionLevelInfo>& infoLevelOfDetails,
   const std::vector<int64_t>& edges,
   const T2 predWeight,
   const T2 updateWeight,
@@ -2339,7 +2339,7 @@ template<class T1, class T2>
 void
 computeInverseLinearLifting(
   std::vector<T1>& signal,
-  const std::vector<SubdivisionLevelInfo>& infoLevelOfDetails,
+  const std::vector<vmesh::SubdivisionLevelInfo>& infoLevelOfDetails,
   const std::vector<int64_t>& edges,
   const T2 predWeight,
   const T2 updateWeight,
@@ -2383,7 +2383,7 @@ template<class T1, class T2>
 void
 interpolateSubdivision(
   std::vector<T1>& signal,
-  const std::vector<SubdivisionLevelInfo>& infoLevelOfDetails,
+  const std::vector<vmesh::SubdivisionLevelInfo>& infoLevelOfDetails,
   const std::vector<int64_t>& edges,
   const T2 weight1,
   const T2 weight2,

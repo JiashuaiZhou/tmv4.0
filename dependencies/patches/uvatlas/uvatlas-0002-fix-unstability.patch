@@ -1,0 +1,483 @@
+From 365244aa3f714607621becf1e7844662bc0552a1 Mon Sep 17 00:00:00 2001
+From: Olivier Mocquard <olivier.mocquard@interdigital.com>
+Date: Wed, 20 Jul 2022 00:00:00 +0200
+Subject: [PATCH] uvatlas: fix unstability
+
+---
+ CMakeLists.txt                           |  6 +--
+ UVAtlas/isochart/SymmetricMatrix.hpp     | 22 ++++-----
+ UVAtlas/isochart/barycentricparam.cpp    |  4 +-
+ UVAtlas/isochart/isochartengine.cpp      |  2 +-
+ UVAtlas/isochart/isochartutil.cpp        | 26 +++++-----
+ UVAtlas/isochart/isochartutil.h          | 36 +++++++-------
+ UVAtlas/isochart/meshoptimizestretch.cpp | 62 ++++++++++++------------
+ 7 files changed, 79 insertions(+), 79 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fac8391..00ae8eb 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -24,7 +24,7 @@ project (UVAtlas
+ option(BUILD_TOOLS "Build UVAtlasTool" OFF)
+ 
+ # Enable the use of OpenMP
+-option(UVATLAS_USE_OPENMP "Build with OpenMP support" ON)
++option(UVATLAS_USE_OPENMP "Build with OpenMP support" OFF)
+ 
+ # Enable use of the Eigen and BLAS libraries (https://eigen.tuxfamily.org/)
+ option(ENABLE_USE_EIGEN "Use the Eigen & BLAS libraries" OFF)
+@@ -206,10 +206,10 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+ endif()
+ 
+ if(MSVC)
+-    target_compile_options(${PROJECT_NAME} PRIVATE /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
++    target_compile_options(${PROJECT_NAME} PRIVATE /fp:strict "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
+ 
+     if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+-        target_compile_options(uvatlastool PRIVATE /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
++        target_compile_options(uvatlastool PRIVATE /fp:strict "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
+         target_link_options(uvatlastool PRIVATE /DYNAMICBASE /NXCOMPAT)
+     endif()
+ 
+diff --git a/UVAtlas/isochart/SymmetricMatrix.hpp b/UVAtlas/isochart/SymmetricMatrix.hpp
+index d1863bb..4e48b01 100644
+--- a/UVAtlas/isochart/SymmetricMatrix.hpp
++++ b/UVAtlas/isochart/SymmetricMatrix.hpp
+@@ -224,7 +224,7 @@ namespace Isochart
+                 value_type h = 0;
+                 for (size_t j = 0; j < i; j++)
+                 {
+-                    total += static_cast<value_type>(fabs(pU[j]));
++                    total += static_cast<value_type>(std::fabs(pU[j]));
+                 }
+ 
+                 if (total < epsilon)
+@@ -336,8 +336,8 @@ namespace Isochart
+                         for (size_t k = 0; k <= i; k++)
+                         {
+                             pRowHeader[k][j] -=
+-                                delta *
+-                                pRowHeader[k][currentDim]
++                                (delta *
++                                pRowHeader[k][currentDim])
+                                 / pU[currentDim];
+                         }
+                     }
+@@ -444,12 +444,12 @@ namespace Isochart
+ 
+                         lastqq =
+                             lastS * lastS * pValues[n - 1]
+-                            + lastC * lastC * pValues[n]
+-                            + 2 * lastS * lastC * pSubDiagVec[n - 1];
++                            + (lastC * lastC * pValues[n]
++                            + 2 * lastS * lastC * pSubDiagVec[n - 1]);
+                         lastpp =
+                             lastS * lastS * pValues[n]
+-                            + lastC * lastC * pValues[n - 1]
+-                            - 2 * lastS * lastC * pSubDiagVec[n - 1];
++                            + (lastC * lastC * pValues[n - 1]
++                            - 2 * lastS * lastC * pSubDiagVec[n - 1]);
+                         lastpq =
+                             (lastC * lastC - lastS * lastS) * pSubDiagVec[n - 1]
+                             + lastS * lastC * (pValues[n - 1] - pValues[n]);
+@@ -492,8 +492,8 @@ namespace Isochart
+ 
+                                 pValues[next + 1] = value_type(
+                                     lastS * lastS * pValues[next]
+-                                    + lastC * lastC * lastpp
+-                                    + 2 * lastS * lastC * pSubDiagVec[next]);
++                                    + (lastC * lastC * lastpp
++                                    + 2 * lastS * lastC * pSubDiagVec[next]));
+ 
+                                 lastpq =
+                                     (lastC * lastC - lastS * lastS) * pSubDiagVec[next]
+@@ -501,8 +501,8 @@ namespace Isochart
+ 
+                                 lastpp =
+                                     lastS * lastS * lastpp
+-                                    + lastC * lastC * pValues[next]
+-                                    - 2 * lastS * lastC * pSubDiagVec[next];
++                                    + (lastC * lastC * pValues[next]
++                                    - 2 * lastS * lastC * pSubDiagVec[next]);
+ 
+                                 if (next > 0)
+                                     extra = lastS * pSubDiagVec[next - 1];
+diff --git a/UVAtlas/isochart/barycentricparam.cpp b/UVAtlas/isochart/barycentricparam.cpp
+index e3cdd49..6de7805 100644
+--- a/UVAtlas/isochart/barycentricparam.cpp
++++ b/UVAtlas/isochart/barycentricparam.cpp
+@@ -156,8 +156,8 @@ HRESULT CIsochartMesh::GenerateBoundaryCoord(
+     for (size_t ii = 0; ii < boundTable.size(); ii += 2)
+     {
+         double angle = 2 * boundTable[ii] * M_PI / totoLength;
+-        boundTable[ii] = cos(angle);
+-        boundTable[ii + 1] = sin(angle);
++        boundTable[ii] = std::cos(angle);
++        boundTable[ii + 1] = std::sin(angle);
+     }
+     return hr;
+ }
+diff --git a/UVAtlas/isochart/isochartengine.cpp b/UVAtlas/isochart/isochartengine.cpp
+index 9767bd3..977e66e 100644
+--- a/UVAtlas/isochart/isochartengine.cpp
++++ b/UVAtlas/isochart/isochartengine.cpp
+@@ -44,7 +44,7 @@ CIsochartEngine::CIsochartEngine() :
+ #endif
+     m_dwOptions(ISOCHARTOPTION::DEFAULT)
+ {
+-    m_randomEngine.seed();
++    m_randomEngine.seed(0);
+ }
+ 
+ CIsochartEngine::~CIsochartEngine()
+diff --git a/UVAtlas/isochart/isochartutil.cpp b/UVAtlas/isochart/isochartutil.cpp
+index 2411476..cacf966 100644
+--- a/UVAtlas/isochart/isochartutil.cpp
++++ b/UVAtlas/isochart/isochartutil.cpp
+@@ -308,7 +308,7 @@ bool Isochart::IsochartIsSegmentsIntersect(
+         p0, p1, p3, p4, intersection, fS, fT);
+ 
+     float epsion2 = ISOCHART_ZERO_EPS * ISOCHART_ZERO_EPS;
+-    if (fS > -epsion2 && fS<epsion2 + 1 && fT>-epsion2 && fT < epsion2 + 1)
++    if (fS > -epsion2 && fS<(epsion2 + 1.0f) && fT>-epsion2 && fT < (epsion2 + 1.0f))
+     {
+         if (pIntersection)
+         {
+@@ -329,8 +329,8 @@ float Isochart::CalL2SquaredStretchLowBoundOnFace(
+     assert(!IsInZeroRange2(fMaxDistortionRate));
+     if (fRotMatrix)
+     {
+-        fRotMatrix[0] = fRotMatrix[3] = 1;
+-        fRotMatrix[1] = fRotMatrix[2] = 0;
++        fRotMatrix[0] = fRotMatrix[3] = 1.0f;
++        fRotMatrix[1] = fRotMatrix[2] = 0.0f;
+     }
+     if (!pMT)
+     {
+@@ -348,12 +348,12 @@ float Isochart::CalL2SquaredStretchLowBoundOnFace(
+     float c = IMT[0] * IMT[2] - IMT[1] * IMT[1];
+ 
+     float fTemp = IsochartSqrtf(b * b - 4 * c);
+-    float d1 = (b + fTemp) / 2;
+-    float d2 = (b - fTemp) / 2;
++    float d1 = (b + fTemp) / 2.0f;
++    float d2 = (b - fTemp) / 2.0f;
+ 
+     if (IsInZeroRange(d1) && IsInZeroRange(d2))
+     {
+-        return CombineSigAndGeoStretch(pMT, 0, fFace3DArea);
++        return CombineSigAndGeoStretch(pMT, 0.0f, fFace3DArea);
+     }
+ 
+     // Solve Eigen vector v1, v2
+@@ -383,7 +383,7 @@ float Isochart::CalL2SquaredStretchLowBoundOnFace(
+ 
+     if (IsInZeroRange2(delta1) && IsInZeroRange2(delta2))
+     {
+-        return CombineSigAndGeoStretch(pMT, 0, fFace3DArea);
++        return CombineSigAndGeoStretch(pMT, 0.0f, fFace3DArea);
+     }
+     if (delta1 >= delta2)
+     {
+@@ -400,7 +400,7 @@ float Isochart::CalL2SquaredStretchLowBoundOnFace(
+     delta2 = IsochartSqrtf(b11 * b11 + b10 * b10);
+     if (IsInZeroRange2(delta1) && IsInZeroRange2(delta2))
+     {
+-        return CombineSigAndGeoStretch(pMT, 0, fFace3DArea);
++        return CombineSigAndGeoStretch(pMT, 0.0f, fFace3DArea);
+     }
+ 
+     if (delta1 >= delta2)
+@@ -430,9 +430,9 @@ float Isochart::CalL2SquaredStretchLowBoundOnFace(
+     float m2 = v1[1] * v1[1] * d1 + v2[1] * v2[1] * d2;
+ 
+     float d = IsochartSqrtf(IsochartSqrtf(d2 / d1));
+-    if (d < 1 / fMaxDistortionRate)
++    if (d < 1.0f / fMaxDistortionRate)
+     {
+-        d = 1 / fMaxDistortionRate;
++        d = 1.0f / fMaxDistortionRate;
+     }
+ 
+     float a0, a1, a2, a3;
+@@ -443,7 +443,7 @@ float Isochart::CalL2SquaredStretchLowBoundOnFace(
+     float delta = a3 * a0 - a1 * a2;
+     if (IsInZeroRange2(delta))
+     {
+-        return CombineSigAndGeoStretch(pMT, 0, fFace3DArea);
++        return CombineSigAndGeoStretch(pMT, 0.0f, fFace3DArea);
+     }
+ 
+     if (fRotMatrix)
+@@ -458,8 +458,8 @@ float Isochart::CalL2SquaredStretchLowBoundOnFace(
+     //float fTesttretch1 = IsochartSqrtf(d1*d2);
+     //float fTestStretch2 = IMT[0]*IMT[2] - IMT[1]*IMT[1];
+ 
+-    float fSigStretch = ((a0 * a0 + a2 * a2) * m0 + 2 * (a0 * a1 + a2 * a3) * m1 + (a1 * a1 + a3 * a3) * m2) / 2;
+-    float fGeoStretch = (d * d + 1 / (d * d)) * fFace3DArea;
++    float fSigStretch = ((a0 * a0 + a2 * a2) * m0 + 2.0f * (a0 * a1 + a2 * a3) * m1 + (a1 * a1 + a3 * a3) * m2) / 2.0f;
++    float fGeoStretch = (d * d + 1.0f / (d * d)) * fFace3DArea;
+ 
+     return CombineSigAndGeoStretch(
+         pMT, fSigStretch, fGeoStretch);
+diff --git a/UVAtlas/isochart/isochartutil.h b/UVAtlas/isochart/isochartutil.h
+index acd2a43..cd4cb1f 100644
+--- a/UVAtlas/isochart/isochartutil.h
++++ b/UVAtlas/isochart/isochartutil.h
+@@ -45,9 +45,9 @@ namespace Isochart
+ 
+     inline float IsochartSqrtf(float a)
+     {
+-        if (a < 0)
++        if (a < 0.0f)
+         {
+-            return 0;
++            return 0.0f;
+         }
+         return sqrtf(a);
+     }
+@@ -81,7 +81,7 @@ namespace Isochart
+         const DirectX::XMFLOAT2& v1,
+         const DirectX::XMFLOAT2& v2)
+     {
+-        return  ((v1.x - v0.x) * (v2.y - v0.y) - (v2.x - v0.x) * (v1.y - v0.y)) / 2;
++        return  ((v1.x - v0.x) * (v2.y - v0.y) - (v2.x - v0.x) * (v1.y - v0.y)) / 2.0f;
+     }
+ 
+ 
+@@ -90,7 +90,7 @@ namespace Isochart
+         const DirectX::XMFLOAT2* pv1,
+         const DirectX::XMFLOAT2* pv2)
+     {
+-        return  ((pv1->x - pv0->x) * (pv2->y - pv0->y) - (pv2->x - pv0->x) * (pv1->y - pv0->y)) / 2;
++        return  ((pv1->x - pv0->x) * (pv2->y - pv0->y) - (pv2->x - pv0->x) * (pv1->y - pv0->y)) / 2.0f;
+     }
+ 
+     inline float IsochartVertexToEdgeDistance2D(
+@@ -121,13 +121,13 @@ namespace Isochart
+         else
+         {
+             fT = XMVectorGetX(XMVector2Dot(vector[0], normal)) / fDot;
+-            if (fT < 0)
++            if (fT < 0.0f)
+             {
+-                fT = 0;
++                fT = 0.0f;
+             }
+-            if (fT > 1)
++            if (fT > 1.0f)
+             {
+-                fT = 1;
++                fT = 1.0f;
+             }
+             normal = XMVectorScale(normal, fT);
+             vector[1] = XMVectorAdd(edgeVertex0, normal);
+@@ -266,20 +266,20 @@ namespace Isochart
+ 
+             if (!IsInZeroRange2(fNew2DArea))
+             {
+-                Ss[ii] = (q[0] * (pv2D1->y - pv2D2->y) +
+-                    q[1] * (pv2D2->y - pv2D0->y) +
+-                    q[2] * (pv2D0->y - pv2D1->y)) / (fNew2DArea * 2);
+ 
+-                St[ii] = (q[0] * (pv2D2->x - pv2D1->x) +
+-                    q[1] * (pv2D0->x - pv2D2->x) +
+-                    q[2] * (pv2D1->x - pv2D0->x)) / (fNew2DArea * 2);
++                Ss[ii] = ((q[0] * (pv2D1->y - pv2D2->y) +
++                    q[1] * (pv2D2->y - pv2D0->y) )+
++                    q[2] * (pv2D0->y - pv2D1->y)) / (fNew2DArea * 2.0f);
++                St[ii] = ((q[0] * (pv2D2->x - pv2D1->x) +
++                    q[1] * (pv2D0->x - pv2D2->x)) +
++                    q[2] * (pv2D1->x - pv2D0->x)) / (fNew2DArea * 2.0f);
+ 
+             }
+             else
+             {
+                 if (q[0] == q[1] && q[0] == q[2])
+                 {
+-                    Ss[ii] = St[ii] = 0;
++                    Ss[ii] = St[ii] = 0.0f;
+                 }
+                 else
+                 {
+@@ -343,11 +343,11 @@ namespace Isochart
+ 
+ #if PIECEWISE_CONSTANT_IMT
+         pNewIMT[0] =
+-            Ss.x * Ss.x * oldIMT[0] + Ss.y * Ss.y * oldIMT[2] + 2 * Ss.x * Ss.y * oldIMT[1];
++            (Ss.x * Ss.x * oldIMT[0] + Ss.y * Ss.y * oldIMT[2]) + 2.0f * Ss.x * Ss.y * oldIMT[1];
+         pNewIMT[2] =
+-            St.x * St.x * oldIMT[0] + St.y * St.y * oldIMT[2] + 2 * St.x * St.y * oldIMT[1];
++            (St.x * St.x * oldIMT[0] + St.y * St.y * oldIMT[2]) + 2.0f * St.x * St.y * oldIMT[1];
+         pNewIMT[1] =
+-            Ss.x * St.x * oldIMT[0] + Ss.y * St.y * oldIMT[2] + (Ss.x * St.y + Ss.y * St.x) * oldIMT[1];
++            (Ss.x * St.x * oldIMT[0] + Ss.y * St.y * oldIMT[2]) + (Ss.x * St.y + Ss.y * St.x) * oldIMT[1];
+ #else
+ #endif
+ 
+diff --git a/UVAtlas/isochart/meshoptimizestretch.cpp b/UVAtlas/isochart/meshoptimizestretch.cpp
+index e96bd9b..b39b5ff 100644
+--- a/UVAtlas/isochart/meshoptimizestretch.cpp
++++ b/UVAtlas/isochart/meshoptimizestretch.cpp
+@@ -1087,12 +1087,12 @@ float CIsochartMesh::CalFaceSigL2SquraedStretch(
+     FLOAT3 IMT;
+     GetIMTOnCanonicalFace(reinterpret_cast<const float*>(*pMT), f3D, IMT);
+ 
+-    if (f3D == 0)
++    if (f3D == 0.0f)
+     {
+-        SetAffineParameter(pGeoM, 1, nullptr, pM, 0, nullptr);
+-        return 0;
++        SetAffineParameter(pGeoM, 1.0f, nullptr, pM, 0.0f, nullptr);
++        return 0.0f;
+     }
+-    else if (f2D < 0)
++    else if (f2D < 0.0f)
+     {
+         SetAffineParameter(
+             pGeoM,
+@@ -1109,8 +1109,8 @@ float CIsochartMesh::CalFaceSigL2SquraedStretch(
+     {
+         if (IsInZeroRange2(f3D))
+         {
+-            SetAffineParameter(pGeoM, 1, nullptr, pM, 0, nullptr);
+-            return 0;
++            SetAffineParameter(pGeoM, 1.0f, nullptr, pM, 0.0f, nullptr);
++            return 0.0f;
+         }
+         else
+         {
+@@ -1130,7 +1130,7 @@ float CIsochartMesh::CalFaceSigL2SquraedStretch(
+             m_baseInfo.pFaceCanonicalUVCoordinate + pFace->dwIDInRootMesh * 3;
+ 
+         FLOAT3 newIMT;
+-        float geo[3] = { 0.0 };
++        float geo[3] = { 0.0f };
+         AffineIMTOn2D(
+             f2D,
+             &v0,
+@@ -1143,19 +1143,19 @@ float CIsochartMesh::CalFaceSigL2SquraedStretch(
+             IMT,
+             geo);
+ 
+-        float fGeoStretch = (geo[0] + geo[1]) / 2 * f3D;
++        float fGeoStretch = ((geo[0] + geo[1]) / 2.0f) * f3D;
+ 
+ #if PIECEWISE_CONSTANT_IMT
+-        float fSigStretch = (newIMT[0] + newIMT[2]) / 2;
++        float fSigStretch = (newIMT[0] + newIMT[2]) / 2.0f;
+ #else
+ #endif
+ 
+         SetAffineParameter(
+             pGeoM,
+-            0,
++            0.0f,
+             geo,
+             pM,
+-            0,
++            0.0f,
+             newIMT);
+ 
+         return CombineSigAndGeoStretch(
+@@ -1175,12 +1175,12 @@ float CIsochartMesh::CalFaceGeoL2SquraedStretch(
+         v0, v1, v2);
+ 
+     // if original triangle's area is 0, No geodesic stretch.
+-    if (f3D == 0)
++    if (f3D == 0.0f)
+     {
+-        return 0;
++        return 0.0f;
+     }
+-    else if (f2D < 0 ||
+-        (f2D < ISOCHART_ZERO_EPS2 && f2D < f3D / 2))
++    else if (f2D < 0.0f ||
++        (f2D < ISOCHART_ZERO_EPS2 && f2D < f3D / 2.0f))
+     {
+         return INFINITE_STRETCH;
+     }
+@@ -1209,7 +1209,7 @@ float CIsochartMesh::CalFaceGeoL2SquraedStretch(
+         float a = XMVectorGetX(XMVector3Dot(vSs, vSs));
+         float c = XMVectorGetX(XMVector3Dot(vSt, vSt));
+ 
+-        return (a + c) * f3D / 2;
++        return ((a + c) * f3D) / 2.0f;
+     }
+ }
+ 
+@@ -1226,12 +1226,12 @@ float CIsochartMesh::CalFaceGeoLNSquraedStretch(
+         v0, v1, v2);
+ 
+     // if original triangle's area is 0, No geodesic stretch.
+-    if (f3D == 0)
++    if (f3D == 0.0f)
+     {
+-        return 1;
++        return 1.0f;
+     }
+-    else if (f2D < 0 ||
+-        (f2D < ISOCHART_ZERO_EPS2 && f2D < f3D / 2))
++    else if (f2D < 0.0f ||
++        ((f2D < ISOCHART_ZERO_EPS2 )&& (f2D < (f3D / 2.0f))))
+     {
+         return INFINITE_STRETCH;
+     }
+@@ -1260,25 +1260,25 @@ float CIsochartMesh::CalFaceGeoLNSquraedStretch(
+         float c = XMVectorGetX(XMVector3Dot(vSt, vSt));
+         float b = XMVectorGetX(XMVector3Dot(vSs, vSt));
+ 
+-        float fTemp = (a - c) * (a - c) + 4 * b * b;
+-        assert(fTemp >= 0);
++        float fTemp = (a - c) * (a - c) + 4.0f * b * b;
++        assert(fTemp >= 0.0f);
+ 
+-        float fTemp1 = (a + c + IsochartSqrtf(fTemp)) / 2;
+-        assert(fTemp1 >= 0);
++        float fTemp1 = (a + c + IsochartSqrtf(fTemp)) / 2.0f;
++        assert(fTemp1 >= 0.0f);
+ 
+         float fFaceStretchN =
+             fScale * IsochartSqrtf(fTemp1);
+ 
+ 
+         float fMinSingleValue;
+-        fTemp1 = (a + c - IsochartSqrtf(fTemp)) / 2;
+-        if (fTemp1 >= 0)
++        fTemp1 = (a + c - IsochartSqrtf(fTemp)) / 2.0f;
++        if (fTemp1 >= 0.0f)
+         {
+-            assert(fTemp1 >= 0);
++            assert(fTemp1 >= 0.0f);
+             fTemp = fScale * IsochartSqrtf(fTemp1);
+             if (!IsInZeroRange(fTemp))
+             {
+-                fMinSingleValue = static_cast<float>(1 / fTemp);
++                fMinSingleValue = static_cast<float>(1.0f / fTemp);
+                 if (fFaceStretchN < fMinSingleValue)
+                 {
+                     fFaceStretchN = fMinSingleValue;
+@@ -1293,7 +1293,7 @@ float CIsochartMesh::CalFaceGeoLNSquraedStretch(
+         {
+             if (fFaceStretchN < 1.0f)
+             {
+-                fFaceStretchN = 1 / fFaceStretchN;
++                fFaceStretchN = 1.0f / fFaceStretchN;
+             }
+         }
+         return fFaceStretchN;
+@@ -1822,9 +1822,9 @@ bool CIsochartMesh::OptimizeVertexStretchAroundCenter(
+         // 1. Get a new random position in the optimizing circle range
+         float fAngle = m_IsochartEngine.UniformRand(2.f * XM_PI);
+         vertInfo.end.x =
+-            vertInfo.center.x + vertInfo.fRadius * cosf(fAngle);
++            vertInfo.center.x + vertInfo.fRadius * (float)std::cos((double)fAngle);
+         vertInfo.end.y =
+-            vertInfo.center.y + vertInfo.fRadius * sinf(fAngle);
++            vertInfo.center.y + vertInfo.fRadius * (float)std::sin((double)fAngle);
+ 
+         // 2. When optimizing an boundary vertex during sigal-specified 
+         // parameterizing, must gurantee the vertex didn't move outside
+-- 
+2.35.1.windows.2
+

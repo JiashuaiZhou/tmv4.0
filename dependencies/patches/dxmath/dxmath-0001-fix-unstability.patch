@@ -1,0 +1,40 @@
+From 40993a2a2ff347b1b95b8e42b2c32f54e5299bee Mon Sep 17 00:00:00 2001
+From: Olivier Mocquard <olivier.mocquard@interdigital.com>
+Date: Wed, 20 Jul 2022 00:00:50 +0200
+Subject: [PATCH 2/2] dxmath: fix unstability
+
+---
+ Inc/DirectXMathMisc.inl | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/Inc/DirectXMathMisc.inl b/Inc/DirectXMathMisc.inl
+index 5f88da6..a991250 100644
+--- a/Inc/DirectXMathMisc.inl
++++ b/Inc/DirectXMathMisc.inl
+@@ -94,10 +94,10 @@ inline XMVECTOR XM_CALLCONV XMQuaternionMultiply
+ 
+ #if defined(_XM_NO_INTRINSICS_)
+     XMVECTORF32 Result = { { {
+-            (Q2.vector4_f32[3] * Q1.vector4_f32[0]) + (Q2.vector4_f32[0] * Q1.vector4_f32[3]) + (Q2.vector4_f32[1] * Q1.vector4_f32[2]) - (Q2.vector4_f32[2] * Q1.vector4_f32[1]),
+-            (Q2.vector4_f32[3] * Q1.vector4_f32[1]) - (Q2.vector4_f32[0] * Q1.vector4_f32[2]) + (Q2.vector4_f32[1] * Q1.vector4_f32[3]) + (Q2.vector4_f32[2] * Q1.vector4_f32[0]),
+-            (Q2.vector4_f32[3] * Q1.vector4_f32[2]) + (Q2.vector4_f32[0] * Q1.vector4_f32[1]) - (Q2.vector4_f32[1] * Q1.vector4_f32[0]) + (Q2.vector4_f32[2] * Q1.vector4_f32[3]),
+-            (Q2.vector4_f32[3] * Q1.vector4_f32[3]) - (Q2.vector4_f32[0] * Q1.vector4_f32[0]) - (Q2.vector4_f32[1] * Q1.vector4_f32[1]) - (Q2.vector4_f32[2] * Q1.vector4_f32[2])
++            (float)((double)((double)((double)Q2.vector4_f32[3] * (double)Q1.vector4_f32[0]) + (double)((double)Q2.vector4_f32[0] * (double)Q1.vector4_f32[3])) + (double)((double)((double)Q2.vector4_f32[1] * (double)Q1.vector4_f32[2]) - (double)((double)Q2.vector4_f32[2] * (double)Q1.vector4_f32[1]))),
++            (float)((double)((double)((double)Q2.vector4_f32[3] * (double)Q1.vector4_f32[1]) - (double)((double)Q2.vector4_f32[0] * (double)Q1.vector4_f32[2])) + (double)((double)((double)Q2.vector4_f32[1] * (double)Q1.vector4_f32[3]) + (double)((double)Q2.vector4_f32[2] * (double)Q1.vector4_f32[0]))),
++            (float)((double)((double)((double)Q2.vector4_f32[3] * (double)Q1.vector4_f32[2]) + (double)((double)Q2.vector4_f32[0] * (double)Q1.vector4_f32[1])) - (double)((double)((double)Q2.vector4_f32[1] * (double)Q1.vector4_f32[0]) + (double)((double)Q2.vector4_f32[2] * (double)Q1.vector4_f32[3]))),
++            (float)((double)((double)((double)Q2.vector4_f32[3] * (double)Q1.vector4_f32[3]) - (double)((double)Q2.vector4_f32[0] * (double)Q1.vector4_f32[0])) - (double)((double)((double)Q2.vector4_f32[1] * (double)Q1.vector4_f32[1]) - (double)((double)Q2.vector4_f32[2] * (double)Q1.vector4_f32[2])))
+         } } };
+     return Result.v;
+ #elif defined(_XM_ARM_NEON_INTRINSICS_)
+@@ -312,7 +312,7 @@ inline XMVECTOR XM_CALLCONV XMQuaternionSlerpV
+ 
+ #if defined(_XM_NO_INTRINSICS_) || defined(_XM_ARM_NEON_INTRINSICS_)
+ 
+-    const XMVECTORF32 OneMinusEpsilon = { { { 1.0f - 0.00001f, 1.0f - 0.00001f, 1.0f - 0.00001f, 1.0f - 0.00001f } } };
++    const XMVECTORF32 OneMinusEpsilon = { { { (float)((double)1.0f - (double)0.00001f), (float)((double)1.0f - (double)0.00001f), (float)((double)1.0f - (double)0.00001f), (float)((double)1.0f - (double)0.00001f) } } };
+ 
+     XMVECTOR CosOmega = XMQuaternionDot(Q0, Q1);
+ 
+-- 
+2.35.1.windows.2
+

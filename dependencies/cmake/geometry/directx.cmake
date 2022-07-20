@@ -42,6 +42,18 @@ if( NOT EXISTS ${DIR} )
                 SOURCE_DIR        ${DIR} 
                 DOWNLOAD_ONLY     YES)
 endif()
+if( NOT EXISTS ${DIR}/PATCHED )  
+  file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/patches/dxmath/*")
+  foreach(file ${files})
+    execute_process( COMMAND git am ${file} WORKING_DIRECTORY ${DIR} RESULT_VARIABLE ret )
+    if( NOT ${ret} EQUAL "0")
+      message( FATAL_ERROR "Error during the dxmath patch process. ")
+    endif()
+  endforeach()
+  file( WRITE ${DIR}/PATCHED "patched" )   
+else()
+  message("directx-dxmath already patched")
+endif()
 add_subdirectory(dependencies/directx-math)
             
 # directx-mesh    

@@ -1,0 +1,73 @@
+From 801f4193cd2a10b79447b77fac9847b243d8967f Mon Sep 17 00:00:00 2001
+From: Olivier Mocquard <olivier.mocquard@interdigital.com>
+Date: Wed, 20 Jul 2022 00:01:50 +0200
+Subject: [PATCH] dxmesh: fix unstability
+
+---
+ CMakeLists.txt                          | 4 ++--
+ DirectXMesh/DirectXMeshClean.cpp        | 2 +-
+ DirectXMesh/DirectXMeshP.h              | 4 ++--
+ DirectXMesh/DirectXMeshletGenerator.cpp | 2 +-
+ 4 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a8560f7..a4a8751 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -174,10 +174,10 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+ endif()
+ 
+ if(MSVC)
+-    target_compile_options(${PROJECT_NAME} PRIVATE /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
++    target_compile_options(${PROJECT_NAME} PRIVATE /fp:strict "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
+ 
+     if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+-      target_compile_options(meshconvert PRIVATE /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
++      target_compile_options(meshconvert PRIVATE /fp:strict "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
+       target_link_options(meshconvert PRIVATE /DYNAMICBASE /NXCOMPAT)
+     endif()
+ 
+diff --git a/DirectXMesh/DirectXMeshClean.cpp b/DirectXMesh/DirectXMeshClean.cpp
+index 1891e23..9eaf328 100644
+--- a/DirectXMesh/DirectXMeshClean.cpp
++++ b/DirectXMesh/DirectXMeshClean.cpp
+@@ -319,7 +319,7 @@ namespace
+                 dupAttr.push_back(UNUSED32);
+             }
+ 
+-            std::unordered_multimap<uint32_t, size_t> dups;
++            std::multimap<uint32_t, size_t> dups;
+ 
+             for (size_t face = 0; face < nFaces; ++face)
+             {
+diff --git a/DirectXMesh/DirectXMeshP.h b/DirectXMesh/DirectXMeshP.h
+index c88c7e5..468d725 100644
+--- a/DirectXMesh/DirectXMeshP.h
++++ b/DirectXMesh/DirectXMeshP.h
+@@ -120,8 +120,8 @@
+ #include <new>
+ #include <string>
+ #include <tuple>
+-#include <unordered_map>
+-#include <unordered_set>
++#include <map>
++#include <set>
+ 
+ #ifndef WIN32
+ #include <mutex>
+diff --git a/DirectXMesh/DirectXMeshletGenerator.cpp b/DirectXMesh/DirectXMeshletGenerator.cpp
+index df2f7bb..970a2c1 100644
+--- a/DirectXMesh/DirectXMeshletGenerator.cpp
++++ b/DirectXMesh/DirectXMeshletGenerator.cpp
+@@ -262,7 +262,7 @@ namespace
+ 
+         // Cache to maintain scores for each candidate triangle
+         std::vector<std::pair<uint32_t, float>> candidates;
+-        std::unordered_set<uint32_t> candidateCheck;
++        std::set<uint32_t> candidateCheck;
+ 
+         // Positions and normals of the current primitive
+         std::vector<XMFLOAT3> vertices;
+-- 
+2.35.1.windows.2
+

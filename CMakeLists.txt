@@ -41,6 +41,24 @@ elseif (WIN32)
   add_definitions(-D_USE_MATH_DEFINES)
 endif()
 
+# directx-mesh unconditionally includes install targets that need dxheaders'
+set(DXHEADERS_INSTALL TRUE)
+
+# directx-mesh unconditionally sets BUILD_TOOLS to TRUE, which then affects
+# other dependencies that use the same variable.  The tools aren't required.
+set (BUILD_TOOLS FALSE)
+
+set (UVATLAS_USE_OPENMP FALSE)
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_XM_NO_INTRINSICS_")
+if (NOT MSVC)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -ffp-model=strict -mno-fma")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=x86-64 -mfpmath=sse -msse2 -ffloat-store -ffp-contract=off")
+    endif()
+endif()
+
 # Dependencies
 include( dependencies/cmake/CPM.cmake )
 include( dependencies/cmake/tools.cmake )

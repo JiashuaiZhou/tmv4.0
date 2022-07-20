@@ -349,7 +349,7 @@ VMCEncoder::computeDracoMapping(
       return h;
     }
   };
-  std::unordered_map<std::array<double, 5>, int32_t, ArrayHasher> map0;
+  std::map<std::array<double, 5>, int32_t> map0;
   const auto texCoordCount0 = fsubdiv0.texCoordCount();
   for (int32_t v = 0; v < texCoordCount0; ++v) {
     const auto& point0 = fsubdiv0.point(std::max(0, texCoordToPoint0[v]));

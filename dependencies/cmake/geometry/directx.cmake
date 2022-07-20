@@ -27,9 +27,9 @@ set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/directx-headers )
 if( NOT EXISTS ${DIR} )
   CPMAddPackage( NAME              directx-headers
                 GIT_REPOSITORY    https://github.com/microsoft/DirectX-Headers.git
-                GIT_TAG           v1.602.0
+                GIT_TAG           1b79ddaeabc4b16c772ca63adc5bdf7d5f741460
                 SOURCE_DIR        ${DIR} 
-                DOWNLOAD_ONLY     YES)               
+                DOWNLOAD_ONLY     YES)
 endif()
 add_subdirectory(dependencies/directx-headers)
 
@@ -38,7 +38,7 @@ set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/directx-math )
 if( NOT EXISTS ${DIR} )
   CPMAddPackage( NAME             directx-math
                 GIT_REPOSITORY    https://github.com/microsoft/DirectXMath.git
-                GIT_TAG           jan2022
+                GIT_TAG           b404898c9dcaff7b686bbaf6d2fba8ff0184a17e
                 SOURCE_DIR        ${DIR} 
                 DOWNLOAD_ONLY     YES)
 endif()
@@ -49,7 +49,7 @@ set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/directx-mesh )
 if( NOT EXISTS ${DIR} )
   CPMAddPackage( NAME             directx-mesh
                 GIT_REPOSITORY    https://github.com/microsoft/DirectXMesh.git
-                GIT_TAG           mar2022
+                GIT_TAG           2c0ed18e271afa99a70948f784dfe082127fa0de
                 SOURCE_DIR        ${DIR} 
                 DOWNLOAD_ONLY     YES)
 endif()

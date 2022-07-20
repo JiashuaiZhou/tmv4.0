@@ -2,7 +2,7 @@ set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/draco )
 if( NOT EXISTS ${DIR}/CMakeLists.txt )
   CPMAddPackage( NAME             draco
                 GIT_REPOSITORY    https://github.com/google/draco.git
-                GIT_TAG           1.4.3
+                GIT_TAG           266f47ce58b0568ff9328e12174b25cb0fbd3b2e
                 SOURCE_DIR        ${DIR}  
                 DOWNLOAD_ONLY     YES)
 endif()

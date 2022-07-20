@@ -2,9 +2,9 @@ set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/uvatlas )
 if( NOT EXISTS ${DIR} )
   CPMAddPackage( NAME             uvatlas
                 GIT_REPOSITORY    https://github.com/microsoft/UVAtlas.git
-                GIT_TAG           mar2022
+                GIT_TAG           5af1b5d2a0fd9e0e5d17aa0971ab17c890e318e0
                 SOURCE_DIR        ${DIR}
-                DOWNLOAD_ONLY     YES)    
+                DOWNLOAD_ONLY     YES)  
 endif()
 
 if( NOT EXISTS ${DIR}/PATCHED )  

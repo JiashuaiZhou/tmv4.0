@@ -1,0 +1,64 @@
+From 4098e672d4b997057010f630dc1225844e35c346 Mon Sep 17 00:00:00 2001
+From: David Flynn <david.flynn@apple.com>
+Date: Fri, 22 Jul 2022 14:55:36 +0200
+Subject: [PATCH] uvatlas: enhanced eigenvalues precision
+
+---
+ UVAtlas/isochart/isomap.cpp | 25 +++++++++++++------------
+ 1 file changed, 13 insertions(+), 12 deletions(-)
+
+diff --git a/UVAtlas/isochart/isomap.cpp b/UVAtlas/isochart/isomap.cpp
+index ba85d77..0211376 100644
+--- a/UVAtlas/isochart/isomap.cpp
++++ b/UVAtlas/isochart/isomap.cpp
+@@ -136,13 +136,17 @@ HRESULT CIsoMap::ComputeLargestEigen(
+     assert(dwSelectedDimension <= m_dwMatrixDimension);
+     _Analysis_assume_(dwSelectedDimension <= m_dwMatrixDimension);
+ 
+-    std::unique_ptr<float[]> pfEigenValue(new (std::nothrow) float[m_dwMatrixDimension]);
+-    std::unique_ptr<float[]> pfEigenVector(new (std::nothrow) float[m_dwMatrixDimension * m_dwMatrixDimension]);
+-    if (!pfEigenValue || !pfEigenVector)
++    std::unique_ptr<double[]> pdEigenValue(new (std::nothrow) double[m_dwMatrixDimension]);
++    std::unique_ptr<double[]> pdEigenVector(new (std::nothrow) double[m_dwMatrixDimension * m_dwMatrixDimension]);
++    std::unique_ptr<double[]> pdMatrixB(new (std::nothrow) double[m_dwMatrixDimension * m_dwMatrixDimension]);
++
++    if (!pdEigenValue || !pdEigenVector || !pdMatrixB)
+     {
+         return E_OUTOFMEMORY;
+     }
+ 
++    std::copy_n(m_pfMatrixB, m_dwMatrixDimension * m_dwMatrixDimension, pdMatrixB.get());
++
+     m_pfEigenValue = new (std::nothrow) float[dwSelectedDimension];
+     m_pfEigenVector = new (std::nothrow) float[m_dwMatrixDimension * dwSelectedDimension];
+ 
+@@ -151,20 +155,17 @@ HRESULT CIsoMap::ComputeLargestEigen(
+         return E_OUTOFMEMORY;
+     }
+ 
+-    if (!CSymmetricMatrix<float>::GetEigen(
+-        m_dwMatrixDimension, m_pfMatrixB,
+-        pfEigenValue.get(), pfEigenVector.get(),
++    if (!CSymmetricMatrix<double>::GetEigen(
++        m_dwMatrixDimension, pdMatrixB.get(),
++        pdEigenValue.get(), pdEigenVector.get(),
+         dwSelectedDimension))
+     {
+         return E_OUTOFMEMORY;
+     }
+ 
+-    memcpy(m_pfEigenValue, pfEigenValue.get(), dwSelectedDimension * sizeof(float));
+-    memcpy(
+-        m_pfEigenVector,
+-        pfEigenVector.get(),
+-        m_dwMatrixDimension * dwSelectedDimension * sizeof(float));
+-
++    std::copy_n(pdEigenValue.get(), dwSelectedDimension, m_pfEigenValue);
++    std::copy_n(pdEigenVector.get(), m_dwMatrixDimension * dwSelectedDimension, m_pfEigenVector);
++    
+     m_fSumOfEigenValue = 0;
+     dwCalculatedDimension = 0;
+     for (size_t i = 0; i < dwSelectedDimension; i++)
+-- 
+2.35.1.windows.2
+

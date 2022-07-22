@@ -51,11 +51,12 @@ set (BUILD_TOOLS FALSE)
 set (UVATLAS_USE_OPENMP FALSE)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_XM_NO_INTRINSICS_")
-if (NOT MSVC)
+# compile flags still to be harmonized to guarantee strict same compilation results on float operations
+if (NOT WIN32)
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -ffp-model=strict -mno-fma")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -m64 -DNDEBUG -mfpmath=sse -ffp-contract=off -ffp-model=strict")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=x86-64 -mfpmath=sse -msse2 -ffloat-store -ffp-contract=off")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -m64 -DNDEBUG -mfpmath=sse -ffp-contract=off -ffloat-store")
     endif()
 endif()
 

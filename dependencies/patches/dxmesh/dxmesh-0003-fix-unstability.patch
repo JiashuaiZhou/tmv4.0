@@ -1,7 +1,8 @@
-From 801f4193cd2a10b79447b77fac9847b243d8967f Mon Sep 17 00:00:00 2001
+From 62d35ac578e4139aae7f27b683d8772ef4ae2f7d Mon Sep 17 00:00:00 2001
 From: Olivier Mocquard <olivier.mocquard@interdigital.com>
 Date: Wed, 20 Jul 2022 00:01:50 +0200
-Subject: [PATCH] dxmesh: fix unstability
+Subject: [PATCH] dxmesh: fix unstability -replace unorded_(map/set) with
+ (map/set)
 
 ---
  CMakeLists.txt                          | 4 ++--
@@ -11,10 +12,10 @@ Subject: [PATCH] dxmesh: fix unstability
  4 files changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index a8560f7..a4a8751 100644
+index 192feed..b99f055 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -174,10 +174,10 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+@@ -176,10 +176,10 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
  endif()
  
  if(MSVC)
@@ -28,7 +29,7 @@ index a8560f7..a4a8751 100644
      endif()
  
 diff --git a/DirectXMesh/DirectXMeshClean.cpp b/DirectXMesh/DirectXMeshClean.cpp
-index 1891e23..9eaf328 100644
+index 80e16ea..4917100 100644
 --- a/DirectXMesh/DirectXMeshClean.cpp
 +++ b/DirectXMesh/DirectXMeshClean.cpp
 @@ -319,7 +319,7 @@ namespace
@@ -41,10 +42,10 @@ index 1891e23..9eaf328 100644
              for (size_t face = 0; face < nFaces; ++face)
              {
 diff --git a/DirectXMesh/DirectXMeshP.h b/DirectXMesh/DirectXMeshP.h
-index c88c7e5..468d725 100644
+index 7ebe0a2..0f370a7 100644
 --- a/DirectXMesh/DirectXMeshP.h
 +++ b/DirectXMesh/DirectXMeshP.h
-@@ -120,8 +120,8 @@
+@@ -121,8 +121,8 @@
  #include <new>
  #include <string>
  #include <tuple>

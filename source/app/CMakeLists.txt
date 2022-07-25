@@ -20,6 +20,7 @@ create_executable( NAME      decode
                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcDecoder )
 
 ########################### Unit tests ###########################
+
 if ( BUILD_WRAPPER_APPS )
   # Draco Encoder/decoder
   create_executable( NAME      encodeDraco
@@ -60,71 +61,19 @@ if ( BUILD_WRAPPER_APPS )
                     LIBRARIES po vdmcCommon
                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon )
 endif()
-
-########################### Original applications ###########################
-
-if( BUILD_ORIGINAL_APPS )
-  # Gengof
-  create_executable( NAME      gengof 
-                    SOURCES   original/gengof.cpp 
-                    LIBRARIES po vdmcCommon vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
-                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder )
-
-  # Simplify
-  create_executable( NAME      simplify 
-                    SOURCES   original/simplify.cpp 
-                    LIBRARIES po vdmcCommon vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh 
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
-                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder )
-
-  # Uvatlas
-  create_executable( NAME      uvatlasapp
-                    SOURCES   original/uvatlas.cpp
-                    LIBRARIES po vdmcCommon vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
-                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder ) 
-
-  # Fitsubdiv
-  create_executable( NAME      fitsubdiv 
-                    SOURCES   original/fitsubdiv.cpp 
-                    LIBRARIES po vdmcCommon vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh 
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
-                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder )
-                              
-  # Vmcenc
-  create_executable( NAME      vmcenc 
-                    SOURCES   original/vmcenc.cpp 
-                    LIBRARIES po vdmcCommon vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh 
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
-                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder )  
-
-  # Vmcdec
-  create_executable( NAME      vmcdec 
-                    SOURCES   original/vmcdec.cpp 
-                    LIBRARIES po vdmcCommon vdmcDecoder 
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
-                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcDecoder )
-endif()
                                                         
 ########################### Test applications ###########################
-if( BUILD_TEST_APPS )
+if( BUILD_UNIT_TEST_APPS )
   CPMAddPackage( "gh:google/googletest#release-1.11.0" )
   enable_testing()
 
-  create_executable( NAME     tests 
-                    SOURCES   tests/main.cpp
-                              tests/draco.cpp 
-                              tests/metrics.cpp
-                              tests/hm.cpp
-                              tests/colourConvert.cpp
-                              tests/gengof.cpp
-                              tests/geometryDecimate.cpp
-                              tests/textureParametrization.cpp
-                              tests/geometryParametrization.cpp
-                              tests/decode.cpp
-                              tests/encode.cpp
-                              tests/allchain.cpp
+  create_executable( NAME     unitTests 
+                    SOURCES   unitTests/main.cpp
+                              unitTests/draco.cpp 
+                              unitTests/metrics.cpp
+                              unitTests/hm.cpp
+                              unitTests/colourConvert.cpp
+                              unitTests/vmesh.cpp
                     LIBRARIES gtest_main 
                               po
                               vdmcCommon 
@@ -146,7 +95,7 @@ if( BUILD_TEST_APPS )
                               ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder
                               ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder  )
   include(GoogleTest)
-  gtest_discover_tests( tests )
+  gtest_discover_tests( unitTests )
 endif()
 
 

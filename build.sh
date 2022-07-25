@@ -29,7 +29,7 @@ do
     doc       ) make -C "${CURDIR}/doc/"; exit 0;;
     debug     ) MODE=Debug; CMAKE_FLAGS+=("-DCMAKE_C_FLAGS=\"-g3\"" "-DCMAKE_CXX_FLAGS=\"-g3\"" );;
     release   ) MODE=Release;;
-	  test      ) CMAKE_FLAGS+=( "-DBUILD_TEST_APPS=TRUE" ) ;;
+	  test      ) CMAKE_FLAGS+=( "-DBUILD_UNIT_TEST_APPS=TRUE" ) ;;
     format    ) FORMAT=1;;
     tidy      ) TIDY=1;;
     *         ) echo "ERROR: arguments \"$i\" not supported: option = [debug|release]"; exit 1;;

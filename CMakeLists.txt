@@ -20,9 +20,8 @@ OPTION( USE_HDRTOOLS             "Use HDRTools for color conversions"     TRUE )
 OPTION( USE_HM_PCC_RDO           "Use HM optimized RDO "                  FALSE )
 
 # Test applications
-OPTION( BUILD_ORIGINAL_APPS      "Build original applications"            TRUE )
 OPTION( BUILD_WRAPPER_APPS       "Build wrapper applications"             TRUE )
-OPTION( BUILD_TEST_APPS          "Build test applications"                FALSE )
+OPTION( BUILD_UNIT_TEST_APPS     "Build unit test applications"           FALSE )
 
 # Building options
 set(CMAKE_CXX_STANDARD          14)

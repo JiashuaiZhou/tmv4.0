@@ -143,9 +143,10 @@ foreach my $cat_name (sort keys %{$cfg->{categories}}) {
 
 		my $cat_seq = $cat->{sequences}{$seq_name};
 		my $seq = $cfg->{sequences}{$seq_name};
-
+		my $cond_id = $cfg->{categories}{$cat_name}->{'cond-id'};
+		my $seq_id = $cat_seq->{'seq-id'};
 		unless (exists $seq->{gops}) {
-			genSeqVariants($cat, $cat_name, $cat_seq, $seq_name, $seq, $seq);
+			genSeqVariants($cat, $cat_name, $cond_id, $cat_seq,  $seq_name, $seq_id, $seq, $seq);
 			next;
 		}
 
@@ -154,7 +155,7 @@ foreach my $cat_name (sort keys %{$cfg->{categories}}) {
 		foreach my $gop (@{$seq->{gops}}) {
 			my $gop_idx = sprintf "%03d", $gop_idx++;
 			my $gop_name = "${seq_name}_gop${gop_idx}";
-			genSeqVariants($cat, $cat_name, $cat_seq, $gop_name, $gop, $seq);
+			genSeqVariants($cat, $cat_name, $cond_id, $cat_seq, $gop_name, $seq_id, $gop, $seq);
 		}
 	}
 }
@@ -182,7 +183,7 @@ if ($batch_template) {
 
 
 sub genSeqVariants {
-	my ($cat, $cat_name, $cat_seq, $seq_name, $gop, $seq) = @_;
+	my ($cat, $cat_name, $cond_id, $cat_seq, $seq_name, $seq_id, $gop, $seq) = @_;
 
 	# if sequence source isn't defined at top level, skip
 	if ($skip_sequences_without_src) {
@@ -215,12 +216,14 @@ sub genSeqVariants {
 	#   NB: in the case of no variants, $var = undef
 	foreach my $var (sort @variants) {
 
-		my $cfgdir =
-			join '/', grep {defined} ($prefix,$cat_name,$seq_name,$var);
+		#my $cfgdir =	join '/', grep {defined} ($prefix,$cat_name,$seq_name,$var);
+		my $short_seq_name = substr($seq_name, 0, 4);
+		my $cfgdir = $prefix . "/s" . $seq_id . "c" . $cond_id . $var . "_" . $short_seq_name ;		
+			
 		print "$cfgdir\n";
 		make_path($cfgdir);
 		push @jobs, "$cfgdir/";
-
+		
 		##
 		# input sequence file name
 		if ($gop->{src} && $output_src_glob_sh) {

@@ -3,18 +3,6 @@
 # - Update the definitions with the paths to the binaries if
 #   they are not on $PATH
 ---
-encoder:
-  - gmenc: draco_encoder
-  - gmdec: draco_decoder
-  - gvenc: TAppEncoder_hm1621scm88
-  - csc: HDRConvert
-  - tvenc: TAppEncoder_hm1621scm88
-
-decoder:
-  - gmdec: draco_decoder
-  - gvdec: TAppDecoder_hm1621scm88
-  - tvdec: TAppDecoder_hm1621scm88
-  - csc: HDRConvert
 
 vars:
   # this is the directory containing all the source sequences

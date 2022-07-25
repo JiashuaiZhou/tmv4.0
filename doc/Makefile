@@ -5,12 +5,11 @@ all: mpeg-vmesh-sw-manual.pdf
 
 MD_SRC=\
 	README.about.md \
+	README.architecture.md \
 	README.build.md \
-	README.options.gengof.md \
-	README.options.simplify.md \
-	README.options.uvatlas.md \
-	README.options.fitsubdiv.md   \
-	README.options.vmc.md \
+	README.clone.md \
+	README.dec_params.md \
+	README.enc_params.md \
 	README.usage.md \
 	$(NULL)
 
@@ -51,3 +50,11 @@ endif
 # convert markdown text to latex for document generation
 %.tex: %.md
 	pandoc -f markdown -t latex -o $@ $<
+
+clean:
+	rm -f $(patsubst %.md,%.tex,$(MD_SRC)) \
+		 mpeg-vmesh-sw-manual.pdf \
+		 mpeg-vmesh-sw-manual.log \
+		 mpeg-vmesh-sw-manual.out \
+		 mpeg-vmesh-sw-manual.toc \
+		 mpeg-vmesh-sw-manual.blg

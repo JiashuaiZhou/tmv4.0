@@ -1,6 +1,7 @@
 Video-based dynamic mesh coding software test model 
 ==============================================
 
+<!--- Building  --->
 # Building 
 
 ## Building script
@@ -48,15 +49,17 @@ $ cmake --build ./build/Release --config Release --parallel 12
 ## Dependencies
 
 The V-DMC software uses several dependencies that are cloned and patched by the CMake building process. These dependencies are: 
- - Directx-headers: https:/github.com/microsoft/DirectX-Headers.git
- - Directx-math: https:/github.com/microsoft/DirectXMath.git
- - Directx-mesh: https:/github.com/microsoft/DirectXMesh.git
- - UVAatlas:  https:/github.com/microsoft/UVAtlas.git
- - Draco: https:/github.com/google/draco.git
- - HDRTools: http:/gitlab.com/standards/HDRTools.git
- - HM: https:/vcgit.hhi.fraunhofer.de/jvet/HM.git
- - VTM: https:/vcgit.hhi.fraunhofer.de/jvet/VVCSoftware_VTM.git
+ - Directx-headers: https:/github.com/microsoft/DirectX-Headers.git (checkout: 1b79ddaeabc4b16c772ca63adc5bdf7d5f741460)
+ - Directx-math: https:/github.com/microsoft/DirectXMath.git (checkout: b404898c9dcaff7b686bbaf6d2fba8ff0184a17e)
+ - Directx-mesh: https:/github.com/microsoft/DirectXMesh.git (checkout: 2c0ed18e271afa99a70948f784dfe082127fa0de)
+ - UVAatlas:  https:/github.com/microsoft/UVAtlas.git (checkout: 5af1b5d2a0fd9e0e5d17aa0971ab17c890e318e0)
+ - Draco: https:/github.com/google/draco.git (checkout: 266f47ce58b0568ff9328e12174b25cb0fbd3b2e)
+ - HDRTools: http:/gitlab.com/standards/HDRTools.git (tag: v0.23)
+ - HM: https:/vcgit.hhi.fraunhofer.de/jvet/HM.git (tag: HM-16.21+SCM-8.8)
+ - VTM: https:/vcgit.hhi.fraunhofer.de/jvet/VVCSoftware_VTM.git (tag: VTM-13.0)
+ - mpeg-pcc-mmetric: http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git (tag: 1_0_1_lib_beta_v2)
 
+<!--- Architecture  --->
 # Architecture 
 
 V-Mesh test model software is organized as follow: 
@@ -155,7 +158,8 @@ $ ./build/Release/bin/unitTests -v 0
 
 Note: it's greatly recommended to execute the unit test application before each submission in the repository.
 
-# Running
+<!--- Usage --->
+# Usage
 
 ## Encode 
 
@@ -403,8 +407,8 @@ IbsmGeom           : 48.669617
 IbsmLuma           : 36.119125
 ```
 
-Contacts and reporting issues
--------
+<!--- Contacts and reporting issues --->
+# Contacts and reporting issues
 
 For any issues or questions don't hesitate to open issues in V-Mesh git repository or to contact us: 
 - Julien Ricard (julien.ricard@interdigital.com)

@@ -82,9 +82,10 @@ try {
   /* clang-format off */
   po::Options opts;
   opts.addOptions()
-  ("help",      print_help,                     false,  "This help text")
-  ("config,c",  po::parseConfigFile,                    "Configuration file name")
-  ("verbose,v", params.verbose,                 true,   "Verbose output")
+  (po::Section("Common"))
+    ("help",      print_help,                     false,  "This help text")
+    ("config,c",  po::parseConfigFile,                    "Configuration file name")
+    ("verbose,v", params.verbose,                 true,   "Verbose output")
 
   (po::Section("Input"))
     ("compressed", params.compressedStreamPath, {},     "Compressed bitstream")
@@ -107,7 +108,7 @@ try {
       params.decParams.keepIntermediateFiles, 
       params.decParams.keepIntermediateFiles, 
       "Keep intermediate files")
-    ("intermediateFilesPathPrefix", 
+    ("interFilesPathPrefix", 
       params.decParams.intermediateFilesPathPrefix, 
       params.decParams.intermediateFilesPathPrefix,
       "Intermediate files path prefix")
@@ -158,6 +159,7 @@ try {
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
+  po::dumpCfg(std::cout, opts, "Common", 4);
   po::dumpCfg(std::cout, opts, "General", 4);
   po::dumpCfg(std::cout, opts, "Output", 4);
   po::dumpCfg(std::cout, opts, "General", 4);

@@ -96,10 +96,8 @@ static std::ostream&
 operator<<(std::ostream& out, SmoothingMethod val)
 {
   switch (val) {
-  case SmoothingMethod::NONE: out << "0 (None)"; break;
-  case SmoothingMethod::VERTEX_CONSTRAINT:
-    out << "1 (Vertex constraint)";
-    break;
+  case SmoothingMethod::NONE: out << "0"; break;
+  case SmoothingMethod::VERTEX_CONSTRAINT: out << "1"; break;
   }
   return out;
 }
@@ -214,7 +212,7 @@ struct VMCEncoderParameters {
   GeometryParametrizationParameters interGeoParams;
 
   // Bug fix 
-  bool forceWriteReadIntermediateModels = true;
+  bool forceCoordTruncation = true;
 };
 
 //============================================================================

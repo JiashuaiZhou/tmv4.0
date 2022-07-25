@@ -58,7 +58,7 @@ namespace vmesh {
 // NOTE: fix issue and debug function.
 template<typename T>
 void
-writeAndReadMeshInObjFiles(TriangleMesh<T>& obj, const std::string name)
+forceCoordinateTruncation(TriangleMesh<T>& obj, const std::string name)
 {
   obj.saveToOBJ(name);
   obj.clear();
@@ -281,12 +281,6 @@ VMCEncoder::computeDracoMapping(
   const int32_t frameIndex,
   const VMCEncoderParameters& params) const
 {
-  // // Bug fix
-  // if (params.forceWriteReadIntermediateModels) {
-  //   auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
-  //     + std::to_string(frameIndex);
-  //   // Bug in r5 : writeAndReadMeshInObjFiles(base, prefix + "base.obj");
-  // }
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto prefix = "GOF_"
@@ -360,10 +354,10 @@ VMCEncoder::computeDracoMapping(
   }
 
   // Geometry parametrisation rec
-  if (params.forceWriteReadIntermediateModels) {
+  if (params.forceCoordTruncation) {
     auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
       + std::to_string(frameIndex);
-    writeAndReadMeshInObjFiles(rec, prefix + "fsubdiv1.obj");
+    forceCoordinateTruncation(rec, prefix + "fsubdiv1.obj");
   }
   auto fsubdiv1 = rec;
   printf(
@@ -560,10 +554,10 @@ VMCEncoder::compressBaseMesh(
     }
 
     // Encode
-    if (params.forceWriteReadIntermediateModels) {
+    if (params.forceCoordTruncation) {
       auto prefix = params.intermediateFilesPathPrefix + "fr_"
         + std::to_string(frameIndex);
-      writeAndReadMeshInObjFiles(base, prefix + "base_before_enc.obj");
+      forceCoordinateTruncation(base, prefix + "base_before_enc.obj");
     }
     GeometryEncoderParameters dracoParams;
     dracoParams.qp_ = params.qpPosition;
@@ -577,10 +571,10 @@ VMCEncoder::compressBaseMesh(
     auto encoder =
       VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
     encoder->encode(base, dracoParams, geometryBitstream, rec);
-    if (params.forceWriteReadIntermediateModels) {
+    if (params.forceCoordTruncation) {
       auto prefix = params.intermediateFilesPathPrefix + "fr_"
         + std::to_string(frameIndex);
-      writeAndReadMeshInObjFiles(rec, prefix + "new_base.obj");
+      forceCoordinateTruncation(rec, prefix + "new_base.obj");
     }
     
     // Save intermediate files
@@ -1119,10 +1113,10 @@ VMCEncoder::compress(
         return 1;
       }
       // Bug fix
-      if (params.forceWriteReadIntermediateModels) {
-        writeAndReadMeshInObjFiles(frame.mapped, prefix + "_mapped.obj");
-        writeAndReadMeshInObjFiles(frame.reference, prefix + "_reference.obj");
-        writeAndReadMeshInObjFiles(frame.decimate, prefix + "_decimate.obj");
+      if (params.forceCoordTruncation) {
+        forceCoordinateTruncation(frame.mapped, prefix + "_mapped.obj");
+        forceCoordinateTruncation(frame.reference, prefix + "_reference.obj");
+        forceCoordinateTruncation(frame.decimate, prefix + "_decimate.obj");
       }
       // Save intermediate files
       if (params.keepIntermediateFiles) {
@@ -1136,8 +1130,8 @@ VMCEncoder::compress(
       textureParametrization.generate(
         frame, params);  // create decimateTexture
       // Bug fix
-      if (params.forceWriteReadIntermediateModels) {
-        writeAndReadMeshInObjFiles(
+      if (params.forceCoordTruncation) {
+        forceCoordinateTruncation(
           frame.decimateTexture, prefix + "_decimateTexture.obj");
       }
       // Save intermediate files
@@ -1162,10 +1156,10 @@ VMCEncoder::compress(
         frame.nsubdivIntra);    // ndeformed
       
       // Bug fix
-      if (params.forceWriteReadIntermediateModels) {
-        writeAndReadMeshInObjFiles(frame.baseIntra, prefix + "_intra_base.obj");
-        writeAndReadMeshInObjFiles(frame.subdivIntra, prefix + "_intra_subdiv.obj");
-        writeAndReadMeshInObjFiles(frame.nsubdivIntra, prefix + "_intra_nsubdiv.obj");
+      if (params.forceCoordTruncation) {
+        forceCoordinateTruncation(frame.baseIntra, prefix + "_intra_base.obj");
+        forceCoordinateTruncation(frame.subdivIntra, prefix + "_intra_subdiv.obj");
+        forceCoordinateTruncation(frame.nsubdivIntra, prefix + "_intra_nsubdiv.obj");
       }
       // Save intermediate files
       if (params.keepIntermediateFiles) {
@@ -1228,10 +1222,10 @@ VMCEncoder::compress(
         }
         
         // Bug fix
-        if (params.forceWriteReadIntermediateModels) {
-          writeAndReadMeshInObjFiles(frame.baseInter, prefix + "_inter_base.obj");
-          writeAndReadMeshInObjFiles(frame.subdivInter, prefix + "_inter_subdiv.obj");
-          writeAndReadMeshInObjFiles(frame.nsubdivInter, prefix + "_inter_nsubdiv.obj");
+        if (params.forceCoordTruncation) {
+          forceCoordinateTruncation(frame.baseInter, prefix + "_inter_base.obj");
+          forceCoordinateTruncation(frame.subdivInter, prefix + "_inter_subdiv.obj");
+          forceCoordinateTruncation(frame.nsubdivInter, prefix + "_inter_nsubdiv.obj");
         }
         // Save intermediate files
         if (params.keepIntermediateFiles) {

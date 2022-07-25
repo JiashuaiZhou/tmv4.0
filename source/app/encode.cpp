@@ -80,9 +80,10 @@ try {
   /* clang-format off */
   po::Options opts;
   opts.addOptions()
-  ("help", print_help, false, "This help text")
-  ("config,c", po::parseConfigFile, "Configuration file name")
-  ("verbose,v", params.verbose, true, "Verbose output")
+  (po::Section("Common"))
+    ("help", print_help, false, "This help text")
+    ("config,c", po::parseConfigFile, "Configuration file name")
+    ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("Input"))
     ("imesh", 
@@ -459,9 +460,9 @@ try {
       "Output texture height")
   
   (po::Section("Bug fix"))    
-    ("forceWriteReadIntermediateModels", 
-      encParams.forceWriteReadIntermediateModels, 
-      encParams.forceWriteReadIntermediateModels, 
+    ("forceCoordTruncation", 
+      encParams.forceCoordTruncation, 
+      encParams.forceCoordTruncation, 
       "Force truncation of the precision of the intermediate mesh files")
   ;
   /* clang-format on */
@@ -506,6 +507,7 @@ try {
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
+  po::dumpCfg(std::cout, opts, "Common", 4);
   po::dumpCfg(std::cout, opts, "Input", 4);
   po::dumpCfg(std::cout, opts, "Output", 4);
   po::dumpCfg(std::cout, opts, "General", 4);

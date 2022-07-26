@@ -22,6 +22,14 @@ mpeg-vmesh-sw-manual.pdf: $(TEX_SRC)
 
 LATEX:=$(shell which xelatex || which pdflatex || which latex)
 
+README.enc_params.md:
+	bash ./update_input_parameters.sh ../build/Release/bin/encode > README.enc_params.md
+	@echo create README.enc_params.md
+
+README.dec_params.md:
+	bash ./update_input_parameters.sh ../build/Release/bin/decode > README.dec_params.md
+	@echo create README.dec_params.md
+
 # for bibtex
 %.aux: %.tex
 	$(LATEX) $(LATEXFLAGS) $<
@@ -57,4 +65,6 @@ clean:
 		 mpeg-vmesh-sw-manual.log \
 		 mpeg-vmesh-sw-manual.out \
 		 mpeg-vmesh-sw-manual.toc \
-		 mpeg-vmesh-sw-manual.blg
+		 mpeg-vmesh-sw-manual.blg \
+		 README.enc_params.md \
+		 README.dec_params.md

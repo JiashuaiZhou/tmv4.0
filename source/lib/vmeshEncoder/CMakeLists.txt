@@ -11,14 +11,14 @@ include_directories( ${CMAKE_SOURCE_DIR}/dependencies
                      ${CMAKE_SOURCE_DIR}/dependencies/directx-math/Inc
                      ${CMAKE_SOURCE_DIR}/dependencies/directx-mesh/DirectXMesh
                      ${CMAKE_SOURCE_DIR}/dependencies/directx-headers/include
-                     ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
+                     ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                      ${CMAKE_SOURCE_DIR}/source/wrapper/videoEncoder
                      ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder
                      ${CMAKE_SOURCE_DIR}/source/wrapper/colourConverter )
  
 add_library( ${MYNAME} ${SRC} ${CMAKE_SOURCE_DIR}/dependencies/schroedinger/schroarith.c )
 
-target_link_libraries( ${MYNAME} vdmcCommon geometryEncoder videoEncoder colourConverter )
+target_link_libraries( ${MYNAME} vmeshCommon geometryEncoder videoEncoder colourConverter )
 
 set_target_properties( ${MYNAME} PROPERTIES LINKER_LANGUAGE CXX)
 

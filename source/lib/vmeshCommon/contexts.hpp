@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#pragma once 
 
 #include "entropy.hpp"
 #include "util/misc.hpp"

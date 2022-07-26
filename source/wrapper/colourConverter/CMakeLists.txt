@@ -9,11 +9,11 @@ file(GLOB SRC *.h *.cpp
               ${CMAKE_SOURCE_DIR}/dependencies/hdrtools/projects/HDRConvert/src/ProjectParameters.cpp )
 
 include_directories( ${CMAKE_SOURCE_DIR}/dependencies 
-                     ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
+                     ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                      ${CMAKE_SOURCE_DIR}/dependencies/hdrtools/common/inc
                      ${CMAKE_SOURCE_DIR}/dependencies/hdrtools/projects/HDRConvert/inc )
 
-set( LIBS vdmcCommon )
+set( LIBS vmeshCommon )
 if( USE_HDRTOOLS )
   set( LIBS ${LIBS} HDRLib )
 endif()

@@ -10,9 +10,9 @@ V-Mesh test model software is organized as shows on Figure 1.
 
 The core codec processes are grouped in three lirbaries: 
 
-- `vdmcCommon` containing the util objects and the processes shared by V-Mesh encoding and decoding processes. 
-- `vdmcEncoder` containing the V-Mesh encoding processes. 
-- `vdmcDecoder` containing the V-Mesh decoding processes. 
+- `vmeshCommon` containing the util objects and the processes shared by V-Mesh encoding and decoding processes. 
+- `vmeshEncoder` containing the V-Mesh encoding processes. 
+- `vmeshDecoder` containing the V-Mesh decoding processes. 
 
 ## Wrapper libraries
 

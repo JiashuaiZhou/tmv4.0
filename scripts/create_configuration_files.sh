@@ -14,7 +14,7 @@ print_usage()
   echo "    Usage:" 
   echo "       -o|--outdir=: configured directory                   (default: $OUTDIR )"  
   echo "       -s|--seqdir=: source sequence directory              (default: $SEQDIR )"
-  echo "       --update:     update cfg files stored in ./cfg/vdmc/ (default: $UPDATE )"
+  echo "       --update:     update cfg files stored in ./cfg/vmesh/ (default: $UPDATE )"
   echo "";
   echo "    Examples:";
   echo "      - $0  "; 
@@ -41,7 +41,7 @@ if [ $UPDATE == 1 ]
 then 
   cd ${MAINDIR}
   CFGDIR=./cfg
-  OUTDIR=${CFGDIR}/vdmc/
+  OUTDIR=${CFGDIR}/vmesh/
   MAINDIR=/path/to/mpeg-vmesh-tm
   SEQDIR=/path/to/contents
   echo "SEQDIR  = $SEQDIR"

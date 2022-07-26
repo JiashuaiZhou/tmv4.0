@@ -8,16 +8,16 @@ target_include_directories(po INTERFACE "${PROJECT_SOURCE_DIR}/dependencies/" )
 # Encode
 create_executable( NAME      encode 
                    SOURCES   encode.cpp 
-                   LIBRARIES po vdmcCommon vdmcEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
-                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
-                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder )  
+                   LIBRARIES po vmeshCommon vmeshEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
+                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshEncoder )  
 
 # Decode
 create_executable( NAME      decode 
                    SOURCES   decode.cpp 
-                   LIBRARIES po vdmcCommon vdmcDecoder 
-                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
-                             ${CMAKE_SOURCE_DIR}/source/lib/vdmcDecoder )
+                   LIBRARIES po vmeshCommon vmeshDecoder 
+                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshDecoder )
 
 ########################### Unit tests ###########################
 
@@ -26,40 +26,40 @@ if ( BUILD_WRAPPER_APPS )
   create_executable( NAME      encodeDraco
                     SOURCES   wrapper/dracoEncoder.cpp 
                     LIBRARIES po geometryEncoder 
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
+                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                               ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder )
 
   create_executable( NAME      decodeDraco 
                     SOURCES   wrapper/dracoDecoder.cpp 
                     LIBRARIES po geometryDecoder
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
+                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                               ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder )
 
   # Video Encoder/decoder
   create_executable( NAME      encodeVideo 
                     SOURCES   wrapper/videoEncoder.cpp 
                     LIBRARIES po videoEncoder
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
+                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                               ${CMAKE_SOURCE_DIR}/source/wrapper/videoEncoder )
 
   create_executable( NAME      decodeVideo 
                     SOURCES   wrapper/videoDecoder.cpp 
                     LIBRARIES po videoDecoder
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
+                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                               ${CMAKE_SOURCE_DIR}/source/wrapper/videoDecoder )
 
   # Colour Converter
   create_executable( NAME      colourConverte
                     SOURCES   wrapper/colourConverter.cpp 
                     LIBRARIES po colourConverter
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
+                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                               ${CMAKE_SOURCE_DIR}/source/wrapper/colourConverter )
 
   # Metrics
   create_executable( NAME      metrics 
                     SOURCES   wrapper/metrics.cpp 
-                    LIBRARIES po vdmcCommon
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon )
+                    LIBRARIES po vmeshCommon
+                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon )
 endif()
                                                         
 ########################### Test applications ###########################
@@ -76,9 +76,9 @@ if( BUILD_UNIT_TEST_APPS )
                               unitTests/vmesh.cpp
                     LIBRARIES gtest_main 
                               po
-                              vdmcCommon 
-                              vdmcEncoder 
-                              vdmcDecoder 
+                              vmeshCommon 
+                              vmeshEncoder 
+                              vmeshDecoder 
                               geometryEncoder 
                               geometryDecoder 
                               videoEncoder 
@@ -89,9 +89,9 @@ if( BUILD_UNIT_TEST_APPS )
                               DirectXMath 
                               DirectXMesh
                     INCLUDES  ${CMAKE_SOURCE_DIR}/dependencies
-                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon
-                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcEncoder 
-                              ${CMAKE_SOURCE_DIR}/source/lib/vdmcDecoder 
+                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshEncoder 
+                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshDecoder 
                               ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder
                               ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder  )
   include(GoogleTest)

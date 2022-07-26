@@ -47,7 +47,7 @@ $ cmake --build ./build/Release --config Release --parallel 12
 
 ## Dependencies
 
-The V-DMC software uses several dependencies that are cloned and patched by the CMake building process. 
+The V-DMC test model software uses several dependencies that are cloned and patched by the CMake building process. 
 
 These dependencies are: 
 

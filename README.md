@@ -48,7 +48,7 @@ $ cmake --build ./build/Release --config Release --parallel 12
 
 ## Dependencies
 
-The V-DMC software uses several dependencies that are cloned and patched by the CMake building process. These dependencies are: 
+The V-DMC test model software uses several dependencies that are cloned and patched by the CMake building process. These dependencies are: 
  - Directx-headers: https:/github.com/microsoft/DirectX-Headers.git (checkout: 1b79ddaeabc4b16c772ca63adc5bdf7d5f741460)
  - Directx-math: https:/github.com/microsoft/DirectXMath.git (checkout: b404898c9dcaff7b686bbaf6d2fba8ff0184a17e)
  - Directx-mesh: https:/github.com/microsoft/DirectXMesh.git (checkout: 2c0ed18e271afa99a70948f784dfe082127fa0de)
@@ -69,9 +69,9 @@ V-Mesh test model software is organized as follow:
 ## Core libraries
 
 The core codec processes are grouped in three lirbaries: 
-- `vdmcCommon` containing the util objects and the processes shared by V-Mesh encoding and decoding processes. 
-- `vdmcEncoder` containing the V-Mesh encoding processes. 
-- `vdmcDecoder` containing the V-Mesh decoding processes. 
+- `vmeshCommon` containing the util objects and the processes shared by V-Mesh encoding and decoding processes. 
+- `vmeshEncoder` containing the V-Mesh encoding processes. 
+- `vmeshDecoder` containing the V-Mesh decoding processes. 
 
 ## Wrapper libraries
 
@@ -169,7 +169,7 @@ The encode command line is the following one:
 $ ./build/Release/bin/encode \
   --config=./generatedConfigFiles/s8c1r1_levi/encoder.cfg \
   --fcount=2 \
-  --compressed=s8c1r1_levi_F002.vdmc
+  --compressed=s8c1r1_levi_F002.vmesh
 ```
 
 ## Decode
@@ -177,9 +177,9 @@ $ ./build/Release/bin/encode \
 The decode can be executed with:
 
 ```console
-./tmc_vdmc/build/Release/bin/decode \
-  --compressed=s8c1r1_levi_F002.vdmc \
-  --cscdecconfig=tmd_vdmc/cfg/hdrconvert/yuv420tobgr444.cfg \
+./build/Release/bin/decode \
+  --compressed=s8c1r1_levi_F002.vmesh \
+  --cscdecconfig=cfg/hdrconvert/yuv420tobgr444.cfg \
   --decmesh=s8c1r1_levi_F002_%04d_dec.obj \
   --dectex=s8c1r1_levi_F002_%04d_dec.png \
   --decmat=s8c1r1_levi_F002_%04d_dec.mtl
@@ -187,7 +187,7 @@ The decode can be executed with:
 
 ## Runtime configuration and configuration files
 
-A set of reference configuration files are provided in the `cfg/vdmc/`
+A set of reference configuration files are provided in the `cfg/vmesh/`
 directory for example.
 
 To generate the configuration files according to your system paths, the following action must be made: 
@@ -212,7 +212,7 @@ $ ./scripts/gen-cfg.sh --outdir=experiment
     Usage:
        -o|--outdir=: configured directory                   (default: generatedConfigFiles )
        -s|--seqdir=: source sequence directory              (default:  )
-       --update:     update cfg files stored in ./cfg/vdmc/ (default: 0 )
+       --update:     update cfg files stored in ./cfg/vmesh/ (default: 0 )
 
     Examples:
       - ./scripts/create_configuration_files.sh
@@ -265,12 +265,12 @@ $ ./scripts/run.sh \
     --cfgdir=generatedConfigFiles \
     --outdir=s3c1r3/
 
-Run vdmc encoder/decoder/metrics: ./scripts
+Run vmesh encoder/decoder/metrics: ./scripts
 # Encode: s3c1r3/s3c1r3_bask_F001
 ./build/Release/bin/encode \
   --config=./generatedConfigFiles/s3c1r3_bask/encoder.cfg \
   --fcount=1 \
-  --compressed=s3c1r3/s3c1r3_bask_F001.vdmc \
+  --compressed=s3c1r3/s3c1r3_bask_F001.vmesh \
   --recmesh=s3c1r3/s3c1r3_bask_F001_%04d_rec.obj \
   --rectex=s3c1r3/s3c1r3_bask_F001_%04d_rec.png \
   --recmat=s3c1r3/s3c1r3_bask_F001_%04d_rec.mtl 2>&1 \
@@ -279,7 +279,7 @@ Run vdmc encoder/decoder/metrics: ./scripts
 # Decode: s3c1r3/s3c1r3_bask_F001
 ./build/Release/bin/decode \
   --config=./generatedConfigFiles/s3c1r3_bask/decoder.cfg \
-  --compressed=s3c1r3/s3c1r3_bask_F001.vdmc \
+  --compressed=s3c1r3/s3c1r3_bask_F001.vmesh \
   --decmesh=s3c1r3/s3c1r3_bask_F001_%04d_dec.obj \
   --dectex=s3c1r3/s3c1r3_bask_F001_%04d_dec.png \
   --decmat=s3c1r3/s3c1r3_bask_F001_%04d_dec.mtl \

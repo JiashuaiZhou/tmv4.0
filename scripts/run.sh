@@ -2,7 +2,7 @@
 
 CURDIR=$( cd "$( dirname "$0" )" && pwd ); 
 MAINDIR=$( dirname ${CURDIR} )
-echo -e "\033[0;32mRun vdmc encoder/decoder/metrics: ${CURDIR} \033[0m";
+echo -e "\033[0;32mRun vmesh encoder/decoder/metrics: ${CURDIR} \033[0m";
 
 function formatCmd(){ local f=${1}; for s in ${2} ; do f=${f// ${s}/ \\\\\\n ${s}}; done ; echo -e $f; }
 
@@ -100,7 +100,7 @@ if [ "$OUTDIR" == "" ] ; then OUTDIR=$CFGDIR; elif [ ! -d $OUTDIR ] ; then mkdir
 
 NAME=$( basename "$CFGSUBDIR" )
 NAME=$( printf "${OUTDIR}/${NAME}_F%03d" "$FRAMECOUNT" )
-VDMC=${NAME}.vdmc
+VDMC=${NAME}.vmesh
 
 LOGENC=${NAME}_enc.log
 LOGDEC=${NAME}_dec.log

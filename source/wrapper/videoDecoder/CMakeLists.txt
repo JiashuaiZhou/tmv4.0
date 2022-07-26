@@ -8,9 +8,9 @@ file(GLOB SRC  *.h
                *.cpp  
                ${HM_LIB_SOURCE_DIR}/TAppCommon/* )
 
-include_directories( . ${CMAKE_SOURCE_DIR}/source/lib/vdmcCommon  )
+include_directories( . ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon  )
 
-set( LIBS vdmcCommon )
+set( LIBS vmeshCommon )
 
 # HM 
 if( USE_HM_VIDEO_CODEC )

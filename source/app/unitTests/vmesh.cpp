@@ -118,12 +118,12 @@ TEST(vmesh, all)
 
   ASSERT_EQ(hashRecObj, hashDecObj);
   ASSERT_EQ(hashRecPng, hashDecPng);
- 
-  // Remove tmp files
-  remove( binPath.c_str() );
-  remove( recObjPath.c_str() );
-  remove( decObjPath.c_str() );
-  remove( recPngPath.c_str() );
-  remove( decPngPath.c_str() );
-}
 
+  // Remove tmp files
+  remove(binPath.c_str());
+  remove(recObjPath.c_str());
+  remove(decObjPath.c_str());
+  remove(recPngPath.c_str());
+  remove(decPngPath.c_str());
+  remove("mat.mtl");
+}

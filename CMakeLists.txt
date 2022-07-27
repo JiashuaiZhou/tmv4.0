@@ -26,6 +26,9 @@ set(DXHEADERS_INSTALL TRUE)
 # other dependencies that use the same variable.  The tools aren't required.
 set (BUILD_TOOLS FALSE)
 
+# using openmp in uvatlas would result in non-determinism
+set(UVATLAS_USE_OPENMP FALSE)
+
 add_subdirectory(dependencies/draco)
 add_subdirectory(dependencies/directx-headers)
 add_subdirectory(dependencies/directx-math)

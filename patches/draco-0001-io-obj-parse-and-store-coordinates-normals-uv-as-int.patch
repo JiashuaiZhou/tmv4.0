@@ -1,4 +1,4 @@
-From d1f3b32bb1298c6c68e0e6191b4ddd582a83f7d2 Mon Sep 17 00:00:00 2001
+From a72b6257829b9b73dbd4210f5dceea85f77ac61b Mon Sep 17 00:00:00 2001
 From: Khaled Mammou <kmammou@apple.com>
 Date: Sat, 7 May 2022 02:15:43 +0200
 Subject: [PATCH] io/obj: parse and store coordinates / normals / uv as
@@ -49,19 +49,19 @@ POSSIBILITY OF SUCH DAMAGE.
  1 file changed, 16 insertions(+), 16 deletions(-)
 
 diff --git a/src/draco/io/obj_decoder.cc b/src/draco/io/obj_decoder.cc
-index 85d90df..86be9a9 100644
+index 755ad24..185ab8b 100644
 --- a/src/draco/io/obj_decoder.cc
 +++ b/src/draco/io/obj_decoder.cc
-@@ -36,7 +36,7 @@ ObjDecoder::ObjDecoder()
-       norm_att_id_(-1),
+@@ -38,7 +38,7 @@ ObjDecoder::ObjDecoder()
        material_att_id_(-1),
        sub_obj_att_id_(-1),
+       added_edge_att_id_(-1),
 -      deduplicate_input_values_(true),
 +      deduplicate_input_values_(false),
        last_material_id_(0),
        use_metadata_(false),
-       mesh_files_(nullptr),
-@@ -138,22 +138,22 @@ Status ObjDecoder::DecodeInternal() {
+       preserve_polygons_(false),
+@@ -142,22 +142,22 @@ Status ObjDecoder::DecodeInternal() {
    // Add attributes if they are present in the input data.
    if (num_positions_ > 0) {
      GeometryAttribute va;
@@ -90,7 +90,7 @@ index 85d90df..86be9a9 100644
      norm_att_id_ =
          out_point_cloud_->AddAttribute(va, use_identity_mapping, num_normals_);
    }
-@@ -316,11 +316,11 @@ bool ObjDecoder::ParseVertexPosition(Status *status) {
+@@ -338,11 +338,11 @@ bool ObjDecoder::ParseVertexPosition(Status *status) {
    buffer()->Advance(2);
    if (!counting_mode_) {
      // Parse three float numbers for vertex position coordinates.
@@ -105,7 +105,7 @@ index 85d90df..86be9a9 100644
          // The definition is processed so return true.
          return true;
        }
-@@ -345,11 +345,11 @@ bool ObjDecoder::ParseNormal(Status *status) {
+@@ -367,11 +367,11 @@ bool ObjDecoder::ParseNormal(Status *status) {
    buffer()->Advance(2);
    if (!counting_mode_) {
      // Parse three float numbers for the normal vector.
@@ -120,7 +120,7 @@ index 85d90df..86be9a9 100644
          // The definition is processed so return true.
          return true;
        }
-@@ -374,11 +374,11 @@ bool ObjDecoder::ParseTexCoord(Status *status) {
+@@ -396,11 +396,11 @@ bool ObjDecoder::ParseTexCoord(Status *status) {
    buffer()->Advance(2);
    if (!counting_mode_) {
      // Parse two float numbers for the texture coordinate.
@@ -136,5 +136,5 @@ index 85d90df..86be9a9 100644
          return true;
        }
 -- 
-2.32.0 (Apple Git-131)
+2.32.0 (Apple Git-132)
 

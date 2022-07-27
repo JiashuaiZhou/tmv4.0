@@ -36,6 +36,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <chrono>
 
 namespace vmesh {
 
@@ -55,7 +56,7 @@ struct VMCStats {
     vertexCount += rhs.vertexCount;
     faceCount += rhs.faceCount;
     baseMeshVertexCount += rhs.baseMeshVertexCount;
-    processingTimeInSeconds += rhs.processingTimeInSeconds;
+    processingTime += rhs.processingTime;
     return *this;
   }
 
@@ -68,7 +69,7 @@ struct VMCStats {
   size_t vertexCount = 0;
   size_t faceCount = 0;
   size_t baseMeshVertexCount = 0;
-  double processingTimeInSeconds = 0.0;
+  std::chrono::steady_clock::duration processingTime{};
 };
 
 //============================================================================

@@ -383,8 +383,8 @@ dumpStats(
   cout << header << " frame count " << stats.frameCount << '\n';
   cout << header << " face count " << stats.faceCount << '\n';
   cout << header << " vertex count " << stats.vertexCount << '\n';
-  cout << header << " processing time " << stats.processingTimeInSeconds
-       << " s \n";
+  cout << header << " processing time "
+       << chrono::duration<double>(stats.processingTime).count() << " s \n";
   cout << header << " meshes bitrate " << baseMeshBitrate << " mbps "
        << stats.baseMeshByteCount << " B "
        << baseMeshBitsPerVertex << " bpv\n";
@@ -610,8 +610,7 @@ compress(const Parameters& params)
     }
 
     auto end = chrono::steady_clock::now();
-    gof.stats.processingTimeInSeconds =
-      chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    gof.stats.processingTime += end - start;
 
     const auto& stats = gof.stats;
     totalStats += stats;
@@ -685,8 +684,7 @@ decompress(const Parameters& params)
     }
 
     auto end = chrono::steady_clock::now();
-    gof.stats.processingTimeInSeconds =
-      chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    gof.stats.processingTime += end - start;
 
     const auto& stats = gof.stats;
     const auto startFrameGOF = f + params.startFrame;

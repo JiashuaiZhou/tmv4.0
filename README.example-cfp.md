@@ -288,10 +288,13 @@ implementation to reproduce the CfP results.
 
 ## jtcvc-hm
 
+NB: The CfP results were obtained using HM-16.21+SCM-8.8.
+
   ```bash
   cd /data/sw
   git clone https://vcgit.hhi.fraunhofer.de/jvet/HM.git jctvc-hm
   cd jctvc-hm
+  git checkout HM-16.21+SCM-8.8
 
   cmake -S$PWD -B$PWD/build -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \

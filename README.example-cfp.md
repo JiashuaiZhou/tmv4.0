@@ -660,8 +660,57 @@ of `fitsubdiv`.
 How to ...
 ==========
 
-Skip `simplify`, `uvatlas`, and `fitsubdiv`
--------------------------------------------
+Re-use previously pre-processed data
+------------------------------------
+
+Simulation times can be reduced by not performing pre-processing if the
+pre-processed meshes are available from another source.  This can be
+especially useful when multiple jobs would re-use the same pre-processed
+data.
+
+One method to do this is to modify the input paths to include a path
+to the location containing the pre-processed data using one of the following
+configuration snippets, then generating the configuration, where
+`cfg-skip-pp.yaml` is the name of a configuration snippet:
+
+  ```console
+  $ /path/to/gen-cfg.sh --outdir=/experiment/dir/name -- cfg-skip-pp.yaml
+  ```
+
+An alternative is to symlink the pre-processed data directories into the
+experiment tree:
+
+  ```console
+  $ cd /path/to/old/experiment
+  $ find . -name '*_ai' -type d -exec \
+      ln -s "/path/to/old/experiment/{}" "/path/to/new/experiment/{}" ';'
+  ```
+
+NB.1: Even though configuration files are generated for the skipped steps,
+when using `Makefile.vmesh-step` they are automatically not performed since
+the encoding step no longer depends upon their output.  However, this is not
+the case when using `vmesh-step.sh`, where either the unwanted config files
+must be deleted or the appropriate SKIP/ONLY variables set.  For example:
+
+  ```console
+  $ find /experiment/dir/name -name simplify.cfg -delete
+  $ find /experiment/dir/name -name uvatlas.cfg -delete
+  $ find /experiment/dir/name -name fitsubdiv_\*.cfg -delete
+  ```
+
+Or (see `vmesh-step.sh` for details):
+
+  ```console
+  $ vmesh-step.sh -C the/job/dir SKIP=pp
+  ```
+
+NB.2: Be careful, incorrect configuration can cause the previous data to be
+overwritten.  In particular, make will regenerate targets if the modification
+time of the dependency is newer than the target.
+
+### Skipping `simplify`, and `uvatlas`
+
+This starts pre-processing from `fitsubdiv`:
 
    ```yaml
    ---
@@ -679,6 +728,37 @@ Skip `simplify`, `uvatlas`, and `fitsubdiv`
        - !conditional '${fitsubdiv_with_mapping}'
        - source: ${pp_pfx}${src-dir}_r${pp}/${src-mesh}_decimated_tex.obj
        - mapped: ${pp_pfx}${src-dir}_r${pp}/${src-mesh}_mapped.obj
+   ```
+
+### Skipping `simplify`, `uvatlas`, and `fitsubdiv`
+
+This skips all pre-processing, performing encoding only:
+
+   ```yaml
+   ---
+   vars:
+     pp_pfx: /data/cfp/
+
+   categories:
+     ai:
+       encoder:
+         - - !conditional 'defined ${pp} and ${pp} < 1.0'
+           - base:   ${pp_pfx}${src-dir}_r${pp}_ai/${src-mesh}_base.obj
+           - subdiv: ${pp_pfx}${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+           - - !conditional '${pp} >= 0.24 and ${pp} < 1.0'
+             - subdiv: ${pp_pfx}${src-dir}_r${pp}_ai/${src-mesh}_base.obj
+     ld:
+       encoder:
+         - - !conditional 'defined ${pp} and ${pp} < 1.0'
+           - base:      ${pp_pfx}${src-dir}_r${pp}_ld/${src-mesh}_base.obj
+           - subdiv:    ${pp_pfx}${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
+           - gofstruct: ${pp_pfx}${src-dir}_r${pp}_ld/${src-dir}.gof
+           - - !conditional '${no_fitsubdiv_inter}'
+             - gofstruct: ""
+             - base:      ${pp_pfx}${src-dir}_r${pp}_ai/${src-mesh}_base.obj
+             - subdiv:    ${pp_pfx}${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
+             - - !conditional '${pp} > 0.24 and ${pp} < 1.0'
+               - subdiv: ${pp_pfx}${src-dir}_r${pp}_ai/${src-mesh}_base.obj
    ```
 
 

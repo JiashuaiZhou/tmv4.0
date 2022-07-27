@@ -4,7 +4,7 @@ Video-based dynamic mesh coding software model
 Bootstrapping
 -------------
 
-1. Fetch and unpack submodules using `git submodule init`
+1. Fetch and unpack submodules using `git submodule update --init`
 
 2. Apply patches to the external dependencies
 

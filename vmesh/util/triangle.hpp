@@ -175,6 +175,14 @@ computeTriangleArea(const Vec3<T>& p0, const Vec3<T>& p1, const Vec3<T>& p2)
   return T(0.5) * computeTriangleNormal(p0, p1, p2, false).norm();
 }
 
+//----------------------------------------------------------------------------
+
+inline bool
+isDegenerate(Triangle tri)
+{
+  return tri[0] == tri[1] || tri[0] == tri[2] || tri[1] == tri[2];
+}
+
 //============================================================================
 
 }  // namespace vmesh

@@ -1466,44 +1466,41 @@ RemoveDuplicatedTriangles(
 {
   struct TriangleInfo {
     double score;
-    int32_t index;
+    int32_t outIdx;
   };
+
+  // Output index for the next unique triangle
+  int32_t nextOutIdx = 0;
+  trianglesOutput.resize(trianglesInput.size());
 
   const auto triangleCount = int32_t(trianglesInput.size());
   std::unordered_map<Triangle, TriangleInfo, HashTriangle> uniqueTriangles;
   const auto* neighbours = vertexToTriangle.neighbours();
   for (int32_t t = 0; t < triangleCount; ++t) {
     const auto tri = orderComponents(trianglesInput[t]);
-    TriangleInfo tinfo;
-    tinfo.index = t;
-    tinfo.score = 0.0;
+    double score = 0.0;
     for (int32_t k = 0; k < 3; ++k) {
       const auto vindex = tri[k];
       const auto start = vertexToTriangle.neighboursStartIndex(vindex);
       const auto end = vertexToTriangle.neighboursEndIndex(vindex);
       for (int32_t n = start; n < end; ++n) {
-        tinfo.score += triangleNormals[t] * triangleNormals[neighbours[n]];
+        score += triangleNormals[t] * triangleNormals[neighbours[n]];
       }
     }
+
     auto it = uniqueTriangles.find(tri);
     if (it == uniqueTriangles.end()) {
-      uniqueTriangles[tri] = tinfo;
-    } else if (tinfo.score > it->second.score) {
-      it->second = tinfo;
+      if (!removeDegeneratedTriangles || !isDegenerate(tri)) {
+        trianglesOutput[nextOutIdx] = trianglesInput[t];
+        uniqueTriangles[tri] = {score, nextOutIdx++};
+      }
+    } else if (score > it->second.score) {
+      it->second.score = score;
+      trianglesOutput[it->second.outIdx] = trianglesInput[t];
     }
   }
 
-  trianglesOutput.resize(0);
-  trianglesOutput.reserve(uniqueTriangles.size());
-  for (const auto& it : uniqueTriangles) {
-    const auto& tri = trianglesInput[it.second.index];
-    if (
-      !removeDegeneratedTriangles
-      || (tri[0] != tri[1] && tri[0] != tri[2] && tri[1] != tri[2])) {
-      trianglesOutput.push_back(tri);
-    }
-  }
-
+  trianglesOutput.resize(uniqueTriangles.size());
   return true;
 }
 

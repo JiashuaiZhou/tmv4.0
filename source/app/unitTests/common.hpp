@@ -97,7 +97,7 @@ public:
 };
 
 static std::string
-grep(std::string filename, std::string keyword)
+grep(const std::string& filename, std::string keyword)
 {
   std::ifstream in(filename.c_str());
   if (in.is_open()) {

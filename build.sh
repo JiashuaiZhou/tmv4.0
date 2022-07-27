@@ -17,10 +17,9 @@ case "$(uname -s)" in
   *)          MACHINE="UNKNOWN:$(uname -s)"
 esac
 
-MODE=Release;
-FORMAT=0;
-TIDY=0;
-CMAKE_FLAGS=();
+MODE=Release
+TARGETS=()
+CMAKE_FLAGS=()
 if [ "$MACHINE" == "Linux" ] ; then NUMBER_OF_PROCESSORS=$( grep -c ^processor /proc/cpuinfo ); fi
 
 for i in "$@"
@@ -30,7 +29,9 @@ do
     debug     ) MODE=Debug; CMAKE_FLAGS+=("-DCMAKE_C_FLAGS=\"-g3\"" "-DCMAKE_CXX_FLAGS=\"-g3\"" );;
     release   ) MODE=Release;;
 	  test      ) CMAKE_FLAGS+=( "-DBUILD_UNIT_TEST_APPS=TRUE" ) ;;
-    format    ) FORMAT=1;;
+    format    ) TARGETS+=( "clang-format" );;
+    tidy      ) TARGETS+=( "clang-tidy" );;
+    cppcheck  ) TARGETS+=( "cppcheck" );;
     tidy      ) TIDY=1;;
     *         ) echo "ERROR: arguments \"$i\" not supported: option = [debug|release]"; exit 1;;
   esac
@@ -47,13 +48,12 @@ echo -e "\033[0;32mCmake: ${CURDIR}: CMAKE_FLAGS = ${CMAKE_FLAGS[@]}\033[0m";
 ${CMAKE} -H${CURDIR} -B"${CURDIR}/build/${MODE}" "${CMAKE_FLAGS[@]}"
 echo -e "\033[0;32mdone \033[0m";
 
-if [ $FORMAT == 1 ] 
-then 
-  echo -e "\033[0;32mFormat: ${CURDIR} \033[0m";
-  ${CMAKE} --build "${CURDIR}/build/${MODE}" --target clang-format
+for TARGET in ${TARGETS}
+do 
+  echo -e "\033[0;32m${TARGET}: ${CURDIR} \033[0m";
+  ${CMAKE} --build "${CURDIR}/build/${MODE}" --target ${TARGET}
   echo -e "\033[0;32mdone \033[0m";
-  exit 0;
-fi 
+done
 
 echo -e "\033[0;32mBuild: ${CURDIR} \033[0m";
 if ! ${CMAKE} --build "${CURDIR}/build/${MODE}" --config ${MODE} --parallel "${NUMBER_OF_PROCESSORS}" ;

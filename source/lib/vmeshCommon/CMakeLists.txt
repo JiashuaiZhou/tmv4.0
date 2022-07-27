@@ -4,12 +4,8 @@ project( ${MYNAME} C CXX )
 
 enable_language( C )
 
-##
-# Determine the software version from VCS
-# Fallback to descriptive version if VCS unavailable
-#  NB: the "unconfirmed-" part refers to this being a fallback option
-#      and the reported version may or may not be accurate.
-set(VERSION_FALLBACK "unconfirmed-release-${VDMC_VERSION_MAJOR}.${VDMC_VERSION_MINOR}")
+# Determine the software version
+set(VERSION_FALLBACK "release-${VDMC_VERSION_MAJOR}.${VDMC_VERSION_MINOR}")
 set(VERSION_FILE       ${CMAKE_CURRENT_BINARY_DIR}/version.cpp)
 set(VERSION_FILE_IN    ${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in)
 set(VERSION_CACHE_FILE ${CMAKE_CURRENT_BINARY_DIR}/version.cache)
@@ -22,12 +18,9 @@ add_custom_target(
                            -D VERSION_EXTRA=${VERSION_EXTRA}
                            -D VERSION_CACHE_FILE=${VERSION_CACHE_FILE}
                            -D GIT_EXECUTABLE=${GIT_EXECUTABLE}
-                           -P ${CMAKE_SOURCE_DIR}/dependencies/cmake/genversion.cmake
+                           -P ${CMAKE_SOURCE_DIR}/dependencies/cmake/tools/genversion.cmake
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
-
-# CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/config.h )
 
 add_custom_command( OUTPUT ${VERSION_FILE} DEPENDS genversion )
 

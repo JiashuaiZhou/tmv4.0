@@ -24,9 +24,10 @@ OPTION( BUILD_WRAPPER_APPS       "Build wrapper applications"             TRUE )
 OPTION( BUILD_UNIT_TEST_APPS     "Build unit test applications"           FALSE )
 
 # Building options
-set(CMAKE_CXX_STANDARD          14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS        OFF)
+set(CMAKE_CXX_STANDARD             14)
+set(CMAKE_CXX_STANDARD_REQUIRED    ON)
+set(CMAKE_CXX_EXTENSIONS           OFF)
+set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_language(C)
 if (MSVC)
   add_compile_options(/W4)
@@ -59,9 +60,14 @@ if (NOT WIN32)
     endif()
 endif()
 
+# Tools
+include( dependencies/cmake/tools/CPM.cmake )
+include( dependencies/cmake/tools/tools.cmake )
+include( dependencies/cmake/tools/clang-format.cmake )
+include( dependencies/cmake/tools/clang-tidy.cmake )
+include( dependencies/cmake/tools/cppcheck.cmake )
+
 # Dependencies
-include( dependencies/cmake/CPM.cmake )
-include( dependencies/cmake/tools.cmake )
 include( dependencies/cmake/geometry/directx.cmake )
 include( dependencies/cmake/geometry/uvatlas.cmake )
 include( dependencies/cmake/geometry/mmetric.cmake )
@@ -87,8 +93,9 @@ if ( USE_DRACO_GEOMETRY_CODEC )
   include( dependencies/cmake/geometry/draco.cmake )
 endif()
 
-# Build
+# V-mesh codec
 add_all_subdirectory(source/wrapper)
 add_all_subdirectory(source/lib)
 add_subdirectory(source/app)
+
 

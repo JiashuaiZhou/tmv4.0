@@ -49,20 +49,20 @@ public:
   GeometryDecimate() = default;
   ~GeometryDecimate() = default;
 
-  bool decimate(VMCFrame& frame, const VMCEncoderParameters& params);
+  static bool decimate(VMCFrame& frame, const VMCEncoderParameters& params);
 
-  bool
+  static bool
   unifyVertices(const TriangleMesh<double>& mesh, TriangleMesh<double>& umesh);
 
 private:
-  bool removeSmallConnectedComponents(
-    TriangleMesh<double>& mesh, int32_t minCCTriangleCount);
+  static bool removeSmallConnectedComponents(
+    TriangleMesh<double>& mesh, int minCCTriangleCount);
 
-  bool removeDuplicatedTriangles(TriangleMesh<double>& mesh);
+  static bool removeDuplicatedTriangles(TriangleMesh<double>& mesh);
 
-  bool unifyVertices(TriangleMesh<double>& mesh);
+  static bool unifyVertices(TriangleMesh<double>& mesh);
 
-  bool decimate(
+  static bool decimate(
     const TriangleMesh<double>& mesh,
     TriangleMesh<double>& dmesh,
     TriangleMesh<double>& mmesh,

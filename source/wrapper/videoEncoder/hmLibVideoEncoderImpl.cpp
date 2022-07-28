@@ -47,14 +47,17 @@ hmLibVideoEncoderImpl<T>::hmLibVideoEncoderImpl() {
   m_essentialBytes = 0;
 }
 
-template <typename T>
-hmLibVideoEncoderImpl<T>::~hmLibVideoEncoderImpl() {}
+template<typename T>
+hmLibVideoEncoderImpl<T>::~hmLibVideoEncoderImpl() = default;
 
-template <typename T>
-Void hmLibVideoEncoderImpl<T>::encode( FrameSequence<T>&    videoSrc,
-                                          std::string        arguments,
-                                          std::vector<uint8_t>& bitstream,
-                                          FrameSequence<T>&    videoRec ) {
+template<typename T>
+Void
+hmLibVideoEncoderImpl<T>::encode(
+  FrameSequence<T>& videoSrc,
+  const std::string& arguments,
+  std::vector<uint8_t>& bitstream,
+  FrameSequence<T>& videoRec)
+{
   std::ostringstream oss( ostringstream::binary | ostringstream::out );
   std::ostream&      bitstreamFile = oss;
   std::istringstream iss( arguments );
@@ -69,7 +72,7 @@ Void hmLibVideoEncoderImpl<T>::encode( FrameSequence<T>&    videoSrc,
   create();
   // parse configuration
   try {
-    if ( !parseCfg( args.size(), &args[0] ) ) {
+    if (!parseCfg(args.size(), args.data())) {
       destroy();
 #if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
       EnvVar::printEnvVar();
@@ -80,10 +83,12 @@ Void hmLibVideoEncoderImpl<T>::encode( FrameSequence<T>&    videoSrc,
     std::cerr << "Error parsing option \"" << e.arg << "\" with argument \"" << e.val << "\"." << std::endl;
     return;
   }
-  for ( size_t i = 0; i < args.size(); i++ ) { delete[] args[i]; }
+  for (auto& arg : args) {
+    delete[] arg;
+  }
   m_framesToBeEncoded     = std::min( m_framesToBeEncoded, (int)videoSrc.frameCount() );
-  TComPicYuv* pcPicYuvOrg = new TComPicYuv;
-  TComPicYuv* pcPicYuvRec = NULL;
+  auto* pcPicYuvOrg = new TComPicYuv;
+  TComPicYuv* pcPicYuvRec = nullptr;
   // initialize internal class & member variables
   xInitLibCfg();
   m_cTEncTop.create();
@@ -94,7 +99,7 @@ Void hmLibVideoEncoderImpl<T>::encode( FrameSequence<T>&    videoSrc,
   if ( m_usePCCExt ) {
     // Note JR: must be given from the function parameters
     printf( "\nReading the aux info files\n" );
-    FILE* patchFile = NULL;
+    FILE* patchFile = nullptr;
     patchFile       = fopen( m_patchInfoFileName.c_str(), "rb" );
     for ( Int i = 0; i < PCC_ME_EXT_MAX_NUM_FRAMES; i++ ) {
       long long readSize = fread( &g_numPatches[i], sizeof( long long ), 1, patchFile );
@@ -164,7 +169,7 @@ Void hmLibVideoEncoderImpl<T>::encode( FrameSequence<T>&    videoSrc,
   // delete original YUV buffer
   pcPicYuvOrg->destroy();
   delete pcPicYuvOrg;
-  pcPicYuvOrg = NULL;
+  pcPicYuvOrg = nullptr;
   // delete used buffers in encoder class
   m_cTEncTop.deletePicBuffer();
   cPicYuvTrueOrg.destroy();
@@ -175,7 +180,6 @@ Void hmLibVideoEncoderImpl<T>::encode( FrameSequence<T>&    videoSrc,
   auto buffer = oss.str();
   bitstream.resize( buffer.size() );
   std::copy( buffer.data(), buffer.data() + buffer.size(), bitstream.data() );
-  return;
 }
 
 template <typename T>
@@ -647,13 +651,13 @@ Void hmLibVideoEncoderImpl<T>::xGetBuffer( TComPicYuv*& rpcPicYuvRec ) {
 
 template <typename T>
 Void hmLibVideoEncoderImpl<T>::xDeleteBuffer() {
-  TComList<TComPicYuv*>::iterator iterPicYuvRec = m_cListPicYuvRec.begin();
+  auto iterPicYuvRec = m_cListPicYuvRec.begin();
   Int                             iSize         = Int( m_cListPicYuvRec.size() );
   for ( Int i = 0; i < iSize; i++ ) {
     TComPicYuv* pcPicYuvRec = *( iterPicYuvRec++ );
     pcPicYuvRec->destroy();
     delete pcPicYuvRec;
-    pcPicYuvRec = NULL;
+    pcPicYuvRec = nullptr;
   }
 }
 
@@ -673,9 +677,9 @@ Void hmLibVideoEncoderImpl<T>::xWriteOutput( std::ostream&                bitstr
       ( !m_outputInternalColourSpace ) ? m_inputColourSpaceConvert : IPCOLOURSPACE_UNCHANGED;
   if ( m_isField ) {
     // Reinterlace fields
-    Int                              i;
-    TComList<TComPicYuv*>::iterator  iterPicYuvRec = m_cListPicYuvRec.end();
-    list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
+    Int i = 0;
+    auto iterPicYuvRec = m_cListPicYuvRec.end();
+    auto iterBitstream = accessUnits.begin();
     for ( i = 0; i < iNumEncoded; i++ ) { --iterPicYuvRec; }
     for ( i = 0; i < iNumEncoded / 2; i++ ) {
       TComPicYuv* pcPicYuvRecTop = *( iterPicYuvRec++ );
@@ -689,9 +693,9 @@ Void hmLibVideoEncoderImpl<T>::xWriteOutput( std::ostream&                bitstr
       rateStatsAccum( auBottom, statsBottom );
     }
   } else {
-    Int                              i;
-    TComList<TComPicYuv*>::iterator  iterPicYuvRec = m_cListPicYuvRec.end();
-    list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
+    Int i = 0;
+    auto iterPicYuvRec = m_cListPicYuvRec.end();
+    auto iterBitstream = accessUnits.begin();
     for ( i = 0; i < iNumEncoded; i++ ) { --iterPicYuvRec; }
     for ( i = 0; i < iNumEncoded; i++ ) {
       TComPicYuv* pcPicYuvRec = *( iterPicYuvRec++ );
@@ -705,8 +709,8 @@ Void hmLibVideoEncoderImpl<T>::xWriteOutput( std::ostream&                bitstr
 
 template <typename T>
 Void hmLibVideoEncoderImpl<T>::rateStatsAccum( const AccessUnit& au, const std::vector<UInt>& annexBsizes ) {
-  AccessUnit::const_iterator   it_au    = au.begin();
-  vector<UInt>::const_iterator it_stats = annexBsizes.begin();
+  auto it_au = au.begin();
+  auto it_stats = annexBsizes.begin();
   for ( ; it_au != au.end(); it_au++, it_stats++ ) {
     switch ( ( *it_au )->m_nalUnitType ) {
       case NAL_UNIT_CODED_SLICE_TRAIL_R:

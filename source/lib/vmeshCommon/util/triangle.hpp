@@ -43,8 +43,8 @@ namespace vmesh {
 
 //============================================================================
 
-typedef Vec3<int32_t> Triangle;
-typedef HashVector3<int32_t> HashTriangle;
+using Triangle = Vec3<int32_t>;
+using HashTriangle = HashVector3<int32_t>;
 
 //============================================================================
 

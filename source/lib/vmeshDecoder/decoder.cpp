@@ -65,7 +65,7 @@ VMCDecoder::decompressMotion(
   std::cout << "Motion byte count = " << byteCount << '\n';
   VMCMotionACContext ctx;
   EntropyDecoder arithmeticDecoder;
-  const auto bufferPtr =
+  const auto* const bufferPtr =
     reinterpret_cast<const char*>(bitstream.buffer.data() + _byteCounter);
   _byteCounter += byteCount;
   arithmeticDecoder.setBuffer(byteCount, bufferPtr);
@@ -75,23 +75,24 @@ VMCDecoder::decompressMotion(
   ComputeVertexToTriangle(triangles, pointCount, vertexToTriangle);
   std::vector<int8_t> available(pointCount, 0);
   std::vector<int8_t> vtags(pointCount);
-  std::vector<int32_t> vadj, tadj;
+  std::vector<int32_t> vadj;
+  std::vector<int32_t> tadj;
   std::vector<Vec3<int32_t>> motion(pointCount);
   current.resize(pointCount);
   for (int vindex0 = 0; vindex0 < pointCount; ++vindex0) {
     const auto predIndex = arithmeticDecoder.decode(ctx.ctxPred);
-    Vec3<int32_t> res;
+    Vec3<int32_t> res{};
     for (int32_t k = 0; k < 3; ++k) {
       int32_t value = 0;
-      if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[0][k])) {
+      if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[0][k]) != 0) {
         const auto sign = arithmeticDecoder.decode(ctx.ctxSign[k]);
         ++value;
-        if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[1][k])) {
+        if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[1][k]) != 0) {
           value += 1
             + arithmeticDecoder.decodeExpGolomb(
               0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
         }
-        if (sign) {
+        if (sign != 0) {
           value = -value;
         }
       }
@@ -104,9 +105,8 @@ VMCDecoder::decompressMotion(
         vindex0, triangles, vertexToTriangle, vtags, vadj);
       Vec3<int32_t> pred(0);
       int32_t predCount = 0;
-      for (int i = 0, count = int(vadj.size()); i < count; ++i) {
-        const auto vindex1 = vadj[i];
-        if (available[vindex1]) {
+      for (int vindex1 : vadj) {
+        if (available[vindex1] != 0) {
           const auto& mv1 = motion[vindex1];
           for (int32_t k = 0; k < 3; ++k) {
             pred[k] += mv1[k];
@@ -142,7 +142,7 @@ VMCDecoder::decompressBaseMesh(
   VMCStats& stats,
   const VMCDecoderParameters& params)
 {
-  if (decodeFrameHeader(bitstream, frameInfo)) {
+  if (decodeFrameHeader(bitstream, frameInfo) != 0) {
     return -1;
   }
   const auto frameIndex = frameInfo.frameIndex + _gofInfo.startFrameIndex_;
@@ -263,8 +263,9 @@ VMCDecoder::decompressTextureVideo(
     bitstream.buffer.begin() + _byteCounter + byteCountTexVideo);
   _byteCounter += byteCountTexVideo;
   
-  // Decode video  
-  FrameSequence<uint16_t> yuv, brg; 
+  // Decode video
+  FrameSequence<uint16_t> yuv;
+  FrameSequence<uint16_t> brg;
   auto decoder = VirtualVideoDecoder<uint16_t>::create(VideoCodecId::HM);
   decoder->decode(videoBitstream, yuv, 10);
 
@@ -273,8 +274,9 @@ VMCDecoder::decompressTextureVideo(
   convert->convert(params.textureVideoHDRToolDecConfig, yuv, brg);
 
   // Store result in 8 bits frames
-  for (int32_t f = 0; f < brg.frameCount(); ++f) 
+  for (int32_t f = 0; f < brg.frameCount(); ++f) {
     gof.frame(f).outputTexture = brg[f];
+  }
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
@@ -305,7 +307,7 @@ VMCDecoder::decompress(
   auto& stats = gof.stats;
   stats.reset();
   stats.totalByteCount = _byteCounter;
-  if (decodeSequenceHeader(bitstream)) {
+  if (decodeSequenceHeader(bitstream) != 0) {
     return -1;
   }
   _dispVideo.resize(
@@ -326,7 +328,7 @@ VMCDecoder::decompress(
   stats.displacementsByteCount = _byteCounter;
   if (
     _sps.encodeDisplacementsVideo
-    && decompressDisplacementsVideo(bitstream, params)) {
+    && (decompressDisplacementsVideo(bitstream, params) != 0)) {
     return -1;
   }
   stats.displacementsByteCount = _byteCounter - stats.displacementsByteCount;
@@ -351,7 +353,7 @@ VMCDecoder::decompress(
   // decompress texture
   if (
     _sps.encodeTextureVideo
-    && decompressTextureVideo(bitstream, gof, params)) {
+    && (decompressTextureVideo(bitstream, gof, params) != 0)) {
     return -1;
   }
   stats.textureByteCount = _byteCounter - stats.textureByteCount;
@@ -394,8 +396,8 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream)
   bitstream.read(subdivInfo, _byteCounter);
   bitstream.read(qpBaseMesh, _byteCounter);
   _sps.frameCount = frameCount;
-  _sps.encodeDisplacementsVideo = bitField & 1;
-  _sps.encodeTextureVideo = (bitField >> 1) & 1;
+  _sps.encodeDisplacementsVideo = ((bitField & 1) != 0);
+  _sps.encodeTextureVideo = (((bitField >> 1) & 1) != 0);
   if (_sps.encodeDisplacementsVideo) {
     bitstream.read(widthDispVideo, _byteCounter);
     bitstream.read(heightDispVideo, _byteCounter);

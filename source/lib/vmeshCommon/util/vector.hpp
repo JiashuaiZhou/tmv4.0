@@ -295,7 +295,7 @@ public:
   Vec2(const T* vec) : Vec2(vec[0], vec[1]){};
 
   Vec2() = default;
-  ~Vec2(void) = default;
+  ~Vec2() = default;
 
   template<typename S>
   Vec2(const Vec2<S>& vec)
@@ -620,7 +620,7 @@ public:
   }
 
   Vec3() = default;
-  ~Vec3(void) = default;
+  ~Vec3() = default;
 
 private:
   T _vec[3];
@@ -910,7 +910,7 @@ public:
 
   Vec4(const T* vec) : Vec4(vec[0], vec[1], vec[2], vec[3]) {}
   Vec4() = default;
-  ~Vec4(void) = default;
+  ~Vec4() = default;
 
 private:
   T _vec[4];
@@ -1181,7 +1181,7 @@ public:
     resize(sz);
     memcpy(_vec.data(), rhs, sz * sizeof(T));
   }
-  ~VecN(void) = default;
+  ~VecN() = default;
 
 private:
   std::vector<T> _vec;

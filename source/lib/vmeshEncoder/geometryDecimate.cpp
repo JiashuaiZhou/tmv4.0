@@ -83,7 +83,7 @@ GeometryDecimate::decimate( VMCFrame& frame, const VMCEncoderParameters& params 
 
 bool
 GeometryDecimate::removeSmallConnectedComponents(
-  TriangleMesh<double>& mesh, int32_t minCCTriangleCount)
+  TriangleMesh<double>& mesh, int minCCTriangleCount)
 {
   std::cout << "Removing small connected components...\n";
 

@@ -67,19 +67,19 @@ public:
     TriangleMesh<double>& ndeformed);
 
 private:
-  bool CheckTriangleNormalInversion(
-    const int32_t vindex,
+  static bool CheckTriangleNormalInversion(
+    int32_t vindex,
     const TriangleMesh<double>& output,
     const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
     const std::vector<Vec3<double>>& initialTriangleNormals,
     const GeometryParametrizationParameters& params);
 
-  void FitMesh(
+  static void FitMesh(
     const TriangleMesh<double>& target,
     const KdTree& kdtree,
     TriangleMesh<double>& output);
 
-  void UpdateMissedVertices(
+  static void UpdateMissedVertices(
     const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
     const std::vector<int8_t>& isBoundaryVertex,
     const std::vector<int32_t>& missedVertices,
@@ -89,28 +89,30 @@ private:
     std::vector<int8_t>& ttags,
     const GeometryParametrizationParameters& params);
 
-  void InitialDeform(
+  static void InitialDeform(
     const TriangleMesh<double>& target,
     const TriangleMesh<double>& mapped,
     const TriangleMesh<double>& motion,
     TriangleMesh<double>& output,
     const GeometryParametrizationParameters& params);
 
-  void InitialDeform(
+  static void InitialDeform(
     const TriangleMesh<double>& target,
     TriangleMesh<double>& output,
     const GeometryParametrizationParameters& params);
 
-  void Deform(
+  static void Deform(
     const TriangleMesh<double>& target,
     const std::vector<Vec3<double>>& initialPositions,
     const std::vector<Vec3<double>>& initialTriangleNormals,
     TriangleMesh<double>& output,
     const GeometryParametrizationParameters& params);
 
-  bool Subdivide(TriangleMesh<double>& mesh, const GeometryParametrizationParameters& params);
+  static bool Subdivide(
+    TriangleMesh<double>& mesh,
+    const GeometryParametrizationParameters& params);
 
-  bool FitMesh(
+  static bool FitMesh(
     const TriangleMesh<double>& target,
     TriangleMesh<double>& mapped,
     const TriangleMesh<double>& motion,
@@ -119,7 +121,7 @@ private:
 
   bool RemoveDuplicatedTriangles(TriangleMesh<double>& mesh);
 
-  bool ComputeMotion(
+  static bool ComputeMotion(
     const TriangleMesh<double>& reference,
     const TriangleMesh<double>& target,
     TriangleMesh<double>& motion);

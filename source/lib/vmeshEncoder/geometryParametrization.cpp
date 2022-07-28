@@ -43,6 +43,8 @@
 #include <memory>
 
 #include "geometryParametrization.hpp"
+
+#include <cmath>
 #include "vmc.hpp"
 #include "encoder.hpp"
 #include "geometryDecimate.hpp"
@@ -122,7 +124,9 @@ GeometryParametrization::generate(
 
   TriangleMesh<double> usource = source;
   GeometryDecimate decimate;
-  if (params.applyVertexUnification && !decimate.unifyVertices(source, usource)) {
+  if (
+    params.applyVertexUnification
+    && !vmesh::GeometryDecimate::unifyVertices(source, usource)) {
     std::cerr << "Error: can't unify vertices!\n";
     return false;
   }
@@ -139,14 +143,16 @@ GeometryParametrization::generate(
   printf("FitMesh: geometryParametrizationSubdivisionIterationCount = %d \n",
     params.geometryParametrizationSubdivisionIterationCount);
   if (
-    params.geometryParametrizationSubdivisionIterationCount
+    (params.geometryParametrizationSubdivisionIterationCount != 0)
     && !FitMesh(target, mapped, motion, deformed, params)) {
     std::cerr << "Error: can't fit mesh!\n";
     return false;
   }
 
   base = usource;
-  if (params.fitSubdivisionSurface && params.geometryParametrizationSubdivisionIterationCount) {
+  if (
+    params.fitSubdivisionSurface
+    && (params.geometryParametrizationSubdivisionIterationCount != 0)) {
     std::cout << "Fitting subdiv ...\n";
     FitMidPointSubdivision(deformed, base, params.geometryParametrizationSubdivisionIterationCount);
   }
@@ -216,8 +222,8 @@ GeometryParametrization::FitMesh(
 {
   const auto pointCount = output.pointCount();
   for (int32_t vindex = 0; vindex < pointCount; ++vindex) {
-    int32_t index;
-    double sqrDist;
+    int32_t index = 0;
+    double sqrDist = NAN;
     const auto point0 = output.point(vindex);
     const auto normal0 = output.normal(vindex);
     kdtree.query(point0.data(), 1, &index, &sqrDist);
@@ -259,22 +265,22 @@ GeometryParametrization::UpdateMissedVertices(
       ComputeAdjacentVertices(
         vindex, output.triangles(), vertexToTriangle, vtags, vadj);
       const auto neighbourCount = int32_t(vadj.size());
-      if (!neighbourCount) {
+      if (neighbourCount == 0) {
         smoothedPositions[i] = output.point(vindex);
         continue;
       }
       const auto point0 = output.point(vindex);
-      if (isBoundaryVertex[vindex]) {
+      if (isBoundaryVertex[vindex] != 0) {
         int32_t boundaryNeighbourCount = 0;
         Vec3<double> centroid(0.0);
         for (int j = 0; j < neighbourCount; ++j) {
           const auto vindex1 = vadj[j];
-          if (isBoundaryVertex[vindex1]) {
+          if (isBoundaryVertex[vindex1] != 0) {
             centroid += output.point(vindex1);
             ++boundaryNeighbourCount;
           }
         }
-        if (boundaryNeighbourCount) {
+        if (boundaryNeighbourCount != 0) {
           centroid /= boundaryNeighbourCount;
           smoothedPositions[i] = point0 + alpha * (centroid - point0);
         }
@@ -344,7 +350,7 @@ GeometryParametrization::InitialDeform(
       const auto& pt0 = mapped.point(tri[0]);
       const auto& pt1 = mapped.point(tri[1]);
       const auto& pt2 = mapped.point(tri[2]);
-      Vec3<double> bcoord;
+      Vec3<double> bcoord{};
       const auto cpoint =
         ClosestPointInTriangle(point0, pt0, pt1, pt2, &bcoord);
       assert(bcoord[0] >= 0.0 && bcoord[1] >= 0.0 && bcoord[2] >= 0.0);
@@ -359,9 +365,9 @@ GeometryParametrization::InitialDeform(
         const auto disp2 = target.point(tri[2]) - pt2;
         minDistDisp =
           bcoord[0] * disp0 + bcoord[1] * disp1 + bcoord[2] * disp2;
-        const auto m0 = motion.point(tri[0]);
-        const auto m1 = motion.point(tri[1]);
-        const auto m2 = motion.point(tri[2]);
+        const auto& m0 = motion.point(tri[0]);
+        const auto& m1 = motion.point(tri[1]);
+        const auto& m2 = motion.point(tri[2]);
         minMotion = bcoord[0] * m0 + bcoord[1] * m1 + bcoord[2] * m2;
       }
     }
@@ -426,7 +432,7 @@ GeometryParametrization::InitialDeform(
       const auto& pt0 = target.point(tri[0]);
       const auto& pt1 = target.point(tri[1]);
       const auto& pt2 = target.point(tri[2]);
-      Vec3<double> bcoord;
+      Vec3<double> bcoord{};
       const auto cpoint =
         ClosestPointInTriangle(point0, pt0, pt1, pt2, &bcoord);
       assert(bcoord[0] >= 0.0 && bcoord[1] >= 0.0 && bcoord[2] >= 0.0);
@@ -539,7 +545,7 @@ GeometryParametrization::Subdivide(TriangleMesh<double>& mesh, const GeometryPar
   printf("Subdivide: geometryParametrizationSubdivisionIterationCount = %d \n",params.geometryParametrizationSubdivisionIterationCount);
   
   mesh.computeNormals();
-  if (params.geometryParametrizationSubdivisionIterationCount) {
+  if (params.geometryParametrizationSubdivisionIterationCount != 0) {
     std::vector<SubdivisionLevelInfo> infoLevelOfDetails;
     std::vector<int64_t> subdivEdges;
     mesh.subdivideMidPoint(

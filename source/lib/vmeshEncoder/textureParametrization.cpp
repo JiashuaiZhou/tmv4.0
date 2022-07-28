@@ -86,13 +86,13 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
   std::cout << mesh.pointCount() << " vertices, " << mesh.triangleCount()
             << " faces\n";
 
-  if (!mesh.pointCount() || !mesh.triangleCount()) {
+  if ((mesh.pointCount() == 0) || (mesh.triangleCount() == 0)) {
     std::cerr << "ERROR: Invalid mesh\n";
     return 1;
   }
 
   // Prepare mesh for processing
-  const float epsilon = 0.f;
+  const float epsilon = 0.F;
   std::vector<uint32_t> adjacency(3 * mesh.triangleCount());
   auto hr = DirectX::GenerateAdjacencyAndPointReps(
     reinterpret_cast<uint32_t*>(mesh.triangles().data()), mesh.triangleCount(),
@@ -129,8 +129,9 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
     std::cout << " [" << dups.size() << " vertex dups]\n";
 
     mesh.reservePoints(mesh.pointCount() + dups.size());
-    for (auto dupIdx : dups)
+    for (auto dupIdx : dups) {
       mesh.addPoint(mesh.point(dupIdx));
+    }
   }
 
   // Perform UVAtlas isocharting
@@ -138,7 +139,7 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
 
   std::vector<DirectX::UVAtlasVertex> vb;
   std::vector<uint8_t> ib;
-  float outStretch = 0.f;
+  float outStretch = 0.F;
   size_t outCharts = 0;
   std::vector<uint32_t> facePartitioning;
   std::vector<uint32_t> vertexRemapArray;
@@ -178,8 +179,9 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
   //  std::swap(mesh.points(), pos); // float to double conversion issues
   mesh.points().clear();
   mesh.points().resize( pos.size() );
-  for(size_t i =0;i<pos.size();i++)
+  for (size_t i = 0; i < pos.size(); i++) {
     mesh.point(i) = pos[i];
+  }
 
   msgs.clear();
   DirectX::Validate(

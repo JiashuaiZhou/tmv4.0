@@ -33,7 +33,9 @@
  */
 #pragma once
 
+#include <cstdlib>
 #include <cstring>
+#include <fstream>
 
 namespace vmesh {
 
@@ -80,62 +82,41 @@ getPeakMemory()
   return (size_t)rusage.ru_maxrss / 1024;
 }
 #else
-static int
-parseLine(char* pLine)
-{
-  int iLen = (int)std::strlen(pLine);
-  const char* pTmp = pLine;
-  while (*pTmp < '0' || *pTmp > '9') {
-    pTmp++;
-  }
-  pLine[iLen - 3] = '\0';
-  iLen = std::atoi(pTmp);
-  return iLen;
-}
+
 static int
 getUsedMemory()
 {
-  FILE* pFile = std::fopen("/proc/self/status", "r");
-  int iResult = 0;
-  if (pFile != NULL) {
-    char pLine[128];
-    while (std::fgets(pLine, 128, pFile) != NULL) {
-      if (std::strncmp(pLine, "VmSize:", 7) == 0) {
-        iResult = (int)std::strlen(pLine);
-        const char* pTmp = pLine;
-        while (*pTmp < '0' || *pTmp > '9') {
-          pTmp++;
-        }
-        pLine[iResult - 3] = '\0';
-        iResult = std::atoi(pTmp);
+  std::ifstream file("/proc/self/status");
+  if (!file) {
+    for (std::string line; std::getline(file, line);) {
+      if (line.rfind("VmSize:", 0) == 0) {
+        line.erase(0, 7);
+        line.erase(line.find("kB"), 3);
+        return std::atoi(line.c_str());
         break;
       }
     }
-    fclose(pFile);
+    file.close();
   }
-  return iResult;
+  return 0;
 }
-static uint64_t
+
+static int
 getPeakMemory()
 {
-  std::FILE* pFile = std::fopen("/proc/self/status", "r");
-  uint64_t iResult = 0;
-  if (pFile != NULL) {
-    char pLine[128];
-    while (std::fgets(pLine, 128, pFile) != NULL) {
-      if (std::strncmp(pLine, "VmPeak:", 7) == 0) {
-        const char* pTmp = pLine;
-        while (*pTmp < '0' || *pTmp > '9') {
-          pTmp++;
-        }
-        pLine[(int)std::strlen(pLine) - 3] = '\0';
-        iResult = std::atoi(pTmp);
+  std::ifstream file("/proc/self/status");
+  if (!file) {
+    for (std::string line; std::getline(file, line);) {
+      if (line.rfind("VmPeak:", 0) == 0) {
+        line.erase(0, 7);
+        line.erase(line.find("kB"), 3);
+        return std::atoi(line.c_str());
         break;
       }
     }
-    std::fclose(pFile);
+    file.close();
   }
-  return iResult;
+  return 0;
 }
 #endif
 

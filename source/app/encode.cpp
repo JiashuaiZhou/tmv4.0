@@ -472,8 +472,9 @@ try {
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
-  for (const auto arg : argv_unhandled)
+  for (const auto* const arg : argv_unhandled) {
     err.warn() << "Unhandled argument ignored: " << arg << '\n';
+  }
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -481,29 +482,37 @@ try {
     return false;
   }
 
-  if (params.compressedStreamPath.empty())
+  if (params.compressedStreamPath.empty()) {
     err.error() << "compressed input/output not specified\n";
+  }
 
-  if (params.inputMeshPath.empty())
+  if (params.inputMeshPath.empty()) {
     err.error() << "input mesh not specified\n";
+  }
 
-  if (params.inputTexturePath.empty())
+  if (params.inputTexturePath.empty()) {
     err.error() << "input texture not specified\n";
+  }
 
-  if (encParams.geometryVideoEncoderConfig.empty())
+  if (encParams.geometryVideoEncoderConfig.empty()) {
     err.error() << "geometry video config not specified\n";
+  }
 
-  if (encParams.textureVideoEncoderConfig.empty())
+  if (encParams.textureVideoEncoderConfig.empty()) {
     err.error() << "texture video encoder config not specified\n";
+  }
 
-  if (encParams.textureVideoHDRToolEncConfig.empty())
+  if (encParams.textureVideoHDRToolEncConfig.empty()) {
     err.error() << "hdrtools encoder config not specified\n";
+  }
 
-  if (encParams.textureVideoHDRToolDecConfig.empty())
+  if (encParams.textureVideoHDRToolDecConfig.empty()) {
     err.error() << "hdrtools decoder config not specified\n";
+  }
 
-  if (err.is_errored)
+  if (err.is_errored) {
     return false;
+  }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
@@ -514,9 +523,10 @@ try {
   po::dumpCfg(std::cout, opts, "Geometry decimate", 4);
   po::dumpCfg(std::cout, opts, "Texture parametrization", 4);
   po::dumpCfg(std::cout, opts, "Geometry parametrization", 4);  
-  po::dumpCfg(std::cout, opts, "Intra geometry parametrization", 4);  
-  if( encParams.subdivInter )
-    po::dumpCfg(std::cout, opts, "Inter geometry parametrization", 4);  
+  po::dumpCfg(std::cout, opts, "Intra geometry parametrization", 4);
+  if (encParams.subdivInter) {
+    po::dumpCfg(std::cout, opts, "Inter geometry parametrization", 4);
+  }
   po::dumpCfg(std::cout, opts, "Mesh", 4);
   po::dumpCfg(std::cout, opts, "Geometry video", 4);
   po::dumpCfg(std::cout, opts, "Texture video", 4);
@@ -579,15 +589,18 @@ saveGroupOfFrames(
       auto strObj = vmesh::expandNum(params.reconstructedMeshPath, n);
       auto strTex = vmesh::expandNum(params.reconstructedTexturePath, n);
       auto strMat = vmesh::expandNum(params.reconstructedMaterialLibPath, n);
-      if( !SaveImage(strTex, gof[f].outputTexture) )
+      if (!SaveImage(strTex, gof[f].outputTexture)) {
         ret = -1;
+      }
       vmesh::Material<double> material;
       material.texture = vmesh::basename(strTex);
-      if( !material.save(strMat) )
+      if (!material.save(strMat)) {
         ret = -1;
+      }
       gof[f].rec.setMaterialLibrary(vmesh::basename(strMat));
-      if( !gof[f].rec.saveToOBJ(strObj) )      
+      if (!gof[f].rec.saveToOBJ(strObj)) {
         ret = -1;
+      }
     }    
   }
   return ret;
@@ -604,9 +617,10 @@ compress(const Parameters& params)
     params.frameCount, params.startFrame,
     params.encParams.groupOfFramesMaxSize, params.encParams.analyzeGof,
     params.inputMeshPath);
-  if (params.encParams.keepIntermediateFiles)
-    sequenceInfo.save(
-      params.encParams.intermediateFilesPathPrefix + "gof.txt");
+  if (params.encParams.keepIntermediateFiles) {
+    auto file = params.encParams.intermediateFilesPathPrefix + "gof.txt";
+    sequenceInfo.save(file );
+  }
 
   vmesh::VMCEncoder encoder;
   vmesh::Bitstream bitstream;
@@ -617,14 +631,14 @@ compress(const Parameters& params)
     printf("loadGroupOfFrames GOF = %d / %zu \n", g, sequenceInfo.gofCount());
     
     // Load group of frame
-    if (loadGroupOfFrames(gofInfo, gof, params)) {
+    if (loadGroupOfFrames(gofInfo, gof, params) != 0) {
       std::cerr << "Error: can't load group of frames!\n";
       return -1;
     }
-    
+
     // Compress group of frame
     auto start = std::chrono::steady_clock::now();
-    if (encoder.compress(gofInfo, gof, bitstream, params.encParams)) {
+    if (encoder.compress(gofInfo, gof, bitstream, params.encParams) != 0) {
       std::cerr << "Error: can't compress group of frames!\n";
       return -1;
     }
@@ -633,7 +647,7 @@ compress(const Parameters& params)
       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     // Save reconsctructed models
-    if (saveGroupOfFrames(gofInfo, gof, params)) {
+    if (saveGroupOfFrames(gofInfo, gof, params) != 0) {
       std::cerr << "Error: can't save rec group of frames!\n";
       return -1;
     }
@@ -668,16 +682,18 @@ main(int argc, char* argv[])
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params))
+  if (!parseParameters(argc, argv, params)) {
     return 1;
+  }
 
-  if (params.verbose)
+  if (params.verbose) {
     vmesh::vout.rdbuf(std::cout.rdbuf());
+  }
 
-  if ( compress(params)) {
+  if (compress(params) != 0) {
     std::cerr << "Error: can't compress animation!\n";
     return 1;
-  } 
+  }
 
   return 0;
 }

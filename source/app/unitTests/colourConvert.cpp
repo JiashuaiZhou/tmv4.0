@@ -34,6 +34,7 @@
  */
 #include <chrono>
 #include <iostream>
+#include <utility>
 
 #include "util/misc.hpp"
 #include "util/verbose.hpp"
@@ -48,7 +49,7 @@
 void
 hdrtoolsConvertion(
   int mode,
-  const std::string inputPath,
+  const std::string& inputPath,
   const int width,
   const int height,
   const int frameCount,
@@ -57,7 +58,7 @@ hdrtoolsConvertion(
   const vmesh::ColourSpace inputColourSpace,
   const vmesh::ColourSpace outputColourSpace,
   std::string configPath0,
-  std::string configPath1)
+  const std::string& configPath1)
 {
   auto recLibsPath = createVideoName(
     "conv_libs_" + std::to_string(mode), width, height, outputBitDepth,
@@ -94,7 +95,7 @@ hdrtoolsConvertion(
   // Convert with lib
   vmesh::FrameSequence<uint16_t> rec;
   auto convert = vmesh::VirtualColourConverter<uint16_t>::create(mode);
-  convert->convert(configPath0, src, rec);
+  convert->convert(std::move(configPath0), src, rec);
   if (outputBitDepth == 8) {
     vmesh::FrameSequence<uint8_t> rec8( rec );
     rec8.save(recLibsPath);
@@ -111,8 +112,9 @@ hdrtoolsConvertion(
       << "  -p SourceHeight=" << height << " "
       << "  -p NumberOfFrames=" << frameCount << " "
       << "  -p OutputFile=" << recSoftPath;
-  if (disableSubProcessLog.disableLog())
+  if (disableSubProcessLog.disableLog()) {
     cmd << " 2>&1 > /dev/null";
+  }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 

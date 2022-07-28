@@ -46,16 +46,16 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose;
+  bool verbose{};
   std::string inputPath;  
   std::string outputPath;
   std::string configPath;
-  int width; 
-  int height;
-  int frameCount;
-  int inputBitDepth;
-  int outputBitDepth;
-  int mode;
+  int width{};
+  int height{};
+  int frameCount{};
+  int inputBitDepth{};
+  int outputBitDepth{};
+  int mode{};
   vmesh::ColourSpace inputColorSpace;
   vmesh::ColourSpace outputColorSpace;
 };
@@ -101,8 +101,9 @@ try {
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
-  for (const auto arg : argv_unhandled)
+  for (const auto* const arg : argv_unhandled) {
     err.warn() << "Unhandled argument ignored: " << arg << '\n';
+  }
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -110,12 +111,15 @@ try {
     return false;
   }
 
-  if (params.inputPath.empty())
+  if (params.inputPath.empty()) {
     err.error() << "Input video pathnot specified\n";
-  if (params.outputPath.empty())
+  }
+  if (params.outputPath.empty()) {
     err.error() << "Output video path not specified\n";
-  if (err.is_errored)
+  }
+  if (err.is_errored) {
     return false;
+  }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
@@ -138,11 +142,13 @@ main(int argc, char* argv[])
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params))
+  if (!parseParameters(argc, argv, params)) {
     return 1;
+  }
 
-  if (params.verbose)
+  if (params.verbose) {
     vmesh::vout.rdbuf(std::cout.rdbuf());
+  }
 
   // Load input mesh
   vmesh::FrameSequence<uint16_t> src(

@@ -199,14 +199,14 @@ public:
   }
 
   SparseMatrix(const SparseMatrix& matrix) { *this = matrix; }
-  ~SparseMatrix(void) = default;
+  ~SparseMatrix() = default;
 
 private:
   std::vector<T> _data;
   std::vector<int32_t> _pointers;
   std::vector<int32_t> _indexes;
-  int32_t _columnCount;
-  int32_t _rowCount;
+  int32_t _columnCount{};
+  int32_t _rowCount{};
 };
 
 //============================================================================

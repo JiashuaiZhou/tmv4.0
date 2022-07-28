@@ -82,60 +82,66 @@ log(const std::string str, const hdrtoolslib::Frame* frame, int comp )
   }
   printf("\n");
 }
-#else 
+#else
 void
-log(const std::string str, const hdrtoolslib::Frame* frame, int comp ) {}
+log(const std::string& str, const hdrtoolslib::Frame* frame, int comp)
+{}
 #endif
 
 template <typename T>
 HdrToolsLibColourConverterImpl<T>::HdrToolsLibColourConverterImpl() {
-  m_oFrameStore  = NULL;
-  m_iFrameStore  = NULL;
+  m_oFrameStore = nullptr;
+  m_iFrameStore = nullptr;
   m_nFrameStores = 7;
-  for ( int index = 0; index < m_nFrameStores; index++ ) { m_pFrameStore[index] = NULL; }
-  m_convertFrameStore      = NULL;
-  m_colorSpaceConvert      = NULL;
-  m_colorSpaceConvertMC    = NULL;
-  m_convertIQuantize       = NULL;
-  m_colorSpaceFrame        = NULL;
-  m_convertProcess         = NULL;
-  m_colorTransform         = NULL;
-  m_normalizeFunction      = NULL;
-  m_inputTransferFunction  = NULL;
-  m_outputTransferFunction = NULL;
-  m_inputFrame             = NULL;
-  m_outputFrame            = NULL;
-  m_convertFormatIn        = NULL;
-  m_addNoise               = NULL;
-  m_convertFormatOut       = NULL;
-  m_scaledFrame            = NULL;
-  m_frameScale             = NULL;
-  m_frameFilter            = NULL;
-  m_frameFilterNoise0      = NULL;
-  m_frameFilterNoise1      = NULL;
-  m_frameFilterNoise2      = NULL;
-  m_croppedFrameStore      = NULL;
-  m_srcDisplayGammaAdjust  = NULL;
-  m_outDisplayGammaAdjust  = NULL;
+  for ( int index = 0; index < m_nFrameStores; index++ ) {
+    m_pFrameStore[index] = nullptr;
+  }
+  m_convertFrameStore = nullptr;
+  m_colorSpaceConvert = nullptr;
+  m_colorSpaceConvertMC = nullptr;
+  m_convertIQuantize = nullptr;
+  m_colorSpaceFrame = nullptr;
+  m_convertProcess = nullptr;
+  m_colorTransform = nullptr;
+  m_normalizeFunction = nullptr;
+  m_inputTransferFunction = nullptr;
+  m_outputTransferFunction = nullptr;
+  m_inputFrame = nullptr;
+  m_outputFrame = nullptr;
+  m_convertFormatIn = nullptr;
+  m_addNoise = nullptr;
+  m_convertFormatOut = nullptr;
+  m_scaledFrame = nullptr;
+  m_frameScale = nullptr;
+  m_frameFilter = nullptr;
+  m_frameFilterNoise0 = nullptr;
+  m_frameFilterNoise1 = nullptr;
+  m_frameFilterNoise2 = nullptr;
+  m_croppedFrameStore = nullptr;
+  m_srcDisplayGammaAdjust = nullptr;
+  m_outDisplayGammaAdjust = nullptr;
   m_changeColorPrimaries   = false;
-  m_inputFile              = NULL;
-  m_outputFile             = NULL;
+  m_inputFile = nullptr;
+  m_outputFile = nullptr;
 }
 template <typename T>
 HdrToolsLibColourConverterImpl<T>::~HdrToolsLibColourConverterImpl() {
   destroy();
 }
 
-template <typename T>
-void HdrToolsLibColourConverterImpl<T>::convert( std::string     configFile,
-                                                   FrameSequence<T>& videoSrc,
-                                                   FrameSequence<T>& videoDst ) {
+template<typename T>
+void
+HdrToolsLibColourConverterImpl<T>::convert(
+  const std::string& configFile,
+  FrameSequence<T>& videoSrc,
+  FrameSequence<T>& videoDst)
+{
   using hdrtoolslib::params;
   using hdrtoolslib::ZERO;
   params                         = &ccParams;
-  ProjectParameters* inputParams = (ProjectParameters*)( params );
+  auto* inputParams = dynamic_cast<ProjectParameters*>(params);
   inputParams->refresh();
-  if ( !inputParams->readConfigFile( (char*)configFile.c_str() ) ) {
+  if (inputParams->readConfigFile((char*)configFile.c_str()) == 0) {
     printf( "Could not open configuration file: %s.\n", configFile.c_str() );
     exit( -1 );
   }
@@ -216,7 +222,7 @@ void HdrToolsLibColourConverterImpl<T>::init( ProjectParameters* inputParams ) {
   if ( output->m_chromaFormat != m_inputFrame->m_chromaFormat ||
        ( m_inputFrame->m_chromaFormat != hdrtoolslib::CF_444 &&
          ( m_inputFrame->m_colorPrimaries != output->m_colorPrimaries ) ) ) {
-    if ( m_filterInFloat == true ) {
+    if (m_filterInFloat) {
       m_pFrameStore[0] =
           new Frame( m_width, m_height, true, m_inputFrame->m_colorSpace, m_inputFrame->m_colorPrimaries, chromaFormat,
                      m_inputFrame->m_sampleRange, m_inputFrame->m_bitDepthComp[Y_COMP], m_inputFrame->m_isInterlaced,
@@ -229,7 +235,7 @@ void HdrToolsLibColourConverterImpl<T>::init( ProjectParameters* inputParams ) {
     }
     m_pFrameStore[0]->clear();
   } else {
-    m_pFrameStore[0] = NULL;
+    m_pFrameStore[0] = nullptr;
   }
 
   // Here we may convert to the output's format type (e.g. from integer to
@@ -505,18 +511,22 @@ void HdrToolsLibColourConverterImpl<T>::init( ProjectParameters* inputParams ) {
          ( input->m_colorPrimaries == output->m_colorPrimaries ) &&
          ( input->m_transferFunction == output->m_transferFunction ) ) ) {
     m_useSingleTransferStep = true;
-    m_normalizeFunction     = NULL;
+    m_normalizeFunction = nullptr;
     m_inputTransferFunction = hdrtoolslib::TransferFunction::create(
-        hdrtoolslib::TF_NULL, true, inputParams->m_enableLegacy ? 1.0f : inputParams->m_srcNormalScale,
-        input->m_systemGamma, inputParams->m_srcMinValue, inputParams->m_srcMaxValue );
+      hdrtoolslib::TF_NULL, true,
+      inputParams->m_enableLegacy ? 1.0F : inputParams->m_srcNormalScale,
+      input->m_systemGamma, inputParams->m_srcMinValue,
+      inputParams->m_srcMaxValue);
     // Output transfer function picture store
     m_outputTransferFunction = hdrtoolslib::TransferFunction::create(
-        hdrtoolslib::TF_NULL, true, inputParams->m_enableLegacy ? 1.0f : inputParams->m_outNormalScale,
-        output->m_systemGamma, inputParams->m_outMinValue, inputParams->m_outMaxValue );
+      hdrtoolslib::TF_NULL, true,
+      inputParams->m_enableLegacy ? 1.0F : inputParams->m_outNormalScale,
+      output->m_systemGamma, inputParams->m_outMinValue,
+      inputParams->m_outMaxValue);
   } else {
     if ( ( input->m_iConstantLuminance != 0 || output->m_iConstantLuminance != 0 ) ||
          ( input->m_transferFunction != hdrtoolslib::TF_NULL && input->m_transferFunction != hdrtoolslib::TF_POWER &&
-           ( inputParams->m_useSingleTransferStep == false ||
+           ( !inputParams->m_useSingleTransferStep ||
              ( input->m_transferFunction != hdrtoolslib::TF_PQ && input->m_transferFunction != hdrtoolslib::TF_HPQ &&
                input->m_transferFunction != hdrtoolslib::TF_HPQ2 && input->m_transferFunction != hdrtoolslib::TF_APQ &&
                input->m_transferFunction != hdrtoolslib::TF_APQS && input->m_transferFunction != hdrtoolslib::TF_MPQ &&
@@ -532,19 +542,20 @@ void HdrToolsLibColourConverterImpl<T>::init( ProjectParameters* inputParams ) {
           inputParams->m_srcMinValue, inputParams->m_srcMaxValue, inputParams->m_enableTFunctionLUT );
     } else {
       m_useSingleTransferStep = true;
-      m_normalizeFunction     = NULL;
+      m_normalizeFunction = nullptr;
       m_inputTransferFunction = TransferFunction::create(
           input->m_transferFunction, true, inputParams->m_srcNormalScale, input->m_systemGamma,
           inputParams->m_srcMinValue, inputParams->m_srcMaxValue, inputParams->m_enableTFunctionLUT );
     }
     // Output transfer function picture store
-    m_outputTransferFunction =
-        TransferFunction::create( output->m_transferFunction, true,
-                                  ( inputParams->m_enableLegacy && output->m_transferFunction == hdrtoolslib::TF_NULL )
-                                      ? 1.0f
-                                      : inputParams->m_outNormalScale,
-                                  output->m_systemGamma, inputParams->m_outMinValue, inputParams->m_outMaxValue,
-                                  inputParams->m_enableTFunctionLUT );
+    m_outputTransferFunction = TransferFunction::create(
+      output->m_transferFunction, true,
+      (inputParams->m_enableLegacy
+       && output->m_transferFunction == hdrtoolslib::TF_NULL)
+        ? 1.0F
+        : inputParams->m_outNormalScale,
+      output->m_systemGamma, inputParams->m_outMinValue,
+      inputParams->m_outMaxValue, inputParams->m_enableTFunctionLUT);
   }
 
   // Format conversion process
@@ -552,8 +563,10 @@ void HdrToolsLibColourConverterImpl<T>::init( ProjectParameters* inputParams ) {
   m_convertIQuantize =
       Convert::create( &m_iFrameStore->m_format, &m_convertFrameStore->m_format, &inputParams->m_cvParams );
   m_convertProcess = Convert::create( &m_pFrameStore[4]->m_format, output, &inputParams->m_cvParams );
-  if ( m_bUseChromaDeblocking == true )
-    m_frameFilter = hdrtoolslib::FrameFilter::create( m_width, m_height, hdrtoolslib::FT_DEBLOCK );
+  if (m_bUseChromaDeblocking) {
+    m_frameFilter = hdrtoolslib::FrameFilter::create(
+      m_width, m_height, hdrtoolslib::FT_DEBLOCK);
+  }
 
   m_frameScale =
       hdrtoolslib::FrameScale::create( m_width, m_height, output->m_width[Y_COMP], output->m_height[Y_COMP],
@@ -564,19 +577,27 @@ void HdrToolsLibColourConverterImpl<T>::init( ProjectParameters* inputParams ) {
                              output->m_bitDepthComp[Y_COMP], output->m_isInterlaced, hdrtoolslib::TF_NORMAL, 1.0 );
 
   using hdrtoolslib::FrameFilter;
-  if ( m_bUseWienerFiltering == true )
-    m_frameFilterNoise0 = FrameFilter::create( m_width, m_height, hdrtoolslib::FT_WIENER2D );
-  if ( m_bUse2DSepFiltering == true )
-    m_frameFilterNoise1 = FrameFilter::create( m_width, m_height, hdrtoolslib::FT_2DSEP, m_b2DSepMode );
-  if ( m_bUseNLMeansFiltering == true )
-    m_frameFilterNoise2 = FrameFilter::create( m_width, m_height, hdrtoolslib::FT_NLMEANS );
+  if (m_bUseWienerFiltering) {
+    m_frameFilterNoise0 =
+      FrameFilter::create(m_width, m_height, hdrtoolslib::FT_WIENER2D);
+  }
+  if (m_bUse2DSepFiltering) {
+    m_frameFilterNoise1 = FrameFilter::create(
+      m_width, m_height, hdrtoolslib::FT_2DSEP, m_b2DSepMode);
+  }
+  if (m_bUseNLMeansFiltering) {
+    m_frameFilterNoise2 =
+      FrameFilter::create(m_width, m_height, hdrtoolslib::FT_NLMEANS);
+  }
 
   m_srcDisplayGammaAdjust = hdrtoolslib::DisplayGammaAdjust::create(
-      input->m_displayAdjustment, m_useSingleTransferStep ? inputParams->m_srcNormalScale : 1.0f,
-      input->m_systemGamma );
+    input->m_displayAdjustment,
+    m_useSingleTransferStep ? inputParams->m_srcNormalScale : 1.0F,
+    input->m_systemGamma);
   m_outDisplayGammaAdjust = hdrtoolslib::DisplayGammaAdjust::create(
-      output->m_displayAdjustment, m_useSingleTransferStep ? inputParams->m_outNormalScale : 1.0f,
-      output->m_systemGamma );
+    output->m_displayAdjustment,
+    m_useSingleTransferStep ? inputParams->m_outNormalScale : 1.0F,
+    output->m_systemGamma);
 
   if ( input->m_displayAdjustment == hdrtoolslib::DA_HLG ) { m_inputTransferFunction->setNormalFactor( 1.0 ); }
   if ( output->m_displayAdjustment == hdrtoolslib::DA_HLG ) { m_outputTransferFunction->setNormalFactor( 1.0 ); }
@@ -588,9 +609,9 @@ template <typename T>
 void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
                                                    FrameSequence<T>&    videoSrc,
                                                    FrameSequence<T>&    videoDst ) {
-  int                       frameNumber;    
+  int frameNumber = 0;
   bool                      errorRead    = false;
-  hdrtoolslib::Frame*       currentFrame = NULL;
+  hdrtoolslib::Frame* currentFrame = nullptr;
   hdrtoolslib::FrameFormat* input        = &inputParams->m_source;
   videoDst.clear();
   // Now process all frames
@@ -625,13 +646,14 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
     // optional forced clipping of the data given their defined range. This is
     // done here without consideration of the upconversion process.
     if ( inputParams->m_forceClipping == 1 ) { m_iFrameStore->clipRange(); }
-    if ( errorRead == true ) {
+    if (errorRead) {
       break;
-    } else if ( inputParams->m_silentMode == false ) {
-      printf( "%05d ", frameNumber );
+    }
+    if (!inputParams->m_silentMode) {
+      printf("%05d ", frameNumber);
     }
     currentFrame = m_iFrameStore;
-    if ( m_croppedFrameStore != NULL ) {
+    if (m_croppedFrameStore != nullptr) {
       m_croppedFrameStore->copy( m_iFrameStore, m_cropOffsetLeft, m_cropOffsetTop,
                                  m_iFrameStore->m_width[hdrtoolslib::Y_COMP] + m_cropOffsetRight,
                                  m_iFrameStore->m_height[hdrtoolslib::Y_COMP] + m_cropOffsetBottom, 0, 0 );
@@ -642,18 +664,21 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
            ( m_iFrameStore->m_colorSpace != hdrtoolslib::CM_RGB ) ) ||
          ( m_iFrameStore->m_chromaFormat != hdrtoolslib::CF_444 &&
            m_iFrameStore->m_colorPrimaries != m_oFrameStore->m_colorPrimaries ) ) {
-      if ( m_filterInFloat == true ) {
+      if (m_filterInFloat) {
         // Convert to different format if needed (integer to float)
         m_convertIQuantize->process( m_pFrameStore[0], currentFrame );
-        if ( m_bUseChromaDeblocking == true )  // Perform deblocking
-          m_frameFilter->process( m_pFrameStore[0] );
+        if (m_bUseChromaDeblocking) {  // Perform deblocking
+          m_frameFilter->process(m_pFrameStore[0]);
+        }
         // Chroma conversion
         m_convertFormatIn->process( m_convertFrameStore, m_pFrameStore[0] );
       } else {
         m_convertFormatIn->process( m_pFrameStore[0], currentFrame );
         // Here perform forced clipping of the data after upconversion of the
         // chroma components
-        if ( inputParams->m_forceClipping == 2 ) m_pFrameStore[0]->clipRange();
+        if (inputParams->m_forceClipping == 2) {
+          m_pFrameStore[0]->clipRange();
+        }
         // Convert to different format if needed (integer to float)
         m_convertIQuantize->process( m_convertFrameStore, m_pFrameStore[0] );
       }
@@ -665,9 +690,15 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
 
     // Add noise
     m_addNoise->process( m_convertFrameStore );
-    if ( m_bUseWienerFiltering == true ) m_frameFilterNoise0->process( m_convertFrameStore );
-    if ( m_bUse2DSepFiltering == true ) m_frameFilterNoise1->process( m_convertFrameStore );
-    if ( m_bUseNLMeansFiltering == true ) m_frameFilterNoise2->process( m_convertFrameStore );
+    if (m_bUseWienerFiltering) {
+      m_frameFilterNoise0->process(m_convertFrameStore);
+    }
+    if (m_bUse2DSepFiltering) {
+      m_frameFilterNoise1->process(m_convertFrameStore);
+    }
+    if (m_bUseNLMeansFiltering) {
+      m_frameFilterNoise2->process(m_convertFrameStore);
+    }
     currentFrame = m_convertFrameStore;
     log( "nois", currentFrame, 2 );    
     m_frameScale->process( m_scaledFrame, currentFrame );
@@ -676,10 +707,11 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
     // Now perform a color format conversion
     // Output to m_pFrameStore memory with appropriate color space conversion
     // Note that the name of "forward" may be a bit of a misnomer.
-    if ( !( input->m_iConstantLuminance != 0 &&
-            ( input->m_colorSpace == hdrtoolslib::CM_YCbCr || input->m_colorSpace == hdrtoolslib::CM_ICtCp ) ) ) {
+    if (
+      input->m_iConstantLuminance == 0
+      || (input->m_colorSpace != hdrtoolslib::CM_YCbCr && input->m_colorSpace != hdrtoolslib::CM_ICtCp)) {
       m_colorTransform->process( m_pFrameStore[2], currentFrame );
-      if ( m_useSingleTransferStep == false ) {
+      if (!m_useSingleTransferStep) {
         m_inputTransferFunction->forward( m_pFrameStore[3], m_pFrameStore[2] );
         m_srcDisplayGammaAdjust->forward( m_pFrameStore[3] );
         m_normalizeFunction->forward( m_pFrameStore[1], m_pFrameStore[3] );
@@ -691,9 +723,9 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
       m_colorTransform->process( m_pFrameStore[2], currentFrame );
       m_normalizeFunction->forward( m_pFrameStore[1], m_pFrameStore[2] );
     }
-    log( "colo", m_pFrameStore[1], 2 );    
+    log( "colo", m_pFrameStore[1], 2 );
 
-    if ( m_changeColorPrimaries == true ) {
+    if (m_changeColorPrimaries) {
       m_colorSpaceConvert->process( m_colorSpaceFrame, m_pFrameStore[1] );
       m_outDisplayGammaAdjust->inverse( m_colorSpaceFrame );
       if ( m_oFrameStore->m_colorSpace == hdrtoolslib::CM_YCbCr ||
@@ -704,7 +736,7 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
         m_outputTransferFunction->inverse( m_pFrameStore[4], m_colorSpaceFrame );
         m_outDisplayGammaAdjust->inverse( m_colorSpaceFrame );
       }
-      // log( "prim", m_colorSpaceFrame, 2 );  
+      // log( "prim", m_colorSpaceFrame, 2 );
     } else {
       // here we apply the output transfer function (to be fixed)
       m_outDisplayGammaAdjust->inverse( m_pFrameStore[1] );
@@ -714,7 +746,7 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
            m_oFrameStore->m_chromaFormat != hdrtoolslib::CF_444 &&
            m_iFrameStore->m_colorPrimaries != m_oFrameStore->m_colorPrimaries ) ||
          ( m_iFrameStore->m_colorSpace == hdrtoolslib::CM_RGB && m_oFrameStore->m_colorSpace != hdrtoolslib::CM_RGB &&
-           m_oFrameStore->m_chromaFormat ) ) {
+           (m_oFrameStore->m_chromaFormat != 0) ) ) {
       m_convertFormatOut->process( m_pFrameStore[5], m_pFrameStore[4] );
       m_convertProcess->process( m_oFrameStore, m_pFrameStore[5] );
     } else {
@@ -773,119 +805,119 @@ void HdrToolsLibColourConverterImpl<T>::process( ProjectParameters* inputParams,
 template <typename T>
 void HdrToolsLibColourConverterImpl<T>::destroy() {
   // destroy
-  if ( m_addNoise != NULL ) {
+  if (m_addNoise != nullptr) {
     delete m_addNoise;
-    m_addNoise = NULL;
+    m_addNoise = nullptr;
   }
-  if ( m_frameFilter != NULL ) {
+  if (m_frameFilter != nullptr) {
     delete m_frameFilter;
-    m_frameFilter = NULL;
+    m_frameFilter = nullptr;
   }
-  if ( m_frameFilterNoise0 != NULL ) {
+  if (m_frameFilterNoise0 != nullptr) {
     delete m_frameFilterNoise0;
-    m_frameFilterNoise0 = NULL;
+    m_frameFilterNoise0 = nullptr;
   }
-  if ( m_frameFilterNoise1 != NULL ) {
+  if (m_frameFilterNoise1 != nullptr) {
     delete m_frameFilterNoise1;
-    m_frameFilterNoise1 = NULL;
+    m_frameFilterNoise1 = nullptr;
   }
-  if ( m_frameFilterNoise2 != NULL ) {
+  if (m_frameFilterNoise2 != nullptr) {
     delete m_frameFilterNoise2;
-    m_frameFilterNoise2 = NULL;
+    m_frameFilterNoise2 = nullptr;
   }
-  if ( m_convertFormatIn != NULL ) {
+  if (m_convertFormatIn != nullptr) {
     delete m_convertFormatIn;
-    m_convertFormatIn = NULL;
+    m_convertFormatIn = nullptr;
   }
-  if ( m_convertFormatOut != NULL ) {
+  if (m_convertFormatOut != nullptr) {
     delete m_convertFormatOut;
-    m_convertFormatOut = NULL;
+    m_convertFormatOut = nullptr;
   }
-  if ( m_convertProcess != NULL ) {
+  if (m_convertProcess != nullptr) {
     delete m_convertProcess;
-    m_convertProcess = NULL;
+    m_convertProcess = nullptr;
   }
-  if ( m_convertIQuantize != NULL ) {
+  if (m_convertIQuantize != nullptr) {
     delete m_convertIQuantize;
-    m_convertIQuantize = NULL;
+    m_convertIQuantize = nullptr;
   }
   // output frame objects
-  if ( m_oFrameStore != NULL ) {
+  if (m_oFrameStore != nullptr) {
     delete m_oFrameStore;
-    m_oFrameStore = NULL;
+    m_oFrameStore = nullptr;
   }
   // input frame objects
-  if ( m_iFrameStore != NULL ) {
+  if (m_iFrameStore != nullptr) {
     delete m_iFrameStore;
-    m_iFrameStore = NULL;
+    m_iFrameStore = nullptr;
   }
   // processing frame objects
   for ( int i = 0; i < m_nFrameStores; i++ ) {
-    if ( m_pFrameStore[i] != NULL ) {
+    if (m_pFrameStore[i] != nullptr) {
       delete m_pFrameStore[i];
-      m_pFrameStore[i] = NULL;
+      m_pFrameStore[i] = nullptr;
     }
   }
-  if ( m_frameScale != NULL ) {
+  if (m_frameScale != nullptr) {
     delete m_frameScale;
-    m_frameScale = NULL;
+    m_frameScale = nullptr;
   }
-  if ( m_colorSpaceConvert != NULL ) {
+  if (m_colorSpaceConvert != nullptr) {
     delete m_colorSpaceConvert;
-    m_colorSpaceConvert = NULL;
+    m_colorSpaceConvert = nullptr;
   }
-  if ( m_colorSpaceConvertMC != NULL ) {
+  if (m_colorSpaceConvertMC != nullptr) {
     delete m_colorSpaceConvertMC;
-    m_colorSpaceConvertMC = NULL;
+    m_colorSpaceConvertMC = nullptr;
   }
-  if ( m_colorSpaceFrame != NULL ) {
+  if (m_colorSpaceFrame != nullptr) {
     delete m_colorSpaceFrame;
-    m_colorSpaceFrame = NULL;
+    m_colorSpaceFrame = nullptr;
   }
   // Cropped frame store
-  if ( m_croppedFrameStore != NULL ) {
+  if (m_croppedFrameStore != nullptr) {
     delete m_croppedFrameStore;
-    m_croppedFrameStore = NULL;
+    m_croppedFrameStore = nullptr;
   }
-  if ( m_convertFrameStore != NULL ) {
+  if (m_convertFrameStore != nullptr) {
     delete m_convertFrameStore;
-    m_convertFrameStore = NULL;
+    m_convertFrameStore = nullptr;
   }
-  if ( m_scaledFrame != NULL ) {
+  if (m_scaledFrame != nullptr) {
     delete m_scaledFrame;
-    m_scaledFrame = NULL;
+    m_scaledFrame = nullptr;
   }
-  if ( m_inputFrame != NULL ) {
+  if (m_inputFrame != nullptr) {
     delete m_inputFrame;
-    m_inputFrame = NULL;
+    m_inputFrame = nullptr;
   }
-  if ( m_outputFrame != NULL ) {
+  if (m_outputFrame != nullptr) {
     delete m_outputFrame;
-    m_outputFrame = NULL;
+    m_outputFrame = nullptr;
   }
-  if ( m_colorTransform != NULL ) {
+  if (m_colorTransform != nullptr) {
     delete m_colorTransform;
-    m_colorTransform = NULL;
+    m_colorTransform = nullptr;
   }
-  if ( m_normalizeFunction != NULL ) {
+  if (m_normalizeFunction != nullptr) {
     delete m_normalizeFunction;
-    m_normalizeFunction = NULL;
+    m_normalizeFunction = nullptr;
   }
-  if ( m_outputTransferFunction != NULL ) {
+  if (m_outputTransferFunction != nullptr) {
     delete m_outputTransferFunction;
-    m_outputTransferFunction = NULL;
+    m_outputTransferFunction = nullptr;
   }
-  if ( m_inputTransferFunction != NULL ) {
+  if (m_inputTransferFunction != nullptr) {
     delete m_inputTransferFunction;
-    m_inputTransferFunction = NULL;
+    m_inputTransferFunction = nullptr;
   }
-  if ( m_srcDisplayGammaAdjust != NULL ) {
+  if (m_srcDisplayGammaAdjust != nullptr) {
     delete m_srcDisplayGammaAdjust;
-    m_srcDisplayGammaAdjust = NULL;
+    m_srcDisplayGammaAdjust = nullptr;
   }
-  if ( m_outDisplayGammaAdjust != NULL ) {
+  if (m_outDisplayGammaAdjust != nullptr) {
     delete m_outDisplayGammaAdjust;
-    m_outDisplayGammaAdjust = NULL;
+    m_outDisplayGammaAdjust = nullptr;
   }
 }
 namespace vmesh{

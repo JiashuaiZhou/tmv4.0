@@ -66,25 +66,29 @@ expandNum(const std::string& src, int num)
     }
     out.append(src, prev, start - prev);
 
-    char c;
-    while ((c = nextChar()) && (c == '#' || c == '0' || c == ' '))
+    char c = 0;
+    while (((c = nextChar()) != 0) && (c == '#' || c == '0' || c == ' ')) {
       idx++; /* flags */
-
-    if ((c = nextChar()) && (c >= '1' && c <= '9')) {
-      idx++; /* width[0] */
-
-      while ((c = nextChar()) && (c >= '0' && c <= '9'))
-        idx++; /* width[>0] */
     }
 
-    if ((c = nextChar()) && (c == '.')) {
+    if (((c = nextChar()) != 0) && (c >= '1' && c <= '9')) {
+      idx++; /* width[0] */
+
+      while (((c = nextChar()) != 0) && (c >= '0' && c <= '9')) {
+        idx++; /* width[>0] */
+      }
+    }
+
+    if (((c = nextChar()) != 0) && (c == '.')) {
       idx++; /* precision[0] */
 
-      if ((c = nextChar()) && (c == '-'))
+      if (((c = nextChar()) != 0) && (c == '-')) {
         idx++; /* precision[1] */
+      }
 
-      while ((c = nextChar()) && (c >= '0' && c <= '9'))
+      while (((c = nextChar()) != 0) && (c >= '0' && c <= '9')) {
         idx++; /* precision[>=1] */
+      }
     }
 
     c = nextChar();

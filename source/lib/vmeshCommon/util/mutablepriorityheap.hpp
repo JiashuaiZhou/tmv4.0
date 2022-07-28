@@ -180,7 +180,7 @@ private:
     auto index = i;
     auto l = left(i);
     auto r = right(i);
-    int32_t largest;
+    int32_t largest = 0;
 
     const auto elementCount = size();
     while (l < elementCount) {
@@ -207,7 +207,6 @@ private:
     }
   }
 
-private:
   std::vector<T*> _elements;
 };
 

@@ -53,8 +53,10 @@ std::string expandNum(const std::string& src, int num);
 
 //============================================================================
 
-static inline std::string removeExtension( const std::string string ) {
-  size_t pos = string.find_last_of( "." );
+static inline std::string
+removeExtension(const std::string& string)
+{
+  size_t pos = string.find_last_of('.');
   return pos != std::string::npos ? string.substr( 0, pos ) : string;
 }
 
@@ -78,7 +80,8 @@ static char getSeparator() { return '\\'; }
 //============================================================================
 
 static char getSeparator( const std::string& eFilename ) {
-  auto pos1 = eFilename.find_last_of( '/' ), pos2 = eFilename.find_last_of( '\\' );
+  auto pos1 = eFilename.find_last_of('/');
+  auto pos2 = eFilename.find_last_of('\\');
   auto pos = ( std::max )( pos1 != std::string::npos ? pos1 : 0, pos2 != std::string::npos ? pos2 : 0 );
   return ( pos != 0 ? eFilename[pos] : getSeparator() );
 }
@@ -93,7 +96,7 @@ static std::string directoryName( const std::string& string ) {
 
 //============================================================================
 static int
-save(std::string filename, std::vector<uint8_t>& buffer)
+save(const std::string& filename, std::vector<uint8_t>& buffer)
 {
   std::ofstream file(filename, std::ios::binary);
   if (!file.is_open()){
@@ -144,9 +147,9 @@ ceilpow2(uint32_t x)
 inline int
 popcnt(uint32_t x)
 {
-  x = x - ((x >> 1) & 0x55555555u);
-  x = (x & 0x33333333u) + ((x >> 2) & 0x33333333u);
-  return (( (x + (x >> 4) ) & 0xF0F0F0Fu) * 0x1010101u) >> 24;
+  x = x - ((x >> 1) & 0x55555555U);
+  x = (x & 0x33333333U) + ((x >> 2) & 0x33333333U);
+  return (((x + (x >> 4)) & 0xF0F0F0FU) * 0x1010101U) >> 24;
 }
 
 //---------------------------------------------------------------------------
@@ -165,12 +168,15 @@ template<class T>
 Vec3<T>
 orderComponents(Vec3<T> v)
 {
-  if (v[0] > v[1])
+  if (v[0] > v[1]) {
     std::swap(v[0], v[1]);
-  if (v[1] > v[2])
+  }
+  if (v[1] > v[2]) {
     std::swap(v[1], v[2]);
-  if (v[0] > v[1])
+  }
+  if (v[0] > v[1]) {
     std::swap(v[0], v[1]);
+  }
   return v;
 }
 

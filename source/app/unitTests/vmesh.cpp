@@ -87,8 +87,9 @@ TEST(vmesh, all)
       << "  --rectex=" << recPngPath    // Reconstructed texture
       << "  --recmat=mat.mtl ";          // Reconstructed materials
 
-  if (disableSubProcessLog.disableLog())
+  if (disableSubProcessLog.disableLog()) {
     cmd << "  2>&1 > /dev/null";
+  }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
  
@@ -100,8 +101,9 @@ TEST(vmesh, all)
       << "  --decmesh=" << decObjPath  
       << "  --dectex=" << decPngPath
       << "  --decmat=mat.mtl ";
-  if (disableSubProcessLog.disableLog()) 
+  if (disableSubProcessLog.disableLog()) {
     cmd << "  2>&1 > /dev/null";
+  }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 

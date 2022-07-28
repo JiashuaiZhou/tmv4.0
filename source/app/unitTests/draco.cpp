@@ -98,8 +98,9 @@ TEST(draco, encode)
       << " -qn " << params.qn_  
       << " -qg " << params.qg_  
       << " -cl " << params.cl_ ;
-  if (disableSubProcessLog.disableLog())
+  if (disableSubProcessLog.disableLog()) {
     cmd << " > /dev/null";
+  }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -107,9 +108,10 @@ TEST(draco, encode)
   cmd.str("");
   cmd << g_dracoDecoderPath << "  "
       << " -i " << binOrg  
-      << " -o " << recOrg; 
-  if (disableSubProcessLog.disableLog())
+      << " -o " << recOrg;
+  if (disableSubProcessLog.disableLog()) {
     cmd << " 2>&1 > /dev/null";
+  }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -153,9 +155,10 @@ TEST(draco, decode)
   std::stringstream cmd;
   cmd << g_dracoDecoderPath << "  "
       << " -i " << binPath  
-      << " -o " << decAppPath; 
-  if (disableSubProcessLog.disableLog())
+      << " -o " << decAppPath;
+  if (disableSubProcessLog.disableLog()) {
     cmd << " 2>&1 > /dev/null";
+  }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
   vmesh::TriangleMesh<double> decApp;

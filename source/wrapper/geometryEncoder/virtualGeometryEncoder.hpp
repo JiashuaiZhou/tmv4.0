@@ -52,19 +52,19 @@ struct GeometryEncoderParameters {
 template <class T>
 class VirtualGeometryEncoder {
  public:
-  VirtualGeometryEncoder() {}
-  ~VirtualGeometryEncoder() {}
+   VirtualGeometryEncoder() = default;
+   ~VirtualGeometryEncoder() = default;
 
-  static std::shared_ptr<VirtualGeometryEncoder<T>>
-  create(GeometryCodecId codecId);
-  static GeometryCodecId getDefaultCodecId();
-  static bool checkCodecId(GeometryCodecId codecId);
+   static std::shared_ptr<VirtualGeometryEncoder<T>>
+   create(GeometryCodecId codecId);
+   static GeometryCodecId getDefaultCodecId();
+   static bool checkCodecId(GeometryCodecId codecId);
 
-  virtual void encode(
-    TriangleMesh<T>& src,
-    GeometryEncoderParameters& params,
-    std::vector<uint8_t>& bitstream,
-    TriangleMesh<T>& rec) = 0;
+   virtual void encode(
+     TriangleMesh<T>& src,
+     GeometryEncoderParameters& params,
+     std::vector<uint8_t>& bitstream,
+     TriangleMesh<T>& rec) = 0;
 };
 
 }  // namespace vmesh

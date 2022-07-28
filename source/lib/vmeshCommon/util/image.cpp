@@ -120,25 +120,33 @@ SaveImage(
       i += 3;
     }
   }
-  bool ret;
+  bool ret = false;
   switch (format) {
   case ImageFormat::JPG:
-    ret = stbi_write_jpg(
-      fileName.c_str(), width, height, channelCount, buffer.get(), quality);
+    ret =
+      (stbi_write_jpg(
+         fileName.c_str(), width, height, channelCount, buffer.get(), quality)
+       != 0);
     break;
   case ImageFormat::TGA:
-    ret = stbi_write_tga(
-      fileName.c_str(), width, height, channelCount, buffer.get());
+    ret =
+      (stbi_write_tga(
+         fileName.c_str(), width, height, channelCount, buffer.get())
+       != 0);
     break;
   case ImageFormat::BMP:
-    ret = stbi_write_bmp(
-      fileName.c_str(), width, height, channelCount, buffer.get());
+    ret =
+      (stbi_write_bmp(
+         fileName.c_str(), width, height, channelCount, buffer.get())
+       != 0);
     break;
   case ImageFormat::PNG:
   default:
-    ret = stbi_write_png(
-      fileName.c_str(), width, height, channelCount, buffer.get(),
-      width * channelCount);
+    ret =
+      (stbi_write_png(
+         fileName.c_str(), width, height, channelCount, buffer.get(),
+         width * channelCount)
+       != 0);
     break;
   }
   return ret;

@@ -35,7 +35,7 @@
 
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 
 #include <cmath>
 #include <cstring>
@@ -74,11 +74,13 @@ operator>>(std::istream& in, GeometryCodecId& val)
   printf("GeometryCodecId: str = %s \n",str.c_str());
 #if defined(USE_DRACO_GEOMETRY_CODEC)
   printf("GeometryCodecId: here \n");
-  if (str == "DRACO")
+  if (str == "DRACO") {
     val = GeometryCodecId::DRACO;
+  }
 #endif
-  if (val == GeometryCodecId::UNKNOWN_GEOMETRY_CODEC)
+  if (val == GeometryCodecId::UNKNOWN_GEOMETRY_CODEC) {
     in.setstate(std::ios::failbit);
+  }
   return in;
 }
 
@@ -300,7 +302,7 @@ ComputeAdjacentVertexCount(
     const auto& triangle = triangles[tadj[i]];
     for (int j = 0; j < 3; ++j) {
       const auto index = triangle[j];
-      if (vtags[index]) {
+      if (vtags[index] != 0) {
         ++vcount;
         vtags[index] = int8_t(0);
       }
@@ -335,7 +337,7 @@ ComputeAdjacentVertices(
     const auto& triangle = triangles[tadj[i]];
     for (int j = 0; j < 3; ++j) {
       const auto index = triangle[j];
-      if (vtags[index]) {
+      if (vtags[index] != 0) {
         vadj.push_back(index);
         vtags[index] = int8_t(0);
       }
@@ -364,7 +366,7 @@ ComputeAdjacentTriangles(
     const auto end = vertexToTriangle.neighboursEndIndex(vindex);
     for (int i = start; i < end; ++i) {
       const auto tindex = tadj[i];
-      if (!ttags[tindex]) {
+      if (ttags[tindex] == 0) {
         ttags[tindex] = int8_t(1);
         adj.push_back(tindex);
       }
@@ -390,7 +392,7 @@ ComputeEdgeAdjacentTriangles(
   const auto& tadj0 = vertexToTriangle.neighbours();
   for (int i = start; i < end; ++i) {
     const auto tindex = tadj0[i];
-    if (ttags[tindex]) {
+    if (ttags[tindex] != 0) {
       tadj.push_back(tindex);
     }
   }
@@ -413,7 +415,7 @@ ComputeEdgeAdjacentTriangleCount(
   int32_t count = 0;
   for (int i = start; i < end; ++i) {
     const auto tindex = tadj0[i];
-    count += ttags[tindex] != 0;
+    count += static_cast<int>(ttags[tindex] != 0);
   }
   return count;
 }
@@ -429,7 +431,7 @@ ComputeBoundaryVertices(
   std::vector<int8_t>& isBoundaryVertex)
 {
   const auto vertexCount = int32_t(vertexToTriangle.size());
-  if (!vertexCount) {
+  if (vertexCount == 0) {
     return;
   }
   isBoundaryVertex.resize(vertexCount);
@@ -437,8 +439,7 @@ ComputeBoundaryVertices(
   std::vector<int32_t> vadj;
   for (int32_t vindex0 = 0; vindex0 < vertexCount; ++vindex0) {
     ComputeAdjacentVertices(vindex0, triangles, vertexToTriangle, vtags, vadj);
-    for (int i = 0, count = int(vadj.size()); i < count; ++i) {
-      const auto vindex1 = vadj[i];
+    for (int vindex1 : vadj) {
       if (vindex1 <= vindex0) {
         continue;
       }
@@ -595,7 +596,8 @@ public:
       std::vector<std::string> tokens;
       clear();
       while (getline(fin, line)) {
-        size_t prev = 0, pos;
+        size_t prev = 0;
+        size_t pos = 0;
         tokens.resize(0);
         while ((pos = line.find_first_of(" ,;:/", prev))
                != std::string::npos) {
@@ -621,20 +623,20 @@ public:
           _normal.push_back(normal);
         } else if (tokens[0] == "f") {
           if (tokens.size() >= 10) {
-            _coordIndex.push_back(Vec3<int>(
-              stoi(tokens[1]) - 1, stoi(tokens[4]) - 1, stoi(tokens[7]) - 1));
-            _texCoordIndex.push_back(Vec3<int>(
-              stoi(tokens[2]) - 1, stoi(tokens[5]) - 1, stoi(tokens[8]) - 1));
-            _normalIndex.push_back(Vec3<int>(
-              stoi(tokens[3]) - 1, stoi(tokens[6]) - 1, stoi(tokens[9]) - 1));
+            _coordIndex.emplace_back(
+              stoi(tokens[1]) - 1, stoi(tokens[4]) - 1, stoi(tokens[7]) - 1);
+            _texCoordIndex.emplace_back(
+              stoi(tokens[2]) - 1, stoi(tokens[5]) - 1, stoi(tokens[8]) - 1);
+            _normalIndex.emplace_back(
+              stoi(tokens[3]) - 1, stoi(tokens[6]) - 1, stoi(tokens[9]) - 1);
           } else if (tokens.size() == 7) {
-            _coordIndex.push_back(Vec3<int>(
-              stoi(tokens[1]) - 1, stoi(tokens[3]) - 1, stoi(tokens[5]) - 1));
-            _texCoordIndex.push_back(Vec3<int>(
-              stoi(tokens[2]) - 1, stoi(tokens[4]) - 1, stoi(tokens[6]) - 1));
+            _coordIndex.emplace_back(
+              stoi(tokens[1]) - 1, stoi(tokens[3]) - 1, stoi(tokens[5]) - 1);
+            _texCoordIndex.emplace_back(
+              stoi(tokens[2]) - 1, stoi(tokens[4]) - 1, stoi(tokens[6]) - 1);
           } else if (tokens.size() == 4) {
-            _coordIndex.push_back(Vec3<int>(
-              stoi(tokens[1]) - 1, stoi(tokens[2]) - 1, stoi(tokens[3]) - 1));
+            _coordIndex.emplace_back(
+              stoi(tokens[1]) - 1, stoi(tokens[2]) - 1, stoi(tokens[3]) - 1);
           }
         } else if (tokens[0] == "mtllib" && tokens.size() >= 2) {
           _mtllib = tokens[1];
@@ -642,9 +644,9 @@ public:
       }
       fin.close();
       return true;
-    } else {
-      printf("Error loading file: %s \n", fileName.c_str());
     }
+    printf("Error loading file: %s \n", fileName.c_str());
+
     return false;
   }
 
@@ -784,8 +786,9 @@ public:
   void scaleTextureCoordinates(int qt )
   {
     const auto scale = qt > 0 ? 1.0 / ((1 << qt) - 1) : 1.0;
-    for (auto& v : _texCoord)
+    for (auto& v : _texCoord) {
       v *= scale;
+    }
   }
   const std::string& materialLibrary() const { return _mtllib; }
   std::string& materialLibrary() { return _mtllib; }
@@ -1160,7 +1163,7 @@ public:
   void addTriangle(const Triangle& tri) { _coordIndex.push_back(tri); }
   void addTriangle(const int32_t i, const int32_t j, const int32_t k)
   {
-    _coordIndex.push_back(Triangle(i, j, k));
+    _coordIndex.emplace_back(i, j, k);
   }
 
   void addTexCoordTriangle(const Triangle& tri)
@@ -1170,13 +1173,13 @@ public:
 
   void addTexCoordTriangle(const int32_t i, const int32_t j, const int32_t k)
   {
-    _texCoordIndex.push_back(Triangle(i, j, k));
+    _texCoordIndex.emplace_back(i, j, k);
   }
 
   void addNormalTriangle(const Triangle& tri) { _normalIndex.push_back(tri); }
   void addNormalTriangle(const int32_t i, const int32_t j, const int32_t k)
   {
-    _normalIndex.push_back(Triangle(i, j, k));
+    _normalIndex.emplace_back(i, j, k);
   }
 
   void setTriangle(
@@ -1373,7 +1376,7 @@ public:
     std::vector<int64_t>* texCoordEdges = nullptr,
     std::vector<int32_t>* triangleToBaseMeshTriangle = nullptr)
   {
-    if (triangleToBaseMeshTriangle) {
+    if (triangleToBaseMeshTriangle != nullptr) {
       auto& triToBaseMeshTri = *triangleToBaseMeshTriangle;
       const auto tCount0 = this->triangleCount();
       triToBaseMeshTri.resize(tCount0);
@@ -1382,7 +1385,7 @@ public:
       }
     }
 
-    if (infoLevelOfDetails) {
+    if (infoLevelOfDetails != nullptr) {
       infoLevelOfDetails->resize(iterationCount + 1);
       auto& infoLevelOfDetail = (*infoLevelOfDetails)[0];
       infoLevelOfDetail.pointCount = pointCount();
@@ -1412,7 +1415,7 @@ public:
           SubdivideMidPoint<Vec2<T>, T>(
             texCoords(), texCoordTriangles(), vertexToTriangleUV,
             vertexToEdgeUV, vtagsUV, edges, nullptr);
-          if (infoLevelOfDetails) {
+          if (infoLevelOfDetails != nullptr) {
             auto& infoLevelOfDetail = (*infoLevelOfDetails)[it + 1];
             infoLevelOfDetail.texCoordCount = texCoordCount();
             infoLevelOfDetail.texCoordTriangleCount = texCoordTriangleCount();
@@ -1424,7 +1427,7 @@ public:
           SubdivideMidPoint<Vec2<T>, T>(
             texCoords(), texCoordTriangles(), vertexToTriangleUV,
             vertexToEdgeUV, vtagsUV, *texCoordEdges, nullptr);
-          if (infoLevelOfDetails) {
+          if (infoLevelOfDetails != nullptr) {
             auto& infoLevelOfDetail = (*infoLevelOfDetails)[it + 1];
             infoLevelOfDetail.texCoordCount = texCoordCount();
             infoLevelOfDetail.texCoordTriangleCount = texCoordTriangleCount();
@@ -1448,7 +1451,7 @@ public:
           SubdivideMidPoint<Vec3<T>, T>(
             points(), triangles(), vertexToTriangle, vertexToEdge, vtags,
             edges, triangleToBaseMeshTriangle);
-          if (infoLevelOfDetails) {
+          if (infoLevelOfDetails != nullptr) {
             auto& infoLevelOfDetail = (*infoLevelOfDetails)[it + 1];
             infoLevelOfDetail.pointCount = pointCount();
             infoLevelOfDetail.triangleCount = triangleCount();
@@ -1460,7 +1463,7 @@ public:
           SubdivideMidPoint<Vec3<T>, T>(
             points(), triangles(), vertexToTriangle, vertexToEdge, vtags,
             *coordEdges, triangleToBaseMeshTriangle);
-          if (infoLevelOfDetails) {
+          if (infoLevelOfDetails != nullptr) {
             auto& infoLevelOfDetail = (*infoLevelOfDetails)[it + 1];
             infoLevelOfDetail.pointCount = pointCount();
             infoLevelOfDetail.triangleCount = triangleCount();
@@ -1491,36 +1494,44 @@ public:
     _mtllib = src.materialLibrary();
     
     _coordIndex.resize(src.triangles().size());
-    for (int i = 0; i < src.triangles().size(); i++)
+    for (int i = 0; i < src.triangles().size(); i++) {
       _coordIndex[i] = src.triangle(i);
+    }
 
     _texCoordIndex.resize(src.texCoordTriangles().size());
-    for (int i = 0; i < src.texCoordTriangles().size(); i++)
+    for (int i = 0; i < src.texCoordTriangles().size(); i++) {
       _texCoordIndex[i] = src.texCoordTriangle(i);
+    }
 
     _normalIndex.resize(src.normalTriangles().size());
-    for (int i = 0; i < src.normalTriangles().size(); i++)
+    for (int i = 0; i < src.normalTriangles().size(); i++) {
       _texCoordIndex[i] = src.normalTriangle(i);
+    }
 
     _disp.resize(src.displacements().size());
-    for (int i = 0; i < src.displacements().size(); i++)
+    for (int i = 0; i < src.displacements().size(); i++) {
       _disp[i] = (Vec3<T>)src.displacement(i);
+    }
 
     _coord.resize(src.points().size());
-    for (int i = 0; i < src.points().size(); i++)    
+    for (int i = 0; i < src.points().size(); i++) {
       _coord[i] = (Vec3<T>)src.point(i);
+    }
 
     _colour.resize(src.colours().size());
-    for (int i = 0; i < src.colours().size(); i++)
+    for (int i = 0; i < src.colours().size(); i++) {
       _colour[i] = (Vec3<T>)src.colour(i);
+    }
 
     _texCoord.resize(src.texCoords().size());
-    for (int i = 0; i < src.texCoords().size(); i++)
+    for (int i = 0; i < src.texCoords().size(); i++) {
       _texCoord[i] = (Vec2<T>)src.texCoord(i);
+    }
 
     _normal.resize(src.normals().size());
-    for (int i = 0; i < src.normals().size(); i++)
+    for (int i = 0; i < src.normals().size(); i++) {
       _normal[i] = (Vec3<T>)src.normal(i);
+    }
   }
 
 private:
@@ -1760,11 +1771,9 @@ ExtractConnectedComponents(
       int32_t ccPosCount = 0;
       int32_t ccTexCoordCount = 0;
       int32_t ccNormalCount = 0;
-      int32_t ccTriCount = 0;
       while (!lifo.empty()) {
         const auto tIndex = lifo.back();
         lifo.pop_back();
-        ++ccTriCount;
 
         if (connectedComponents) {
           triangleList.push_back(tIndex);
@@ -1880,7 +1889,8 @@ SmoothWithVertexConstraints(
     return;
   }
 
-  std::vector<int32_t> vadj, tadj;
+  std::vector<int32_t> vadj;
+  std::vector<int32_t> tadj;
   const auto n = 2 * pointCount;
   SparseMatrix<T> A(n, pointCount);
 
@@ -1922,8 +1932,12 @@ SmoothWithVertexConstraints(
   const auto At = A.transpose();
   const auto itCount =
     maxIterationCount == -1 ? pointCount * 2 : maxIterationCount;
-  VecN<double> b(n), x(pointCount), y(n), p(pointCount), r(pointCount),
-    q(pointCount);
+  VecN<double> b(n);
+  VecN<double> x(pointCount);
+  VecN<double> y(n);
+  VecN<double> p(pointCount);
+  VecN<double> r(pointCount);
+  VecN<double> q(pointCount);
   b = T(0);
   for (int32_t dim = 0; dim < 3; ++dim) {
     x = T(0);
@@ -1996,7 +2010,8 @@ SmoothWithVertexConstraints(
   ComputeBoundaryVertices(
     triangles, vertexToTriangle, vtags, ttags, isBoundaryVertex);
 
-  std::vector<int32_t> vadj, tadj;
+  std::vector<int32_t> vadj;
+  std::vector<int32_t> tadj;
   const auto n = 2 * pointCount;
   SparseMatrix<T> A(n, pointCount);
 
@@ -2036,8 +2051,12 @@ SmoothWithVertexConstraints(
   const auto At = A.transpose();
   const auto itCount =
     maxIterationCount == -1 ? pointCount * 2 : maxIterationCount;
-  VecN<double> b(n), x(pointCount), y(n), p(pointCount), r(pointCount),
-    q(pointCount);
+  VecN<double> b(n);
+  VecN<double> x(pointCount);
+  VecN<double> y(n);
+  VecN<double> p(pointCount);
+  VecN<double> r(pointCount);
+  VecN<double> q(pointCount);
   b = T(0);
   for (int32_t dim = 0; dim < 3; ++dim) {
     x = T(0);

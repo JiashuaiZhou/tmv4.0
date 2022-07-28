@@ -48,14 +48,14 @@
 
 void
 encodeDecodeHM(
-  const std::string prefix,
-  const std::string inputPath,
+  const std::string& prefix,
+  const std::string& inputPath,
   const int width,
   const int height,
   const int bitDepth,
   const vmesh::ColourSpace colorSpace,
   const int frameCount,
-  const std::string configPath)
+  const std::string& configPath)
 {
   auto binLibsPath = prefix + "_libs.h265";
   auto binSoftPath = prefix + "_soft.h265";
@@ -147,8 +147,9 @@ encodeDecodeHM(
       << "  --BitstreamFile=" << binSoftPath << " "
       << "  --ReconFile=" << recSoftPath << " "
       << "  --QP=38 ";
-  if (disableSubProcessLog.disableLog())
+  if (disableSubProcessLog.disableLog()) {
     cmd << " 2>&1 > /dev/null";
+  }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -157,8 +158,9 @@ encodeDecodeHM(
   cmd << g_hmDecoderPath << " "
       << "  --BitstreamFile=" << binSoftPath << " "
       << "  --ReconFile=" << decSoftPath;
-  if (disableSubProcessLog.disableLog())
+  if (disableSubProcessLog.disableLog()) {
     cmd << " 2>&1 > /dev/null";
+  }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 

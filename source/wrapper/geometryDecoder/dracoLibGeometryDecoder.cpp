@@ -41,28 +41,28 @@
 namespace vmesh {
 
 template<typename T>
-DracoLibGeometryDecoder<T>::DracoLibGeometryDecoder()
-{}
+DracoLibGeometryDecoder<T>::DracoLibGeometryDecoder() = default;
 template<typename T>
-DracoLibGeometryDecoder<T>::~DracoLibGeometryDecoder()
-{}
-
+DracoLibGeometryDecoder<T>::~DracoLibGeometryDecoder() = default;
 
 template<typename T>
 void
 convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
 {
   draco::Mesh& mesh = *src;
-  auto posAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::POSITION);
-  auto nrmAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::NORMAL);
-  auto colAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::COLOR);
-  auto texAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::TEX_COORD);
+  const auto* posAtt =
+    mesh.GetNamedAttribute(draco::GeometryAttribute::POSITION);
+  const auto* nrmAtt =
+    mesh.GetNamedAttribute(draco::GeometryAttribute::NORMAL);
+  const auto* colAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::COLOR);
+  const auto* texAtt =
+    mesh.GetNamedAttribute(draco::GeometryAttribute::TEX_COORD);
   // position
   if (posAtt) {
     for (draco::AttributeValueIndex i(0);
          i < static_cast<uint32_t>(posAtt->size()); ++i) {
-      std::array<int32_t, 3> value;
-      if (!posAtt->ConvertValue<int32_t, 3>(i, &value[0])) {
+      std::array<int32_t, 3> value{};
+      if (!posAtt->ConvertValue<int32_t, 3>(i, value.data())) {
         return;
       }
       dst.addPoint(value[0], value[1], value[2]);
@@ -72,8 +72,8 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
   if (nrmAtt) {
     for (draco::AttributeValueIndex i(0);
          i < static_cast<uint32_t>(nrmAtt->size()); ++i) {
-      std::array<int32_t, 3> value;
-      if (!nrmAtt->ConvertValue<int32_t, 3>(i, &value[0])) {
+      std::array<int32_t, 3> value{};
+      if (!nrmAtt->ConvertValue<int32_t, 3>(i, value.data())) {
         return;
       }
       dst.addNormal(value[0], value[1], value[2]);
@@ -83,8 +83,8 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
   if (colAtt) {
     for (draco::AttributeValueIndex i(0);
          i < static_cast<uint32_t>(colAtt->size()); ++i) {
-      std::array<int32_t, 3> value;
-      if (!colAtt->ConvertValue<int32_t, 3>(i, &value[0])) {
+      std::array<int32_t, 3> value{};
+      if (!colAtt->ConvertValue<int32_t, 3>(i, value.data())) {
         return;
       }
       dst.addColour(value[0], value[1], value[2]);
@@ -94,15 +94,15 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
   if (texAtt) {
     for (draco::AttributeValueIndex i(0);
          i < static_cast<uint32_t>(texAtt->size()); ++i) {
-      std::array<int32_t, 2> value;
-      if (!texAtt->ConvertValue<int32_t, 2>(i, &value[0])) {
+      std::array<int32_t, 2> value{};
+      if (!texAtt->ConvertValue<int32_t, 2>(i, value.data())) {
         return;
       }
       dst.addTexCoord(value[0], value[1]);
     }
   }
   for (draco::FaceIndex i(0); i < mesh.num_faces(); ++i) {
-    auto& face = mesh.face(i);
+    const auto& face = mesh.face(i);
     const int32_t idx0 = posAtt->mapped_index(face[0]).value();
     const int32_t idx1 = posAtt->mapped_index(face[1]).value();
     const int32_t idx2 = posAtt->mapped_index(face[2]).value();

@@ -36,6 +36,7 @@
 #pragma once
 
 #include <cstdlib>
+#include<iostream>
 
 namespace vmesh {
 
@@ -62,22 +63,22 @@ struct VMCStats {
   void dump(const std::string& header, const int framerate) const
   {
     const auto byteCountToBitrate = 
-      (8.0 * framerate) / (frameCount * 1000000.0);
-    const auto baseMeshBitrate = baseMeshByteCount * byteCountToBitrate;
-    const auto motionBitrate = motionByteCount * byteCountToBitrate;
+      (8.0 * framerate) / ((double)frameCount * 1000000.0);
+    const auto baseMeshBitrate = (double)baseMeshByteCount * byteCountToBitrate;
+    const auto motionBitrate = (double)motionByteCount * byteCountToBitrate;
     const auto displacementBitrate =
-      displacementsByteCount * byteCountToBitrate;
-    const auto textureBitrate = textureByteCount * byteCountToBitrate;
-    const auto totalBitrate = totalByteCount * byteCountToBitrate;
+      (double)displacementsByteCount * byteCountToBitrate;
+    const auto textureBitrate = (double)textureByteCount * byteCountToBitrate;
+    const auto totalBitrate = (double)totalByteCount * byteCountToBitrate;
 
     const auto baseMeshBitsPerVertex =
-      baseMeshByteCount * 8.0 / baseMeshVertexCount;
+      (double)baseMeshByteCount * 8.0 / (double)baseMeshVertexCount;
     const auto motionBitsPerVertex =
-      motionByteCount * 8.0 / baseMeshVertexCount;
-    const auto textureBitsPerVertex = textureByteCount * 8.0 / vertexCount;
+      (double)motionByteCount * 8.0 / (double)baseMeshVertexCount;
+    const auto textureBitsPerVertex = (double)textureByteCount * 8.0 / (double)vertexCount;
     const auto displacementBitsPerVertex =
-      displacementsByteCount * 8.0 / vertexCount;
-    const auto totalBitsPerVertex = totalByteCount * 8.0 / vertexCount;
+      (double)displacementsByteCount * 8.0 / (double)vertexCount;
+    const auto totalBitsPerVertex = (double)totalByteCount * 8.0 / (double)vertexCount;
 
     std::cout << header << " frame count " << frameCount << '\n';
     std::cout << header << " face count " << faceCount << '\n';

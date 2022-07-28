@@ -96,7 +96,6 @@ private:
     VMCGroupOfFrames& gof,
     const VMCDecoderParameters& params);
 
-private:
   size_t _byteCounter = 0;
   VMCGroupOfFramesInfo _gofInfo;
   VMCSequenceParameterSet _sps;

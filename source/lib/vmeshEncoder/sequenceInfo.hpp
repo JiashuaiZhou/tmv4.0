@@ -52,23 +52,23 @@ public:
   VMCGroupOfFramesInfo& operator[]( int index ) { return sequenceInfo_[index]; }
 
   int generate(
-    const int frameCount,
-    const int startFrame,
-    const int maxGOFSize,
-    const bool analyzeGof,
+    int frameCount,
+    int startFrame,
+    int maxGOFSize,
+    bool analyzeGof,
     const std::string& inputPath);
 
-  int save(const std::string outputPath);
+  int save(std::string& outputPath);
 
   int load(
-    const int frameCount,
-    const int startFrame,
-    const int maxGOFSize,
-    const std::string groupOfFramesStructurePath);
-    
-    int gofCount()const {return (int)sequenceInfo_.size();}
+    int frameCount,
+    int startFrame,
+    int maxGOFSize,
+    std::string& groupOfFramesStructurePath);
 
-    void trace();
+  int gofCount() const { return (int)sequenceInfo_.size(); }
+
+  void trace();
 private:
   int frameCount_ = 0;
   int startFrame_ = 0;

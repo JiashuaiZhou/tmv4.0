@@ -38,17 +38,17 @@ namespace vmesh {
 template <class T>
 class VirtualColourConverter {
  public:
-  VirtualColourConverter() {}
-  ~VirtualColourConverter() {}
+   VirtualColourConverter() = default;
+   ~VirtualColourConverter() = default;
 
-  static std::shared_ptr<VirtualColourConverter<T>> create( uint8_t codecId );
+   static std::shared_ptr<VirtualColourConverter<T>> create(uint8_t codecId);
 
-  virtual void convert(
-    std::string configFile,
-    FrameSequence<T>& videoSrc,
-    FrameSequence<T>& videoDst ) = 0;
+   virtual void convert(
+     std::string configFile,
+     FrameSequence<T>& videoSrc,
+     FrameSequence<T>& videoDst) = 0;
 
-private:
+ private:
 };
 
 }  // namespace vmesh

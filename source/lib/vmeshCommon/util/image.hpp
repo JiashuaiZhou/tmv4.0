@@ -35,13 +35,14 @@
 
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 
 #include <cmath>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "util/matrix.hpp"
@@ -76,8 +77,9 @@ operator>>(std::istream& in, VideoCodecId& val)
   in >> str;
   val = VideoCodecId::UNKNOWN_VIDEO_CODEC;
 #if defined(USE_HM_VIDEO_CODEC)
-  if (str == "HM")
+  if (str == "HM") {
     val = VideoCodecId::HM;
+  }
 #endif
 #if defined(USE_VTM_VIDEO_CODEC)
   if (str == "VTM")
@@ -87,8 +89,9 @@ operator>>(std::istream& in, VideoCodecId& val)
   if (str == "FFMPEG")
     val = VideoCodecId::FFMPEG;
 #endif
-  if( val == VideoCodecId::UNKNOWN_VIDEO_CODEC )
+  if (val == VideoCodecId::UNKNOWN_VIDEO_CODEC) {
     in.setstate(std::ios::failbit);
+  }
   return in;
 }
 
@@ -133,20 +136,21 @@ operator>>(std::istream& in, ColourSpace& val)
 {
   std::string str;
   in >> str;
-  if (str == "YUV400p")
+  if (str == "YUV400p") {
     val = ColourSpace::YUV400p;
-  else if (str == "YUV420p")
+  } else if (str == "YUV420p") {
     val = ColourSpace::YUV420p;
-  else if (str == "YUV444p")
+  } else if (str == "YUV444p") {
     val = ColourSpace::YUV444p;
-  else if (str == "RGB444p")
+  } else if (str == "RGB444p") {
     val = ColourSpace::RGB444p;
-  else if (str == "BGR444p")
+  } else if (str == "BGR444p") {
     val = ColourSpace::BGR444p;
-  else if (str == "GBR444p")
+  } else if (str == "GBR444p") {
     val = ColourSpace::GBR444p;
-  else
+  } else {
     in.setstate(std::ios::failbit);
+  }
   return in;
 }
 
@@ -171,7 +175,7 @@ operator<<(std::ostream& out, ColourSpace val)
 
 static std::string
 createVideoName(
-  const std::string prefix,
+  const std::string& prefix,
   const int width,
   const int height,
   const int bits,
@@ -209,9 +213,11 @@ struct Plane {
   Plane& operator=(const Plane<D>& src)
   {
     resize(src.width(), src.height());
-    for (int i = 0; i < _height; i++)
-      for (int j = 0; j < _width; j++)
-        set(i, j , (T)src.get(i, j) );       
+    for (int i = 0; i < _height; i++) {
+      for (int j = 0; j < _width; j++) {
+        set(i, j , (T)src.get(i, j) );
+      }
+    }
     return *this;
   }
 
@@ -266,7 +272,7 @@ struct Plane {
   int height() const { return _height; }
   void clear() { _buffer.clear(); }
 
-  void log(const std::string str) const
+  void log(const std::string& str) const
   {
     printf("%s: ", str.c_str() );
     fflush(stdout);
@@ -276,8 +282,8 @@ struct Plane {
       }
       printf("\n");
     }
-  }  
-  void logF(const std::string str) const
+  }
+  void logF(const std::string& str) const
   {
     printf("%s: ", str.c_str());
     fflush(stdout);
@@ -396,8 +402,9 @@ public:
   Frame& operator=( const Frame<D>& src)
   {
     resize(src.width(), src.height(), src.colourSpace());
-    for (int i = 0; i < src.planeCount(); i++)
+    for (int i = 0; i < src.planeCount(); i++) {
       _planes[i] = src.plane(i);
+    }
     return *this;
   }
 
@@ -447,7 +454,7 @@ public:
     return true;
   }
 
-  void log(const std::string str) const
+  void log(const std::string& str) const
   {
     printf("%s: %dx%d \n", str.c_str(), _width, _height);
     fflush(stdout);
@@ -554,8 +561,8 @@ public:
   }
 
 private:
-  int _width;
-  int _height;
+  int _width{};
+  int _height{};
   ColourSpace _colourSpace;
   std::vector<Plane<T>> _planes;
 };
@@ -581,14 +588,16 @@ public:
   FrameSequence& operator=(const FrameSequence<D>& src)
   {
     resize(src.width(), src.height(), src.colourSpace(), src.frameCount());
-    for (int i = 0; i < src.frameCount(); i++)
+    for (int i = 0; i < src.frameCount(); i++) {
       _frames[i] = src.frame(i);
+    }
     return *this;
   }
   ~FrameSequence() = default;
 
-  std::string createName( std::string prefix, int bits ){
-    return createVideoName( prefix, _width, _height, bits, _colourSpace );
+  std::string createName(const std::string& prefix, int bits)
+  {
+    return createVideoName(prefix, _width, _height, bits, _colourSpace);
   }
   Frame<T>& operator[]( int frameIndex ) { return _frames[frameIndex]; }
   typename std::vector<Frame<T> >::iterator begin() { return _frames.begin(); }
@@ -660,8 +669,8 @@ public:
   }
 
 private:
-  int _width;
-  int _height;
+  int _width{};
+  int _height{};
   ColourSpace _colourSpace;
   std::vector<Frame<T>> _frames;
 };
@@ -799,11 +808,11 @@ PullPushPadding(Frame<T1>& input, const Plane<T2>& occupancy)
     Plane<float>* weights1 = &(levelOfDetail->weights);
     values1->resize(width1, height1,colourSpace);
     weights1->resize(width1, height1);
-    values1->fill(0.0f);
+    values1->fill(0.0F);
     for (int32_t i1 = 0; i1 < height1; ++i1) {
       for (int32_t j1 = 0; j1 < width1; ++j1) {
-        std::fill(v.begin(), v.end(), 0.0f);
-        float w1 = 0.0f;
+        std::fill(v.begin(), v.end(), 0.0F);
+        float w1 = 0.0F;
         for (int32_t k1 = 0; k1 < K; ++k1) {
           const auto i0 = (i1 << 1) + k1 - K2;
           if (i0 < 0 || i0 >= height0) {
@@ -815,14 +824,14 @@ PullPushPadding(Frame<T1>& input, const Plane<T2>& occupancy)
               continue;
             }
             const auto w0 =
-              kernel[k1][k2] * std::min(weights0->get(i0, j0), 1.0f);
+              kernel[k1][k2] * std::min(weights0->get(i0, j0), 1.0F);
             for (int32_t p = 0; p < planeCount; ++p) {
               v[p] += w0 * values0->plane(p)(i0, j0);
             }
             w1 += w0;
           }
         }
-        for (int32_t p = 0; w1 > 0.0f && p < planeCount; ++p) {
+        for (int32_t p = 0; w1 > 0.0F && p < planeCount; ++p) {
           values1->plane(p)(i1, j1) = v[p] / w1;
         }
         weights1->set(i1, j1, w1);
@@ -858,8 +867,8 @@ PullPushPadding(Frame<T1>& input, const Plane<T2>& occupancy)
 
     for (int32_t i0 = 0; i0 < heightCurrent; ++i0) {
       for (int32_t j0 = 0; j0 < widthCurrent; ++j0) {
-        std::fill(v.begin(), v.end(), 0.0f);
-        float omega0 = 0.0f;
+        std::fill(v.begin(), v.end(), 0.0F);
+        float omega0 = 0.0F;
         for (int32_t k1 = 0; k1 < K; ++k1) {
           const auto i1 = (i0 >> 1) + k1 - K2;
           if (i1 < 0 || i1 >= heightNext) {
@@ -871,22 +880,22 @@ PullPushPadding(Frame<T1>& input, const Plane<T2>& occupancy)
               continue;
             }
             const auto w1 =
-              kernel[k1][k2] * std::min(weightsNext->get(i1, j1), 1.0f);
+              kernel[k1][k2] * std::min(weightsNext->get(i1, j1), 1.0F);
             for (int32_t p = 0; p < planeCount; ++p) {
               v[p] += w1 * valuesNext->plane(p)(i1, j1);
             }
             omega0 += w1;
           }
         }
-        const auto w0 = std::min(1.0f, weightsCurrent->get(i0, j0));
+        const auto w0 = std::min(1.0F, weightsCurrent->get(i0, j0));
         ;
-        const auto w0Updated = std::min(1.0f, omega0) * (1.0f - w0) + w0;
+        const auto w0Updated = std::min(1.0F, omega0) * (1.0F - w0) + w0;
         tweights0->set(i0, j0, w0Updated);
         assert(omega0 > 0.0f);
         for (int32_t p = 0; p < planeCount; ++p) {
           const auto x0 = valuesCurrent->plane(p)(i0, j0);
           const auto y0 = v[p] / omega0;
-          tvalues0->plane(p)(i0, j0) = y0 * (1.0f - w0) + w0 * x0;
+          tvalues0->plane(p)(i0, j0) = y0 * (1.0F - w0) + w0 * x0;
         }
       }
     }
@@ -903,7 +912,7 @@ PullPushPadding(Frame<T1>& input, const Plane<T2>& occupancy)
           continue;
         }
         const auto value = std::round(vplane(i, j));
-        if (value >= 0.0f && value <= maxValue) {
+        if (value >= 0.0F && value <= maxValue) {
           plane.set(i, j, T1(value));
         } else if (value > maxValue) {
           plane.set(i, j, maxValue);
@@ -950,9 +959,9 @@ SparseLinearPadding(
       if (index >= 0) {
         const int32_t shift[4][2] = {{-1, -0}, {0, -1}, {1, 0}, {0, 1}};
         int32_t count = 0;
-        for (int32_t k = 0; k < 4; ++k) {
-          const auto i1 = i + shift[k][0];
-          const auto j1 = j + shift[k][1];
+        for (const auto* k : shift) {
+          const auto i1 = i + k[0];
+          const auto j1 = j + k[1];
           if (i1 < 0 || j1 < 0 || i1 >= height || j1 >= width) {
             continue;
           }
@@ -976,7 +985,9 @@ SparseLinearPadding(
   A.updatePointers();
   const auto itCount =
     maxIterationCount == -1 ? toPaddPixelCount * 2 : maxIterationCount;
-  VecN<double> r(toPaddPixelCount), p(toPaddPixelCount), q(toPaddPixelCount);
+  VecN<double> r(toPaddPixelCount);
+  VecN<double> p(toPaddPixelCount);
+  VecN<double> q(toPaddPixelCount);
   for (int32_t dim = 0; dim < planeCount; ++dim) {
     auto* x = X.row(dim);
     p = A * x;
@@ -1054,8 +1065,8 @@ bool LoadImage(
 bool SaveImage(
   const std::string& fileName,
   const Frame<uint8_t>& image,
-  const ImageFormat format = ImageFormat::PNG,
-  const int32_t quality = 100);
+  ImageFormat format = ImageFormat::PNG,
+  int32_t quality = 100);
 
 //============================================================================
 

@@ -52,18 +52,16 @@ namespace vmesh {
 struct metric_L2_double {
   template<class T, class DataSource>
   struct traits {
-    typedef nanoflann::L2_Adaptor<T, DataSource, double> distance_t;
+    using distance_t = nanoflann::L2_Adaptor<T, DataSource, double>;
   };
 };
 
-typedef KDTreeVectorOfVectorsAdaptor<
-  std::vector<Vec3<double>>,  // array type
-  double,                     // coordinate type
-  3,                          // num dimensions
-  metric_L2_double,           // distance class
-  int32_t                     // index type (eg size_t)
-  >
-  KdTree;
+using KdTree = KDTreeVectorOfVectorsAdaptor<
+  std::vector<Vec3<double>>,
+  double,
+  3,
+  metric_L2_double,
+  int32_t>;
 
 //============================================================================
 

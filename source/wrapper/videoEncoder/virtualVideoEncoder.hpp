@@ -59,17 +59,18 @@ struct VideoEncoderParameters {
 template <class T>
 class VirtualVideoEncoder {
  public:
-  VirtualVideoEncoder() {}
-  ~VirtualVideoEncoder() {}
+   VirtualVideoEncoder() = default;
+   ~VirtualVideoEncoder() = default;
 
-  static std::shared_ptr<VirtualVideoEncoder<T>> create( VideoCodecId codecId );
-  static VideoCodecId                                 getDefaultCodecId();
-  static bool                                       checkCodecId( VideoCodecId codecId );
+   static std::shared_ptr<VirtualVideoEncoder<T>> create(VideoCodecId codecId);
+   static VideoCodecId getDefaultCodecId();
+   static bool checkCodecId(VideoCodecId codecId);
 
-  virtual void encode( FrameSequence<T>&            videoSrc,
-                       VideoEncoderParameters& params,
-                       std::vector<uint8_t>&         bitstream,
-                       FrameSequence<T>&            videoRec ) = 0;
+   virtual void encode(
+     FrameSequence<T>& videoSrc,
+     VideoEncoderParameters& params,
+     std::vector<uint8_t>& bitstream,
+     FrameSequence<T>& videoRec) = 0;
 };
 
 }  // namespace vmesh

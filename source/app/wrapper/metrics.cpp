@@ -44,13 +44,13 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose;
+  bool verbose{};
   std::string srcMeshPath;
   std::string srcTexturePath;
   std::string decMeshPath;
   std::string decTexturePath;
-  int32_t startFrame;
-  int32_t frameCount;
+  int32_t startFrame{};
+  int32_t frameCount{};
   vmesh::VMCMetricsParameters metParams;
 };
 
@@ -101,8 +101,9 @@ try {
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
-  for (const auto arg : argv_unhandled)
+  for (const auto* const arg : argv_unhandled) {
     err.warn() << "Unhandled argument ignored: " << arg << '\n';
+  }
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -110,16 +111,21 @@ try {
     return false;
   }
 
-  if (params.srcMeshPath.empty())
+  if (params.srcMeshPath.empty()) {
     err.error() << "Src mesh not specified\n";
-  if (params.srcTexturePath.empty())
+  }
+  if (params.srcTexturePath.empty()) {
     err.error() << "Src texture not specified\n";
-  if (params.decMeshPath.empty())
+  }
+  if (params.decMeshPath.empty()) {
     err.error() << "Rec/dec mesh not specified\n";
-  if (params.decTexturePath.empty())
+  }
+  if (params.decTexturePath.empty()) {
     err.error() << "Rec/dec texture not specified\n";
-  if (err.is_errored)
+  }
+  if (err.is_errored) {
     return false;
+  }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
@@ -190,13 +196,15 @@ main(int argc, char* argv[])
   std::cout.precision( std::numeric_limits<float>::max_digits10 );
   
   Parameters params;
-  if (!parseParameters(argc, argv, params))
+  if (!parseParameters(argc, argv, params)) {
     return 1;
+  }
 
-  if (params.verbose)
+  if (params.verbose) {
     vmesh::vout.rdbuf(std::cout.rdbuf());
+  }
 
-  if ( metrics(params)) {
+  if (metrics(params) != 0) {
     std::cerr << "Error: can't compute metrics!\n";
     return 1;
   }

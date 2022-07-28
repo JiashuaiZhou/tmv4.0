@@ -57,7 +57,8 @@ SequenceInfo::generate(
   const bool analyzeGof,
   const std::string& inputPath)
 {
-  printf("SequenceInfo generate analyzeGof = %d \n",analyzeGof);
+  printf(
+    "SequenceInfo generate analyzeGof = %d \n", static_cast<int>(analyzeGof));
   startFrame_ = startFrame;
   frameCount_ = frameCount;
   groupOfFramesMaxSize_ = maxGOFSize;
@@ -90,7 +91,8 @@ SequenceInfo::generate(
       }
     }
   } else {
-    TriangleMesh<double> mesh0, mesh1;
+    TriangleMesh<double> mesh0;
+    TriangleMesh<double> mesh1;
     auto frameIndex0 = startFrame;
     const auto& name = expandNum(inputPath, frameIndex0);
     if (!mesh0.loadFromOBJ(name)) {
@@ -182,7 +184,7 @@ SequenceInfo::generate(
       }
       f += coherentFrameCount;
     }
-    if (framesInGOF) {
+    if (framesInGOF != 0) {
       const auto start = startFrameIndexGOF;
       const auto end = startFrameIndexGOF + framesInGOF;
       assert(start >= startFrame);
@@ -239,15 +241,14 @@ SequenceInfo::generate(
 }
 
 int
-SequenceInfo::save(const std::string outputPath)
+SequenceInfo::save(std::string& outputPath)
 {
   std::ofstream fout(outputPath);
   if (!fout.is_open()) {
     std::cerr << "Error: can't create output file " << outputPath << '\n';
     return 1;
   }
-  for (int gofIndex = 0; gofIndex < (int)sequenceInfo_.size(); gofIndex++) {
-    auto& gofInfo = sequenceInfo_[gofIndex];
+  for (auto& gofInfo : sequenceInfo_) {
     for (auto& frameInfo : gofInfo.framesInfo_) {
       auto frameIndex = frameInfo.frameIndex + gofInfo.startFrameIndex_;
       auto refIndex = frameInfo.referenceFrameIndex == -1
@@ -261,10 +262,10 @@ SequenceInfo::save(const std::string outputPath)
 
 int
 SequenceInfo::load(
-  const int frameCount,
-  const int startFrame,
-  const int maxGOFSize,
-  const std::string groupOfFramesStructurePath)
+  int frameCount,
+  int startFrame,
+  int maxGOFSize,
+  std::string& groupOfFramesStructurePath)
 {
   startFrame_ = startFrame;
   frameCount_ = frameCount;
@@ -301,7 +302,8 @@ SequenceInfo::load(
     int32_t frameCounter = 0;
 
     while (getline(fin, line) && frameCounter++ < frameCount_) {
-      size_t prev = 0, pos;
+      size_t prev = 0;
+      size_t pos = 0;
       tokens.resize(0);
       while ((pos = line.find_first_of(" ,;:/", prev)) != std::string::npos) {
         if (pos > prev) {

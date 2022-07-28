@@ -48,14 +48,14 @@ private:
   bool isDisable_ = false;
   std::stringstream binCoutStream_;
   std::stringstream binCerrStream_;
-  std::streambuf* oldCoutRdBuf_;
-  std::streambuf* oldCerrRdBuf_;
-  char binStdoutBuffer_[4096];
-  char binStderrBuffer_[4096];
-  FILE* binStdout_;
-  FILE* binStderr_;
-  FILE* oldStdout_;
-  FILE* oldStderr_;
+  std::streambuf* oldCoutRdBuf_{};
+  std::streambuf* oldCerrRdBuf_{};
+  char binStdoutBuffer_[4096]{};
+  char binStderrBuffer_[4096]{};
+  FILE* binStdout_{};
+  FILE* binStderr_{};
+  FILE* oldStdout_{};
+  FILE* oldStderr_{};
 
 public:
   void switchOnLog() { disableLog_ = false; }
@@ -71,10 +71,12 @@ public:
       // redirect printf
       binStdout_ = fmemopen(binStdoutBuffer_, 4096, "w");
       binStderr_ = fmemopen(binStderrBuffer_, 4096, "w");
-      if (!binStdout_)
+      if (binStdout_ == nullptr) {
         return;
-      if (!binStderr_)
+      }
+      if (binStderr_ == nullptr) {
         return;
+      }
       oldStdout_ = stdout;
       oldStderr_ = stderr;
       stdout = binStdout_;
@@ -97,7 +99,7 @@ public:
 };
 
 static std::string
-grep(const std::string& filename, std::string keyword)
+grep(const std::string& filename, const std::string& keyword)
 {
   std::ifstream in(filename.c_str());
   if (in.is_open()) {
@@ -111,7 +113,7 @@ grep(const std::string& filename, std::string keyword)
     }
   }
   in.close();
-  return std::string();
+  return {};
 }
 
 static inline bool
@@ -155,7 +157,7 @@ checkSoftwarePath()
   auto externalPath = {
     g_hmEncoderPath,    g_hmDecoderPath, g_hdrConvertPath,  g_dracoEncoderPath,
     g_dracoDecoderPath, g_mmMetricsPath, g_vmeshEncodePath, g_vmeshDecodePath};
-  for (auto& path : externalPath) {
+  for (const auto& path : externalPath) {
     if (!exists(path)) {
       printf("Software path not exists: %s \n", path.c_str());
       ret = false;

@@ -243,15 +243,15 @@ public:
   Mat4() = default;
   Mat4(const T a)
   {
-    for (int32_t i = 0; i < 4; ++i) {
+    for (auto& i : data) {
       for (int32_t j = 0; j < 4; ++j) {
-        data[i][j] = a;
+        i[j] = a;
       }
     }
   }
 
   Mat4(const Mat4& rhs) { memcpy(data, rhs.data, sizeof(data)); }
-  ~Mat4(void) = default;
+  ~Mat4() = default;
 
   friend Mat4 operator*(T lhs, const Mat4<T>& rhs)
   {
@@ -395,7 +395,9 @@ public:
   static void makeRotationEulerAngles(
     const T angleX, const T angleY, const T angleZ, Mat4<T>& mat)
   {
-    Mat4<T> Rx, Ry, Rz;
+    Mat4<T> Rx;
+    Mat4<T> Ry;
+    Mat4<T> Rz;
     makeRotationX(angleX, Rx);
     makeRotationY(angleY, Ry);
     makeRotationZ(angleZ, Rz);
@@ -620,16 +622,16 @@ public:
 
   Mat3(const T a)
   {
-    for (int32_t i = 0; i < 3; ++i) {
+    for (auto& i : data) {
       for (int32_t j = 0; j < 3; ++j) {
-        data[i][j] = a;
+        i[j] = a;
       }
     }
   }
 
   Mat3(const Mat3& rhs) { memcpy(data, rhs.data, sizeof(data)); }
 
-  ~Mat3(void) = default;
+  ~Mat3() = default;
 
   friend inline Mat3<T> operator*(T lhs, const Mat3<T>& rhs)
   {
@@ -728,7 +730,9 @@ public:
   static void makeRotationEulerAngles(
     const T angleX, const T angleY, const T angleZ, Mat3<T>& mat)
   {
-    Mat3<T> Rx, Ry, Rz;
+    Mat3<T> Rx;
+    Mat3<T> Ry;
+    Mat3<T> Rz;
     makeRotationX(angleX, Rx);
     makeRotationY(angleY, Ry);
     makeRotationZ(angleZ, Rz);
@@ -1082,12 +1086,12 @@ public:
 
   Matrix(const Matrix& matrix) { *this = matrix; }
 
-  ~Matrix(void) = default;
+  ~Matrix() = default;
 
 private:
   std::vector<T> _data;
-  int32_t _columnCount;
-  int32_t _rowCount;
+  int32_t _columnCount{};
+  int32_t _rowCount{};
 };
 
 //============================================================================

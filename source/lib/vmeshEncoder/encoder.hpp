@@ -50,14 +50,15 @@ namespace DirectX {
   {
     std::string str;
     in >> str;
-    if (str == "DEFAULT")
+    if (str == "DEFAULT") {
       val = UVATLAS_DEFAULT;
-    else if (str == "FAST")
+    } else if (str == "FAST") {
       val = UVATLAS_GEODESIC_FAST;
-    else if (str == "QUALITY")
+    } else if (str == "QUALITY") {
       val = UVATLAS_GEODESIC_QUALITY;
-    else
+    } else {
       in.setstate(std::ios::failbit);
+    }
     return in;
   }
 
@@ -84,10 +85,10 @@ namespace vmesh {
 static std::istream&
 operator>>(std::istream& in, SmoothingMethod& val)
 {
-  unsigned int tmp;
-  in >> tmp;
-  val = SmoothingMethod(tmp);
-  return in;
+    unsigned int tmp = 0;
+    in >> tmp;
+    val = SmoothingMethod(tmp);
+    return in;
 }
 
 //----------------------------------------------------------------------------
@@ -196,8 +197,8 @@ struct VMCEncoderParameters {
 
   // TextureParametrization  
   size_t maxCharts = size_t();
-  float maxStretch = 0.16667f;
-  float gutter = 2.f;
+  float maxStretch = 0.16667F;
+  float gutter = 2.F;
   size_t width = 512;
   size_t height = 512;
   DirectX::UVATLAS uvOptions = DirectX::UVATLAS_DEFAULT;
@@ -207,7 +208,7 @@ struct VMCEncoderParameters {
   bool subdivIsBase = false;
   bool subdivInter  = false;
   bool subdivInterWithMapping = false;
-  float maxAllowedD2PSNRLoss = 1.f;
+  float maxAllowedD2PSNRLoss = 1.F;
   GeometryParametrizationParameters intraGeoParams;
   GeometryParametrizationParameters interGeoParams;
 
@@ -237,25 +238,25 @@ public:
     const VMCEncoderParameters& params);
 
 private:
-  void unifyVertices(
+  static void unifyVertices(
     const VMCGroupOfFramesInfo& gofInfo,
     VMCGroupOfFrames& gof,
     const VMCEncoderParameters& params);
   int32_t computeDracoMapping(
     TriangleMesh<double> base,
     std::vector<int32_t>& mapping,
-    const int32_t frameIndex,
+    int32_t frameIndex,
     const VMCEncoderParameters& params) const;
   int32_t encodeSequenceHeader(
     const VMCGroupOfFrames& gof,
     Bitstream& bitstream,
     const VMCEncoderParameters& params) const;
-  int32_t
-  encodeFrameHeader(const VMCFrameInfo& frameInfo, Bitstream& bitstream) const;
-  int32_t computeDisplacements(
-    VMCFrame& frame, const VMCEncoderParameters& params) const;
-  int32_t quantizeDisplacements(
-    VMCFrame& frame, const VMCEncoderParameters& params) const;
+  static int32_t
+  encodeFrameHeader(const VMCFrameInfo& frameInfo, Bitstream& bitstream);
+  static int32_t
+  computeDisplacements(VMCFrame& frame, const VMCEncoderParameters& params);
+  static int32_t
+  quantizeDisplacements(VMCFrame& frame, const VMCEncoderParameters& params);
 
   int32_t init(
     const VMCGroupOfFrames& gof,
@@ -269,25 +270,25 @@ private:
     Bitstream& bitstream,
     VMCStats& stats,
     const VMCEncoderParameters& params) const;
-  int32_t compressMotion(
+  static int32_t compressMotion(
     const std::vector<Vec3<int32_t>>& triangles,
     const std::vector<Vec3<int32_t>>& current,
     const std::vector<Vec3<int32_t>>& reference,
     Bitstream& bitstream,
-    const VMCEncoderParameters& params) const;
-  int32_t computeDisplacementVideoFrame(
+    const VMCEncoderParameters& params);
+  static int32_t computeDisplacementVideoFrame(
     const VMCFrame& frame,
     Frame<uint16_t>& dispVideoFrame,  // ColourSpace::YUV444p
-    const VMCEncoderParameters& params) const;
+    const VMCEncoderParameters& params);
   int32_t compressDisplacementsVideo(
     Bitstream& bitstream, const VMCEncoderParameters& params);
   int32_t compressTextureVideo(
     VMCGroupOfFrames& gof,
     Bitstream& bitstream,
-    const VMCEncoderParameters& params);
+    const VMCEncoderParameters& params) const;
 
-  int32_t
-  transferTexture(VMCFrame& frame, const VMCEncoderParameters& params) const;
+  static int32_t
+  transferTexture(VMCFrame& frame, const VMCEncoderParameters& params);
 
   static int32_t transferTexture(
     const TriangleMesh<double>& targetMesh,
@@ -296,7 +297,6 @@ private:
     Frame<uint8_t>& outputTexture,        // ColourSpace::BGR444p
     const VMCEncoderParameters& params);
 
-private:
   VMCGroupOfFramesInfo _gofInfo;
   FrameSequence<uint16_t> _dispVideo; // ColourSpace::YUV444p
 };

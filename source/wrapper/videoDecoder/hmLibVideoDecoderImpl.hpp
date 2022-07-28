@@ -60,10 +60,10 @@ class hmLibVideoDecoderImpl {
   int                m_iPOCLastDisplay;
   int                m_iSkipFrame{};
   std::array<int, 2> m_outputBitDepth{};
-  int                m_internalBitDepths;
-  int                m_outputWidth;
-  int                m_outputHeight;
-  bool               m_bRGB2GBR;
+  int m_internalBitDepths{};
+  int m_outputWidth{};
+  int m_outputHeight{};
+  bool m_bRGB2GBR{};
 };
 
 }  // namespace vmesh

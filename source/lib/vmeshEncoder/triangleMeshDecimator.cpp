@@ -45,7 +45,7 @@ namespace vmesh {
 
 //============================================================================
 
-typedef double Real;
+using Real = double;
 
 //----------------------------------------------------------------------------
 
@@ -81,8 +81,8 @@ struct Quadratic {
 
   void zero()
   {
-    for (int i = 0; i < 10; ++i) {
-      _data[i] = Real(0);
+    for (double& i : _data) {
+      i = Real(0);
     }
   }
 
@@ -102,7 +102,7 @@ struct Quadratic {
 
   friend Quadratic operator+(const Quadratic& lhs, const Quadratic& rhs)
   {
-    Quadratic res;
+    Quadratic res{};
     for (int i = 0; i < 10; ++i) {
       res._data[i] = lhs._data[i] + rhs._data[i];
     }
@@ -127,32 +127,32 @@ struct Quadratic {
 
   Quadratic& operator+=(double rhs)
   {
-    for (int i = 0; i < 10; ++i) {
-      _data[i] += rhs;
+    for (double& i : _data) {
+      i += rhs;
     }
     return *this;
   }
 
   Quadratic& operator-=(double rhs)
   {
-    for (int i = 0; i < 10; ++i) {
-      _data[i] -= rhs;
+    for (double& i : _data) {
+      i -= rhs;
     }
     return *this;
   }
 
   Quadratic& operator*=(double rhs)
   {
-    for (int i = 0; i < 10; ++i) {
-      _data[i] *= rhs;
+    for (double& i : _data) {
+      i *= rhs;
     }
     return *this;
   }
 
   bool minDistPoint(Vec3<double>& point) const
   {
-    Mat3<double> M;
-    Mat3<double> iM;
+    Mat3<double> M{};
+    Mat3<double> iM{};
     M[0][0] = _data[0];
     M[0][1] = _data[1];
     M[0][2] = _data[2];
@@ -188,7 +188,7 @@ struct Quadratic {
       + _data[8] * z2 + _data[9];
   }
 
-  Real _data[10];
+  Real _data[10]{};
 };
 
 //============================================================================
@@ -287,8 +287,8 @@ public:
   }
 
 private:
-  int _size;
-  int _allocated;
+  int _size{};
+  int _allocated{};
   T* _data;
   T _data0[N];
   std::unique_ptr<T[]> _data1;
@@ -296,26 +296,26 @@ private:
 
 //----------------------------------------------------------------------------
 
-typedef SmallVector<int, 8> SmallIntVec;
+using SmallIntVec = SmallVector<int, 8>;
 
 //============================================================================
 
 class TriangleMeshDecimatorImpl {
   struct DVertex {
-    Vec3<double> _pos;
-    Quadratic _q;
-    int _tag;
+    Vec3<double> _pos{};
+    Quadratic _q{};
+    int _tag{};
     SmallIntVec _triangles;
     SmallIntVec _edges;
-    bool _valid;
+    bool _valid{};
   };
 
   struct DTriangle {
-    int _tag;
-    Vec3<int> _indices;
-    Vec3<double> _normal;
-    bool _zeroArea;
-    bool _valid;
+    int _tag{};
+    Vec3<int> _indices{};
+    Vec3<double> _normal{};
+    bool _zeroArea{};
+    bool _valid{};
 #if SIMPLIFY_MESH_TRACK_POINTS
     std::vector<int32_t> _trackedPointsIndexes;
 #endif  // SIMPLIFY_MESH_TRACK_POINTS
@@ -355,7 +355,9 @@ public:
     int triangleCount,
     const TriangleMeshDecimatorParameters& params)
   {
-    if (!triangles || !points || !pointCount || !triangleCount) {
+    if (
+      (triangles == nullptr) || (points == nullptr) || (pointCount == 0)
+      || (triangleCount == 0)) {
       return Error::UNEXPECTED_INPUT_DATA;
     }
     init(points, pointCount, triangles, triangleCount, params);
@@ -372,11 +374,11 @@ public:
       return res;
     }
 
-    if (dtriangleCount < _triangleCount || !dtriangles) {
+    if (dtriangleCount < _triangleCount || (dtriangles == nullptr)) {
       return Error::UNEXPECTED_INPUT_DATA;
     }
 
-    const auto triangles = reinterpret_cast<Vec3<int>*>(dtriangles);
+    auto* const triangles = reinterpret_cast<Vec3<int>*>(dtriangles);
     int tcount = 0;
     int count = 0;
     for (const auto& triangle : _triangles) {
@@ -410,7 +412,7 @@ public:
       return Error::UNEXPECTED_INPUT_DATA;
     }
 
-    if (tpoints) {
+    if (tpoints != nullptr) {
       for (int i = 0, j = 0; i < pointCount; ++i, j += 3) {
         const auto point = _trackedMesh.point(i) * _scale + _center;
         tpoints[j] = point[0];
@@ -419,7 +421,7 @@ public:
       }
     }
 
-    if (tindexes) {
+    if (tindexes != nullptr) {
       for (int i = 0; i < pointCount; ++i) {
         const auto tindex = _trackedPointToTriangle[i];
         assert(tindex >= -1);
@@ -451,11 +453,11 @@ private:
   Error decimatedPoints(
     double* const dpoints, int dpointCount, std::vector<int32_t>& vmap)
   {
-    if (dpointCount < _pointCount || !dpoints) {
+    if (dpointCount < _pointCount || (dpoints == nullptr)) {
       return Error::UNEXPECTED_INPUT_DATA;
     }
 
-    const auto points = reinterpret_cast<Vec3<double>*>(dpoints);
+    auto* const points = reinterpret_cast<Vec3<double>*>(dpoints);
     const auto pointCount0 = int(_vertices.size());
     vmap.resize(pointCount0, -1);
     int vcount = 0;
@@ -581,7 +583,7 @@ private:
       computeAdjacentVertices(vindex0, vadj);
       for (int i = 0, count = vadj.size(); i < count; ++i) {
         const auto vindex1 = vadj[i];
-        edgeCount += (vindex1 > vindex0);
+        edgeCount += static_cast<int>(vindex1 > vindex0);
       }
     }
     _edges.resize(edgeCount);
@@ -646,8 +648,8 @@ private:
   double computeCost(
     const Quadratic& q,
     const Vec3<double>& pos,
-    const int32_t vindex0,
-    const int32_t vindex1,
+    int32_t vindex0,
+    int32_t vindex1,
     const TriangleMeshDecimatorParameters& params);
 
   void computeAdjacentVertices(int vindex, SmallIntVec& vadj)
@@ -744,7 +746,7 @@ private:
     const auto& tadj0 = _vertices[vindex0]._triangles;
     for (int i = 0, count = tadj0.size(); i < count; ++i) {
       const auto tindex = tadj0[i];
-      if (_triangles[tindex]._tag) {
+      if (_triangles[tindex]._tag != 0) {
         tadj.push_back(tindex);
       }
     }
@@ -804,7 +806,8 @@ private:
       if (triangle._tag != 1 || triangle._zeroArea) {
         continue;
       }
-      int j, k;
+      int j = 0;
+      int k = 0;
       if (triangle._indices[0] == vindex) {
         j = triangle._indices[1];
         k = triangle._indices[2];
@@ -888,7 +891,7 @@ private:
         const auto vindex = trackedPointsIndexes[p];
         assert(vindex >= 0 && vindex < _trackedMesh.pointCount());
         trackedPointsPositions[p] = _trackedMesh.point(vindex);
-        Vec3<double> tpoint0;
+        Vec3<double> tpoint0{};
         const auto tindex0 = trackPoint(vindex, modified, tpoint0, params);
         if (tindex0 >= 0) {
           _trackedMesh.setPoint(vindex, tpoint0);
@@ -949,12 +952,11 @@ private:
     return true;
   }
 
-private:
-  int _pointCount;
-  int _triangleCount;
+  int _pointCount{};
+  int _triangleCount{};
 
-  double _scale;
-  Vec3<double> _center;
+  double _scale{};
+  Vec3<double> _center{};
 
   std::vector<DVertex> _vertices;
   std::vector<DTriangle> _triangles;
@@ -977,12 +979,13 @@ PrintProgress(double progress)
   std::cout << "\t [";
   int pos = barWidth * progress;
   for (int i = 0; i < barWidth; ++i) {
-    if (i < pos)
+    if (i < pos) {
       std::cout << '=';
-    else if (i == pos)
+    } else if (i == pos) {
       std::cout << '>';
-    else
+    } else {
       std::cout << ' ';
+    }
   }
   std::cout << "] " << int(progress * 100.0) << " %\r";
   std::cout.flush();
@@ -995,7 +998,8 @@ void
 TriangleMeshDecimatorImpl::decimate(
   const TriangleMeshDecimatorParameters& params)
 {
-  SmallIntVec modified0, modified1;
+  SmallIntVec modified0;
+  SmallIntVec modified1;
   SmallIntVec deleted;
   const auto maxError = -params.maxError;
   const double triangleCount0 = _triangleCount;
@@ -1118,7 +1122,7 @@ TriangleMeshDecimatorImpl::decimate(
 #if SIMPLIFY_MESH_TRACK_POINTS
             resetIncidentTrianglesTrackedPoints(vindex0);
             for (const auto vindex : trackedPointsIndexes) {
-              Vec3<double> tpoint0;
+              Vec3<double> tpoint0{};
               const auto tindex0 = trackPoint(
                 vindex, _vertices[vindex0]._triangles, tpoint0, params);
               assert(tindex0 >= 0);
@@ -1136,7 +1140,8 @@ TriangleMeshDecimatorImpl::decimate(
             for (int32_t i = 0; i < tcount; ++i) {
               const auto tindex = _vertices[vindex0]._triangles[i];
               const auto& tri = _triangles[tindex]._indices;
-              int32_t a, b;
+              int32_t a = 0;
+              int32_t b = 0;
               if (tri[0] == vindex0) {
                 a = tri[1];
                 b = tri[2];
@@ -1237,7 +1242,7 @@ TriangleMeshDecimatorImpl::computeEdgeCollapseCost(
     }
   }
 
-  Vec3<double> posOptimal;
+  Vec3<double> posOptimal{};
   if (
     params.vertexPlacement == VertexPlacement::OPTIMAL
     && q.minDistPoint(posOptimal)) {

@@ -69,8 +69,9 @@ try {
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
-  for (const auto arg : argv_unhandled)
+  for (const auto* const arg : argv_unhandled) {
     err.warn() << "Unhandled argument ignored: " << arg << '\n';
+  }
 
   if ( print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -78,8 +79,9 @@ try {
     return false;
   }
 
-  if (err.is_errored)
+  if (err.is_errored) {
     return false;
+  }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
@@ -106,12 +108,14 @@ main(int argc, char* argv[])
 
   ::testing::InitGoogleTest(&argc, argv);
 
-  if (!parseParameters(argc, argv))
+  if (!parseParameters(argc, argv)) {
     return 1;
+  }
 
-  if( testParams.verbose )
-    disableSubProcessLog.switchOnLog();  
-  
+  if (testParams.verbose) {
+    disableSubProcessLog.switchOnLog();
+  }
+
   return RUN_ALL_TESTS();
   return 0;
 }

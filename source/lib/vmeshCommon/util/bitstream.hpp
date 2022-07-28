@@ -77,7 +77,7 @@ struct Bitstream {
     union {
       T u;
       uint8_t u8[sizeof(T)];
-    } source;
+    } source{};
     source.u = u;
     if (systemEndianness() == Endianness::LITTLE) {
       for (size_t k = 0; k < sizeof(T); k++) {

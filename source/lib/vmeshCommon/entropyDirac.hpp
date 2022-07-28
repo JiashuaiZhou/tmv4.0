@@ -38,9 +38,8 @@
 #include <schroedinger/schroarith.h>
 
 #include <algorithm>
-#include <assert.h>
-#include <stdlib.h>
-#include <algorithm>
+#include <cassert>
+#include <cstdlib>
 #include <memory>
 #include <vector>
 #include <stdexcept>
@@ -77,7 +76,7 @@ namespace dirac {
   inline int approxSymbolProbability(int bit, SchroContext& model)
   {
     int p = std::max(1, model.probability >> 9);
-    return bit ? 128 - p : p;
+    return bit != 0 ? 128 - p : p;
   }
 
   //==========================================================================
@@ -103,9 +102,9 @@ namespace dirac {
     void setBuffer(size_t size, uint8_t* buffer)
     {
       _bufSize = size;
-      if (buffer)
+      if (buffer != nullptr) {
         _buf = _bufWr = buffer;
-      else {
+      } else {
         allocatedBuffer.reset(new uint8_t[size]);
         _buf = _bufWr = allocatedBuffer.get();
       }
@@ -150,20 +149,20 @@ namespace dirac {
   private:
     static void writeByteCallback(uint8_t byte, void* thisptr)
     {
-      auto _this = reinterpret_cast<ArithmeticEncoder*>(thisptr);
-      if (_this->_bufSize == 0)
+      auto* _this = reinterpret_cast<ArithmeticEncoder*>(thisptr);
+      if (_this->_bufSize == 0) {
         throw std::runtime_error("Aec stream overflow");
+      }
       _this->_bufSize--;
       *_this->_bufWr++ = byte;
     }
 
     //------------------------------------------------------------------------
 
-  private:
-    ::SchroArith impl;
-    uint8_t* _buf;
-    uint8_t* _bufWr;
-    size_t _bufSize;
+    ::SchroArith impl{};
+    uint8_t* _buf{};
+    uint8_t* _bufWr{};
+    size_t _bufSize{};
     std::unique_ptr<uint8_t[]> allocatedBuffer;
   };
 
@@ -210,14 +209,14 @@ namespace dirac {
   private:
     static uint8_t readByteCallback(void* thisptr)
     {
-      auto _this = reinterpret_cast<ArithmeticDecoder*>(thisptr);
-      if (!_this->_bufferLen)
+      auto* _this = reinterpret_cast<ArithmeticDecoder*>(thisptr);
+      if (_this->_bufferLen == 0U) {
         return 0xff;
+      }
       _this->_bufferLen--;
       return *_this->_buffer++;
     }
 
-  private:
     ::SchroArith impl;
 
     // the user supplied buffer.

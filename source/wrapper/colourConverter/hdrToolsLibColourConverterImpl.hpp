@@ -55,8 +55,6 @@
 #include "ToneMapping.H"
 #include "ProjectParameters.H"
 
-#include "util/image.hpp"
-
 namespace vmesh {
 
 template <class T>
@@ -64,9 +62,12 @@ class HdrToolsLibColourConverterImpl {
  public:
   HdrToolsLibColourConverterImpl();
   ~HdrToolsLibColourConverterImpl();
-  void convert( std::string configFile, FrameSequence<T>& videoSrc, FrameSequence<T>& videoDst );
+  void convert(
+    const std::string& configFile,
+    FrameSequence<T>& videoSrc,
+    FrameSequence<T>& videoDst);
 
- private:
+private:
   void init( ProjectParameters* inputParams );
   void process( ProjectParameters* inputParams, FrameSequence<T>& videoSrc, FrameSequence<T>& videoDst );
   void destroy();
@@ -74,8 +75,8 @@ class HdrToolsLibColourConverterImpl {
   int                 m_nFrameStores;
   hdrtoolslib::Frame* m_oFrameStore;                 // picture storage for output frames
   hdrtoolslib::Frame* m_iFrameStore;                 // picture storage for input frames
-  hdrtoolslib::Frame* m_pFrameStore[7];              // picture storage for processing
-                                                     // frames
+  hdrtoolslib::Frame* m_pFrameStore[7]{};  // picture storage for processing
+                                           // frames
   hdrtoolslib::Frame*          m_croppedFrameStore;  // cropped frame store
   hdrtoolslib::Frame*          m_convertFrameStore;  // pixel type conversion frame store
   hdrtoolslib::Frame*          m_colorSpaceFrame;
@@ -105,25 +106,25 @@ class HdrToolsLibColourConverterImpl {
                                                             // OpenEXR inputs
   hdrtoolslib::TransferFunction* m_inputTransferFunction;   // Transfer function
   hdrtoolslib::TransferFunction* m_outputTransferFunction;  // Transfer function
-  bool                           m_useSingleTransferStep;
-  int                            m_startFrame;
-  bool                           m_filterInFloat;
+  bool m_useSingleTransferStep{};
+  int m_startFrame{};
+  bool m_filterInFloat{};
   bool                           m_changeColorPrimaries;
-  bool                           m_bUseChromaDeblocking;
-  bool                           m_bUseWienerFiltering;
-  bool                           m_bUse2DSepFiltering;
-  bool                           m_bUseNLMeansFiltering;
-  bool                           m_b2DSepMode;
-  int                            m_cropOffsetLeft;
-  int                            m_cropOffsetTop;
-  int                            m_cropOffsetRight;
-  int                            m_cropOffsetBottom;
-  int                            m_width;
-  int                            m_height;
+  bool m_bUseChromaDeblocking{};
+  bool m_bUseWienerFiltering{};
+  bool m_bUse2DSepFiltering{};
+  bool m_bUseNLMeansFiltering{};
+  bool m_b2DSepMode{};
+  int m_cropOffsetLeft{};
+  int m_cropOffsetTop{};
+  int m_cropOffsetRight{};
+  int m_cropOffsetBottom{};
+  int m_width{};
+  int m_height{};
   hdrtoolslib::IOVideo*          m_inputFile;
   hdrtoolslib::IOVideo*          m_outputFile;
-  int                            m_cropWidth;
-  int                            m_cropHeight;
+  int m_cropWidth{};
+  int m_cropHeight{};
   hdrtoolslib::Input*            m_inputFrame;   // input frames
   hdrtoolslib::Output*           m_outputFrame;  // output frames
 };

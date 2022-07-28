@@ -39,10 +39,10 @@
 
 using namespace vmesh;
 
-template <typename T>
-HdrToolsLibColourConverter<T>::HdrToolsLibColourConverter() {}
-template <typename T>
-HdrToolsLibColourConverter<T>::~HdrToolsLibColourConverter() {}
+template<typename T>
+HdrToolsLibColourConverter<T>::HdrToolsLibColourConverter() = default;
+template<typename T>
+HdrToolsLibColourConverter<T>::~HdrToolsLibColourConverter() = default;
 
 template <typename T>
 void HdrToolsLibColourConverter<T>::convert( std::string        configFile,

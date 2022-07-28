@@ -168,7 +168,7 @@ struct VMCGroupOfFramesInfo {
     printf(
       "  - Gof %2d: frameCount = %d startFrame = %d \n", index_, frameCount_,
       startFrameIndex_);
-    for (auto& frameInfo : framesInfo_) {
+    for (const auto& frameInfo : framesInfo_) {
       printf(
         "    - frameIndex = %3d refIndex = %3d type = %s \n", 
         frameInfo.frameIndex, frameInfo.referenceFrameIndex,
@@ -235,7 +235,8 @@ reconstructDisplacementFromVideoFrame(
       (blockIndex % geometryVideoWidthInBlocks) * geometryVideoBlockSize;
     const auto y0 =
       (blockIndex / geometryVideoWidthInBlocks) * geometryVideoBlockSize;
-    int32_t x, y;
+    int32_t x = 0;
+    int32_t y = 0;
     computeMorton2D(indexWithinBlock, x, y);
     assert(x < geometryVideoBlockSize);
     assert(y < geometryVideoBlockSize);
@@ -288,7 +289,8 @@ applyDisplacements(
     const auto& d = disp[v];
     if (displacementCoordinateSystem == DisplacementCoordinateSystem::LOCAL) {
       const auto n = rec.normal(v);
-      Vec3<double> t, b;
+      Vec3<double> t{};
+      Vec3<double> b{};
       computeLocalCoordinatesSystem(n, t, b);
       rec.point(v) += d[0] * n + d[1] * t + d[2] * b;
     } else {
@@ -310,7 +312,8 @@ inverseQuantizeDisplacements(
   const auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   const auto lodCount = int32_t(infoLevelOfDetails.size());
   assert(lodCount > 0);
-  double iscale[3], ilodScale[3];
+  double iscale[3];
+  double ilodScale[3];
   for (int32_t k = 0; k < 3; ++k) {
     const auto qp = liftingQuantizationParameters[k];
     iscale[k] =

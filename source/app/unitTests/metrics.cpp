@@ -243,7 +243,11 @@ TEST(metrics, compare)
   std::string c2a = grep("metric_pcc.log", "   c[2],PSNRF         : ");
 
   auto pcc = metrics.getPccResults();
-  std::ostringstream d1b, d2b, c0b, c1b, c2b;
+  std::ostringstream d1b;
+  std::ostringstream d2b;
+  std::ostringstream c0b;
+  std::ostringstream c1b;
+  std::ostringstream c2b;
   d1b << std::setprecision(std::numeric_limits<float>::max_digits10) << pcc[0];
   d2b << std::setprecision(std::numeric_limits<float>::max_digits10) << pcc[1];
   c0b << std::setprecision(std::numeric_limits<float>::max_digits10) << pcc[2];

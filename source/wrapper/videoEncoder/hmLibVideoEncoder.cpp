@@ -37,10 +37,10 @@
 
 namespace vmesh {
 
-template <typename T>
-hmLibVideoEncoder<T>::hmLibVideoEncoder() {}
-template <typename T>
-hmLibVideoEncoder<T>::~hmLibVideoEncoder() {}
+template<typename T>
+hmLibVideoEncoder<T>::hmLibVideoEncoder() = default;
+template<typename T>
+hmLibVideoEncoder<T>::~hmLibVideoEncoder() = default;
 
 template<typename T>
 void
@@ -69,13 +69,15 @@ hmLibVideoEncoder<T>::encode(
     videoSrc.colourSpace() == ColourSpace::YUV444p
     || videoSrc.colourSpace() == ColourSpace::RGB444p
     || videoSrc.colourSpace() == ColourSpace::BGR444p
-    || videoSrc.colourSpace() == ColourSpace::GBR444p)
+    || videoSrc.colourSpace() == ColourSpace::GBR444p) {
     cmd << " --InputChromaFormat=444";
-  else
+  } else {
     cmd << " --InputChromaFormat=420";
+  }
 
-  if( params.qp_ != -8 )
+  if (params.qp_ != -8) {
     cmd << " --QP=" << params.qp_;
+  }
   cmd << " --InputBitDepth=" << params.inputBitDepth_;
   cmd << " --OutputBitDepth=" << params.outputBitDepth_;
   cmd << " --OutputBitDepthC=" << params.outputBitDepth_;

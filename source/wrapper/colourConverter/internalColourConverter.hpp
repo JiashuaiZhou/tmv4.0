@@ -150,8 +150,8 @@ private:
     size_t dstNumByte,
     size_t filter);
 
-  void RGBtoFloatRGB(
-    const Plane<T>& src, Plane<float>& dst, const size_t nbyte) const;
+  void
+  RGBtoFloatRGB(const Plane<T>& src, Plane<float>& dst, size_t nbyte) const;
 
   void convertRGBToYUV(
     const Plane<float>& R,
@@ -190,16 +190,10 @@ private:
 
   // TODO: This currently can't handle 10-bit. A new parameter is needed.
   void floatYUVToYUV(
-    const Plane<float>& src,
-    Plane<T>& dst,
-    const bool chroma,
-    const size_t nbyte) const;
+    const Plane<float>& src, Plane<T>& dst, bool chroma, size_t nbyte) const;
 
   void YUVtoFloatYUV(
-    const Plane<T>& src,
-    Plane<float>& dst,
-    const bool chroma,
-    const size_t nbBytes) const;
+    const Plane<T>& src, Plane<float>& dst, bool chroma, size_t nbBytes) const;
 
   void convertYUVToRGB(
     const Plane<float>& Y,
@@ -209,27 +203,29 @@ private:
     Plane<float>& G,
     Plane<float>& B) const;
 
-  void floatRGBToRGB(
-    const Plane<float>& src, Plane<T>& dst, const size_t nbyte) const;
+  void
+  floatRGBToRGB(const Plane<float>& src, Plane<T>& dst, size_t nbyte) const;
 
   void downsampling(
     const Plane<float>& src,
     Plane<float>& dst,
-    const int maxValue,
-    const size_t filter) const;
+    int maxValue,
+    size_t filter) const;
 
   void upsampling(
     const Plane<float>& src,
     Plane<float>& dst,
-    const int maxValue,
-    const size_t filter) const;
+    int maxValue,
+    size_t filter) const;
 
   inline void copy(const Plane<float>& src, Plane<float>& dst) const
   {
     dst.resize(src.width(), src.height());
-    for (int j = 0; j < src.height(); j++)
-      for (int i = 0; i < src.width(); i++)
+    for (int j = 0; j < src.height(); j++) {
+      for (int i = 0; i < src.width(); i++) {
         dst(j, i) = src(j, i);
+      }
+    }
   }
 
   inline float downsamplingHorizontal(
@@ -240,7 +236,7 @@ private:
   {
     const auto width = plane.width();
     const float scale =
-      1.0f / ((float)(1 << ((int)filter.horizontal_.shift_)));
+      1.0F / ((float)(1 << ((int)filter.horizontal_.shift_)));
     const float offset = 0.00000000;
     const int position = int(filter.horizontal_.data_.size() - 1) >> 1;
     double value = 0;
@@ -259,7 +255,7 @@ private:
   {
     const auto height = plane.height();
     const float offset = 0;
-    const float scale = 1.0f / ((float)(1 << ((int)filter.vertical_.shift_)));
+    const float scale = 1.0F / ((float)(1 << ((int)filter.vertical_.shift_)));
     const int position = int(filter.vertical_.data_.size() - 1) >> 1;
     double value = 0;
     for (int i = 0; i < (int)filter.vertical_.data_.size(); i++) {
@@ -276,7 +272,7 @@ private:
     const int j0) const
   {
     const auto height = plane.height();
-    const float scale = 1.0f / ((float)(1 << ((int)filter.vertical0_.shift_)));
+    const float scale = 1.0F / ((float)(1 << ((int)filter.vertical0_.shift_)));
     const float offset = 0.00000000;
     const int position = int(filter.vertical0_.data_.size() + 1) >> 1;
     float value = 0;
@@ -294,7 +290,7 @@ private:
     int j0) const
   {
     const auto height = plane.height();
-    const float scale = 1.0f / ((float)(1 << ((int)filter.vertical1_.shift_)));
+    const float scale = 1.0F / ((float)(1 << ((int)filter.vertical1_.shift_)));
     const float offset = 0.00000000;
     const int position = int(filter.vertical1_.data_.size() + 1) >> 1;
     float value = 0;
@@ -313,7 +309,7 @@ private:
   {
     const auto width = plane.width();
     const float scale =
-      1.0f / ((float)(1 << ((int)filter.horizontal0_.shift_)));
+      1.0F / ((float)(1 << ((int)filter.horizontal0_.shift_)));
     const float offset = 0.00000000;
     const int position = int(filter.horizontal0_.data_.size() + 1) >> 1;
     float value = 0;
@@ -332,7 +328,7 @@ private:
   {
     const auto width = plane.width();
     const float scale =
-      1.0f / ((float)(1 << ((int)filter.horizontal1_.shift_)));
+      1.0F / ((float)(1 << ((int)filter.horizontal1_.shift_)));
     const float offset = 0.00000000;
     const int position = int(filter.horizontal1_.data_.size() + 1) >> 1;
     float value = 0;

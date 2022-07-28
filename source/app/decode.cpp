@@ -49,7 +49,7 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose;
+  bool verbose{};
 
   std::string inputMeshPath;
   std::string inputTexturePath;
@@ -130,8 +130,9 @@ try {
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
-  for (const auto arg : argv_unhandled)
+  for (const auto* const arg : argv_unhandled) {
     err.warn() << "Unhandled argument ignored: " << arg << '\n';
+  }
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -139,23 +140,29 @@ try {
     return false;
   }
 
-  if (params.compressedStreamPath.empty())
+  if (params.compressedStreamPath.empty()) {
     err.error() << "compressed input/output not specified\n";
+  }
 
-  if (params.decodedMeshPath.empty())
+  if (params.decodedMeshPath.empty()) {
     err.error() << "decoded mesh not specified\n";
+  }
 
-  if (params.decodedTexturePath.empty())
+  if (params.decodedTexturePath.empty()) {
     err.error() << "decoded texture not specified\n";
+  }
 
-  if (params.decodedMaterialLibPath.empty())
+  if (params.decodedMaterialLibPath.empty()) {
     err.error() << "decoded materials not specified\n";
+  }
 
-  if (params.decParams.textureVideoHDRToolDecConfig.empty())
+  if (params.decParams.textureVideoHDRToolDecConfig.empty()) {
     err.error() << "hdrtools decoder config not specified\n";
+  }
 
-  if (err.is_errored)
+  if (err.is_errored) {
     return false;
+  }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
@@ -224,18 +231,20 @@ decompress(const Parameters& params)
     // Decompress
     vmesh::VMCGroupOfFrames gof;
     auto start = std::chrono::steady_clock::now();
-    if (decoder.decompress(
-          bitstream, gofInfo, gof, byteCounter, params.decParams)) {
+    if (
+      decoder.decompress(
+        bitstream, gofInfo, gof, byteCounter, params.decParams)
+      != 0) {
       std::cerr << "Error: can't decompress group of frames!\n";
       return -1;
-    }    
+    }
     printf("gof.stats.frameCount = %d \n",gof.stats.frameCount);
     auto end = std::chrono::steady_clock::now();
     gof.stats.processingTimeInSeconds =
       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     // Save reconsctructed models
-    if (saveGroupOfFrames(gofInfo, gof, params)) {
+    if (saveGroupOfFrames(gofInfo, gof, params) != 0) {
       std::cerr << "Error: can't save dec group of frames!\n";
       return -1;
     }
@@ -269,13 +278,15 @@ main(int argc, char* argv[])
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params))
+  if (!parseParameters(argc, argv, params)) {
     return 1;
+  }
 
-  if (params.verbose)
+  if (params.verbose) {
     vmesh::vout.rdbuf(std::cout.rdbuf());
+  }
 
-  if (decompress(params)) {
+  if (decompress(params) != 0) {
     std::cerr << "Error: can't decompress animation!\n";
     return 1;
   }

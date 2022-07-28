@@ -32,31 +32,27 @@
  */
 
 #ifndef __hmLibVideoEncoderImpl_H__
-#define __hmLibVideoEncoderImpl_H__
+#  define hmLibVideoEncoderImpl_H_
 
+#  ifdef USE_HM_VIDEO_CODEC
+#    include "util/image.hpp"
 
-
-#ifdef USE_HM_VIDEO_CODEC
-#include "util/image.hpp"
-
-
-#include <list>
-#include <ostream>
-#include "TLibEncoder/TEncTop.h"
-#include "TLibCommon/AccessUnit.h"
-#include "hmLibVideoEncoderCfg.hpp"
-#include <list>
-#include <fstream>
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <iomanip>
-#include "TLibEncoder/AnnexBwrite.h"
-#if EXTENSION_360_VIDEO
-#include "TAppEncHelper360/TExt360AppEncTop.h"
-#endif
-#include "Utilities/program_options_lite.h"
+#    include <list>
+#    include <ostream>
+#    include "TLibEncoder/TEncTop.h"
+#    include "TLibCommon/AccessUnit.h"
+#    include "hmLibVideoEncoderCfg.hpp"
+#    include <fstream>
+#    include <cstdlib>
+#    include <cstdio>
+#    include <fcntl.h>
+#    include <cassert>
+#    include <iomanip>
+#    include "TLibEncoder/AnnexBwrite.h"
+#    if EXTENSION_360_VIDEO
+#      include "TAppEncHelper360/TExt360AppEncTop.h"
+#    endif
+#    include "Utilities/program_options_lite.h"
 
 namespace vmesh {
 
@@ -72,13 +68,14 @@ class hmLibVideoEncoderImpl : public hmLibVideoEncoderCfg {
  public:
   hmLibVideoEncoderImpl();
 
-  ~hmLibVideoEncoderImpl();
+  ~hmLibVideoEncoderImpl() override;
 
-  Void encode( FrameSequence<T>&    videoSrc,
-               std::string        arguments,
-               std::vector<uint8_t>& bitstream,
+  Void encode(
+    FrameSequence<T>& videoSrc,
+    const std::string& arguments,
+    std::vector<uint8_t>& bitstream,
 
-               FrameSequence<T>& videoRec );
+    FrameSequence<T>& videoRec);
   // #if PCC_CF_EXT
   // void setLogger( PCCLogger& logger ) { logger_ = &logger; }
   // #endif
@@ -107,8 +104,8 @@ class hmLibVideoEncoderImpl : public hmLibVideoEncoderCfg {
   Int                   m_iFrameRcvd;
   UInt                  m_essentialBytes;
   UInt                  m_totalBytes;
-  int                   m_outputWidth;
-  int                   m_outputHeight;
+  int m_outputWidth{};
+  int m_outputHeight{};
 };
 
 }  // namespace vmesh

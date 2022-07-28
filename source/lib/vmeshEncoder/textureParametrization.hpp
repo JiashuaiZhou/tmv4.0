@@ -53,8 +53,7 @@ public:
   TextureParametrization() = default;
   ~TextureParametrization() = default;
 
-  bool generate(
-    VMCFrame& frame, const VMCEncoderParameters& params);
+  static bool generate(VMCFrame& frame, const VMCEncoderParameters& params);
 };
 
 }  // namespace vmesh

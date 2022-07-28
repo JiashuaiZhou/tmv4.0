@@ -52,10 +52,10 @@ void hmLibVideoDecoderImpl<T>::decode( std::vector<uint8_t>& bitstream, size_t o
   std::string                         s( reinterpret_cast<char*>( bitstream.data() ), bitstream.size() );
   std::istringstream                  iss( s );
   std::istream&                       bitstreamFile = iss;
-  Int                                 poc;
-  pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic = NULL;
+  Int poc = 0;
+  pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic = nullptr;
   pcc_hm::InputByteStream             bytestream( bitstreamFile );
-  if ( outputBitDepth ) {
+  if (outputBitDepth != 0U) {
     m_outputBitDepth[CHANNEL_TYPE_LUMA]   = outputBitDepth;
     m_outputBitDepth[CHANNEL_TYPE_CHROMA] = outputBitDepth;
   }
@@ -109,7 +109,7 @@ void hmLibVideoDecoderImpl<T>::decode( std::vector<uint8_t>& bitstream, size_t o
       m_pTDecTop->setFirstSliceInPicture( true );
     }
 
-    if ( pcListPic ) {
+    if (pcListPic != nullptr) {
       if ( bNewPicture ) {
         if ( m_pTDecTop->getTwoVersionsOfCurrDecPicFlag() ) {
           // remove current picture before ILF
@@ -162,7 +162,7 @@ void hmLibVideoDecoderImpl<T>::decode( std::vector<uint8_t>& bitstream, size_t o
 
 template <typename T>
 void hmLibVideoDecoderImpl<T>::setVideoSize( const pcc_hm::TComSPS* sps ) {
-  auto& window        = sps->getConformanceWindow();
+  const auto& window = sps->getConformanceWindow();
   int   width         = sps->getPicWidthInLumaSamples();
   int   height        = sps->getPicHeightInLumaSamples();
   m_outputWidth       = width - window.getWindowLeftOffset() - window.getWindowRightOffset();
@@ -171,17 +171,20 @@ void hmLibVideoDecoderImpl<T>::setVideoSize( const pcc_hm::TComSPS* sps ) {
   m_bRGB2GBR          = sps->getChromaFormatIdc() == CHROMA_444;
 }
 
-template <typename T>
-void hmLibVideoDecoderImpl<T>::xWriteOutput( pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic,
-                                                UInt                                tId,
-                                                FrameSequence<T>&                     video ) {
+template<typename T>
+void
+hmLibVideoDecoderImpl<T>::xWriteOutput(
+  pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic,
+  UInt /*tId*/,
+  FrameSequence<T>& video)
+{
   if ( pcListPic->empty() ) { return; }
-  pcc_hm::TComList<pcc_hm::TComPic*>::iterator iterPic                = pcListPic->begin();
+  auto iterPic = pcListPic->begin();
   Int                                          numPicsNotYetDisplayed = 0;
   Int                                          dpbFullness            = 0;
   const TComSPS*                               activeSPS              = &( pcListPic->front()->getPicSym()->getSPS() );
-  UInt                                         numReorderPicsHighestTid;
-  UInt                                         maxDecPicBufferingHighestTid;
+  UInt numReorderPicsHighestTid = 0;
+  UInt maxDecPicBufferingHighestTid = 0;
   UInt                                         maxNrSublayers = activeSPS->getMaxTLayers();
   numReorderPicsHighestTid                                    = activeSPS->getNumReorderPics( maxNrSublayers - 1 );
   maxDecPicBufferingHighestTid                                = activeSPS->getMaxDecPicBuffering( maxNrSublayers - 1 );
@@ -199,7 +202,7 @@ void hmLibVideoDecoderImpl<T>::xWriteOutput( pcc_hm::TComList<pcc_hm::TComPic*>*
   if ( numPicsNotYetDisplayed > 2 ) { iterPic++; }
   TComPic* pcPic = *( iterPic );
   if ( numPicsNotYetDisplayed > 2 && pcPic->isField() ) {  // Field Decoding
-    TComList<TComPic*>::iterator endPic = pcListPic->end();
+    auto endPic = pcListPic->end();
     endPic--;
     iterPic = pcListPic->begin();
     while ( iterPic != endPic ) {
@@ -208,8 +211,8 @@ void hmLibVideoDecoderImpl<T>::xWriteOutput( pcc_hm::TComList<pcc_hm::TComPic*>*
       TComPic* pcPicBottom = *( iterPic );
       if ( pcPicTop->getOutputMark() && pcPicBottom->getOutputMark() &&
            ( numPicsNotYetDisplayed > numReorderPicsHighestTid ||
-             dpbFullness > maxDecPicBufferingHighestTid - m_pTDecTop->getTwoVersionsOfCurrDecPicFlag() ) &&
-           ( !( pcPicTop->getPOC() % 2 ) && pcPicBottom->getPOC() == pcPicTop->getPOC() + 1 ) &&
+             dpbFullness > maxDecPicBufferingHighestTid - static_cast<unsigned int>(m_pTDecTop->getTwoVersionsOfCurrDecPicFlag()) ) &&
+           ( (( pcPicTop->getPOC() % 2 ) == 0) && pcPicBottom->getPOC() == pcPicTop->getPOC() + 1 ) &&
            ( pcPicTop->getPOC() == m_iPOCLastDisplay + 1 || m_iPOCLastDisplay < 0 ) ) {
         // write to file
         numPicsNotYetDisplayed = numPicsNotYetDisplayed - 2;
@@ -217,12 +220,15 @@ void hmLibVideoDecoderImpl<T>::xWriteOutput( pcc_hm::TComList<pcc_hm::TComPic*>*
         // update POC of display order
         m_iPOCLastDisplay = pcPicBottom->getPOC();
         // erase non-referenced picture in the reference picture list after display
-        if ( !pcPicTop->getSlice( 0 )->isReferenced() && pcPicTop->getReconMark() == true ) {
+        if (
+          !pcPicTop->getSlice(0)->isReferenced() && pcPicTop->getReconMark()) {
           pcPicTop->setReconMark( false );
           // mark it should be extended later
           pcPicTop->getPicYuvRec()->setBorderExtension( false );
         }
-        if ( !pcPicBottom->getSlice( 0 )->isReferenced() && pcPicBottom->getReconMark() == true ) {
+        if (
+          !pcPicBottom->getSlice(0)->isReferenced()
+          && pcPicBottom->getReconMark()) {
           pcPicBottom->setReconMark( false );
           // mark it should be extended later
           pcPicBottom->getPicYuvRec()->setBorderExtension( false );
@@ -238,16 +244,18 @@ void hmLibVideoDecoderImpl<T>::xWriteOutput( pcc_hm::TComList<pcc_hm::TComPic*>*
 
       if ( pcPic->getOutputMark() && pcPic->getPOC() > m_iPOCLastDisplay &&
            ( numPicsNotYetDisplayed > numReorderPicsHighestTid ||
-             dpbFullness > maxDecPicBufferingHighestTid - m_pTDecTop->getTwoVersionsOfCurrDecPicFlag() ) ) {
+             dpbFullness > maxDecPicBufferingHighestTid - static_cast<unsigned int>(m_pTDecTop->getTwoVersionsOfCurrDecPicFlag()) ) ) {
         // write to file
         numPicsNotYetDisplayed--;
-        if ( pcPic->getSlice( 0 )->isReferenced() == false ) { dpbFullness--; }
+        if (!pcPic->getSlice(0)->isReferenced()) {
+          dpbFullness--;
+        }
         xWritePicture( pcPic->getPicYuvRec(), video );
         // update POC of display order
         m_iPOCLastDisplay = pcPic->getPOC();
         // erase non-referenced picture in the reference picture list after
         // display
-        if ( !pcPic->getSlice( 0 )->isReferenced() && pcPic->getReconMark() == true ) {
+        if (!pcPic->getSlice(0)->isReferenced() && pcPic->getReconMark()) {
           pcPic->setReconMark( false );
           // mark it should be extended later
           pcPic->getPicYuvRec()->setBorderExtension( false );
@@ -261,32 +269,40 @@ void hmLibVideoDecoderImpl<T>::xWriteOutput( pcc_hm::TComList<pcc_hm::TComPic*>*
 
 template <typename T>
 void hmLibVideoDecoderImpl<T>::xFlushOutput( pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic, FrameSequence<T>& video ) {
-  if ( !pcListPic || pcListPic->empty() ) { return; }
-  pcc_hm::TComList<pcc_hm::TComPic*>::iterator iterPic = pcListPic->begin();
+  if ((pcListPic == nullptr) || pcListPic->empty()) {
+    return;
+  }
+  auto iterPic = pcListPic->begin();
   iterPic                                              = pcListPic->begin();
   pcc_hm::TComPic* pcPic                               = *( iterPic );
   if ( pcPic->isField() ) {  // Field Decoding
-    pcc_hm::TComList<pcc_hm::TComPic*>::iterator endPic = pcListPic->end();
+    auto endPic = pcListPic->end();
     endPic--;
-    TComPic *pcPicTop, *pcPicBottom = NULL;
+    TComPic* pcPicTop = nullptr;
+    TComPic* pcPicBottom = nullptr;
     while ( iterPic != endPic ) {
       pcPicTop = *( iterPic );
       iterPic++;
       pcPicBottom = *( iterPic );
-      if ( pcPicTop->getOutputMark() && pcPicBottom->getOutputMark() && !( pcPicTop->getPOC() % 2 ) &&
-           ( pcPicBottom->getPOC() == pcPicTop->getPOC() + 1 ) ) {
+      if (
+        pcPicTop->getOutputMark() && pcPicBottom->getOutputMark()
+        && ((pcPicTop->getPOC() % 2) == 0)
+        && (pcPicBottom->getPOC() == pcPicTop->getPOC() + 1)) {
         // write to file
         xWritePicture( pcPic->getPicYuvRec(), video );
         // update POC of display order
         m_iPOCLastDisplay = pcPicBottom->getPOC();
         // erase non-referenced picture in the reference picture list after
         // display
-        if ( !pcPicTop->getSlice( 0 )->isReferenced() && pcPicTop->getReconMark() == true ) {
+        if (
+          !pcPicTop->getSlice(0)->isReferenced() && pcPicTop->getReconMark()) {
           pcPicTop->setReconMark( false );
           // mark it should be extended later
           pcPicTop->getPicYuvRec()->setBorderExtension( false );
         }
-        if ( !pcPicBottom->getSlice( 0 )->isReferenced() && pcPicBottom->getReconMark() == true ) {
+        if (
+          !pcPicBottom->getSlice(0)->isReferenced()
+          && pcPicBottom->getReconMark()) {
           pcPicBottom->setReconMark( false );
           // mark it should be extended later
           pcPicBottom->getPicYuvRec()->setBorderExtension( false );
@@ -294,17 +310,17 @@ void hmLibVideoDecoderImpl<T>::xFlushOutput( pcc_hm::TComList<pcc_hm::TComPic*>*
         pcPicTop->setOutputMark( false );
         pcPicBottom->setOutputMark( false );
 
-        if ( pcPicTop ) {
+        if (pcPicTop != nullptr) {
           pcPicTop->destroy();
           delete pcPicTop;
-          pcPicTop = NULL;
+          pcPicTop = nullptr;
         }
       }
     }
-    if ( pcPicBottom ) {
+    if (pcPicBottom != nullptr) {
       pcPicBottom->destroy();
       delete pcPicBottom;
-      pcPicBottom = NULL;
+      pcPicBottom = nullptr;
     }
   } else {  // Frame decoding
     while ( iterPic != pcListPic->end() ) {
@@ -316,17 +332,17 @@ void hmLibVideoDecoderImpl<T>::xFlushOutput( pcc_hm::TComList<pcc_hm::TComPic*>*
         m_iPOCLastDisplay = pcPic->getPOC();
         // erase non-referenced picture in the reference picture list after
         // display
-        if ( !pcPic->getSlice( 0 )->isReferenced() && pcPic->getReconMark() == true ) {
+        if (!pcPic->getSlice(0)->isReferenced() && pcPic->getReconMark()) {
           pcPic->setReconMark( false );
           // mark it should be extended later
           pcPic->getPicYuvRec()->setBorderExtension( false );
         }
         pcPic->setOutputMark( false );
       }
-      if ( pcPic != NULL ) {
+      if (pcPic != nullptr) {
         pcPic->destroy();
         delete pcPic;
-        pcPic = NULL;
+        pcPic = nullptr;
       }
       iterPic++;
     }

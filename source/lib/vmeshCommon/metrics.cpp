@@ -37,7 +37,6 @@
 #include "mmSample.h"
 #include "mmModel.h"
 #include "mmImage.h"
-#include "mmSample.h"
 #include "mmCompare.h"
 #include "mmDequantize.h"
 #include "mmIO.h"
@@ -56,14 +55,14 @@ convert(const TriangleMesh<double>& src, mm::Model& dst)
     dst.vertices[3 * i + 1] = points[i][1];
     dst.vertices[3 * i + 2] = points[i][2];
   }
-  if( src.texCoords().size() > 0 ){
+  if (!src.texCoords().empty()) {
     const auto& texCoords = src.texCoords();
     dst.uvcoords.resize(texCoords.size() * 2);
     for (size_t i = 0; i < texCoords.size(); i++) {
       dst.uvcoords[2 * i + 0] = texCoords[i][0];
       dst.uvcoords[2 * i + 1] = texCoords[i][1];
     }
-  }  
+  }
   const auto& triangles = src.triangles();
   dst.triangles.resize(triangles.size() * 3);
   for (size_t i = 0; i < triangles.size(); i++) {
@@ -71,7 +70,7 @@ convert(const TriangleMesh<double>& src, mm::Model& dst)
     dst.triangles[3 * i + 1] = triangles[i][1];
     dst.triangles[3 * i + 2] = triangles[i][2];
   }
-  if( src.texCoordTriangles().size() > 0 ){
+  if (!src.texCoordTriangles().empty()) {
     const auto& texCoordsTri = src.texCoordTriangles();
     dst.trianglesuv.resize(texCoordsTri.size() * 3);
     for (size_t i = 0; i < texCoordsTri.size(); i++) {
@@ -79,8 +78,8 @@ convert(const TriangleMesh<double>& src, mm::Model& dst)
       dst.trianglesuv[3 * i + 1] = texCoordsTri[i][1];
       dst.trianglesuv[3 * i + 2] = texCoordsTri[i][2];
     }
-  }   
-  if( src.normals().size() > 0 ){
+  }
+  if (!src.normals().empty()) {
     const auto& normals = src.normals();    
     dst.normals.resize(normals.size() * 3);
     for (size_t i = 0; i < normals.size(); i++) {
@@ -121,7 +120,7 @@ VMCMetrics::compute(
     mm::Image srcImage;
     mm::Image recImage;
 
-    auto& frame = gof.frame(i);
+    const auto& frame = gof.frame(i);
     convert(frame.input, srcModel);
     convert(frame.rec, recModel);
 
@@ -150,8 +149,10 @@ VMCMetrics::compute(
   if (!compare) {
     compare = std::make_shared<mm::Compare>();
   }
-  mm::Model srcModel, recModel;
-  mm::Image srcImage, recImage;
+  mm::Model srcModel;
+  mm::Model recModel;
+  mm::Image srcImage;
+  mm::Image recImage;
   convert(srcMesh, srcModel);
   convert(recMesh, recModel);
   convert(srcMap, srcImage);
@@ -187,7 +188,7 @@ VMCMetrics::compute(
   glm::vec3 maxPos(
     params.maxPosition[0], params.maxPosition[1], params.maxPosition[2]);
   for (size_t i = 0; i < 2; i++) {
-    auto& model = i == 0 ? srcModel : recModel;    
+    const auto& model = i == 0 ? srcModel : recModel;
     std::cout << (i == 0 ? "Src" : "Rec")
               << " model: " << (i == 0 ? srcName : recName) << std::endl;
     std::cout << "  Vertices: " << model.vertices.size() / 3 << std::endl;
@@ -199,7 +200,8 @@ VMCMetrics::compute(
               << std::endl;
 
     // Dequantize
-    glm::vec2 zero2( 0, 0 ),one2( 1, 1 );
+    glm::vec2 zero2(0, 0);
+    glm::vec2 one2(1, 1);
     glm::vec3 zero3( 0, 0, 0 );
 
     std::cout << "De-quantizing" << std::endl;
@@ -339,7 +341,7 @@ VMCMetrics::compute(
     const unsigned int ibsmCameraCount = 16;
     const glm::vec3 ibsmCamRotParams = {0.0F, 0.0F, 0.0F};
     const std::string ibsmRenderer = "sw_raster";
-    const std::string ibsmOutputPrefix = "";
+    const std::string ibsmOutputPrefix;
     const bool ibsmDisableReordering = false;
     const bool ibsmDisableCulling = false;
     std::cout << "Compare models using IBSM distortion metric" << std::endl;

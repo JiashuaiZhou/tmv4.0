@@ -45,7 +45,7 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose;
+  bool verbose{};
   std::string bitstreamPath;
   std::string outputPath;  
   vmesh::GeometryCodecId codecId;
@@ -81,8 +81,9 @@ try {
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
-  for (const auto arg : argv_unhandled)
+  for (const auto* const arg : argv_unhandled) {
     err.warn() << "Unhandled argument ignored: " << arg << '\n';
+  }
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -90,10 +91,12 @@ try {
     return false;
   }
 
-  if (params.bitstreamPath.empty())
+  if (params.bitstreamPath.empty()) {
     err.error() << "Output bitstream path not specified\n";
-  if (err.is_errored)
+  }
+  if (err.is_errored) {
     return false;
+  }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
@@ -115,11 +118,13 @@ main(int argc, char* argv[])
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params))
+  if (!parseParameters(argc, argv, params)) {
     return 1;
+  }
 
-  if (params.verbose)
+  if (params.verbose) {
     vmesh::vout.rdbuf(std::cout.rdbuf());
+  }
 
   // Load bitstream 
     vmesh::Bitstream bitstream;

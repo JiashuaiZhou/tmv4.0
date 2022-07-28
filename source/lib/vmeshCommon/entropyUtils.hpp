@@ -36,7 +36,7 @@
 #pragma once
 
 #include <algorithm>
-#include <stddef.h>
+#include <cstddef>
 
 namespace vmesh {
 
@@ -118,14 +118,15 @@ EntropyEncoderWrapper<Base>::encodeExpGolomb(
   unsigned int symbol, int k, AdaptiveBitModel& ctxPrefix)
 {
   while (1) {
-    if (symbol >= (1u << k)) {
+    if (symbol >= (1U << k)) {
       encode(1, ctxPrefix);
-      symbol -= (1u << k);
+      symbol -= (1U << k);
       k++;
     } else {
       encode(0, ctxPrefix);
-      while (k--)
+      while ((k--) != 0) {
         encode((symbol >> k) & 1);
+      }
       break;
     }
   }
@@ -146,15 +147,16 @@ EntropyEncoderWrapper<Base>::encodeExpGolomb(
   constexpr int maxSuffixIdx = NumSuffixCtx - 1;
   const int k0 = k;
 
-  while (symbol >= (1u << k)) {
+  while (symbol >= (1U << k)) {
     encode(1, ctxPrefix[std::min(maxPrefixIdx, k - k0)]);
-    symbol -= 1u << k;
+    symbol -= 1U << k;
     k++;
   }
   encode(0, ctxPrefix[std::min(maxPrefixIdx, k - k0)]);
 
-  while (k--)
+  while (k--) {
     encode((symbol >> k) & 1, ctxSuffix[std::min(maxSuffixIdx, k)]);
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -164,7 +166,7 @@ inline unsigned int
 EntropyDecoderWrapper<Base>::decodeExpGolomb(
   int k, AdaptiveBitModel& ctxPrefix)
 {
-  unsigned int l;
+  unsigned int l = 0;
   int symbol = 0;
   int binary_symbol = 0;
   do {
@@ -174,10 +176,11 @@ EntropyDecoderWrapper<Base>::decodeExpGolomb(
       k++;
     }
   } while (l != 0);
-  while (k--)  //next binary part
+  while ((k--) != 0) {  //next binary part
     if (decode() == 1) {
       binary_symbol |= (1 << k);
     }
+  }
   return static_cast<unsigned int>(symbol + binary_symbol);
 }
 
@@ -194,7 +197,7 @@ EntropyDecoderWrapper<Base>::decodeExpGolomb(
   constexpr int maxPrefixIdx = NumPrefixCtx - 1;
   constexpr int maxSuffixIdx = NumSuffixCtx - 1;
   const int k0 = k;
-  unsigned int l;
+  unsigned int l = 0;
   int symbol = 0;
   int binary_symbol = 0;
 
@@ -206,8 +209,9 @@ EntropyDecoderWrapper<Base>::decodeExpGolomb(
     }
   } while (l != 0);
 
-  while (k--)
+  while (k--) {
     binary_symbol |= decode(ctxSuffix[std::min(maxSuffixIdx, k)]) << k;
+  }
 
   return static_cast<unsigned int>(symbol + binary_symbol);
 }

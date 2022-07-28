@@ -38,17 +38,20 @@
 
 namespace vmesh {
 
-template <typename T>
-hmLibVideoDecoder<T>::hmLibVideoDecoder() {}
-template <typename T>
-hmLibVideoDecoder<T>::~hmLibVideoDecoder() {}
+template<typename T>
+hmLibVideoDecoder<T>::hmLibVideoDecoder() = default;
+template<typename T>
+hmLibVideoDecoder<T>::~hmLibVideoDecoder() = default;
 
-template <typename T>
-void hmLibVideoDecoder<T>::decode( std::vector<uint8_t>& bitstream,
-                                      FrameSequence<T>&    video,
-                                      size_t             outputBitDepth,
-                                      const std::string& decoderPath,
-                                      const std::string& fileName ) {
+template<typename T>
+void
+hmLibVideoDecoder<T>::decode(
+  std::vector<uint8_t>& bitstream,
+  FrameSequence<T>& video,
+  size_t outputBitDepth,
+  const std::string& /*decoderPath*/,
+  const std::string& /*fileName*/)
+{
   hmLibVideoDecoderImpl<T> decoder;
   decoder.decode( bitstream, outputBitDepth, video );
 }

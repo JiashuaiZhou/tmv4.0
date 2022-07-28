@@ -28,7 +28,7 @@ google-build-using-namespace,
 -readability-named-parameter
 '
 
-HeaderFilterRegex: 'source/.*/include/TMIV/.*'
+HeaderFilterRegex: 'source/.*'
 
 WarningsAsErrors: '*'
 

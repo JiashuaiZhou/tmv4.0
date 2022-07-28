@@ -2,8 +2,6 @@
 
 find_program(CPPCHECK_PATH NAMES cppcheck )
 
-message( "CPPCHECK_PATH = ${CPPCHECK_PATH}" )
-
 if( EXISTS  "${CPPCHECK_PATH}" )
   file(GLOB_RECURSE ALL_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp  
                                      ${CMAKE_CURRENT_SOURCE_DIR}/source/*.hpp)

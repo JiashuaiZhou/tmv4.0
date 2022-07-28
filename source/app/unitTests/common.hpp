@@ -61,6 +61,10 @@ public:
   void switchOnLog() { disableLog_ = false; }
   bool disableLog() const { return disableLog_; }
 
+#if defined(WIN32)
+  void disable(){}
+  void enable(){}
+#else
   void disable()
   {
     if (disableLog_ && !isDisable_) {
@@ -96,6 +100,7 @@ public:
       isDisable_ = false;
     }
   }
+#endif
 };
 
 static std::string
@@ -138,6 +143,21 @@ hash(const std::string& name)
   return 0xffffffffffffffff;
 }
 
+#if defined(WIN32)
+const std::string g_hmEncoderPath =
+  "externaltools\\hm-16.21+scm-8.8\\bin\\vs17\\msvc-19.32\\x86_64\\release\\TAppEncoder.exe";
+const std::string g_hmDecoderPath =
+  "externaltools\\hm-16.21+scm-8.8\\bin\\vs17\\msvc-19.32\\x86_64\\release\\TAppDecoder.exe";
+const std::string g_hdrConvertPath =
+  "externaltools\\hdrtools\\build\\bin\\Release\\HDRConvert.exe";
+const std::string g_dracoEncoderPath =
+  "build\\Release\\bin\\Release\\draco_encoder.exe";
+const std::string g_dracoDecoderPath =
+  "build\\Release\\bin\\Release\\draco_decoder.exe";
+const std::string g_mmMetricsPath = "build\\Release\\bin\\Release\\mm.exe";
+const std::string g_vmeshEncodePath = "build\\Release\\bin\\Release\\encode.exe";
+const std::string g_vmeshDecodePath = "build\\Release\\bin\\Release\\decode.exe";
+#else
 const std::string g_hmEncoderPath =
   "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderStatic";
 const std::string g_hmDecoderPath =
@@ -149,6 +169,7 @@ const std::string g_dracoDecoderPath = "build/Release/bin/draco_decoder";
 const std::string g_mmMetricsPath    = "build/Release/bin/mm";
 const std::string g_vmeshEncodePath = "build/Release/bin/encode";
 const std::string g_vmeshDecodePath = "build/Release/bin/decode";
+#endif 
 
 static bool
 checkSoftwarePath()

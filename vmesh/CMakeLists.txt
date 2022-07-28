@@ -21,7 +21,7 @@ endif()
 # Fallback to descriptive version if VCS unavailable
 #  NB: the "unconfirmed-" part refers to this being a fallback option
 #      and the reported version may or may not be accurate.
-set(VERSION_FALLBACK "unconfirmed-release-0.0")
+set(VERSION_FALLBACK "unconfirmed-release-0.1")
 set(VERSION_FILE ${CMAKE_CURRENT_BINARY_DIR}/version.cpp)
 set(VERSION_FILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in)
 set(VERSION_CACHE_FILE ${CMAKE_CURRENT_BINARY_DIR}/version.cache)

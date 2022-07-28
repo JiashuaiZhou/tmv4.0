@@ -48,12 +48,32 @@ echo -e "\033[0;32mCmake: ${CURDIR}: CMAKE_FLAGS = ${CMAKE_FLAGS[@]}\033[0m";
 ${CMAKE} -H${CURDIR} -B"${CURDIR}/build/${MODE}" "${CMAKE_FLAGS[@]}"
 echo -e "\033[0;32mdone \033[0m";
 
-for TARGET in ${TARGETS}
-do 
-  echo -e "\033[0;32m${TARGET}: ${CURDIR} \033[0m";
-  ${CMAKE} --build "${CURDIR}/build/${MODE}" --target ${TARGET}
-  echo -e "\033[0;32mdone \033[0m";
-done
+# Use custom targets
+if (( ${#TARGETS[@]} ))
+then 
+  for TARGET in ${TARGETS[@]}
+  do     
+    if [ "$TARGET" == "clang-tidy" ]
+    then 
+      if [ ! -f ${CC}-tidy ]
+      then 
+        echo "${CC}-tidy not exists"
+      else
+        ${CC}-tidy \
+          -format-style=file \
+          -p ${CURDIR}/build/${MODE} \
+          -fix \
+          -fix-errors \
+          $( find ${CURDIR}/source/ -name '*.cpp' -o -name '*.hpp' )
+      fi
+    else 
+      echo -e "\033[0;32m${TARGET}: ${CURDIR} \033[0m";
+      ${CMAKE} --build "${CURDIR}/build/${MODE}" --target ${TARGET}
+      echo -e "\033[0;32mdone \033[0m";
+    fi
+  done
+  exit 0
+fi
 
 echo -e "\033[0;32mBuild: ${CURDIR} \033[0m";
 if ! ${CMAKE} --build "${CURDIR}/build/${MODE}" --config ${MODE} --parallel "${NUMBER_OF_PROCESSORS}" ;

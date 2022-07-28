@@ -64,7 +64,6 @@ endif()
 include( dependencies/cmake/tools/CPM.cmake )
 include( dependencies/cmake/tools/tools.cmake )
 include( dependencies/cmake/tools/clang-format.cmake )
-include( dependencies/cmake/tools/clang-tidy.cmake )
 include( dependencies/cmake/tools/cppcheck.cmake )
 
 # Dependencies

@@ -1,8 +1,0 @@
-input = /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr%04d_qp12_qt13.obj
-qt = 13
-decimated = levi_voxelized_r0.03/levi_fr%04d_qp12_qt13.obj_decimated.obj
-reference = levi_voxelized_r0.03/levi_fr%04d_qp12_qt13.obj_reference.obj
-mapped = levi_voxelized_r0.03/levi_fr%04d_qp12_qt13.obj_mapped.obj
-target = 0.03
-cctcount = 8
-loaded_simplify=1

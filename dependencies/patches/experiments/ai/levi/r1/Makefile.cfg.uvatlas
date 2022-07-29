@@ -1,7 +1,0 @@
-input = levi_voxelized_r0.03/levi_fr%04d_qp12_qt13.obj_decimated.obj
-output = levi_voxelized_r0.03/levi_fr%04d_qp12_qt13.obj_decimated_tex.obj
-width = 4096
-height = 4096
-quality = QUALITY
-gutter = 32
-loaded_uvatlas=1

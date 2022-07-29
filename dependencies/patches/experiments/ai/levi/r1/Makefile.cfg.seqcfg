@@ -1,6 +1,0 @@
-firstframe = 0
-lastframe = 1
-numframes = 2
-srcmesh = /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr%04d_qp12_qt13.obj
-srctex = /home/library24/PCC/contents/mpeg_vmesh_cfp_v02/contents/voxelized/levi_voxelized/levi_fr%04d.png
-loaded_seqcfg=1

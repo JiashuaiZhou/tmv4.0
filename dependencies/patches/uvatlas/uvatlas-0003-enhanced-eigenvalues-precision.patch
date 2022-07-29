@@ -39,8 +39,8 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ---
- UVAtlas/isochart/isomap.cpp | 25 +++++++++++++------------
- 1 file changed, 13 insertions(+), 12 deletions(-)
+ UVAtlas/isochart/isomap.cpp | 23 ++++++++++++-----------
+ 1 file changed, 12 insertions(+), 11 deletions(-)
 
 diff --git a/UVAtlas/isochart/isomap.cpp b/UVAtlas/isochart/isomap.cpp
 index ba85d77..0211376 100644
@@ -87,10 +87,9 @@ index ba85d77..0211376 100644
 -        m_pfEigenVector,
 -        pfEigenVector.get(),
 -        m_dwMatrixDimension * dwSelectedDimension * sizeof(float));
--
 +    std::copy_n(pdEigenValue.get(), dwSelectedDimension, m_pfEigenValue);
 +    std::copy_n(pdEigenVector.get(), m_dwMatrixDimension * dwSelectedDimension, m_pfEigenVector);
-+    
+
      m_fSumOfEigenValue = 0;
      dwCalculatedDimension = 0;
      for (size_t i = 0; i < dwSelectedDimension; i++)

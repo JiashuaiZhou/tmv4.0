@@ -151,7 +151,8 @@ HdrToolsLibColourConverterImpl<T>::convert(
   inputParams->update();
   init( inputParams );
   process( inputParams, videoSrc, videoDst );
-  destroy();
+  destroy();  
+  std::remove( inputParams->m_outputFile.m_fName ); 
 }
 
 template <typename T>

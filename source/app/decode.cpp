@@ -240,8 +240,7 @@ decompress(const Parameters& params)
     }
     printf("gof.stats.frameCount = %d \n",gof.stats.frameCount);
     auto end = std::chrono::steady_clock::now();
-    gof.stats.processingTimeInSeconds =
-      std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    gof.stats.processingTime = end - start;
 
     // Save reconsctructed models
     if (saveGroupOfFrames(gofInfo, gof, params) != 0) {

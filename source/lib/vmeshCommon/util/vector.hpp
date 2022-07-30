@@ -42,6 +42,7 @@
 #include <istream>
 #include <ostream>
 #include <vector>
+#include <limits>
 
 #if defined(WIN32) || defined(_WIN32)
 #  define NOMINMAX

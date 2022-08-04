@@ -75,11 +75,14 @@ public:
     this->swap(i, size() - 1);
     _elements.pop_back();
     e.setHeapPosition(-1);  // not in heap
-    if (_elements[i]->heapKey() < e.heapKey()) {
-      downheap(i);
-    } else {
-      upheap(i);
-    }
+    if (i == size())
+        upheap(i);
+    else
+      if (_elements[i]->heapKey() < e.heapKey()) {
+        downheap(i);
+      } else {
+        upheap(i);
+      }
     return &e;
   }
   T* extract()

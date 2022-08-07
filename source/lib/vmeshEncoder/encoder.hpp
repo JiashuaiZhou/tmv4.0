@@ -213,7 +213,7 @@ struct VMCEncoderParameters {
   GeometryParametrizationParameters interGeoParams;
 
   // Bug fix 
-  bool forceCoordTruncation = true;
+  bool forceCoordTruncation = false;
 };
 
 //============================================================================

@@ -57,7 +57,9 @@
 
 namespace vmesh {
 
-// NOTE: fix issue and debug function.
+// Force truncation of mesh coordinates to get the same results as P11 
+// Note: this function is a fix to reproduce the results of P11 and 
+// will be removed in future version.
 template<typename T>
 void
 forceCoordinateTruncation(TriangleMesh<T>& obj, const std::string name)
@@ -359,6 +361,7 @@ VMCEncoder::computeDracoMapping(
   }
 
   // Geometry parametrisation rec
+  // Force truncation of mesh coordinates to get the same results as P11
   if (params.forceCoordTruncation) {
     auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
       + std::to_string(frameIndex);
@@ -553,6 +556,7 @@ VMCEncoder::compressBaseMesh(
       base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
     }    
 
+    // Save intermediate files
     if (params.keepIntermediateFiles) {
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
         + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
@@ -560,12 +564,14 @@ VMCEncoder::compressBaseMesh(
       base.saveToOBJ(prefix + "_base_quant.obj");
     }
 
-    // Encode
+    // Force truncation of mesh coordinates to get the same results as P11
     if (params.forceCoordTruncation) {
       auto prefix = params.intermediateFilesPathPrefix + "fr_"
         + std::to_string(frameIndex);
       forceCoordinateTruncation(base, prefix + "base_before_enc.obj");
     }
+
+    // Encode
     GeometryEncoderParameters dracoParams;
     dracoParams.qp_ = params.qpPosition;
     dracoParams.qt_ = params.qpTexCoord;
@@ -578,6 +584,8 @@ VMCEncoder::compressBaseMesh(
     auto encoder =
       VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
     encoder->encode(base, dracoParams, geometryBitstream, rec);
+
+    // Force truncation of mesh coordinates to get the same results as P11
     if (params.forceCoordTruncation) {
       auto prefix = params.intermediateFilesPathPrefix + "fr_"
         + std::to_string(frameIndex);
@@ -1123,12 +1131,14 @@ VMCEncoder::compress(
         std::cerr << "Error: can't simplify mesh !\n";
         return 1;
       }
-      // Bug fix
+
+      // Force truncation of mesh coordinates to get the same results as P11
       if (params.forceCoordTruncation) {
         forceCoordinateTruncation(frame.mapped, prefix + "_mapped.obj");
         forceCoordinateTruncation(frame.reference, prefix + "_reference.obj");
         forceCoordinateTruncation(frame.decimate, prefix + "_decimate.obj");
       }
+
       // Save intermediate files
       if (params.keepIntermediateFiles) {
         frame.mapped.saveToOBJ(prefix + "_mapped.obj");
@@ -1136,22 +1146,23 @@ VMCEncoder::compress(
         frame.decimate.saveToOBJ(prefix + "_decimate.obj");
       }
 
-      // TextureParametrization
-      std::cout << "TextureParametrization \n";
-      vmesh::TextureParametrization::generate(
-        frame, params);  // create decimateTexture
-      // Bug fix
+      // Texture parametrization
+      std::cout << "Texture parametrization \n";
+      vmesh::TextureParametrization::generate(frame, params);
+      
+      // Force truncation of mesh coordinates to get the same results as P11
       if (params.forceCoordTruncation) {
         forceCoordinateTruncation(
           frame.decimateTexture, prefix + "_decimateTexture.obj");
       }
+
       // Save intermediate files
       if (params.keepIntermediateFiles) {
         frame.decimateTexture.saveToOBJ(prefix + "_decimateTexture.obj");
       }
 
-      // Fitsubdiv Intra
-      std::cout << "Fitsubdiv Intra \n";
+      // Intra geometry parametrization
+      std::cout << "Intra geometry parametrization\n";
       GeometryParametrization fitsubdivIntra;
       TriangleMesh<double> mtargetIntra;
       TriangleMesh<double> subdiv0Intra;
@@ -1166,12 +1177,13 @@ VMCEncoder::compress(
         frame.subdivIntra,      // deformed
         frame.nsubdivIntra);    // ndeformed
       
-      // Bug fix
+      // Force truncation of mesh coordinates to get the same results as P11
       if (params.forceCoordTruncation) {
         forceCoordinateTruncation(frame.baseIntra, prefix + "_intra_base.obj");
         forceCoordinateTruncation(frame.subdivIntra, prefix + "_intra_subdiv.obj");
         forceCoordinateTruncation(frame.nsubdivIntra, prefix + "_intra_nsubdiv.obj");
       }
+
       // Save intermediate files
       if (params.keepIntermediateFiles) {
         frame.decimateTexture.saveToOBJ(
@@ -1223,7 +1235,7 @@ VMCEncoder::compress(
           auto& ref = gof.frame(frameIndex - 1);
           TriangleMesh<double> mappedInter;
           TriangleMesh<double> mtargetInter;
-          fitsubdivInter.generate(
+          fitsubdivInter.generate(!
             frame.reference,        // target
             ref.base,               // source
             mappedInter,            // mapped
@@ -1235,12 +1247,13 @@ VMCEncoder::compress(
             frame.nsubdivInter);    // ndeformed
         }
         
-        // Bug fix
+        // Force truncation of mesh coordinates to get the same results as P11
         if (params.forceCoordTruncation) {
           forceCoordinateTruncation(frame.baseInter, prefix + "_inter_base.obj");
           forceCoordinateTruncation(frame.subdivInter, prefix + "_inter_subdiv.obj");
           forceCoordinateTruncation(frame.nsubdivInter, prefix + "_inter_nsubdiv.obj");
         }
+        
         // Save intermediate files
         if (params.keepIntermediateFiles) {
           frame.decimateTexture.saveToOBJ(
@@ -1255,40 +1268,46 @@ VMCEncoder::compress(
         VMCMetrics metricsInter;
         VMCMetricsParameters metricParams;
         metricParams.computePcc = true;
-        metricParams.qp = params.bitDepthPosition;
-        metricParams.qt = params.bitDepthTexCoord;
-        for(int c=0;c<3;c++){
-          metricParams.minPosition[c] = params.minPosition[c]; 
-          metricParams.maxPosition[c] = params.maxPosition[c]; 
-        } 
-        metricsIntra.compute( frame.input, 
+        metricParams.qp         = params.bitDepthPosition;
+        metricParams.qt         = params.bitDepthTexCoord;
+        for (int c = 0; c < 3; c++) {
+          metricParams.minPosition[c] = params.minPosition[c];
+          metricParams.maxPosition[c] = params.maxPosition[c];
+        }
+        !metricsIntra.compute(frame.input,
                               frame.subdivIntra,
                               frame.inputTexture,
                               frame.inputTexture,
-                              metricParams );
-        metricsInter.compute( frame.input, 
-                              frame.subdivInter,
-                              frame.inputTexture,
-                              frame.inputTexture,
-                              metricParams );
-        auto metIntra =  metricsIntra.getPccResults();
-        auto metInter =  metricsInter.getPccResults();
-        int pos = 1;
+                              metricParams);
+        metricsInter.compute(frame.input,
+                             frame.subdivInter,
+                             frame.inputTexture,
+                             frame.inputTexture,
+                             metricParams);
+        auto metIntra = metricsIntra.getPccResults();
+        auto metInter = metricsInter.getPccResults();
+        int  pos      = 1;
         if (metIntra[pos] - metInter[pos] > params.maxAllowedD2PSNRLoss) {
-          // intra
+          // Choose Intra
           printf(
             "Frame %3d: choose Intra: met %8.4f - %8.4f = %8.4f > %8.4f \n",
-            frameIndex, metIntra[pos], metInter[pos], metIntra[pos] - metInter[pos],
+            frameIndex,
+            metIntra[pos],
+            metInter[pos],
+            metIntra[pos] - metInter[pos],
             params.maxAllowedD2PSNRLoss);
           chooseIntra = true;
           if (params.subdivInterWithMapping) {
             forceSubGofRestToIntra = true;
           }
         } else {
-          // inter
+          // Choose Inter
           printf(
             "Frame %3d: choose Inter: met %8.4f - %8.4f = %8.4f > %8.4f \n",
-            frameIndex, metIntra[pos], metInter[pos], metIntra[pos] - metInter[pos],
+            frameIndex,
+            metIntra[pos],
+            metInter[pos],
+            metIntra[pos] - metInter[pos],
             params.maxAllowedD2PSNRLoss);
           chooseIntra = false;
         }
@@ -1302,12 +1321,11 @@ VMCEncoder::compress(
       } else {
         auto& frameInfo = _gofInfo.frameInfo( frameIndex );
         frameInfo.type = FrameType::SKIP;        
-        // if( !params.subdivInterWithMapping ){
-          frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;      
-          printf("update referenceFrameIndex = %d = %d - 1 \n",
-            frameInfo.referenceFrameIndex, frameInfo.frameIndex );  
-        // }
-        frame.base = frame.baseInter;
+        frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
+        printf("update referenceFrameIndex = %d = %d - 1 \n",
+               frameInfo.referenceFrameIndex,
+               frameInfo.frameIndex);
+        frame.base    = frame.baseInter;
         frame.subdiv = frame.subdivInter;
         frame.nsubdiv = frame.nsubdivInter;
       }
@@ -1322,6 +1340,7 @@ VMCEncoder::compress(
       frame.subdiv = frame.base;
     }
   }
+
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
@@ -1340,6 +1359,7 @@ VMCEncoder::compress(
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
     auto& frame = gof.frame(frameIndex);
+
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"

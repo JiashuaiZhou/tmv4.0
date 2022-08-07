@@ -30,22 +30,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined( USE_FFMPEG_VIDEO_CODEC )
-#include "util/image.hpp"
-#include "virtualVideoEncoder.hpp"
+#if defined(USE_FFMPEG_VIDEO_CODEC)
+#  include "util/image.hpp"
+#  include "virtualVideoEncoder.hpp"
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class ffmpegLibVideoEncoder : public VirtualVideoEncoder<T> {
- public:
+public:
   ffmpegLibVideoEncoder();
   ~ffmpegLibVideoEncoder();
 
-  void encode( FrameSequence<T>&            videoSrc,
-               VideoEncoderParameters& params,
-               std::vector<uint8_t>&         bitstream,
-               FrameSequence<T>&            videoRec );
+  void encode(FrameSequence<T>&       videoSrc,
+              VideoEncoderParameters& params,
+              std::vector<uint8_t>&   bitstream,
+              FrameSequence<T>&       videoRec);
 };
 
 }  // namespace vmesh

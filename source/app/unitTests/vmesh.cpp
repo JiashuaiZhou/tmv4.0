@@ -43,20 +43,19 @@
 #include <gtest/gtest.h>
 #include "common.hpp"
 
-TEST(vmesh, all)
-{
+TEST(vmesh, all) {
   disableSubProcessLog.disable();
-  // Set parameters  
-  std::string meshPath = "data/levi_fr0000_qp12_qt13.obj";
-  std::string texPath = "data/levi_fr0000.png";
-  std::string cfgPath = "data/encoder.cfg";
-  std::string binPath = "bin.bin";
+  // Set parameters
+  std::string meshPath   = "data/levi_fr0000_qp12_qt13.obj";
+  std::string texPath    = "data/levi_fr0000.png";
+  std::string cfgPath    = "data/encoder.cfg";
+  std::string binPath    = "bin.bin";
   std::string recObjPath = "rec.obj";
   std::string recPngPath = "rec.png";
   std::string decObjPath = "dec.obj";
   std::string decPngPath = "rec.png";
-  
-  if (!checkSoftwarePath()){
+
+  if (!checkSoftwarePath()) {
     FAIL() << "All software paths not exist: ";
     return;
   }
@@ -83,31 +82,26 @@ TEST(vmesh, all)
       << "  --imesh=" << meshPath      // Input mesh
       << "  --itex=" << texPath        // Input texture
       << "  --compressed=" << binPath  // Compressed bitstream
-      << "  --recmesh=" << recObjPath    // Reconstructed mesh
-      << "  --rectex=" << recPngPath    // Reconstructed texture
-      << "  --recmat=mat.mtl ";          // Reconstructed materials
+      << "  --recmesh=" << recObjPath  // Reconstructed mesh
+      << "  --rectex=" << recPngPath   // Reconstructed texture
+      << "  --recmat=mat.mtl ";        // Reconstructed materials
 
-  if (disableSubProcessLog.disableLog()) {
-    cmd << "  2>&1 > /dev/null";
-  }
+  if (disableSubProcessLog.disableLog()) { cmd << "  2>&1 > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
- 
+
   // Decode
   cmd.str("");
   cmd << g_vmeshDecodePath << "  "
       << "  --compressed=" << binPath
       << "  --cscdecconfig=cfg/hdrconvert/yuv420tobgr444.cfg "
-      << "  --decmesh=" << decObjPath  
-      << "  --dectex=" << decPngPath
+      << "  --decmesh=" << decObjPath << "  --dectex=" << decPngPath
       << "  --decmat=mat.mtl ";
-  if (disableSubProcessLog.disableLog()) {
-    cmd << "  2>&1 > /dev/null";
-  }
+  if (disableSubProcessLog.disableLog()) { cmd << "  2>&1 > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
-  // Compare 
+  // Compare
   auto hashRecObj = hash(recObjPath);
   auto hashDecObj = hash(decObjPath);
   auto hashRecPng = hash(recPngPath);

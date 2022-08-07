@@ -54,55 +54,53 @@ class Frame;
 //============================================================================
 
 struct VMCMetricsParameters {
-  bool computePcc = false;
-  bool computeIbsm = false;
-  bool computePcqm = false;
-  int gridSize = 1024;
-  int qp = 12;
-  int qt = 13;  
+  bool   computePcc     = false;
+  bool   computeIbsm    = false;
+  bool   computePcqm    = false;
+  int    gridSize       = 1024;
+  int    qp             = 12;
+  int    qt             = 13;
   double minPosition[3] = {0, 0, 0};
   double maxPosition[3] = {0, 0, 0};
 
   // PCQM
-  double pcqmRadiusCurvature = 0.001;
-  int pcqmThresholdKnnSearch = 20;
-  double pcqmRadiusFactor = 2.0;
+  double pcqmRadiusCurvature    = 0.001;
+  int    pcqmThresholdKnnSearch = 20;
+  double pcqmRadiusFactor       = 2.0;
 };
 
 //============================================================================
 
 class VMCMetrics {
 public:
-  VMCMetrics() = default;
-  VMCMetrics(const VMCMetrics& rhs) = delete;
+  VMCMetrics()                                 = default;
+  VMCMetrics(const VMCMetrics& rhs)            = delete;
   VMCMetrics& operator=(const VMCMetrics& rhs) = delete;
-  ~VMCMetrics() = default;
+  ~VMCMetrics()                                = default;
 
-  void compute(
-    const VMCGroupOfFrames& gof, const VMCMetricsParameters& params);
+  void compute(const VMCGroupOfFrames&     gof,
+               const VMCMetricsParameters& params);
 
-  void compute(
-    const TriangleMesh<double>& srcModel,
-    const TriangleMesh<double>& recModel,
-    const Frame<uint8_t>& srcMap,
-    const Frame<uint8_t>& recMap,
-    const VMCMetricsParameters& params);
-  
+  void compute(const TriangleMesh<double>& srcModel,
+               const TriangleMesh<double>& recModel,
+               const Frame<uint8_t>&       srcMap,
+               const Frame<uint8_t>&       recMap,
+               const VMCMetricsParameters& params);
+
   void display();
-  
+
   std::vector<double> getPccResults();
   std::vector<double> getIbsmResults();
   std::vector<double> getPcqmResults();
 
 private:
-  void compute(
-    const mm::Model& srcModel,
-    const mm::Model& recModel,
-    const mm::Image& srcMap,
-    const mm::Image& recMap,
-    const std::string& srcName,
-    const std::string& recName,
-    const VMCMetricsParameters& params);
+  void compute(const mm::Model&            srcModel,
+               const mm::Model&            recModel,
+               const mm::Image&            srcMap,
+               const mm::Image&            recMap,
+               const std::string&          srcName,
+               const std::string&          recName,
+               const VMCMetricsParameters& params);
 
   std::shared_ptr<mm::Compare> compare;
 };

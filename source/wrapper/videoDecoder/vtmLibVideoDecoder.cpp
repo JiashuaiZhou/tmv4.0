@@ -30,34 +30,35 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined( USE_VTM_VIDEO_CODEC )
+#if defined(USE_VTM_VIDEO_CODEC)
 
-#include "vtmLibVideoDecoder.hpp"
-#include "vtmLibVideoDecoderImpl.hpp"
+#  include "vtmLibVideoDecoder.hpp"
+#  include "vtmLibVideoDecoderImpl.hpp"
 
 namespace vmesh {
 
-template <typename T>
+template<typename T>
 vtmLibVideoDecoder<T>::vtmLibVideoDecoder() {}
-template <typename T>
+template<typename T>
 vtmLibVideoDecoder<T>::~vtmLibVideoDecoder() {}
 
-template <typename T>
-void vtmLibVideoDecoder<T>::decode( std::vector<uint8_t>& bitstream,
-                                       FrameSequence<T>&    video,
-                                       size_t             outputBitDepth,
-                                       const std::string& decoderPath,
-                                       const std::string& fileName ) {
+template<typename T>
+void
+vtmLibVideoDecoder<T>::decode(std::vector<uint8_t>& bitstream,
+                              FrameSequence<T>&     video,
+                              size_t                outputBitDepth,
+                              const std::string&    decoderPath,
+                              const std::string&    fileName) {
   // print information
-  fprintf( stdout, "\n" );
-  fprintf( stdout, "VVCSoftware: VTM Decoder Version %s ", VTM_VERSION );
-  fprintf( stdout, NVM_ONOS );
-  fprintf( stdout, NVM_COMPILEDBY );
-  fprintf( stdout, NVM_BITS );
-#if ENABLE_TRACING
-  fprintf( stdout, "[ENABLE_TRACING] " );
-#endif
-  fprintf( stdout, "\n" );
+  fprintf(stdout, "\n");
+  fprintf(stdout, "VVCSoftware: VTM Decoder Version %s ", VTM_VERSION);
+  fprintf(stdout, NVM_ONOS);
+  fprintf(stdout, NVM_COMPILEDBY);
+  fprintf(stdout, NVM_BITS);
+#  if ENABLE_TRACING
+  fprintf(stdout, "[ENABLE_TRACING] ");
+#  endif
+  fprintf(stdout, "\n");
 
   vtmLibVideoDecoderImpl<T> decoder;
 
@@ -66,21 +67,24 @@ void vtmLibVideoDecoder<T>::decode( std::vector<uint8_t>& bitstream,
   clock_t lBefore = clock();
 
   // call decoding function
-#ifndef _DEBUG
+#  ifndef _DEBUG
   try {
-#endif  // !_DEBUG
-    if ( 0 != decoder.decode( bitstream, outputBitDepth, video ) ) {
-      printf( "\n\n***ERROR*** A decoding mismatch occured: signalled md5sum does not match\n" );
+#  endif  // !_DEBUG
+    if (0 != decoder.decode(bitstream, outputBitDepth, video)) {
+      printf("\n\n***ERROR*** A decoding mismatch occured: signalled md5sum "
+             "does not match\n");
     }
-#ifndef _DEBUG
-  } catch ( Exception& e ) { std::cerr << e.what() << std::endl; } catch ( const std::bad_alloc& e ) {
+#  ifndef _DEBUG
+  } catch (Exception& e) {
+    std::cerr << e.what() << std::endl;
+  } catch (const std::bad_alloc& e) {
     std::cout << "Memory allocation failed: " << e.what() << std::endl;
   }
-#endif
+#  endif
 
   // ending time
-  dResult = (double)( clock() - lBefore ) / CLOCKS_PER_SEC;
-  printf( "\n Total Time: %12.3f sec.\n", dResult );
+  dResult = (double)(clock() - lBefore) / CLOCKS_PER_SEC;
+  printf("\n Total Time: %12.3f sec.\n", dResult);
 }
 
 template class vtmLibVideoDecoder<uint8_t>;

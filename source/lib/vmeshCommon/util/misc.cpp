@@ -44,9 +44,8 @@ namespace vmesh {
 //============================================================================
 
 std::string
-expandNum(const std::string& src, int num)
-{
-  size_t idx = 0;
+expandNum(const std::string& src, int num) {
+  size_t idx    = 0;
   auto nextChar = [&]() { return idx + 1 < src.size() ? src[idx + 1] : '\0'; };
 
   std::string out;
@@ -56,7 +55,7 @@ expandNum(const std::string& src, int num)
   //  - validate it, and pass off to snprintf for formatting
   for (; nextChar() != '\0'; idx++) {
     // Find start of pattern:
-    size_t prev = idx;
+    size_t prev  = idx;
     size_t start = idx = src.find('%', prev);
 
     // copy intermediate bytes
@@ -82,9 +81,7 @@ expandNum(const std::string& src, int num)
     if (((c = nextChar()) != 0) && (c == '.')) {
       idx++; /* precision[0] */
 
-      if (((c = nextChar()) != 0) && (c == '-')) {
-        idx++; /* precision[1] */
-      }
+      if (((c = nextChar()) != 0) && (c == '-')) { idx++; /* precision[1] */ }
 
       while (((c = nextChar()) != 0) && (c >= '0' && c <= '9')) {
         idx++; /* precision[>=1] */
@@ -99,9 +96,9 @@ expandNum(const std::string& src, int num)
     } else if (c == 'd' && idx - start < 30) {
       char fmt[32];
       char buf[32];
-      int fmtlen = src.copy(fmt, idx - start + 2, start);
+      int  fmtlen = src.copy(fmt, idx - start + 2, start);
       fmt[fmtlen] = '\0';
-      int len = snprintf(buf, 32, fmt, num);
+      int len     = snprintf(buf, 32, fmt, num);
       if (len < 32) {
         out.append(buf);
       } else {

@@ -39,9 +39,8 @@ namespace vmesh {
 
 //============================================================================
 
-enum class Error
-{
-  OK = 0,
+enum class Error {
+  OK                    = 0,
   UNEXPECTED_INPUT_DATA = 1,
 };
 

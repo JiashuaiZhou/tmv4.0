@@ -33,27 +33,26 @@
 #include "virtualColourConverter.hpp"
 #include "util/image.hpp"
 
-#if defined( USE_HDRTOOLS )
+#if defined(USE_HDRTOOLS)
 
 class ProjectParameters;
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class HdrToolsLibColourConverter : public VirtualColourConverter<T> {
- public:
+public:
   HdrToolsLibColourConverter();
   ~HdrToolsLibColourConverter();
-  void convert( std::string        configuration,
-                FrameSequence<T>&    videoSrc ) {
+  void convert(std::string configuration, FrameSequence<T>& videoSrc) {
     FrameSequence<T> videoDst;
-    convert( configuration, videoSrc, videoDst );
+    convert(configuration, videoSrc, videoDst);
     videoSrc = videoDst;
   }
 
-  void convert( std::string        configuration,
-                FrameSequence<T>&    videoSrc,
-                FrameSequence<T>&    videoDst );
+  void convert(std::string       configuration,
+               FrameSequence<T>& videoSrc,
+               FrameSequence<T>& videoDst);
 };
 
 }  // namespace vmesh

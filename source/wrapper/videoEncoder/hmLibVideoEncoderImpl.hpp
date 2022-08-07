@@ -63,19 +63,18 @@ using namespace pcc_hm;
 // ====================================================================================================================
 
 /// encoder application class
-template <class T>
+template<class T>
 class hmLibVideoEncoderImpl : public hmLibVideoEncoderCfg {
- public:
+public:
   hmLibVideoEncoderImpl();
 
   ~hmLibVideoEncoderImpl() override;
 
-  Void encode(
-    FrameSequence<T>& videoSrc,
-    const std::string& arguments,
-    std::vector<uint8_t>& bitstream,
+  Void encode(FrameSequence<T>&     videoSrc,
+              const std::string&    arguments,
+              std::vector<uint8_t>& bitstream,
 
-    FrameSequence<T>& videoRec);
+              FrameSequence<T>& videoRec);
   // #if PCC_CF_EXT
   // void setLogger( PCCLogger& logger ) { logger_ = &logger; }
   // #endif
@@ -85,31 +84,32 @@ class hmLibVideoEncoderImpl : public hmLibVideoEncoderCfg {
   // PCCLogger* logger_ = nullptr;
   // #endif
 
- private:
+private:
   Void xInitLibCfg();
-  Void xGetBuffer( TComPicYuv*& rpcPicYuvRec );
+  Void xGetBuffer(TComPicYuv*& rpcPicYuvRec);
   Void xDeleteBuffer();
-  Void xWriteOutput( std::ostream&                bitstreamFile,
-                     Int                          iNumEncoded,
-                     const std::list<AccessUnit>& accessUnits,
-                     FrameSequence<T>&              videoRec );
-  Void rateStatsAccum( const AccessUnit& au, const std::vector<UInt>& annexBsizes );
+  Void xWriteOutput(std::ostream&                bitstreamFile,
+                    Int                          iNumEncoded,
+                    const std::list<AccessUnit>& accessUnits,
+                    FrameSequence<T>&            videoRec);
+  Void rateStatsAccum(const AccessUnit&        au,
+                      const std::vector<UInt>& annexBsizes);
   Void printRateSummary();
   Void printChromaFormat();
-  void xWritePicture( const TComPicYuv* pic, FrameSequence<T>& video );
-  void xReadPicture( TComPicYuv* pic, FrameSequence<T>& video, int frameIndex );
+  void xWritePicture(const TComPicYuv* pic, FrameSequence<T>& video);
+  void xReadPicture(TComPicYuv* pic, FrameSequence<T>& video, int frameIndex);
 
   TEncTop               m_cTEncTop;
   TComList<TComPicYuv*> m_cListPicYuvRec;
   Int                   m_iFrameRcvd;
   UInt                  m_essentialBytes;
   UInt                  m_totalBytes;
-  int m_outputWidth{};
-  int m_outputHeight{};
+  int                   m_outputWidth{};
+  int                   m_outputHeight{};
 };
 
 }  // namespace vmesh
 
-#endif
+#  endif
 
 #endif  //~__hmLibVideoEncoderImpl_H__

@@ -51,48 +51,64 @@ DracoLibGeometryEncoder<T>::~DracoLibGeometryEncoder() = default;
 
 template<typename T>
 std::unique_ptr<draco::Mesh>
-convert(TriangleMesh<T>& src)
-{
-  const int32_t triCount = src.triangleCount();
-  const int32_t pointCount = src.pointCount();
+convert(TriangleMesh<T>& src) {
+  const int32_t triCount      = src.triangleCount();
+  const int32_t pointCount    = src.pointCount();
   const int32_t texCoordCount = src.texCoordCount();
-  const int32_t normalCount = src.normalCount();
-  const int32_t colourCount = src.colourCount();
-  int posAtt = -1;
-  int nrmAtt = -1;
-  int colAtt = -1;
-  int texAtt = -1;
+  const int32_t normalCount   = src.normalCount();
+  const int32_t colourCount   = src.colourCount();
+  int           posAtt        = -1;
+  int           nrmAtt        = -1;
+  int           colAtt        = -1;
+  int           texAtt        = -1;
 
   // Add attributes if they are present in the input data.
   const bool use_identity_mapping = false;
-  auto mesh = std::make_unique<draco::Mesh>();
+  auto       mesh                 = std::make_unique<draco::Mesh>();
   mesh->SetNumFaces(triCount);
   mesh->set_num_points(3 * triCount);
 
   draco::GeometryAttribute va;
-  va.Init(draco::GeometryAttribute::POSITION, nullptr, 3, draco::DT_INT32, false,
-          sizeof(int32_t) * 3, 0);
+  va.Init(draco::GeometryAttribute::POSITION,
+          nullptr,
+          3,
+          draco::DT_INT32,
+          false,
+          sizeof(int32_t) * 3,
+          0);
   posAtt = mesh->AddAttribute(va, use_identity_mapping, pointCount);
 
   if (normalCount > 0) {
     draco::GeometryAttribute va;
-    va.Init(
-      draco::GeometryAttribute::NORMAL, nullptr, 3, draco::DT_INT32, false,
-      sizeof(int32_t) * 3, 0);
+    va.Init(draco::GeometryAttribute::NORMAL,
+            nullptr,
+            3,
+            draco::DT_INT32,
+            false,
+            sizeof(int32_t) * 3,
+            0);
     nrmAtt = mesh->AddAttribute(va, use_identity_mapping, normalCount);
   }
   if (colourCount > 0) {
     draco::GeometryAttribute va;
-    va.Init(
-      draco::GeometryAttribute::NORMAL, nullptr, 3, draco::DT_INT32, false,
-      sizeof(int32_t) * 3, 0);
+    va.Init(draco::GeometryAttribute::NORMAL,
+            nullptr,
+            3,
+            draco::DT_INT32,
+            false,
+            sizeof(int32_t) * 3,
+            0);
     colAtt = mesh->AddAttribute(va, use_identity_mapping, colourCount);
   }
   if (texCoordCount > 0) {
     draco::GeometryAttribute va;
-    va.Init(
-      draco::GeometryAttribute::TEX_COORD, nullptr, 2, draco::DT_INT32, false,
-      sizeof(int32_t) * 2, 0);
+    va.Init(draco::GeometryAttribute::TEX_COORD,
+            nullptr,
+            2,
+            draco::DT_INT32,
+            false,
+            sizeof(int32_t) * 2,
+            0);
     texAtt = mesh->AddAttribute(va, use_identity_mapping, texCoordCount);
   }
 
@@ -124,7 +140,7 @@ convert(TriangleMesh<T>& src)
   }
   for (int32_t i = 0; i < triCount; i++) {
     draco::Mesh::Face face;
-    Vec3<int32_t> tri(src.triangle(i));
+    Vec3<int32_t>     tri(src.triangle(i));
     for (int c = 0; c < 3; ++c) {
       face[c] = 3 * i + c;
       mesh->attribute(posAtt)->SetPointMapEntry(
@@ -152,10 +168,9 @@ convert(TriangleMesh<T>& src)
 
 template<typename T>
 void
-convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
-{
+convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst) {
   draco::Mesh& mesh = *src;
-  const auto* posAtt =
+  const auto*  posAtt =
     mesh.GetNamedAttribute(draco::GeometryAttribute::POSITION);
   const auto* nrmAtt =
     mesh.GetNamedAttribute(draco::GeometryAttribute::NORMAL);
@@ -165,60 +180,56 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
   // position
   if (posAtt) {
     for (draco::AttributeValueIndex i(0);
-         i < static_cast<uint32_t>(posAtt->size()); ++i) {
+         i < static_cast<uint32_t>(posAtt->size());
+         ++i) {
       std::array<int32_t, 3> value{};
-      if (!posAtt->ConvertValue<int32_t, 3>(i, value.data())) {
-        return;
-      }
+      if (!posAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
       dst.addPoint(value[0], value[1], value[2]);
     }
   }
   // Normal
   if (nrmAtt) {
     for (draco::AttributeValueIndex i(0);
-         i < static_cast<uint32_t>(nrmAtt->size()); ++i) {
+         i < static_cast<uint32_t>(nrmAtt->size());
+         ++i) {
       std::array<int32_t, 3> value{};
-      if (!nrmAtt->ConvertValue<int32_t, 3>(i, value.data())) {
-        return;
-      }
+      if (!nrmAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
       dst.addNormal(value[0], value[1], value[2]);
     }
   }
   // Color
   if (colAtt) {
     for (draco::AttributeValueIndex i(0);
-         i < static_cast<uint32_t>(colAtt->size()); ++i) {
+         i < static_cast<uint32_t>(colAtt->size());
+         ++i) {
       std::array<int32_t, 3> value{};
-      if (!colAtt->ConvertValue<int32_t, 3>(i, value.data())) {
-        return;
-      }
+      if (!colAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
       dst.addColour(value[0], value[1], value[2]);
     }
   }
   // Texture coordinate
   if (texAtt) {
     for (draco::AttributeValueIndex i(0);
-         i < static_cast<uint32_t>(texAtt->size()); ++i) {
+         i < static_cast<uint32_t>(texAtt->size());
+         ++i) {
       std::array<int32_t, 2> value{};
-      if (!texAtt->ConvertValue<int32_t, 2>(i, value.data())) {
-        return;
-      }
+      if (!texAtt->ConvertValue<int32_t, 2>(i, value.data())) { return; }
       dst.addTexCoord(value[0], value[1]);
     }
   }
   for (draco::FaceIndex i(0); i < mesh.num_faces(); ++i) {
-    const auto& face = mesh.face(i);
+    const auto&   face = mesh.face(i);
     const int32_t idx0 = posAtt->mapped_index(face[0]).value();
     const int32_t idx1 = posAtt->mapped_index(face[1]).value();
     const int32_t idx2 = posAtt->mapped_index(face[2]).value();
     dst.addTriangle(idx0, idx1, idx2);
-    if (texAtt && texAtt->size() > 0){
+    if (texAtt && texAtt->size() > 0) {
       const int32_t tex0 = texAtt->mapped_index(face[0]).value();
       const int32_t tex1 = texAtt->mapped_index(face[1]).value();
       const int32_t tex2 = texAtt->mapped_index(face[2]).value();
       dst.addTexCoordTriangle(tex0, tex1, tex2);
     }
-    if (nrmAtt && nrmAtt->size() > 0){
+    if (nrmAtt && nrmAtt->size() > 0) {
       const int32_t nrm0 = nrmAtt->mapped_index(face[0]).value();
       const int32_t nrm1 = nrmAtt->mapped_index(face[1]).value();
       const int32_t nrm2 = nrmAtt->mapped_index(face[2]).value();
@@ -229,13 +240,12 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
 
 template<typename T>
 void
-DracoLibGeometryEncoder<T>::encode(
-  TriangleMesh<T>& src,
-  GeometryEncoderParameters& params,
-  std::vector<uint8_t>& bitstream,
-  TriangleMesh<T>& rec)
+DracoLibGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
+                                   GeometryEncoderParameters& params,
+                                   std::vector<uint8_t>&      bitstream,
+                                   TriangleMesh<T>&           rec)
 
-{  
+{
   // Load draco mesh
   auto mesh = convert(src);
 
@@ -244,20 +254,20 @@ DracoLibGeometryEncoder<T>::encode(
   encoder.SetSpeedOptions(10 - params.cl_, 10 - params.cl_);
   encoder.SetEncodingMethod(
     draco::MeshEncoderMethod::MESH_EDGEBREAKER_ENCODING);
-  encoder.SetAttributeQuantization(
-    draco::GeometryAttribute::POSITION, params.qp_);
-  encoder.SetAttributeQuantization(
-    draco::GeometryAttribute::TEX_COORD, params.qt_);
+  encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION,
+                                   params.qp_);
+  encoder.SetAttributeQuantization(draco::GeometryAttribute::TEX_COORD,
+                                   params.qt_);
   if (params.qn_ > 0) {
-    encoder.SetAttributeQuantization(
-      draco::GeometryAttribute::NORMAL, params.qn_);
+    encoder.SetAttributeQuantization(draco::GeometryAttribute::NORMAL,
+                                     params.qn_);
   }
   if (params.qg_ > 0) {
-    encoder.SetAttributeQuantization(
-      draco::GeometryAttribute::COLOR, params.qg_);
+    encoder.SetAttributeQuantization(draco::GeometryAttribute::COLOR,
+                                     params.qg_);
   }
   draco::EncoderBuffer buffer;
-  const draco::Status status =
+  const draco::Status  status =
     encoder.EncodeMeshToBuffer(*(mesh.get()), &buffer);
   if (!status.ok()) {
     printf("Failed to encode the mesh: %s\n", status.error_msg());
@@ -270,7 +280,7 @@ DracoLibGeometryEncoder<T>::encode(
   bitstream.resize(buffer.size());
   std::copy(buffer.data(), buffer.data() + buffer.size(), bitstream.data());
 
-  // Decode  
+  // Decode
   draco::DecoderBuffer decBuffer;
   decBuffer.Init((const char*)bitstream.data(), bitstream.size());
   auto type = draco::Decoder::GetEncodedGeometryType(&decBuffer);
@@ -280,10 +290,10 @@ DracoLibGeometryEncoder<T>::encode(
   }
   if (type.value() == draco::TRIANGULAR_MESH) {
     draco::Decoder decoder;
-    auto status = decoder.DecodeMeshFromBuffer(&decBuffer);
+    auto           status = decoder.DecodeMeshFromBuffer(&decBuffer);
     if (!status.ok()) {
-      printf(
-        "Failed DecodeMeshFromBuffer: %s.\n", status.status().error_msg());
+      printf("Failed DecodeMeshFromBuffer: %s.\n",
+             status.status().error_msg());
       exit(-1);
     }
     std::unique_ptr<draco::Mesh> decMesh = std::move(status).value();

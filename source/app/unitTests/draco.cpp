@@ -46,24 +46,23 @@
 #include <gtest/gtest.h>
 #include "common.hpp"
 
-TEST(draco, encode)
-{
+TEST(draco, encode) {
   disableSubProcessLog.disable();
   // Set parameters
-  vmesh::GeometryCodecId codecId = vmesh::GeometryCodecId::DRACO;
+  vmesh::GeometryCodecId           codecId = vmesh::GeometryCodecId::DRACO;
   vmesh::GeometryEncoderParameters params;
-  std::string inputMesh = "data/gof_0_fr_0_qbase.obj";
-  std::string recOrg = "rec_org.obj";
-  std::string binOrg = "bin_org.drc";
-  std::string recNew = "rec_new.obj";
-  std::string binNew = "bin_new.drc";
-  params.qp_ = 11;
-  params.qt_ = 10;
-  params.qn_ = -1;
-  params.qg_ = -1;
-  params.cl_ = 10;
-  
-  if (!checkSoftwarePath()){
+  std::string                      inputMesh = "data/gof_0_fr_0_qbase.obj";
+  std::string                      recOrg    = "rec_org.obj";
+  std::string                      binOrg    = "bin_org.drc";
+  std::string                      recNew    = "rec_new.obj";
+  std::string                      binNew    = "bin_new.drc";
+  params.qp_                                 = 11;
+  params.qt_                                 = 10;
+  params.qn_                                 = -1;
+  params.qg_                                 = -1;
+  params.cl_                                 = 10;
+
+  if (!checkSoftwarePath()) {
     FAIL() << "All software paths not exist: ";
     return;
   }
@@ -77,7 +76,7 @@ TEST(draco, encode)
   vmesh::TriangleMesh<double> src;
   vmesh::TriangleMesh<double> rec;
   vmesh::TriangleMesh<double> dec;
-  vmesh::Bitstream bitstream;
+  vmesh::Bitstream            bitstream;
   src.loadFromOBJ(inputMesh);
   auto encoder = vmesh::VirtualGeometryEncoder<double>::create(codecId);
   encoder->encode(src, params, bitstream.vector(), rec);
@@ -91,57 +90,46 @@ TEST(draco, encode)
   // Encode with original draco application
   std::stringstream cmd;
   cmd << g_dracoEncoderPath << "  "
-      << " -i " << inputMesh    
-      << " -o " << binOrg       
-      << " -qp " << params.qp_  
-      << " -qt " << params.qt_  
-      << " -qn " << params.qn_  
-      << " -qg " << params.qg_  
-      << " -cl " << params.cl_ ;
-  if (disableSubProcessLog.disableLog()) {
-    cmd << " > /dev/null";
-  }
+      << " -i " << inputMesh << " -o " << binOrg << " -qp " << params.qp_
+      << " -qt " << params.qt_ << " -qn " << params.qn_ << " -qg "
+      << params.qg_ << " -cl " << params.cl_;
+  if (disableSubProcessLog.disableLog()) { cmd << " > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
   // Decode with original draco application
   cmd.str("");
   cmd << g_dracoDecoderPath << "  "
-      << " -i " << binOrg  
-      << " -o " << recOrg;
-  if (disableSubProcessLog.disableLog()) {
-    cmd << " 2>&1 > /dev/null";
-  }
+      << " -i " << binOrg << " -o " << recOrg;
+  if (disableSubProcessLog.disableLog()) { cmd << " 2>&1 > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
   // Compare bitstreams
-  auto hashBinLibs =  hash(binOrg);
-  auto hashBinSoft =  hash(binNew);
+  auto hashBinLibs = hash(binOrg);
+  auto hashBinSoft = hash(binNew);
   std::cout << "hashBinLibs = " << std::hex << hashBinLibs << "\n";
   std::cout << "hashBinSoft = " << std::hex << hashBinSoft << "\n";
   disableSubProcessLog.enable();
 
   ASSERT_EQ(hashBinLibs, hashBinSoft);
- 
+
   // Remove tmp files
-  remove( binOrg.c_str() );
-  remove( binNew.c_str() );
-  remove( recOrg.c_str() );
-  remove( recNew.c_str() );
+  remove(binOrg.c_str());
+  remove(binNew.c_str());
+  remove(recOrg.c_str());
+  remove(recNew.c_str());
 }
 
-
-TEST(draco, decode)
-{
+TEST(draco, decode) {
   disableSubProcessLog.disable();
   // Set parameters
-  vmesh::GeometryCodecId codecId = vmesh::GeometryCodecId::DRACO;
-  std::string binPath    = "data/gof_0_fr_0_cbase.drc";
-  std::string decAppPath = "dec_app.obj";  
-  std::string decLibPath = "dec_lib.obj";
-  
-  if (!checkSoftwarePath()){    
+  vmesh::GeometryCodecId codecId    = vmesh::GeometryCodecId::DRACO;
+  std::string            binPath    = "data/gof_0_fr_0_cbase.drc";
+  std::string            decAppPath = "dec_app.obj";
+  std::string            decLibPath = "dec_lib.obj";
+
+  if (!checkSoftwarePath()) {
     FAIL() << "All software paths not exist: ";
     return;
   }
@@ -154,11 +142,8 @@ TEST(draco, decode)
   // Decode with original draco application
   std::stringstream cmd;
   cmd << g_dracoDecoderPath << "  "
-      << " -i " << binPath  
-      << " -o " << decAppPath;
-  if (disableSubProcessLog.disableLog()) {
-    cmd << " 2>&1 > /dev/null";
-  }
+      << " -i " << binPath << " -o " << decAppPath;
+  if (disableSubProcessLog.disableLog()) { cmd << " 2>&1 > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
   vmesh::TriangleMesh<double> decApp;
@@ -166,11 +151,11 @@ TEST(draco, decode)
   decApp.saveToOBJ(decAppPath);
 
   // Decode with VirtualGeometryEncoder
-  vmesh::Bitstream bitstream;
+  vmesh::Bitstream            bitstream;
   vmesh::TriangleMesh<double> decLib;
   bitstream.load(binPath);
   auto decoder = vmesh::VirtualGeometryDecoder<double>::create(codecId);
-  decoder->decode(bitstream.vector(), decLib);  
+  decoder->decode(bitstream.vector(), decLib);
   decLib.saveToOBJ(decLibPath);
 
   // Compare bitstreams
@@ -180,8 +165,8 @@ TEST(draco, decode)
   std::cout << "hashDecLib = " << std::hex << hashDecLib << "\n";
   disableSubProcessLog.enable();
   ASSERT_EQ(hashDecApp, hashDecLib);
- 
+
   // Remove tmp files
-  remove( decAppPath.c_str() );
-  remove( decLibPath.c_str() );
+  remove(decAppPath.c_str());
+  remove(decLibPath.c_str());
 }

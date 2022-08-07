@@ -44,21 +44,20 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose{};
-  std::string srcMeshPath;
-  std::string srcTexturePath;
-  std::string decMeshPath;
-  std::string decTexturePath;
-  int32_t startFrame{};
-  int32_t frameCount{};
+  bool                        verbose{};
+  std::string                 srcMeshPath;
+  std::string                 srcTexturePath;
+  std::string                 decMeshPath;
+  std::string                 decTexturePath;
+  int32_t                     startFrame{};
+  int32_t                     frameCount{};
   vmesh::VMCMetricsParameters metParams;
 };
 
 //============================================================================
 
 static bool
-parseParameters(int argc, char* argv[], Parameters& params)
-try {
+parseParameters(int argc, char* argv[], Parameters& params) try {
   namespace po = df::program_options_lite;
 
   bool print_help = false;
@@ -97,7 +96,7 @@ try {
   /* clang-format on */
 
   po::setDefaults(opts);
-  po::ErrorReporter err;
+  po::ErrorReporter             err;
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
@@ -123,18 +122,15 @@ try {
   if (params.decTexturePath.empty()) {
     err.error() << "Rec/dec texture not specified\n";
   }
-  if (err.is_errored) {
-    return false;
-  }
+  if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
   po::dumpCfg(std::cout, opts, "Input/Output", 4);
-  po::dumpCfg(std::cout, opts, "Metrics", 4);  
+  po::dumpCfg(std::cout, opts, "Metrics", 4);
   std::cout << '\n';
   return true;
-}
-catch (df::program_options_lite::ParseFailure& e) {
+} catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
             << e.val << "\".\n";
   return false;
@@ -143,44 +139,47 @@ catch (df::program_options_lite::ParseFailure& e) {
 //============================================================================
 
 int32_t
-metrics(const Parameters& params)
-{
+metrics(const Parameters& params) {
   vmesh::VMCMetrics metrics;
-  const int lastFrame =  params.startFrame +  params.frameCount;
+  const int         lastFrame = params.startFrame + params.frameCount;
   for (int f = params.startFrame; f < lastFrame; ++f) {
     vmesh::VMCGroupOfFrames gof;
     gof.resize(1);
-    const auto nameSrcMesh = vmesh::expandNum(params.srcMeshPath, f);
+    const auto nameSrcMesh    = vmesh::expandNum(params.srcMeshPath, f);
     const auto nameSrcTexture = vmesh::expandNum(params.srcTexturePath, f);
-    const auto nameRecMesh = vmesh::expandNum(params.decMeshPath, f);
+    const auto nameRecMesh    = vmesh::expandNum(params.decMeshPath, f);
     const auto nameRecTexture = vmesh::expandNum(params.decTexturePath, f);
-    auto& frame = gof.frames[0];
+    auto&      frame          = gof.frames[0];
     if (!frame.input.loadFromOBJ(nameSrcMesh)) {
-      printf(
-        "Error loading src mesh %d / %d: %s \n", f, params.frameCount,
-        nameSrcMesh.c_str());
+      printf("Error loading src mesh %d / %d: %s \n",
+             f,
+             params.frameCount,
+             nameSrcMesh.c_str());
       return -1;
     }
     if (!vmesh::LoadImage(nameSrcTexture, frame.inputTexture)) {
-      printf(
-        "Error loading src texture %d / %d: %s \n", f, params.frameCount,
-        nameSrcTexture.c_str());
+      printf("Error loading src texture %d / %d: %s \n",
+             f,
+             params.frameCount,
+             nameSrcTexture.c_str());
       return -1;
     }
     if (!frame.rec.loadFromOBJ(nameRecMesh)) {
-      printf(
-        "Error loading rec mesh %d / %d: %s \n", f, params.frameCount,
-        nameRecMesh.c_str());
+      printf("Error loading rec mesh %d / %d: %s \n",
+             f,
+             params.frameCount,
+             nameRecMesh.c_str());
       return -1;
     }
     if (!vmesh::LoadImage(nameRecTexture, frame.outputTexture)) {
-      printf(
-        "Error loading rec texture %d / %d: %s \n", f, params.frameCount,
-        nameRecTexture.c_str());
+      printf("Error loading rec texture %d / %d: %s \n",
+             f,
+             params.frameCount,
+             nameRecTexture.c_str());
       return -1;
     }
-    printf("Compute metric frame %d / %d  \n",f, params.frameCount );
-    metrics.compute( gof, params.metParams);
+    printf("Compute metric frame %d / %d  \n", f, params.frameCount);
+    metrics.compute(gof, params.metParams);
   }
   return 0;
 }
@@ -188,21 +187,16 @@ metrics(const Parameters& params)
 //============================================================================
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   // this is mandatory to print floats with full precision
-  std::cout.precision( std::numeric_limits<float>::max_digits10 );
-  
-  Parameters params;
-  if (!parseParameters(argc, argv, params)) {
-    return 1;
-  }
+  std::cout.precision(std::numeric_limits<float>::max_digits10);
 
-  if (params.verbose) {
-    vmesh::vout.rdbuf(std::cout.rdbuf());
-  }
+  Parameters params;
+  if (!parseParameters(argc, argv, params)) { return 1; }
+
+  if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
   if (metrics(params) != 0) {
     std::cerr << "Error: can't compute metrics!\n";

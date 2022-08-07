@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <chrono>
-#include <iostream> 
+#include <iostream>
 
 #include "util/misc.hpp"
 #include "util/verbose.hpp"
@@ -45,12 +45,11 @@
 #include <program-options-lite/program_options_lite.h>
 
 DisableSubProcessLog disableSubProcessLog;
-TestParameters testParams;
+TestParameters       testParams;
 //============================================================================
 
 static bool
-parseParameters(int argc, char* argv[])
-try {
+parseParameters(int argc, char* argv[]) try {
   namespace po = df::program_options_lite;
 
   bool print_help = false;
@@ -65,7 +64,7 @@ try {
   /* clang-format on */
 
   po::setDefaults(opts);
-  po::ErrorReporter err;
+  po::ErrorReporter             err;
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
@@ -73,15 +72,13 @@ try {
     err.warn() << "Unhandled argument ignored: " << arg << '\n';
   }
 
-  if ( print_help) {
+  if (print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
     po::doHelp(std::cout, opts, 78);
     return false;
   }
 
-  if (err.is_errored) {
-    return false;
-  }
+  if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
@@ -89,8 +86,7 @@ try {
   std::cout << '\n';
 
   return true;
-}
-catch (df::program_options_lite::ParseFailure& e) {
+} catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
             << e.val << "\".\n";
   return false;
@@ -99,22 +95,17 @@ catch (df::program_options_lite::ParseFailure& e) {
 //============================================================================
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   // this is mandatory to print floats with full precision
-  std::cout.precision( std::numeric_limits<float>::max_digits10 );
+  std::cout.precision(std::numeric_limits<float>::max_digits10);
 
   ::testing::InitGoogleTest(&argc, argv);
 
-  if (!parseParameters(argc, argv)) {
-    return 1;
-  }
+  if (!parseParameters(argc, argv)) { return 1; }
 
-  if (testParams.verbose) {
-    disableSubProcessLog.switchOnLog();
-  }
+  if (testParams.verbose) { disableSubProcessLog.switchOnLog(); }
 
   return RUN_ALL_TESTS();
   return 0;

@@ -30,23 +30,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined( USE_HM_VIDEO_CODEC )
-#include "util/image.hpp"
-#include "virtualVideoDecoder.hpp"
+#if defined(USE_HM_VIDEO_CODEC)
+#  include "util/image.hpp"
+#  include "virtualVideoDecoder.hpp"
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class hmLibVideoDecoder : public VirtualVideoDecoder<T> {
- public:
+public:
   hmLibVideoDecoder();
   ~hmLibVideoDecoder();
 
-  void decode( std::vector<uint8_t>& bitstream,
-               FrameSequence<T>&    video,
-               size_t             outputBitDepth = 8,
-               const std::string& decoderPath    = "",
-               const std::string& parameters     = "" );
+  void decode(std::vector<uint8_t>& bitstream,
+              FrameSequence<T>&     video,
+              size_t                outputBitDepth = 8,
+              const std::string&    decoderPath    = "",
+              const std::string&    parameters     = "");
 };
 
 }  // namespace vmesh

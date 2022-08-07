@@ -50,74 +50,71 @@
 namespace vmesh {
 
 int
-SequenceInfo::generate(
-  const int frameCount,
-  const int startFrame,
-  const int maxGOFSize,
-  const bool analyzeGof,
-  const std::string& inputPath)
-{
-  printf(
-    "SequenceInfo generate analyzeGof = %d \n", static_cast<int>(analyzeGof));
-  startFrame_ = startFrame;
-  frameCount_ = frameCount;
+SequenceInfo::generate(const int          frameCount,
+                       const int          startFrame,
+                       const int          maxGOFSize,
+                       const bool         analyzeGof,
+                       const std::string& inputPath) {
+  printf("SequenceInfo generate analyzeGof = %d \n",
+         static_cast<int>(analyzeGof));
+  startFrame_           = startFrame;
+  frameCount_           = frameCount;
   groupOfFramesMaxSize_ = maxGOFSize;
   if (!analyzeGof) {
     int32_t currentGofIndex = -1;
     for (int32_t f = 0; f < frameCount_; ++f) {
       const auto frameIndex = startFrame + f;
-      const auto gofIndex = f / groupOfFramesMaxSize_;
+      const auto gofIndex   = f / groupOfFramesMaxSize_;
       if (gofIndex != currentGofIndex) {
         currentGofIndex = gofIndex;
         sequenceInfo_.resize(sequenceInfo_.size() + 1);
-        auto& gofInfo = sequenceInfo_.back();
-        gofInfo.frameCount_ = 1;
+        auto& gofInfo            = sequenceInfo_.back();
+        gofInfo.frameCount_      = 1;
         gofInfo.startFrameIndex_ = frameIndex;
-        gofInfo.index_ = gofIndex;
+        gofInfo.index_           = gofIndex;
         VMCFrameInfo frameInfo;
-        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
+        frameInfo.frameIndex          = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type = FrameType::INTRA;
+        frameInfo.type                = FrameType::INTRA;
         gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
         gofInfo.framesInfo_.push_back(frameInfo);
       } else {
         auto& gofInfo = sequenceInfo_.back();
         ++gofInfo.frameCount_;
         VMCFrameInfo frameInfo;
-        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
+        frameInfo.frameIndex          = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type = FrameType::INTRA;
+        frameInfo.type                = FrameType::INTRA;
         gofInfo.framesInfo_.push_back(frameInfo);
       }
     }
   } else {
     TriangleMesh<double> mesh0;
     TriangleMesh<double> mesh1;
-    auto frameIndex0 = startFrame;
-    const auto& name = expandNum(inputPath, frameIndex0);
+    auto                 frameIndex0 = startFrame;
+    const auto&          name        = expandNum(inputPath, frameIndex0);
     if (!mesh0.loadFromOBJ(name)) {
       std::cerr << "Error: can't load frame" << frameIndex0 << ' ' << name
                 << '\n';
       return 1;
     }
     std::vector<Vec3<int32_t>> predStructure(frameCount);
-    predStructure[0] = Vec3<int32_t>(frameIndex0, frameIndex0, 0);
+    predStructure[0]        = Vec3<int32_t>(frameIndex0, frameIndex0, 0);
     int32_t interFrameCount = 0;
     for (int32_t f = 1; f < frameCount; ++f) {
-      const auto frameIndex1 = startFrame + f;      
-      const auto& name = expandNum(inputPath, frameIndex1);
+      const auto  frameIndex1 = startFrame + f;
+      const auto& name        = expandNum(inputPath, frameIndex1);
       if (!mesh1.loadFromOBJ(name)) {
         std::cerr << "Error: can't load frame" << frameIndex1 << ' ' << name
                   << '\n';
         return 1;
       }
       bool same = false;
-      if (
-        mesh1.pointCount() == mesh0.pointCount()
-        && mesh1.triangleCount() == mesh0.triangleCount()
-        && mesh1.pointCount() == mesh0.texCoordCount()
-        && mesh1.triangleCount() == mesh0.texCoordTriangleCount()) {
-        same = true;
+      if (mesh1.pointCount() == mesh0.pointCount()
+          && mesh1.triangleCount() == mesh0.triangleCount()
+          && mesh1.pointCount() == mesh0.texCoordCount()
+          && mesh1.triangleCount() == mesh0.texCoordTriangleCount()) {
+        same                     = true;
         const auto texCoordCount = mesh0.texCoordCount();
         for (int32_t v = 0; same && v < texCoordCount; ++v) {
           const auto& texCoord0 = mesh0.texCoord(v);
@@ -131,8 +128,8 @@ SequenceInfo::generate(
         }
         const auto triangleCount = mesh0.triangleCount();
         for (int32_t t = 0; same && t < triangleCount; ++t) {
-          const auto& tri0 = mesh0.triangle(t);
-          const auto& tri1 = mesh1.triangle(t);
+          const auto& tri0         = mesh0.triangle(t);
+          const auto& tri1         = mesh1.triangle(t);
           const auto& triTexCoord0 = mesh0.texCoordTriangle(t);
           const auto& triTexCoord1 = mesh1.texCoordTriangle(t);
           for (int32_t k = 0; k < 3; ++k) {
@@ -145,21 +142,21 @@ SequenceInfo::generate(
       }
       if (!same) {
         frameIndex0 = frameIndex1;
-        mesh0 = mesh1;
+        mesh0       = mesh1;
       } else {
         std::cout << interFrameCount++ << ' ' << frameIndex0 << " -> "
                   << frameIndex1 << '\n';
       }
       predStructure[f] = Vec3<int32_t>(frameIndex1, frameIndex0, 0);
-      printf("Analyse => index = %3d ref = %3d \n",frameIndex1, frameIndex0);
+      printf("Analyse => index = %3d ref = %3d \n", frameIndex1, frameIndex0);
     }
 
-    int32_t framesInGOF = 0;
+    int32_t framesInGOF        = 0;
     int32_t startFrameIndexGOF = startFrame;
-    int32_t counterGOF = 0;
+    int32_t counterGOF         = 0;
     for (int32_t f = 0; f < frameCount;) {
-      const auto refFrameIndex = predStructure[f][1];
-      int32_t coherentFrameCount = 0;
+      const auto refFrameIndex      = predStructure[f][1];
+      int32_t    coherentFrameCount = 0;
       while (coherentFrameCount <= maxGOFSize
              && f + coherentFrameCount < frameCount
              && predStructure[f + coherentFrameCount][1] == refFrameIndex) {
@@ -170,7 +167,7 @@ SequenceInfo::generate(
         framesInGOF += coherentFrameCount;
       } else {
         const auto start = startFrameIndexGOF;
-        const auto end = startFrameIndexGOF + framesInGOF;
+        const auto end   = startFrameIndexGOF + framesInGOF;
         assert(start >= startFrame);
         assert(end <= startFrame + frameCount_);
         std::cout << "GOf[" << counterGOF << "] " << start << " -> " << end
@@ -179,14 +176,14 @@ SequenceInfo::generate(
           predStructure[t - startFrame][2] = counterGOF;
         }
         startFrameIndexGOF = startFrame + f;
-        framesInGOF = coherentFrameCount;
+        framesInGOF        = coherentFrameCount;
         ++counterGOF;
       }
       f += coherentFrameCount;
     }
     if (framesInGOF != 0) {
       const auto start = startFrameIndexGOF;
-      const auto end = startFrameIndexGOF + framesInGOF;
+      const auto end   = startFrameIndexGOF + framesInGOF;
       assert(start >= startFrame);
       assert(end <= startFrame + frameCount);
       std::cout << "GOf[" << counterGOF << "] " << start << " -> " << end
@@ -199,22 +196,22 @@ SequenceInfo::generate(
 
     int32_t currentGofIndex = -1;
     for (int32_t t = 0; t < frameCount_; ++t) {
-      const auto& pred = predStructure[t];
-      const auto frameIndex = pred[0];
-      const auto referenceFrameIndex = pred[1];
-      const auto gofIndex = pred[2];
+      const auto& pred                = predStructure[t];
+      const auto  frameIndex          = pred[0];
+      const auto  referenceFrameIndex = pred[1];
+      const auto  gofIndex            = pred[2];
       assert(referenceFrameIndex <= frameIndex);
       if (gofIndex != currentGofIndex) {
         currentGofIndex = gofIndex;
         sequenceInfo_.resize(sequenceInfo_.size() + 1);
-        auto& gofInfo = sequenceInfo_.back();
-        gofInfo.frameCount_ = 1;
+        auto& gofInfo            = sequenceInfo_.back();
+        gofInfo.frameCount_      = 1;
         gofInfo.startFrameIndex_ = frameIndex;
-        gofInfo.index_ = gofIndex;
+        gofInfo.index_           = gofIndex;
         VMCFrameInfo frameInfo;
-        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
+        frameInfo.frameIndex          = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type = FrameType::INTRA;
+        frameInfo.type                = FrameType::INTRA;
         gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
         gofInfo.framesInfo_.push_back(frameInfo);
       } else {
@@ -225,13 +222,14 @@ SequenceInfo::generate(
         if (referenceFrameIndex == frameIndex) {
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex = -1;
-          frameInfo.previousFrameIndex = -1;
-          frameInfo.type = FrameType::INTRA;
+          frameInfo.previousFrameIndex  = -1;
+          frameInfo.type                = FrameType::INTRA;
         } else {
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
-          frameInfo.referenceFrameIndex = referenceFrameIndex - gofInfo.startFrameIndex_;
+          frameInfo.referenceFrameIndex =
+            referenceFrameIndex - gofInfo.startFrameIndex_;
           frameInfo.previousFrameIndex = frameInfo.frameIndex - 1;
-          frameInfo.type = FrameType::SKIP;
+          frameInfo.type               = FrameType::SKIP;
         }
         gofInfo.framesInfo_.push_back(frameInfo);
       }
@@ -241,8 +239,7 @@ SequenceInfo::generate(
 }
 
 int
-SequenceInfo::save(std::string& outputPath)
-{
+SequenceInfo::save(std::string& outputPath) {
   std::ofstream fout(outputPath);
   if (!fout.is_open()) {
     std::cerr << "Error: can't create output file " << outputPath << '\n';
@@ -251,9 +248,10 @@ SequenceInfo::save(std::string& outputPath)
   for (auto& gofInfo : sequenceInfo_) {
     for (auto& frameInfo : gofInfo.framesInfo_) {
       auto frameIndex = frameInfo.frameIndex + gofInfo.startFrameIndex_;
-      auto refIndex = frameInfo.referenceFrameIndex == -1
-        ? frameInfo.frameIndex + gofInfo.startFrameIndex_
-        : frameInfo.referenceFrameIndex + gofInfo.startFrameIndex_;
+      auto refIndex =
+        frameInfo.referenceFrameIndex == -1
+          ? frameInfo.frameIndex + gofInfo.startFrameIndex_
+          : frameInfo.referenceFrameIndex + gofInfo.startFrameIndex_;
       fout << frameIndex << ' ' << refIndex << ' ' << gofInfo.index_ << '\n';
     }
   }
@@ -261,14 +259,12 @@ SequenceInfo::save(std::string& outputPath)
 }
 
 int
-SequenceInfo::load(
-  int frameCount,
-  int startFrame,
-  int maxGOFSize,
-  std::string& groupOfFramesStructurePath)
-{
-  startFrame_ = startFrame;
-  frameCount_ = frameCount;
+SequenceInfo::load(int          frameCount,
+                   int          startFrame,
+                   int          maxGOFSize,
+                   std::string& groupOfFramesStructurePath) {
+  startFrame_           = startFrame;
+  frameCount_           = frameCount;
   groupOfFramesMaxSize_ = maxGOFSize;
   sequenceInfo_.reserve(10);
   if (groupOfFramesStructurePath.empty()) {
@@ -277,17 +273,17 @@ SequenceInfo::load(
       const auto frameCountGOF =
         std::min(groupOfFramesMaxSize_, frameCount_ - f);
       sequenceInfo_.resize(sequenceInfo_.size() + 1);
-      auto& gofInfo = sequenceInfo_.back();
-      gofInfo.frameCount_ = frameCountGOF;
+      auto& gofInfo            = sequenceInfo_.back();
+      gofInfo.frameCount_      = frameCountGOF;
       gofInfo.startFrameIndex_ = startFrameGOF;
-      gofInfo.index_ = gofIndex;
+      gofInfo.index_           = gofIndex;
       gofInfo.resize(frameCountGOF);
       for (int32_t frameIndexInGOF = 0; frameIndexInGOF < frameCountGOF;
            ++frameIndexInGOF) {
-        VMCFrameInfo& frameInfo = gofInfo.frameInfo(frameIndexInGOF);
-        frameInfo.frameIndex = frameIndexInGOF;
+        VMCFrameInfo& frameInfo       = gofInfo.frameInfo(frameIndexInGOF);
+        frameInfo.frameIndex          = frameIndexInGOF;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type = FrameType::INTRA;
+        frameInfo.type                = FrameType::INTRA;
       }
       f += frameCountGOF;
     }
@@ -296,19 +292,17 @@ SequenceInfo::load(
 
   std::ifstream fin(groupOfFramesStructurePath);
   if (fin.is_open()) {
-    std::string line;
+    std::string              line;
     std::vector<std::string> tokens;
-    int32_t currentGofIndex = -1;
-    int32_t frameCounter = 0;
+    int32_t                  currentGofIndex = -1;
+    int32_t                  frameCounter    = 0;
 
     while (getline(fin, line) && frameCounter++ < frameCount_) {
       size_t prev = 0;
-      size_t pos = 0;
+      size_t pos  = 0;
       tokens.resize(0);
       while ((pos = line.find_first_of(" ,;:/", prev)) != std::string::npos) {
-        if (pos > prev) {
-          tokens.push_back(line.substr(prev, pos - prev));
-        }
+        if (pos > prev) { tokens.push_back(line.substr(prev, pos - prev)); }
         prev = pos + 1;
       }
 
@@ -316,22 +310,22 @@ SequenceInfo::load(
         tokens.push_back(line.substr(prev, std::string::npos));
       }
 
-      const auto frameIndex = atoi(tokens[0].c_str());
+      const auto frameIndex          = atoi(tokens[0].c_str());
       const auto referenceFrameIndex = atoi(tokens[1].c_str());
-      const auto gofIndex = atoi(tokens[2].c_str());
+      const auto gofIndex            = atoi(tokens[2].c_str());
       assert(referenceFrameIndex <= frameIndex);
 
       if (gofIndex != currentGofIndex) {
         currentGofIndex = gofIndex;
         sequenceInfo_.resize(sequenceInfo_.size() + 1);
-        auto& gofInfo = sequenceInfo_.back();
-        gofInfo.frameCount_ = 1;
+        auto& gofInfo            = sequenceInfo_.back();
+        gofInfo.frameCount_      = 1;
         gofInfo.startFrameIndex_ = frameIndex;
-        gofInfo.index_ = gofIndex;
+        gofInfo.index_           = gofIndex;
         VMCFrameInfo frameInfo;
-        frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
+        frameInfo.frameIndex          = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type = FrameType::INTRA;
+        frameInfo.type                = FrameType::INTRA;
         gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
         gofInfo.framesInfo_.push_back(frameInfo);
       } else {
@@ -342,11 +336,11 @@ SequenceInfo::load(
         if (referenceFrameIndex == frameIndex) {
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex = -1;
-          frameInfo.type = FrameType::INTRA;
+          frameInfo.type                = FrameType::INTRA;
         } else {
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
-          frameInfo.type = FrameType::SKIP;
+          frameInfo.type                = FrameType::SKIP;
         }
         gofInfo.framesInfo_.push_back(frameInfo);
       }
@@ -357,14 +351,13 @@ SequenceInfo::load(
   return -1;
 }
 
-void SequenceInfo::trace(){
+void
+SequenceInfo::trace() {
   int gofIndex = 0;
-  printf(
-    "SequenceInfo: frameCount = %d startFrame = %d \n", frameCount_,
-    startFrame_);
-  for (auto& seqInfo : sequenceInfo_) {
-    seqInfo.trace();
-  }
+  printf("SequenceInfo: frameCount = %d startFrame = %d \n",
+         frameCount_,
+         startFrame_);
+  for (auto& seqInfo : sequenceInfo_) { seqInfo.trace(); }
 }
 
 }  // namespace vmesh

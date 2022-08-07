@@ -30,11 +30,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined( USE_HM_VIDEO_CODEC )
+#if defined(USE_HM_VIDEO_CODEC)
 
-#include "hmLibVideoDecoderImpl.hpp"
-#include "hmLibVideoDecoder.hpp"
-
+#  include "hmLibVideoDecoderImpl.hpp"
+#  include "hmLibVideoDecoder.hpp"
 
 namespace vmesh {
 
@@ -45,15 +44,13 @@ hmLibVideoDecoder<T>::~hmLibVideoDecoder() = default;
 
 template<typename T>
 void
-hmLibVideoDecoder<T>::decode(
-  std::vector<uint8_t>& bitstream,
-  FrameSequence<T>& video,
-  size_t outputBitDepth,
-  const std::string& /*decoderPath*/,
-  const std::string& /*fileName*/)
-{
+hmLibVideoDecoder<T>::decode(std::vector<uint8_t>& bitstream,
+                             FrameSequence<T>&     video,
+                             size_t                outputBitDepth,
+                             const std::string& /*decoderPath*/,
+                             const std::string& /*fileName*/) {
   hmLibVideoDecoderImpl<T> decoder;
-  decoder.decode( bitstream, outputBitDepth, video );
+  decoder.decode(bitstream, outputBitDepth, video);
 }
 
 template class hmLibVideoDecoder<uint8_t>;

@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once 
+#pragma once
 
 #include "util/image.hpp"
 
@@ -56,21 +56,20 @@ struct VideoEncoderParameters {
   bool        usePccRDO_                   = false;
 };
 
-template <class T>
+template<class T>
 class VirtualVideoEncoder {
- public:
-   VirtualVideoEncoder() = default;
-   ~VirtualVideoEncoder() = default;
+public:
+  VirtualVideoEncoder()  = default;
+  ~VirtualVideoEncoder() = default;
 
-   static std::shared_ptr<VirtualVideoEncoder<T>> create(VideoCodecId codecId);
-   static VideoCodecId getDefaultCodecId();
-   static bool checkCodecId(VideoCodecId codecId);
+  static std::shared_ptr<VirtualVideoEncoder<T>> create(VideoCodecId codecId);
+  static VideoCodecId                            getDefaultCodecId();
+  static bool checkCodecId(VideoCodecId codecId);
 
-   virtual void encode(
-     FrameSequence<T>& videoSrc,
-     VideoEncoderParameters& params,
-     std::vector<uint8_t>& bitstream,
-     FrameSequence<T>& videoRec) = 0;
+  virtual void encode(FrameSequence<T>&       videoSrc,
+                      VideoEncoderParameters& params,
+                      std::vector<uint8_t>&   bitstream,
+                      FrameSequence<T>&       videoRec) = 0;
 };
 
 }  // namespace vmesh

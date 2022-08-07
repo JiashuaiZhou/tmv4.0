@@ -46,27 +46,26 @@ struct VMCEncoderParameters;
 
 class GeometryDecimate {
 public:
-  GeometryDecimate() = default;
+  GeometryDecimate()  = default;
   ~GeometryDecimate() = default;
 
   static bool decimate(VMCFrame& frame, const VMCEncoderParameters& params);
 
-  static bool
-  unifyVertices(const TriangleMesh<double>& mesh, TriangleMesh<double>& umesh);
+  static bool unifyVertices(const TriangleMesh<double>& mesh,
+                            TriangleMesh<double>&       umesh);
 
 private:
-  static bool removeSmallConnectedComponents(
-    TriangleMesh<double>& mesh, int minCCTriangleCount);
+  static bool removeSmallConnectedComponents(TriangleMesh<double>& mesh,
+                                             int minCCTriangleCount);
 
   static bool removeDuplicatedTriangles(TriangleMesh<double>& mesh);
 
   static bool unifyVertices(TriangleMesh<double>& mesh);
 
-  static bool decimate(
-    const TriangleMesh<double>& mesh,
-    TriangleMesh<double>& dmesh,
-    TriangleMesh<double>& mmesh,
-    const VMCEncoderParameters& params);
+  static bool decimate(const TriangleMesh<double>& mesh,
+                       TriangleMesh<double>&       dmesh,
+                       TriangleMesh<double>&       mmesh,
+                       const VMCEncoderParameters& params);
 };
 
 }  // namespace vmesh

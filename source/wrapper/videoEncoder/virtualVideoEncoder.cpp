@@ -33,17 +33,17 @@
 
 #include "virtualVideoEncoder.hpp"
 
-
 #include "hmLibVideoEncoder.hpp"
 #include "vtmLibVideoEncoder.hpp"
 #ifdef USE_FFMPEG_VIDEO_CODEC
-#include "ffmpegLibVideoEncoder.hpp"
+#  include "ffmpegLibVideoEncoder.hpp"
 #endif
 
 namespace vmesh {
 
-template <typename T>
-VideoCodecId VirtualVideoEncoder<T>::getDefaultCodecId() {
+template<typename T>
+VideoCodecId
+VirtualVideoEncoder<T>::getDefaultCodecId() {
 #ifdef USE_HM_VIDEO_CODEC
   return VideoCodecId::HM;
 #endif
@@ -56,42 +56,51 @@ VideoCodecId VirtualVideoEncoder<T>::getDefaultCodecId() {
   return VideoCodecId::UNKNOWN_VIDEO_CODEC;
 }
 
-template <typename T>
-bool VirtualVideoEncoder<T>::checkCodecId( VideoCodecId codecId ) {
-  switch ( codecId ) {
+template<typename T>
+bool
+VirtualVideoEncoder<T>::checkCodecId(VideoCodecId codecId) {
+  switch (codecId) {
 #ifdef USE_HM_VIDEO_CODEC
-    case VideoCodecId::HM: break;
+  case VideoCodecId::HM: break;
 #endif
 #ifdef USE_VTM_VIDEO_CODEC
-    case VideoCodecId::VTM: break;
+  case VideoCodecId::VTM: break;
 #endif
 #ifdef USE_FFMPEG_VIDEO_CODEC
-    case VideoCodecId::FFMPEG: break;
+  case VideoCodecId::FFMPEG: break;
 #endif
-    default:
-      printf( "Error: codec id %d not supported \n", (int)codecId );
-      return false;
-      break;
+  default:
+    printf("Error: codec id %d not supported \n", (int)codecId);
+    return false;
+    break;
   }
   return true;
 }
 
-template <typename T>
-std::shared_ptr<VirtualVideoEncoder<T>> VirtualVideoEncoder<T>::create( VideoCodecId codecId ) {
-  switch ( codecId ) {
+template<typename T>
+std::shared_ptr<VirtualVideoEncoder<T>>
+VirtualVideoEncoder<T>::create(VideoCodecId codecId) {
+  switch (codecId) {
 #ifdef USE_HM_VIDEO_CODEC
-    case VideoCodecId::HM: return std::make_shared<hmLibVideoEncoder<T>>(); break;
+  case VideoCodecId::HM:
+    return std::make_shared<hmLibVideoEncoder<T>>();
+    break;
 #endif
 #ifdef USE_VTM_VIDEO_CODEC
-    case VideoCodecId::VTM: return std::make_shared<vtmLibVideoEncoder<T>>(); break;
+  case VideoCodecId::VTM:
+    return std::make_shared<vtmLibVideoEncoder<T>>();
+    break;
 #endif
 #ifdef USE_FFMPEG_VIDEO_CODEC
-    case VideoCodecId::FFMPEG: return std::make_shared<ffmpegLibVideoEncoder<T>>(); break;
+  case VideoCodecId::FFMPEG:
+    return std::make_shared<ffmpegLibVideoEncoder<T>>();
+    break;
 #endif
-    default:
-      printf( "Error VirtualVideoEncoder: codec id not supported ( %d ) \n", (int)codecId );
-      exit( -1 );
-      break;
+  default:
+    printf("Error VirtualVideoEncoder: codec id not supported ( %d ) \n",
+           (int)codecId);
+    exit(-1);
+    break;
   }
   return nullptr;
 }
@@ -99,4 +108,4 @@ std::shared_ptr<VirtualVideoEncoder<T>> VirtualVideoEncoder<T>::create( VideoCod
 template class VirtualVideoEncoder<uint8_t>;
 template class VirtualVideoEncoder<uint16_t>;
 
-} // namespace vmesh 
+}  // namespace vmesh

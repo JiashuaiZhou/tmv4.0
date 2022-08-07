@@ -31,26 +31,25 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef USE_VTM_VIDEO_CODEC
-#include "util/image.hpp"
+#  include "util/image.hpp"
 
-
-#include <list>
-#include <ostream>
-#include "EncoderLib/EncLib.h"
-#include "Utilities/VideoIOYuv.h"
-#include "vtmLibVideoEncoderCfg.hpp"
-#include <list>
-#include <fstream>
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <iomanip>
-#include "EncoderLib/EncTemporalFilter.h"
-#if EXTENSION_360_VIDEO
-#include "AppEncHelper360/TExt360AppEncTop.h"
-#endif
-#include "Utilities/program_options_lite.h"
+#  include <list>
+#  include <ostream>
+#  include "EncoderLib/EncLib.h"
+#  include "Utilities/VideoIOYuv.h"
+#  include "vtmLibVideoEncoderCfg.hpp"
+#  include <list>
+#  include <fstream>
+#  include <stdlib.h>
+#  include <stdio.h>
+#  include <fcntl.h>
+#  include <assert.h>
+#  include <iomanip>
+#  include "EncoderLib/EncTemporalFilter.h"
+#  if EXTENSION_360_VIDEO
+#    include "AppEncHelper360/TExt360AppEncTop.h"
+#  endif
+#  include "Utilities/program_options_lite.h"
 
 namespace vmesh {
 
@@ -59,35 +58,41 @@ namespace vmesh {
 // ====================================================================================================================
 
 /// encoder application class
-template <class T>
-class vtmLibVideoEncoderImpl : public vtmLibVideoEncoderCfg, public AUWriterIf {
- public:
-  vtmLibVideoEncoderImpl( ostream& bitStream, EncLibCommon* encLibCommon );
+template<class T>
+class vtmLibVideoEncoderImpl
+  : public vtmLibVideoEncoderCfg
+  , public AUWriterIf {
+public:
+  vtmLibVideoEncoderImpl(ostream& bitStream, EncLibCommon* encLibCommon);
 
   ~vtmLibVideoEncoderImpl();
 
-  bool encode( FrameSequence<T>&    videoSrc,
-               std::string        arguments,
-               std::vector<uint8_t>& bitstream,
-               FrameSequence<T>&    videoRec );
-  bool encodePrep( bool& eos, FrameSequence<T>& videoSrc, std::string arguments, FrameSequence<T>& videoRec );
-  void createLib( const int layerIdx );
+  bool encode(FrameSequence<T>&     videoSrc,
+              std::string           arguments,
+              std::vector<uint8_t>& bitstream,
+              FrameSequence<T>&     videoRec);
+  bool encodePrep(bool&             eos,
+                  FrameSequence<T>& videoSrc,
+                  std::string       arguments,
+                  FrameSequence<T>& videoRec);
+  void createLib(const int layerIdx);
   void destroyLib();
 
- private:
+private:
   void xInitLibCfg();
   void xInitLib();
   void xDestroyLib();
-  void xWriteOutput( std::ostream&           bitstreamFile,
-                     int                     iNumEncoded,
-                     std::list<PelUnitBuf*>& recBufList,
-                     FrameSequence<T>&         videoRec );
-  void xWritePicture( const PelUnitBuf* pic, FrameSequence<T>& video );
-  void xReadPicture( PelUnitBuf* pic, FrameSequence<T>& video, int frameIndex );
+  void xWriteOutput(std::ostream&           bitstreamFile,
+                    int                     iNumEncoded,
+                    std::list<PelUnitBuf*>& recBufList,
+                    FrameSequence<T>&       videoRec);
+  void xWritePicture(const PelUnitBuf* pic, FrameSequence<T>& video);
+  void xReadPicture(PelUnitBuf* pic, FrameSequence<T>& video, int frameIndex);
   void printChromaFormat();
   void printRateSummary();
-  void rateStatsAccum( const AccessUnit& au, const std::vector<uint32_t>& stats );
-  void outputAU( const AccessUnit& au );
+  void rateStatsAccum(const AccessUnit&            au,
+                      const std::vector<uint32_t>& stats);
+  void outputAU(const AccessUnit& au);
 
   EncLib                 m_cEncLib;
   std::list<PelUnitBuf*> m_recBufList;

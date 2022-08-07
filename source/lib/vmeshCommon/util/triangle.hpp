@@ -43,33 +43,31 @@ namespace vmesh {
 
 //============================================================================
 
-using Triangle = Vec3<int32_t>;
+using Triangle     = Vec3<int32_t>;
 using HashTriangle = HashVector3<int32_t>;
 
 //============================================================================
 
 template<typename T>
 Vec3<T>
-ClosestPointInTriangle(
-  const Vec3<T> p,
-  const Vec3<T>& a,
-  const Vec3<T>& b,
-  const Vec3<T>& c,
-  Vec3<T>* barycentricCoords = nullptr)
-{
-  const auto ab = b - a;
-  const auto ac = c - a;
-  const auto bc = c - b;
-  const auto ap = p - a;
-  const auto bp = p - b;
-  const auto cp = p - c;
-  const auto snom = ap * ab;
+ClosestPointInTriangle(const Vec3<T>  p,
+                       const Vec3<T>& a,
+                       const Vec3<T>& b,
+                       const Vec3<T>& c,
+                       Vec3<T>*       barycentricCoords = nullptr) {
+  const auto ab     = b - a;
+  const auto ac     = c - a;
+  const auto bc     = c - b;
+  const auto ap     = p - a;
+  const auto bp     = p - b;
+  const auto cp     = p - c;
+  const auto snom   = ap * ab;
   const auto sdenom = -(bp * ab);
-  const auto tnom = ap * ac;
+  const auto tnom   = ap * ac;
   const auto tdenom = -(cp * ac);
-  const auto eps = T(1.0e-10);
-  const auto zero = T(0);
-  const auto one = T(1);
+  const auto eps    = T(1.0e-10);
+  const auto zero   = T(0);
+  const auto one    = T(1);
 
   if (snom <= eps && tnom <= eps) {
     if (barycentricCoords) {
@@ -80,7 +78,7 @@ ClosestPointInTriangle(
     return a;
   }
 
-  const auto unom = bp * bc;
+  const auto unom   = bp * bc;
   const auto udenom = -(cp * bc);
 
   if (sdenom <= eps && unom <= eps) {
@@ -101,7 +99,7 @@ ClosestPointInTriangle(
     return c;
   }
 
-  const auto n = ab ^ ac;
+  const auto n  = ab ^ ac;
   const auto vc = n * (ap ^ bp);
 
   if (vc <= zero && snom >= eps && sdenom >= eps) {
@@ -138,9 +136,9 @@ ClosestPointInTriangle(
   }
 
   const auto sum = va + vb + vc;
-  const auto u = va / sum;
-  const auto v = vb / sum;
-  const auto w = one - u - v;
+  const auto u   = va / sum;
+  const auto v   = vb / sum;
+  const auto w   = one - u - v;
   if (barycentricCoords) {
     barycentricCoords->x() = u;
     barycentricCoords->y() = v;
@@ -153,16 +151,12 @@ ClosestPointInTriangle(
 
 template<class T>
 Vec3<T>
-computeTriangleNormal(
-  const Vec3<T>& p0,
-  const Vec3<T>& p1,
-  const Vec3<T>& p2,
-  const bool normalize)
-{
+computeTriangleNormal(const Vec3<T>& p0,
+                      const Vec3<T>& p1,
+                      const Vec3<T>& p2,
+                      const bool     normalize) {
   auto normal = (p1 - p0) ^ (p2 - p0);
-  if (normalize) {
-    normal.normalize();
-  }
+  if (normalize) { normal.normalize(); }
   return normal;
 }
 
@@ -170,8 +164,7 @@ computeTriangleNormal(
 
 template<class T>
 T
-computeTriangleArea(const Vec3<T>& p0, const Vec3<T>& p1, const Vec3<T>& p2)
-{
+computeTriangleArea(const Vec3<T>& p0, const Vec3<T>& p1, const Vec3<T>& p2) {
   return T(0.5) * computeTriangleNormal(p0, p1, p2, false).norm();
 }
 

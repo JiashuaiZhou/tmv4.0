@@ -31,23 +31,24 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef USE_VTM_VIDEO_CODEC
-#include "util/image.hpp"
-#include "vtmLibVideoEncoder.hpp"
-#include "vtmLibVideoEncoderImpl.hpp"
-#include "EncoderLib/EncLibCommon.h"
+#  include "util/image.hpp"
+#  include "vtmLibVideoEncoder.hpp"
+#  include "vtmLibVideoEncoderImpl.hpp"
+#  include "EncoderLib/EncLibCommon.h"
 
 namespace vmesh {
 
-template <typename T>
+template<typename T>
 vtmLibVideoEncoder<T>::vtmLibVideoEncoder() {}
-template <typename T>
+template<typename T>
 vtmLibVideoEncoder<T>::~vtmLibVideoEncoder() {}
 
-template <typename T>
-void vtmLibVideoEncoder<T>::encode( FrameSequence<T>&            videoSrc,
-                                       VideoEncoderParameters& params,
-                                       std::vector<uint8_t>&         bitstream,
-                                       FrameSequence<T>&            videoRec ) {
+template<typename T>
+void
+vtmLibVideoEncoder<T>::encode(FrameSequence<T>&       videoSrc,
+                              VideoEncoderParameters& params,
+                              std::vector<uint8_t>&   bitstream,
+                              FrameSequence<T>&       videoRec) {
   const size_t      width      = videoSrc.width();
   const size_t      height     = videoSrc.height();
   const size_t      frameCount = videoSrc.frameCount();
@@ -67,102 +68,106 @@ void vtmLibVideoEncoder<T>::encode( FrameSequence<T>&            videoSrc,
   cmd << " --BitstreamFile=" << params.binFileName_;
   cmd << " --ReconFile=" << params.recYuvFileName_;
   cmd << " --QP=" << params.qp_;
-  if ( params.internalBitDepth_ != 0 ) { cmd << " --InternalBitDepth=" << params.internalBitDepth_; }
-  if ( params.usePccMotionEstimation_ ) {
+  if (params.internalBitDepth_ != 0) {
+    cmd << " --InternalBitDepth=" << params.internalBitDepth_;
+  }
+  if (params.usePccMotionEstimation_) {
     cmd << " --UsePccMotionEstimation=1"
-        << " --BlockToPatchFile=" << params.blockToPatchFile_ << " --OccupancyMapFile=" << params.occupancyMapFile_
+        << " --BlockToPatchFile=" << params.blockToPatchFile_
+        << " --OccupancyMapFile=" << params.occupancyMapFile_
         << " --PatchInfoFile=" << params.patchInfoFile_;
-  }  
+  }
   std::cout << cmd.str() << std::endl;
 
   std::string arguments = cmd.str();
 
-  fprintf( stdout, "\n" );
-  fprintf( stdout, "VVCSoftware: VTM Encoder Version %s ", VTM_VERSION );
-  fprintf( stdout, NVM_ONOS );
-  fprintf( stdout, NVM_COMPILEDBY );
-  fprintf( stdout, NVM_BITS );
-  fprintf( stdout, "\n" );
+  fprintf(stdout, "\n");
+  fprintf(stdout, "VVCSoftware: VTM Encoder Version %s ", VTM_VERSION);
+  fprintf(stdout, NVM_ONOS);
+  fprintf(stdout, NVM_COMPILEDBY);
+  fprintf(stdout, NVM_BITS);
+  fprintf(stdout, "\n");
 
-  std::ostringstream oss( ostringstream::binary | ostringstream::out );
+  std::ostringstream oss(ostringstream::binary | ostringstream::out);
   std::ostream&      bitstreamFile = oss;
   EncLibCommon       encLibCommon;
 
   initROM();
   TComHash::initBlockSizeToIndex();
 
-  vtmLibVideoEncoderImpl<T> encoder( bitstreamFile, &encLibCommon );
+  vtmLibVideoEncoderImpl<T> encoder(bitstreamFile, &encLibCommon);
 
-  std::istringstream iss( arguments );
+  std::istringstream iss(arguments);
   std::string        token;
   std::vector<char*> args;
-  while ( iss >> token ) {
+  while (iss >> token) {
     char* arg = new char[token.size() + 1];
-    copy( token.begin(), token.end(), arg );
+    copy(token.begin(), token.end(), arg);
     arg[token.size()] = '\0';
-    args.push_back( arg );
+    args.push_back(arg);
   }
   encoder.create();
   // parse configuration
   try {
-    if ( !encoder.parseCfg( args.size(), &args[0] ) ) {
+    if (!encoder.parseCfg(args.size(), &args[0])) {
       encoder.destroy();
-#if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
+#  if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
       EnvVar::printEnvVar();
-#endif
+#  endif
       return;
     }
-  } catch ( df::program_options_lite::ParseFailure& e ) {
-    std::cerr << "Error parsing option \"" << e.arg << "\" with argument \"" << e.val << "\"." << std::endl;
+  } catch (df::program_options_lite::ParseFailure& e) {
+    std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
+              << e.val << "\"." << std::endl;
     return;
   }
-  for ( size_t i = 0; i < args.size(); i++ ) { delete[] args[i]; }
+  for (size_t i = 0; i < args.size(); i++) { delete[] args[i]; }
 
-  encoder.createLib( 0 );
+  encoder.createLib(0);
 
   bool eos = false;
 
-  while ( !eos ) {
+  while (!eos) {
     // read GOP
     bool keepLoop = true;
-    while ( keepLoop ) {
-#ifndef _DEBUG
+    while (keepLoop) {
+#  ifndef _DEBUG
       try {
-#endif
-        keepLoop = encoder.encodePrep( eos, videoSrc, arguments, videoRec );        
-#ifndef _DEBUG
-      } catch ( Exception& e ) {
+#  endif
+        keepLoop = encoder.encodePrep(eos, videoSrc, arguments, videoRec);
+#  ifndef _DEBUG
+      } catch (Exception& e) {
         std::cerr << e.what() << std::endl;
         return;
-      } catch ( const std::bad_alloc& e ) {
+      } catch (const std::bad_alloc& e) {
         std::cout << "Memory allocation failed: " << e.what() << std::endl;
         return;
       }
-#endif
+#  endif
     }
 
     // encode GOP
     keepLoop = true;
-    while ( keepLoop ) {
-#ifndef _DEBUG
+    while (keepLoop) {
+#  ifndef _DEBUG
       try {
-#endif
-        keepLoop = encoder.encode( videoSrc, arguments, bitstream, videoRec );        
-#ifndef _DEBUG
-      } catch ( Exception& e ) {
+#  endif
+        keepLoop = encoder.encode(videoSrc, arguments, bitstream, videoRec);
+#  ifndef _DEBUG
+      } catch (Exception& e) {
         std::cerr << e.what() << std::endl;
         return;
-      } catch ( const std::bad_alloc& e ) {
+      } catch (const std::bad_alloc& e) {
         std::cout << "Memory allocation failed: " << e.what() << std::endl;
         return;
       }
-#endif
+#  endif
     }
   }
 
   auto buffer = oss.str();
-  bitstream.resize( buffer.size() );
-  std::copy( buffer.data(), buffer.data() + buffer.size(), bitstream.data() );
+  bitstream.resize(buffer.size());
+  std::copy(buffer.data(), buffer.data() + buffer.size(), bitstream.data());
 
   encoder.destroyLib();
   encoder.destroy();
@@ -172,6 +177,6 @@ void vtmLibVideoEncoder<T>::encode( FrameSequence<T>&            videoSrc,
 template class vtmLibVideoEncoder<uint8_t>;
 template class vtmLibVideoEncoder<uint16_t>;
 
-} // namespace vmesh 
+}  // namespace vmesh
 
 #endif

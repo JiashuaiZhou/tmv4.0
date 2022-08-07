@@ -64,8 +64,8 @@ struct Parameters {
   std::string decodedTexturePath;
   std::string decodedMaterialLibPath;
 
-  int32_t startFrame = 0; 
-  double framerate   = 30.;
+  int32_t startFrame = 0;
+  double  framerate  = 30.;
 
   vmesh::VMCDecoderParameters decParams;
 };
@@ -73,8 +73,7 @@ struct Parameters {
 //============================================================================
 
 static bool
-parseParameters(int argc, char* argv[], Parameters& params)
-try {
+parseParameters(int argc, char* argv[], Parameters& params) try {
   namespace po = df::program_options_lite;
 
   bool print_help = false;
@@ -126,7 +125,7 @@ try {
   /* clang-format on */
 
   po::setDefaults(opts);
-  po::ErrorReporter err;
+  po::ErrorReporter             err;
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
@@ -160,9 +159,7 @@ try {
     err.error() << "hdrtools decoder config not specified\n";
   }
 
-  if (err.is_errored) {
-    return false;
-  }
+  if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
@@ -173,8 +170,7 @@ try {
   po::dumpCfg(std::cout, opts, "Decoder", 4);
   std::cout << '\n';
   return true;
-}
-catch (df::program_options_lite::ParseFailure& e) {
+} catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
             << e.val << "\".\n";
   return false;
@@ -183,20 +179,16 @@ catch (df::program_options_lite::ParseFailure& e) {
 //============================================================================
 
 int32_t
-saveGroupOfFrames(
-  const vmesh::VMCGroupOfFramesInfo& gofInfo,
-  vmesh::VMCGroupOfFrames& gof,
-  const Parameters& params)
-{
-  if (
-    !params.decodedMeshPath.empty()
-    && !params.decodedTexturePath.empty()
-    && !params.decodedMaterialLibPath.empty()) {
+saveGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
+                  vmesh::VMCGroupOfFrames&           gof,
+                  const Parameters&                  params) {
+  if (!params.decodedMeshPath.empty() && !params.decodedTexturePath.empty()
+      && !params.decodedMaterialLibPath.empty()) {
     for (int f = 0; f < gofInfo.frameCount_; ++f) {
-      const auto n = gofInfo.startFrameIndex_ + f;
-      auto strObj = vmesh::expandNum(params.decodedMeshPath, n);
-      auto strTex = vmesh::expandNum(params.decodedTexturePath, n);
-      auto strMat = vmesh::expandNum(params.decodedMaterialLibPath, n);
+      const auto n      = gofInfo.startFrameIndex_ + f;
+      auto       strObj = vmesh::expandNum(params.decodedMeshPath, n);
+      auto       strTex = vmesh::expandNum(params.decodedTexturePath, n);
+      auto       strMat = vmesh::expandNum(params.decodedMaterialLibPath, n);
       SaveImage(strTex, gof[f].outputTexture);
       vmesh::Material<double> material;
       material.texture = vmesh::basename(strTex);
@@ -212,34 +204,32 @@ saveGroupOfFrames(
 //============================================================================
 
 int32_t
-decompress(const Parameters& params)
-{
+decompress(const Parameters& params) {
   vmesh::Bitstream bitstream;
   if (bitstream.load(params.compressedStreamPath)) {
     std::cerr << "Error: can't load compressed bitstream ! ("
-         << params.compressedStreamPath << ")\n";
+              << params.compressedStreamPath << ")\n";
     return -1;
   }
 
-  vmesh::VMCDecoder decoder;
+  vmesh::VMCDecoder           decoder;
   vmesh::VMCGroupOfFramesInfo gofInfo;
-  vmesh::VMCStats totalStats;
-  size_t byteCounter = 0;
-  gofInfo.index_ = 0;
-  gofInfo.startFrameIndex_ = params.startFrame;
-  while (byteCounter != bitstream.size()) {    
+  vmesh::VMCStats             totalStats;
+  size_t                      byteCounter = 0;
+  gofInfo.index_                          = 0;
+  gofInfo.startFrameIndex_                = params.startFrame;
+  while (byteCounter != bitstream.size()) {
     // Decompress
     vmesh::VMCGroupOfFrames gof;
-    auto start = std::chrono::steady_clock::now();
-    if (
-      decoder.decompress(
-        bitstream, gofInfo, gof, byteCounter, params.decParams)
-      != 0) {
+    auto                    start = std::chrono::steady_clock::now();
+    if (decoder.decompress(
+          bitstream, gofInfo, gof, byteCounter, params.decParams)
+        != 0) {
       std::cerr << "Error: can't decompress group of frames!\n";
       return -1;
     }
-    printf("gof.stats.frameCount = %d \n",gof.stats.frameCount);
-    auto end = std::chrono::steady_clock::now();
+    printf("gof.stats.frameCount = %d \n", gof.stats.frameCount);
+    auto end                 = std::chrono::steady_clock::now();
     gof.stats.processingTime = end - start;
 
     // Save reconsctructed models
@@ -254,17 +244,17 @@ decompress(const Parameters& params)
 
     if (vmesh::vout) {
       vmesh::vout << "\n------- Group of frames " << gofInfo.index_
-           << " -----------\n";
-      gof.stats.dump( "GOF", params.framerate);
+                  << " -----------\n";
+      gof.stats.dump("GOF", params.framerate);
       vmesh::vout << "---------------------------------------\n";
     }
   }
 
   std::cout << "\n------- All frames -----------\n";
-  totalStats.dump( "Sequence", params.framerate);
+  totalStats.dump("Sequence", params.framerate);
   std::cout << "Sequence peak memory " << vmesh::getPeakMemory() << " KB\n";
-  std::cout << "---------------------------------------\n";  
-  
+  std::cout << "---------------------------------------\n";
+
   std::cout << "\nAll frames have been decoded. \n";
   return 0;
 }
@@ -272,18 +262,13 @@ decompress(const Parameters& params)
 //============================================================================
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params)) {
-    return 1;
-  }
+  if (!parseParameters(argc, argv, params)) { return 1; }
 
-  if (params.verbose) {
-    vmesh::vout.rdbuf(std::cout.rdbuf());
-  }
+  if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
   if (decompress(params) != 0) {
     std::cerr << "Error: can't decompress animation!\n";

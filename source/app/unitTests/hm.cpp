@@ -47,16 +47,14 @@
 #include "common.hpp"
 
 void
-encodeDecodeHM(
-  const std::string& prefix,
-  const std::string& inputPath,
-  const int width,
-  const int height,
-  const int bitDepth,
-  const vmesh::ColourSpace colorSpace,
-  const int frameCount,
-  const std::string& configPath)
-{
+encodeDecodeHM(const std::string&       prefix,
+               const std::string&       inputPath,
+               const int                width,
+               const int                height,
+               const int                bitDepth,
+               const vmesh::ColourSpace colorSpace,
+               const int                frameCount,
+               const std::string&       configPath) {
   auto binLibsPath = prefix + "_libs.h265";
   auto binSoftPath = prefix + "_soft.h265";
   auto recLibsPath =
@@ -69,7 +67,7 @@ encodeDecodeHM(
     createVideoName(prefix + "_dec_soft", width, height, bitDepth, colorSpace);
 
   // Check encoder and decoder path exist
-  if (!checkSoftwarePath()){    
+  if (!checkSoftwarePath()) {
     FAIL() << "All software paths not exist: ";
     return;
   }
@@ -86,12 +84,12 @@ encodeDecodeHM(
 
   // Set parameters
   vmesh::VideoEncoderParameters params;
-  vmesh::VideoCodecId codecId = vmesh::VideoCodecId::HM;
-  params.encoderConfig_ = configPath;
-  params.qp_ = 38;
-  params.inputBitDepth_ = bitDepth;
-  params.internalBitDepth_ = bitDepth;
-  params.outputBitDepth_ = bitDepth;
+  vmesh::VideoCodecId           codecId = vmesh::VideoCodecId::HM;
+  params.encoderConfig_                 = configPath;
+  params.qp_                            = 38;
+  params.inputBitDepth_                 = bitDepth;
+  params.internalBitDepth_              = bitDepth;
+  params.outputBitDepth_                = bitDepth;
 
   // Load input mesh
   vmesh::FrameSequence<uint16_t> src(width, height, colorSpace, frameCount);
@@ -105,7 +103,7 @@ encodeDecodeHM(
 
   // Encode lib
   vmesh::FrameSequence<uint16_t> rec;
-  vmesh::Bitstream bitstream;
+  vmesh::Bitstream               bitstream;
   auto encoder = vmesh::VirtualVideoEncoder<uint16_t>::create(codecId);
   encoder->encode(src, params, bitstream.vector(), rec);
 
@@ -122,11 +120,11 @@ encodeDecodeHM(
   rec[0].log("rec");
   dec[0].log("dec");
 
-  disableSubProcessLog.enable ();
+  disableSubProcessLog.enable();
 
   printf("Start Soft part \n");
   disableSubProcessLog.disable();
- 
+
   // Encode with application
   std::stringstream cmd;
   cmd << g_hmEncoderPath << " "
@@ -147,9 +145,7 @@ encodeDecodeHM(
       << "  --BitstreamFile=" << binSoftPath << " "
       << "  --ReconFile=" << recSoftPath << " "
       << "  --QP=38 ";
-  if (disableSubProcessLog.disableLog()) {
-    cmd << " 2>&1 > /dev/null";
-  }
+  if (disableSubProcessLog.disableLog()) { cmd << " 2>&1 > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -158,9 +154,7 @@ encodeDecodeHM(
   cmd << g_hmDecoderPath << " "
       << "  --BitstreamFile=" << binSoftPath << " "
       << "  --ReconFile=" << decSoftPath;
-  if (disableSubProcessLog.disableLog()) {
-    cmd << " 2>&1 > /dev/null";
-  }
+  if (disableSubProcessLog.disableLog()) { cmd << " 2>&1 > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
 
@@ -201,25 +195,35 @@ encodeDecodeHM(
   remove(decSoftPath.c_str());
 }
 
-TEST(hm, disp)
-{
-  encodeDecodeHM(
-    "disp", "data/disp_256x160_10bits_p444.brg", 256, 160, 10,
-    vmesh::ColourSpace::BGR444p, 2,
-    "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
+TEST(hm, disp) {
+  encodeDecodeHM("disp",
+                 "data/disp_256x160_10bits_p444.brg",
+                 256,
+                 160,
+                 10,
+                 vmesh::ColourSpace::BGR444p,
+                 2,
+                 "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
 }
 
-TEST(hm, disp2)
-{
-  encodeDecodeHM(
-    "disp", "data/GOF_0_disp_enc_256x160_10bits_p444.yuv", 256, 160, 10,
-    vmesh::ColourSpace::BGR444p, 1,
-    "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
+TEST(hm, disp2) {
+  encodeDecodeHM("disp",
+                 "data/GOF_0_disp_enc_256x160_10bits_p444.yuv",
+                 256,
+                 160,
+                 10,
+                 vmesh::ColourSpace::BGR444p,
+                 1,
+                 "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
 }
 
-TEST(hm, texture)
-{
-  encodeDecodeHM(
-    "disp", "data/tex_512x512_10bits_p420.yuv", 512, 512, 10,
-    vmesh::ColourSpace::YUV420p, 2, "cfg/hm/ctc-hm-texture-ai.cfg");
+TEST(hm, texture) {
+  encodeDecodeHM("disp",
+                 "data/tex_512x512_10bits_p420.yuv",
+                 512,
+                 512,
+                 10,
+                 vmesh::ColourSpace::YUV420p,
+                 2,
+                 "cfg/hm/ctc-hm-texture-ai.cfg");
 }

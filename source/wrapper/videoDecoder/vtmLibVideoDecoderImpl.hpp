@@ -30,37 +30,41 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined( USE_VTM_VIDEO_CODEC )
+#if defined(USE_VTM_VIDEO_CODEC)
 
-#include "util/image.hpp"
+#  include "util/image.hpp"
 
-#include "vtmLibVideoDecoderCfg.hpp"
+#  include "vtmLibVideoDecoderCfg.hpp"
 
-#include <CommonLib/Picture.h>
-#include <DecoderLib/AnnexBread.h>
-#include <DecoderLib/NALread.h>
-#include <DecoderLib/DecLib.h>
+#  include <CommonLib/Picture.h>
+#  include <DecoderLib/AnnexBread.h>
+#  include <DecoderLib/NALread.h>
+#  include <DecoderLib/DecLib.h>
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class vtmLibVideoDecoderImpl : public vtmLibVideoDecoderCfg {
- public:
+public:
   vtmLibVideoDecoderImpl();
 
   ~vtmLibVideoDecoderImpl();
-  uint32_t decode( std::vector<uint8_t>& bitstream, size_t outputBitDepth, FrameSequence<T>& video );
+  uint32_t decode(std::vector<uint8_t>& bitstream,
+                  size_t                outputBitDepth,
+                  FrameSequence<T>&     video);
 
- private:
-  void   xCreateDecLib();
-  void   xDestroyDecLib();
-  void   setVideoSize( const SPS* sps );
-  void   xWriteOutput( PicList* pcListPic, uint32_t tId, FrameSequence<T>& video );
-  void   xFlushOutput( PicList* pcListPic, FrameSequence<T>& video, const int layerId = NOT_VALID );
-  void   xWritePicture( const Picture* pic, FrameSequence<T>& video );
-  DecLib m_cDecLib;
-  int    m_iPOCLastDisplay = -MAX_INT;
-  int    m_iSkipFrame{};
+private:
+  void xCreateDecLib();
+  void xDestroyDecLib();
+  void setVideoSize(const SPS* sps);
+  void xWriteOutput(PicList* pcListPic, uint32_t tId, FrameSequence<T>& video);
+  void xFlushOutput(PicList*          pcListPic,
+                    FrameSequence<T>& video,
+                    const int         layerId = NOT_VALID);
+  void xWritePicture(const Picture* pic, FrameSequence<T>& video);
+  DecLib                                m_cDecLib;
+  int                                   m_iPOCLastDisplay = -MAX_INT;
+  int                                   m_iSkipFrame{};
   std::array<int, MAX_NUM_CHANNEL_TYPE> m_outputBitDepth{};
   int                                   m_internalBitDepths;
   int                                   m_outputWidth;
@@ -69,19 +73,22 @@ class vtmLibVideoDecoderImpl : public vtmLibVideoDecoderCfg {
   bool                                  m_newCLVS[MAX_NUM_LAYER_IDS];
   std::ofstream                         m_seiMessageFileStream;
 
-  SEIAnnotatedRegions::AnnotatedRegionHeader                     m_arHeader;   ///< AR header
-  std::map<uint32_t, SEIAnnotatedRegions::AnnotatedRegionObject> m_arObjects;  ///< AR object pool
-  std::map<uint32_t, std::string>                                m_arLabels;   ///< AR label pool
+  SEIAnnotatedRegions::AnnotatedRegionHeader m_arHeader;  ///< AR header
+  std::map<uint32_t, SEIAnnotatedRegions::AnnotatedRegionObject>
+                                  m_arObjects;  ///< AR object pool
+  std::map<uint32_t, std::string> m_arLabels;   ///< AR label pool
 
-  bool xIsNaluWithinTargetDecLayerIdSet( const InputNALUnit* nalu ) const;
-  bool xIsNaluWithinTargetOutputLayerIdSet( const InputNALUnit* nalu ) const;
-  bool isNewPicture( std::istream* bitstreamFile, class InputByteStream* bytestream );
-  bool isNewAccessUnit( bool newPicture, std::istream* bitstreamFile, class InputByteStream* bytestream );
+  bool xIsNaluWithinTargetDecLayerIdSet(const InputNALUnit* nalu) const;
+  bool xIsNaluWithinTargetOutputLayerIdSet(const InputNALUnit* nalu) const;
+  bool isNewPicture(std::istream*          bitstreamFile,
+                    class InputByteStream* bytestream);
+  bool isNewAccessUnit(bool                   newPicture,
+                       std::istream*          bitstreamFile,
+                       class InputByteStream* bytestream);
 
-  void xOutputAnnotatedRegions( PicList* pcListPic );
+  void xOutputAnnotatedRegions(PicList* pcListPic);
 };
 
 }  // namespace vmesh
 
 #endif
-

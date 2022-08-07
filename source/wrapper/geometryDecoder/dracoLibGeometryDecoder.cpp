@@ -32,11 +32,11 @@
  */
 #if defined(USE_DRACO_GEOMETRY_CODEC)
 
-#include "util/mesh.hpp"
-#include "dracoLibGeometryDecoder.hpp"
+#  include "util/mesh.hpp"
+#  include "dracoLibGeometryDecoder.hpp"
 
-#include "draco/compression/decode.h"
-#include "draco/core/data_buffer.h"
+#  include "draco/compression/decode.h"
+#  include "draco/core/data_buffer.h"
 
 namespace vmesh {
 
@@ -47,10 +47,9 @@ DracoLibGeometryDecoder<T>::~DracoLibGeometryDecoder() = default;
 
 template<typename T>
 void
-convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
-{
+convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst) {
   draco::Mesh& mesh = *src;
-  const auto* posAtt =
+  const auto*  posAtt =
     mesh.GetNamedAttribute(draco::GeometryAttribute::POSITION);
   const auto* nrmAtt =
     mesh.GetNamedAttribute(draco::GeometryAttribute::NORMAL);
@@ -60,60 +59,56 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
   // position
   if (posAtt) {
     for (draco::AttributeValueIndex i(0);
-         i < static_cast<uint32_t>(posAtt->size()); ++i) {
+         i < static_cast<uint32_t>(posAtt->size());
+         ++i) {
       std::array<int32_t, 3> value{};
-      if (!posAtt->ConvertValue<int32_t, 3>(i, value.data())) {
-        return;
-      }
+      if (!posAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
       dst.addPoint(value[0], value[1], value[2]);
     }
   }
   // Normal
   if (nrmAtt) {
     for (draco::AttributeValueIndex i(0);
-         i < static_cast<uint32_t>(nrmAtt->size()); ++i) {
+         i < static_cast<uint32_t>(nrmAtt->size());
+         ++i) {
       std::array<int32_t, 3> value{};
-      if (!nrmAtt->ConvertValue<int32_t, 3>(i, value.data())) {
-        return;
-      }
+      if (!nrmAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
       dst.addNormal(value[0], value[1], value[2]);
     }
   }
   // Color
   if (colAtt) {
     for (draco::AttributeValueIndex i(0);
-         i < static_cast<uint32_t>(colAtt->size()); ++i) {
+         i < static_cast<uint32_t>(colAtt->size());
+         ++i) {
       std::array<int32_t, 3> value{};
-      if (!colAtt->ConvertValue<int32_t, 3>(i, value.data())) {
-        return;
-      }
+      if (!colAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
       dst.addColour(value[0], value[1], value[2]);
     }
   }
   // Texture coordinate
   if (texAtt) {
     for (draco::AttributeValueIndex i(0);
-         i < static_cast<uint32_t>(texAtt->size()); ++i) {
+         i < static_cast<uint32_t>(texAtt->size());
+         ++i) {
       std::array<int32_t, 2> value{};
-      if (!texAtt->ConvertValue<int32_t, 2>(i, value.data())) {
-        return;
-      }
+      if (!texAtt->ConvertValue<int32_t, 2>(i, value.data())) { return; }
       dst.addTexCoord(value[0], value[1]);
     }
   }
   for (draco::FaceIndex i(0); i < mesh.num_faces(); ++i) {
-    const auto& face = mesh.face(i);
+    const auto&   face = mesh.face(i);
     const int32_t idx0 = posAtt->mapped_index(face[0]).value();
     const int32_t idx1 = posAtt->mapped_index(face[1]).value();
     const int32_t idx2 = posAtt->mapped_index(face[2]).value();
     dst.addTriangle(idx0, idx1, idx2);
-    if (texAtt && texAtt->size() > 0){
+    if (texAtt && texAtt->size() > 0) {
       const int32_t tex0 = texAtt->mapped_index(face[0]).value();
       const int32_t tex1 = texAtt->mapped_index(face[1]).value();
       const int32_t tex2 = texAtt->mapped_index(face[2]).value();
       dst.addTexCoordTriangle(tex0, tex1, tex2);
     }
-    if (nrmAtt && nrmAtt->size() > 0){
+    if (nrmAtt && nrmAtt->size() > 0) {
       const int32_t nrm0 = nrmAtt->mapped_index(face[0]).value();
       const int32_t nrm1 = nrmAtt->mapped_index(face[1]).value();
       const int32_t nrm2 = nrmAtt->mapped_index(face[2]).value();
@@ -124,35 +119,35 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst)
 
 template<typename T>
 void
-DracoLibGeometryDecoder<T>::decode(
-  std::vector<uint8_t>& bitstream,
-  TriangleMesh<T>& dec){
+DracoLibGeometryDecoder<T>::decode(std::vector<uint8_t>& bitstream,
+                                   TriangleMesh<T>&      dec) {
   draco::DecoderBuffer decBuffer;
-  printf("bitstream.size() = %zu \n",bitstream.size());
-  decBuffer.Init( (const char*)bitstream.data(), bitstream.size() );
-  auto type = draco::Decoder::GetEncodedGeometryType( &decBuffer );
-  if ( !type.ok() ) {
-    printf( "Failed GetEncodedGeometryType: %s.\n", type.status().error_msg() );
-    exit( -1 );
+  printf("bitstream.size() = %zu \n", bitstream.size());
+  decBuffer.Init((const char*)bitstream.data(), bitstream.size());
+  auto type = draco::Decoder::GetEncodedGeometryType(&decBuffer);
+  if (!type.ok()) {
+    printf("Failed GetEncodedGeometryType: %s.\n", type.status().error_msg());
+    exit(-1);
   }
-  if ( type.value() == draco::TRIANGULAR_MESH ) {
+  if (type.value() == draco::TRIANGULAR_MESH) {
     draco::Decoder decoder;
-    auto           status = decoder.DecodeMeshFromBuffer( &decBuffer );
-    if ( !status.ok() ) {
-      printf( "Failed DecodeMeshFromBuffer: %s.\n", status.status().error_msg() );
-      exit( -1 );
+    auto           status = decoder.DecodeMeshFromBuffer(&decBuffer);
+    if (!status.ok()) {
+      printf("Failed DecodeMeshFromBuffer: %s.\n",
+             status.status().error_msg());
+      exit(-1);
     }
-    std::unique_ptr<draco::Mesh> decMesh = std::move( status ).value();
-    if ( decMesh ) {
-      convert( decMesh, dec );
+    std::unique_ptr<draco::Mesh> decMesh = std::move(status).value();
+    if (decMesh) {
+      convert(decMesh, dec);
     } else {
-      printf( "Failed no in mesh  \n" );
-      exit( -1 );
+      printf("Failed no in mesh  \n");
+      exit(-1);
     }
   } else {
-    printf( "Failed no mesh type not supported.\n" );
-    exit( -1 );
-  }    
+    printf("Failed no mesh type not supported.\n");
+    exit(-1);
+  }
 }
 
 template class DracoLibGeometryDecoder<float>;

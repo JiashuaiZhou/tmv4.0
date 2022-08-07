@@ -44,35 +44,34 @@
 #include <gtest/gtest.h>
 #include "common.hpp"
 
-TEST(metrics, compare)
-{
+TEST(metrics, compare) {
   disableSubProcessLog.disable();
   // Set parameters
   vmesh::VMCMetricsParameters params;
-  std::string srcObjPath = "data/levi_fr%04d_qp12_qt13.obj";
-  std::string srcTexPath = "data/levi_fr%04d.png";
-  std::string decObjPath = "data/levi_fr%04d_decoded.obj";
-  std::string decTexPath = "data/levi_fr%04d_decoded.png";
-  const int startFrame = 0;
-  const int frameCount = 0;
-  params.computePcc = true;
-  params.computeIbsm = false;
-  params.computePcqm = false;
-  params.gridSize = 1024;
-  params.qp = 12;
-  params.qt = 13;
-  params.minPosition[0] = -0.780686975;
-  params.minPosition[1] = -0.0424938016;
-  params.minPosition[2] = -0.594317973;
-  params.maxPosition[0] = 0.857237995;
-  params.maxPosition[1] = 1.90897;
-  params.maxPosition[2] = 0.687259018;
-  params.pcqmRadiusCurvature = 0.001;
-  params.pcqmThresholdKnnSearch = 20;
-  params.pcqmRadiusFactor = 2.0;
+  std::string                 srcObjPath = "data/levi_fr%04d_qp12_qt13.obj";
+  std::string                 srcTexPath = "data/levi_fr%04d.png";
+  std::string                 decObjPath = "data/levi_fr%04d_decoded.obj";
+  std::string                 decTexPath = "data/levi_fr%04d_decoded.png";
+  const int                   startFrame = 0;
+  const int                   frameCount = 0;
+  params.computePcc                      = true;
+  params.computeIbsm                     = false;
+  params.computePcqm                     = false;
+  params.gridSize                        = 1024;
+  params.qp                              = 12;
+  params.qt                              = 13;
+  params.minPosition[0]                  = -0.780686975;
+  params.minPosition[1]                  = -0.0424938016;
+  params.minPosition[2]                  = -0.594317973;
+  params.maxPosition[0]                  = 0.857237995;
+  params.maxPosition[1]                  = 1.90897;
+  params.maxPosition[2]                  = 0.687259018;
+  params.pcqmRadiusCurvature             = 0.001;
+  params.pcqmThresholdKnnSearch          = 20;
+  params.pcqmRadiusFactor                = 2.0;
 
   vmesh::VMCMetrics metrics;
-  const int lastFrame = startFrame + frameCount;
+  const int         lastFrame = startFrame + frameCount;
   for (int f = startFrame; f <= lastFrame; ++f) {
     vmesh::VMCGroupOfFrames gof;
     gof.resize(1);
@@ -84,33 +83,37 @@ TEST(metrics, compare)
     auto& frame = gof.frames[0];
     if (!frame.input.loadFromOBJ(srcObjName)) {
       disableSubProcessLog.enable();
-      printf(
-        "Error loading src mesh %d / %d: %s \n", f, frameCount,
-        srcObjName.c_str());
+      printf("Error loading src mesh %d / %d: %s \n",
+             f,
+             frameCount,
+             srcObjName.c_str());
       fflush(stdout);
       return;
     }
     if (!vmesh::LoadImage(srcTexName, frame.inputTexture)) {
       disableSubProcessLog.enable();
-      printf(
-        "Error loading src texture %d / %d: %s \n", f, frameCount,
-        srcTexName.c_str());
+      printf("Error loading src texture %d / %d: %s \n",
+             f,
+             frameCount,
+             srcTexName.c_str());
       fflush(stdout);
       return;
     }
     if (!frame.rec.loadFromOBJ(decObjName)) {
       disableSubProcessLog.enable();
-      printf(
-        "Error loading rec mesh %d / %d: %s \n", f, frameCount,
-        decObjName.c_str());
+      printf("Error loading rec mesh %d / %d: %s \n",
+             f,
+             frameCount,
+             decObjName.c_str());
       fflush(stdout);
       return;
     }
     if (!vmesh::LoadImage(decTexName, frame.outputTexture)) {
       disableSubProcessLog.enable();
-      printf(
-        "Error loading rec texture %d / %d: %s \n", f, frameCount,
-        decTexName.c_str());
+      printf("Error loading rec texture %d / %d: %s \n",
+             f,
+             frameCount,
+             decTexName.c_str());
       fflush(stdout);
       return;
     }
@@ -242,7 +245,7 @@ TEST(metrics, compare)
   std::string c1a = grep("metric_pcc.log", "   c[1],PSNRF         : ");
   std::string c2a = grep("metric_pcc.log", "   c[2],PSNRF         : ");
 
-  auto pcc = metrics.getPccResults();
+  auto               pcc = metrics.getPccResults();
   std::ostringstream d1b;
   std::ostringstream d2b;
   std::ostringstream c0b;
@@ -269,5 +272,5 @@ TEST(metrics, compare)
   ASSERT_EQ(c2a, c2b.str());
 
   // Remove tmp files
-  remove(  "metric_pcc.log"  );
+  remove("metric_pcc.log");
 }

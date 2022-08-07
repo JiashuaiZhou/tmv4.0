@@ -55,28 +55,27 @@ namespace vmesh {
 
 bool
 GeometryParametrization::generate(
-  TriangleMesh<double>& target,
-  TriangleMesh<double>& source,
-  TriangleMesh<double>& mapped,
-  const TriangleMesh<double>& mtarget,
-  const TriangleMesh<double>& subdiv0,
+  TriangleMesh<double>&                    target,
+  TriangleMesh<double>&                    source,
+  TriangleMesh<double>&                    mapped,
+  const TriangleMesh<double>&              mtarget,
+  const TriangleMesh<double>&              subdiv0,
   const GeometryParametrizationParameters& params,
-  TriangleMesh<double>& base,
-  TriangleMesh<double>& deformed,
-  TriangleMesh<double>& ndeformed)
-{
+  TriangleMesh<double>&                    base,
+  TriangleMesh<double>&                    deformed,
+  TriangleMesh<double>&                    ndeformed) {
   // // Input
   // auto& target = frame.reference;
-  // auto& source = frame.decimateTexture;  // change inter 
-  // auto& mapped = frame.mapped;           // 
+  // auto& source = frame.decimateTexture;  // change inter
+  // auto& mapped = frame.mapped;           //
 
-  // // Without mapping 
+  // // Without mapping
   // // subdiv0 : ld frame - 1 subdiv
-  // // souce   : ld frame - 1 base 
+  // // souce   : ld frame - 1 base
   // // target  : ld frame - 1 reference
 
   // // With mapping
-  // // target  : ai RNUM reference 
+  // // target  : ai RNUM reference
   // // source  : ai RNUM decimate tex
   // // mapped  : ai RNUM mapped
   // // mtarget :    FNUM input
@@ -93,45 +92,42 @@ GeometryParametrization::generate(
 
   std::cout << " [done]\n";
   std::cout << "\t Target mesh: " << target.pointCount() << "V "
-       << target.triangleCount() << "T\n";
+            << target.triangleCount() << "T\n";
   std::cout << "\t Source mesh: " << source.pointCount() << "V "
-       << source.triangleCount() << "T\n";
+            << source.triangleCount() << "T\n";
   std::cout << "\t Target modifier mesh: " << mtarget.pointCount() << "V "
-       << mtarget.triangleCount() << "T\n";
+            << mtarget.triangleCount() << "T\n";
   std::cout << "\t Mapped mesh: " << mapped.pointCount() << "V "
-       << mapped.triangleCount() << "T\n";
+            << mapped.triangleCount() << "T\n";
 
-  if ( mapped.pointCount() != 0 &&
-      (mapped.pointCount() != target.pointCount() ||
-       mapped.triangleCount() != target.triangleCount())) {
+  if (mapped.pointCount() != 0
+      && (mapped.pointCount() != target.pointCount()
+          || mapped.triangleCount() != target.triangleCount())) {
     std::cerr << "Error: mapped has a different connectivity from target!\n";
     return false;
   }
 
   TriangleMesh<double> motion;
-  if ( mtarget.pointCount() != 0  
-    && !ComputeMotion(mtarget, target, motion)) {
+  if (mtarget.pointCount() != 0 && !ComputeMotion(mtarget, target, motion)) {
     std::cerr << "Error: target mesh not modified!\n";
     return false;
   }
 
-  if (
-    motion.pointCount() != target.pointCount()
-    || motion.triangles() != target.triangles()) {
+  if (motion.pointCount() != target.pointCount()
+      || motion.triangles() != target.triangles()) {
     motion.triangles() = target.triangles();
     motion.resizePoints(target.pointCount());
   }
 
   TriangleMesh<double> usource = source;
-  GeometryDecimate decimate;
-  if (
-    params.applyVertexUnification
-    && !vmesh::GeometryDecimate::unifyVertices(source, usource)) {
+  GeometryDecimate     decimate;
+  if (params.applyVertexUnification
+      && !vmesh::GeometryDecimate::unifyVertices(source, usource)) {
     std::cerr << "Error: can't unify vertices!\n";
     return false;
   }
 
-  if ( subdiv0.pointCount() != 0 ) {
+  if (subdiv0.pointCount() != 0) {
     deformed = subdiv0;
   } else {
     deformed = usource;
@@ -141,20 +137,19 @@ GeometryParametrization::generate(
     }
   }
   printf("FitMesh: geometryParametrizationSubdivisionIterationCount = %d \n",
-    params.geometryParametrizationSubdivisionIterationCount);
-  if (
-    (params.geometryParametrizationSubdivisionIterationCount != 0)
-    && !FitMesh(target, mapped, motion, deformed, params)) {
+         params.geometryParametrizationSubdivisionIterationCount);
+  if ((params.geometryParametrizationSubdivisionIterationCount != 0)
+      && !FitMesh(target, mapped, motion, deformed, params)) {
     std::cerr << "Error: can't fit mesh!\n";
     return false;
   }
 
   base = usource;
-  if (
-    params.fitSubdivisionSurface
-    && (params.geometryParametrizationSubdivisionIterationCount != 0)) {
+  if (params.fitSubdivisionSurface
+      && (params.geometryParametrizationSubdivisionIterationCount != 0)) {
     std::cout << "Fitting subdiv ...\n";
-    FitMidPointSubdivision(deformed, base, params.geometryParametrizationSubdivisionIterationCount);
+    FitMidPointSubdivision(
+      deformed, base, params.geometryParametrizationSubdivisionIterationCount);
   }
 
   auto subdiv = base;
@@ -162,16 +157,16 @@ GeometryParametrization::generate(
     std::cerr << "Error: can't subdivide mesh!\n";
     return false;
   }
-  
-  ndeformed = deformed;
-  double errorNormal = 0.0;
+
+  ndeformed           = deformed;
+  double errorNormal  = 0.0;
   double errorTangent = 0.0;
   for (int32_t v = 0, count = deformed.pointCount(); v < count; ++v) {
-    const auto p0 = deformed.point(v);
-    const auto p1 = subdiv.point(v);
-    const auto n = subdiv.normal(v);
-    const auto delta = p0 - p1;
-    const auto dot = delta * n;
+    const auto p0     = deformed.point(v);
+    const auto p1     = subdiv.point(v);
+    const auto n      = subdiv.normal(v);
+    const auto delta  = p0 - p1;
+    const auto dot    = delta * n;
     const auto nDelta = dot * n;
     const auto tDelta = delta - nDelta;
     errorNormal += nDelta * nDelta;
@@ -189,23 +184,21 @@ GeometryParametrization::generate(
 
 bool
 GeometryParametrization::CheckTriangleNormalInversion(
-  const int32_t vindex,
-  const TriangleMesh<double>& output,
+  const int32_t                              vindex,
+  const TriangleMesh<double>&                output,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  const std::vector<Vec3<double>>& initialTriangleNormals,
-  const GeometryParametrizationParameters& params)
-{
-  const auto& tadj = vertexToTriangle.neighbours();
-  const auto start = vertexToTriangle.neighboursStartIndex(vindex);
-  const auto end = vertexToTriangle.neighboursEndIndex(vindex);
+  const std::vector<Vec3<double>>&           initialTriangleNormals,
+  const GeometryParametrizationParameters&   params) {
+  const auto& tadj  = vertexToTriangle.neighbours();
+  const auto  start = vertexToTriangle.neighboursStartIndex(vindex);
+  const auto  end   = vertexToTriangle.neighboursEndIndex(vindex);
   for (int j = start; j < end; ++j) {
-    const auto tindex = tadj[j];
-    const auto& tri = output.triangle(tindex);
-    const auto normal = computeTriangleNormal(
+    const auto  tindex = tadj[j];
+    const auto& tri    = output.triangle(tindex);
+    const auto  normal = computeTriangleNormal(
       output.point(tri[0]), output.point(tri[1]), output.point(tri[2]), true);
-    if (
-      normal * initialTriangleNormals[tindex]
-      < params.smoothDeformTriangleNormalFlipThreshold) {
+    if (normal * initialTriangleNormals[tindex]
+        < params.smoothDeformTriangleNormalFlipThreshold) {
       return true;
     }
   }
@@ -215,20 +208,18 @@ GeometryParametrization::CheckTriangleNormalInversion(
 //----------------------------------------------------------------------------
 
 void
-GeometryParametrization::FitMesh(
-  const TriangleMesh<double>& target,
-  const KdTree& kdtree,
-  TriangleMesh<double>& output)
-{
+GeometryParametrization::FitMesh(const TriangleMesh<double>& target,
+                                 const KdTree&               kdtree,
+                                 TriangleMesh<double>&       output) {
   const auto pointCount = output.pointCount();
   for (int32_t vindex = 0; vindex < pointCount; ++vindex) {
-    int32_t index = 0;
-    double sqrDist = NAN;
-    const auto point0 = output.point(vindex);
+    int32_t    index   = 0;
+    double     sqrDist = NAN;
+    const auto point0  = output.point(vindex);
     const auto normal0 = output.normal(vindex);
     kdtree.query(point0.data(), 1, &index, &sqrDist);
-    const auto delta = target.point(index) - point0;
-    const auto d = delta * normal0;
+    const auto delta  = target.point(index) - point0;
+    const auto d      = delta * normal0;
     const auto point1 = point0 + d * normal0;
     output.setPoint(vindex, point1);
   }
@@ -239,19 +230,16 @@ GeometryParametrization::FitMesh(
 void
 GeometryParametrization::UpdateMissedVertices(
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  const std::vector<int8_t>& isBoundaryVertex,
-  const std::vector<int32_t>& missedVertices,
-  TriangleMesh<double>& output,
-  std::vector<int32_t>& vadj,
-  std::vector<int8_t>& vtags,
-  std::vector<int8_t>& ttags,
-  const GeometryParametrizationParameters& params)
-{
-  if (params.geometryMissedVerticesSmoothingIterationCount <= 0) {
-    return;
-  }
-  const auto pointCount = output.pointCount();
-  const auto triangleCount = output.triangleCount();
+  const std::vector<int8_t>&                 isBoundaryVertex,
+  const std::vector<int32_t>&                missedVertices,
+  TriangleMesh<double>&                      output,
+  std::vector<int32_t>&                      vadj,
+  std::vector<int8_t>&                       vtags,
+  std::vector<int8_t>&                       ttags,
+  const GeometryParametrizationParameters&   params) {
+  if (params.geometryMissedVerticesSmoothingIterationCount <= 0) { return; }
+  const auto pointCount       = output.pointCount();
+  const auto triangleCount    = output.triangleCount();
   const auto missedPointCount = int32_t(missedVertices.size());
   const auto alpha = params.geometryMissedVerticesSmoothingCoeffcient;
   std::vector<Vec3<double>> smoothedPositions(missedPointCount);
@@ -271,7 +259,7 @@ GeometryParametrization::UpdateMissedVertices(
       }
       const auto point0 = output.point(vindex);
       if (isBoundaryVertex[vindex] != 0) {
-        int32_t boundaryNeighbourCount = 0;
+        int32_t      boundaryNeighbourCount = 0;
         Vec3<double> centroid(0.0);
         for (int j = 0; j < neighbourCount; ++j) {
           const auto vindex1 = vadj[j];
@@ -303,63 +291,59 @@ GeometryParametrization::UpdateMissedVertices(
 
 void
 GeometryParametrization::InitialDeform(
-  const TriangleMesh<double>& target,
-  const TriangleMesh<double>& mapped,
-  const TriangleMesh<double>& motion,
-  TriangleMesh<double>& output,
-  const GeometryParametrizationParameters& params)
-{
+  const TriangleMesh<double>&              target,
+  const TriangleMesh<double>&              mapped,
+  const TriangleMesh<double>&              motion,
+  TriangleMesh<double>&                    output,
+  const GeometryParametrizationParameters& params) {
   StaticAdjacencyInformation<int32_t> vertexToTriangleMapped;
   ComputeVertexToTriangle(
     mapped.triangles(), mapped.pointCount(), vertexToTriangleMapped);
-  KdTree kdtreeMapped(3, mapped.points(), 10);  // dim, cloud, max leaf
-  const auto pointCount = output.pointCount();
+  KdTree      kdtreeMapped(3, mapped.points(), 10);  // dim, cloud, max leaf
+  const auto  pointCount       = output.pointCount();
   const auto* neighboursMapped = vertexToTriangleMapped.neighbours();
-  const auto nnCount = params.initialDeformNNCount;
+  const auto  nnCount          = params.initialDeformNNCount;
   std::vector<int32_t> indexes(nnCount);
-  std::vector<double> sqrDists(nnCount);
+  std::vector<double>  sqrDists(nnCount);
   for (int32_t vindex = 0; vindex < pointCount; ++vindex) {
-    const auto point0 = output.point(vindex);
+    const auto point0  = output.point(vindex);
     const auto normal0 = output.normal(vindex);
     kdtreeMapped.query(
       point0.data(), nnCount, indexes.data(), sqrDists.data());
     int32_t nindex = -1;
     for (int32_t n = 0; n < nnCount; ++n) {
-      const auto index = indexes[n];
+      const auto  index        = indexes[n];
       const auto& normalTarget = target.normal(index);
-      if (
-        normal0 * normalTarget
-        >= params.initialDeformNormalDeviationThreshold) {
+      if (normal0 * normalTarget
+          >= params.initialDeformNormalDeviationThreshold) {
         nindex = index;
         break;
       }
     }
-    if (nindex == -1) {
-      continue;
-    }
-    const auto start = vertexToTriangleMapped.neighboursStartIndex(nindex);
-    const auto end = vertexToTriangleMapped.neighboursEndIndex(nindex);
-    double minDist = std::numeric_limits<double>::max();
-    auto minDistDisp = target.point(nindex) - mapped.point(nindex);
-    auto minMotion = motion.point(nindex);
-    auto minDistPoint = mapped.point(nindex);
+    if (nindex == -1) { continue; }
+    const auto start   = vertexToTriangleMapped.neighboursStartIndex(nindex);
+    const auto end     = vertexToTriangleMapped.neighboursEndIndex(nindex);
+    double     minDist = std::numeric_limits<double>::max();
+    auto       minDistDisp  = target.point(nindex) - mapped.point(nindex);
+    auto       minMotion    = motion.point(nindex);
+    auto       minDistPoint = mapped.point(nindex);
     for (int32_t n = start; n < end; ++n) {
       const auto tindex = neighboursMapped[n];
       assert(tindex < target.triangleCount());
-      const auto& tri = mapped.triangle(tindex);
-      const auto& pt0 = mapped.point(tri[0]);
-      const auto& pt1 = mapped.point(tri[1]);
-      const auto& pt2 = mapped.point(tri[2]);
+      const auto&  tri = mapped.triangle(tindex);
+      const auto&  pt0 = mapped.point(tri[0]);
+      const auto&  pt1 = mapped.point(tri[1]);
+      const auto&  pt2 = mapped.point(tri[2]);
       Vec3<double> bcoord{};
-      const auto cpoint =
+      const auto   cpoint =
         ClosestPointInTriangle(point0, pt0, pt1, pt2, &bcoord);
       assert(bcoord[0] >= 0.0 && bcoord[1] >= 0.0 && bcoord[2] >= 0.0);
       assert(fabs(1.0 - bcoord[0] - bcoord[1] - bcoord[2]) < 0.000001);
       const auto dist = (point0 - cpoint).norm2();
       // compute closest point
       if (dist < minDist) {
-        minDist = dist;
-        minDistPoint = cpoint;
+        minDist          = dist;
+        minDistPoint     = cpoint;
         const auto disp0 = target.point(tri[0]) - pt0;
         const auto disp1 = target.point(tri[1]) - pt1;
         const auto disp2 = target.point(tri[2]) - pt2;
@@ -368,12 +352,12 @@ GeometryParametrization::InitialDeform(
         const auto& m0 = motion.point(tri[0]);
         const auto& m1 = motion.point(tri[1]);
         const auto& m2 = motion.point(tri[2]);
-        minMotion = bcoord[0] * m0 + bcoord[1] * m1 + bcoord[2] * m2;
+        minMotion      = bcoord[0] * m0 + bcoord[1] * m1 + bcoord[2] * m2;
       }
     }
     if (params.initialDeformForceNormalDisplacement) {
       const auto delta = minDistPoint + minDistDisp - point0;
-      const auto d = delta * normal0;
+      const auto d     = delta * normal0;
       output.setPoint(vindex, minMotion + point0 + d * normal0);
     } else {
       output.setPoint(vindex, minMotion + minDistPoint + minDistDisp);
@@ -385,33 +369,31 @@ GeometryParametrization::InitialDeform(
 
 void
 GeometryParametrization::InitialDeform(
-  const TriangleMesh<double>& target,
-  TriangleMesh<double>& output,
-  const GeometryParametrizationParameters& params)
-{
+  const TriangleMesh<double>&              target,
+  TriangleMesh<double>&                    output,
+  const GeometryParametrizationParameters& params) {
   StaticAdjacencyInformation<int32_t> vertexToTriangleTarget;
   ComputeVertexToTriangle(
     target.triangles(), target.pointCount(), vertexToTriangleTarget);
   KdTree kdtreeTarget(3, target.points(), 10);  // dim, cloud, max leaf
 
-  const auto* neighboursTarget = vertexToTriangleTarget.neighbours();
+  const auto*          neighboursTarget = vertexToTriangleTarget.neighbours();
   std::vector<int32_t> missedVertices;
-  const auto pointCount = output.pointCount();
-  const auto nnCount = params.initialDeformNNCount;
+  const auto           pointCount = output.pointCount();
+  const auto           nnCount    = params.initialDeformNNCount;
   std::vector<int32_t> indexes(nnCount);
-  std::vector<double> sqrDists(nnCount);
+  std::vector<double>  sqrDists(nnCount);
   for (int32_t vindex = 0; vindex < pointCount; ++vindex) {
-    const auto point0 = output.point(vindex);
+    const auto point0  = output.point(vindex);
     const auto normal0 = output.normal(vindex);
     kdtreeTarget.query(
       point0.data(), nnCount, indexes.data(), sqrDists.data());
     int32_t nindex = -1;
     for (int32_t n = 0; n < nnCount; ++n) {
-      const auto index = indexes[n];
+      const auto  index        = indexes[n];
       const auto& normalTarget = target.normal(index);
-      if (
-        normal0 * normalTarget
-        >= params.initialDeformNormalDeviationThreshold) {
+      if (normal0 * normalTarget
+          >= params.initialDeformNormalDeviationThreshold) {
         nindex = index;
         break;
       }
@@ -420,28 +402,28 @@ GeometryParametrization::InitialDeform(
       missedVertices.push_back(vindex);
       continue;
     }
-    const auto start = vertexToTriangleTarget.neighboursStartIndex(nindex);
-    const auto end = vertexToTriangleTarget.neighboursEndIndex(nindex);
-    double minDist = std::numeric_limits<double>::max();
-    auto minDistDisp = target.point(nindex) - target.point(nindex);
-    auto minDistPoint = target.point(nindex);
+    const auto start   = vertexToTriangleTarget.neighboursStartIndex(nindex);
+    const auto end     = vertexToTriangleTarget.neighboursEndIndex(nindex);
+    double     minDist = std::numeric_limits<double>::max();
+    auto       minDistDisp  = target.point(nindex) - target.point(nindex);
+    auto       minDistPoint = target.point(nindex);
     for (int32_t n = start; n < end; ++n) {
       const auto tindex = neighboursTarget[n];
       assert(tindex < target.triangleCount());
-      const auto& tri = target.triangle(tindex);
-      const auto& pt0 = target.point(tri[0]);
-      const auto& pt1 = target.point(tri[1]);
-      const auto& pt2 = target.point(tri[2]);
+      const auto&  tri = target.triangle(tindex);
+      const auto&  pt0 = target.point(tri[0]);
+      const auto&  pt1 = target.point(tri[1]);
+      const auto&  pt2 = target.point(tri[2]);
       Vec3<double> bcoord{};
-      const auto cpoint =
+      const auto   cpoint =
         ClosestPointInTriangle(point0, pt0, pt1, pt2, &bcoord);
       assert(bcoord[0] >= 0.0 && bcoord[1] >= 0.0 && bcoord[2] >= 0.0);
       assert(fabs(1.0 - bcoord[0] - bcoord[1] - bcoord[2]) < 0.000001);
       const auto dist = (point0 - cpoint).norm2();
       // compute closest point
       if (dist < minDist) {
-        minDist = dist;
-        minDistPoint = cpoint;
+        minDist          = dist;
+        minDistPoint     = cpoint;
         const auto disp0 = target.point(tri[0]) - pt0;
         const auto disp1 = target.point(tri[1]) - pt1;
         const auto disp2 = target.point(tri[2]) - pt2;
@@ -451,7 +433,7 @@ GeometryParametrization::InitialDeform(
     }
     if (params.initialDeformForceNormalDisplacement) {
       const auto delta = minDistPoint + minDistDisp - point0;
-      const auto d = delta * normal0;
+      const auto d     = delta * normal0;
       output.setPoint(vindex, point0 + d * normal0);
     } else {
       output.setPoint(vindex, minDistPoint + minDistDisp);
@@ -463,28 +445,29 @@ GeometryParametrization::InitialDeform(
 
 void
 GeometryParametrization::Deform(
-  const TriangleMesh<double>& target,
-  const std::vector<Vec3<double>>& initialPositions,
-  const std::vector<Vec3<double>>& initialTriangleNormals,
-  TriangleMesh<double>& output,
-  const GeometryParametrizationParameters& params)
-{
-  const auto pointCount = output.pointCount();
-  const auto triangleCount = output.triangleCount();
+  const TriangleMesh<double>&              target,
+  const std::vector<Vec3<double>>&         initialPositions,
+  const std::vector<Vec3<double>>&         initialTriangleNormals,
+  TriangleMesh<double>&                    output,
+  const GeometryParametrizationParameters& params) {
+  const auto                          pointCount    = output.pointCount();
+  const auto                          triangleCount = output.triangleCount();
   StaticAdjacencyInformation<int32_t> vertexToTriangleOutput;
   ComputeVertexToTriangle(
     output.triangles(), output.pointCount(), vertexToTriangleOutput);
   std::vector<int8_t> vtags(pointCount);
   std::vector<int8_t> ttags(triangleCount);
   std::vector<int8_t> isBoundaryVertex;
-  ComputeBoundaryVertices(
-    output.triangles(), vertexToTriangleOutput, vtags, ttags,
-    isBoundaryVertex);
+  ComputeBoundaryVertices(output.triangles(),
+                          vertexToTriangleOutput,
+                          vtags,
+                          ttags,
+                          isBoundaryVertex);
   KdTree kdtreeTarget(3, target.points(), 10);  // dim, cloud, max leaf
 
   std::vector<int32_t> missedVertices;
   std::vector<int32_t> vadj;
-  double smoothCoeff = params.geometrySmoothingCoeffcient;
+  double               smoothCoeff = params.geometrySmoothingCoeffcient;
   for (int32_t it = 0; it < params.geometryFittingIterationCount; ++it) {
     if (params.smoothDeformUpdateNormals) {
       std::cout << "\t Iteration " << it;
@@ -499,9 +482,11 @@ GeometryParametrization::Deform(
 
     missedVertices.resize(0);
     for (int32_t vindex = 0; vindex < pointCount; ++vindex) {
-      if (CheckTriangleNormalInversion(
-            vindex, output, vertexToTriangleOutput, initialTriangleNormals,
-            params)) {
+      if (CheckTriangleNormalInversion(vindex,
+                                       output,
+                                       vertexToTriangleOutput,
+                                       initialTriangleNormals,
+                                       params)) {
         missedVertices.push_back(vindex);
       }
     }
@@ -510,19 +495,26 @@ GeometryParametrization::Deform(
          ++i) {
       output.setPoint(i, output.point(i) - initialPositions[i]);
     }
-    UpdateMissedVertices(
-      vertexToTriangleOutput, isBoundaryVertex, missedVertices, output, vadj,
-      vtags, ttags, params);
+    UpdateMissedVertices(vertexToTriangleOutput,
+                         isBoundaryVertex,
+                         missedVertices,
+                         output,
+                         vadj,
+                         vtags,
+                         ttags,
+                         params);
 
     std::cout << '[' << missedVertices.size() << ']';
     std::cout << "\t Smoothing[" << smoothCoeff << "]...";
 
-    if (
-      params.smoothDeformSmoothingMethod
-      == SmoothingMethod::VERTEX_CONSTRAINT) {
-      SmoothWithVertexConstraints(
-        output, vertexToTriangleOutput, isBoundaryVertex, vtags, ttags,
-        smoothCoeff);
+    if (params.smoothDeformSmoothingMethod
+        == SmoothingMethod::VERTEX_CONSTRAINT) {
+      SmoothWithVertexConstraints(output,
+                                  vertexToTriangleOutput,
+                                  isBoundaryVertex,
+                                  vtags,
+                                  ttags,
+                                  smoothCoeff);
     }
     for (int i = 0; i < pointCount && params.smoothingDeformSmoothMotion;
          ++i) {
@@ -538,28 +530,33 @@ GeometryParametrization::Deform(
 //----------------------------------------------------------------------------
 
 bool
-GeometryParametrization::Subdivide(TriangleMesh<double>& mesh, const GeometryParametrizationParameters& params)
-{
+GeometryParametrization::Subdivide(
+  TriangleMesh<double>&                    mesh,
+  const GeometryParametrizationParameters& params) {
   std::cout << "Subdividing Mesh...\n";
   auto start = std::chrono::steady_clock::now();
-  printf("Subdivide: geometryParametrizationSubdivisionIterationCount = %d \n",params.geometryParametrizationSubdivisionIterationCount);
-  
+  printf("Subdivide: geometryParametrizationSubdivisionIterationCount = %d \n",
+         params.geometryParametrizationSubdivisionIterationCount);
+
   mesh.computeNormals();
   if (params.geometryParametrizationSubdivisionIterationCount != 0) {
     std::vector<SubdivisionLevelInfo> infoLevelOfDetails;
-    std::vector<int64_t> subdivEdges;
+    std::vector<int64_t>              subdivEdges;
     mesh.subdivideMidPoint(
-      params.geometryParametrizationSubdivisionIterationCount, &infoLevelOfDetails, &subdivEdges);
+      params.geometryParametrizationSubdivisionIterationCount,
+      &infoLevelOfDetails,
+      &subdivEdges);
     mesh.resizeNormals(mesh.pointCount());
     interpolateSubdivision(
       mesh.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);
   }
 
   auto end = std::chrono::steady_clock::now();
-  auto deltams = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  auto deltams =
+    std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   std::cout << " [done] " << deltams.count() << " ms\n";
   std::cout << "\t Subdivided mesh: " << mesh.pointCount() << "V "
-       << mesh.triangleCount() << "T\n";
+            << mesh.triangleCount() << "T\n";
   return true;
 }
 
@@ -567,12 +564,11 @@ GeometryParametrization::Subdivide(TriangleMesh<double>& mesh, const GeometryPar
 
 bool
 GeometryParametrization::FitMesh(
-  const TriangleMesh<double>& target,
-  TriangleMesh<double>& mapped,
-  const TriangleMesh<double>& motion,
-  TriangleMesh<double>& deformed,
-  const GeometryParametrizationParameters& params)
-{
+  const TriangleMesh<double>&              target,
+  TriangleMesh<double>&                    mapped,
+  const TriangleMesh<double>&              motion,
+  TriangleMesh<double>&                    deformed,
+  const GeometryParametrizationParameters& params) {
   std::cout << "Deforming Mesh...\n";
   auto start = std::chrono::steady_clock::now();
 
@@ -611,13 +607,16 @@ GeometryParametrization::FitMesh(
       subdivTarget.setPoint(v, subdivTarget.point(v) + subdivMotion.point(v));
     }
     subdivTarget.computeNormals();
-    Deform(
-      subdivTarget, initialPositions, initialTriangleNormals, deformed,
-      params);
+    Deform(subdivTarget,
+           initialPositions,
+           initialTriangleNormals,
+           deformed,
+           params);
   }
 
   auto end = std::chrono::steady_clock::now();
-  auto deltams = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  auto deltams =
+    std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   std::cout << " [done] " << deltams.count() << " ms\n";
   return true;
 }
@@ -625,37 +624,33 @@ GeometryParametrization::FitMesh(
 //----------------------------------------------------------------------------
 
 bool
-GeometryParametrization::ComputeMotion(
-  const TriangleMesh<double>& reference,
-  const TriangleMesh<double>& target,
-  TriangleMesh<double>& motion)
-{
+GeometryParametrization::ComputeMotion(const TriangleMesh<double>& reference,
+                                       const TriangleMesh<double>& target,
+                                       TriangleMesh<double>&       motion) {
   std::cout << "Deforming geometry... ";
 
-  const auto pointCountTarget = target.pointCount();
+  const auto pointCountTarget    = target.pointCount();
   const auto texCoordCountTarget = target.texCoordCount();
   const auto triangleCountTarget = target.triangleCount();
   assert(triangleCountTarget == target.texCoordTriangleCount());
-  const auto pointCountReference = reference.pointCount();
+  const auto pointCountReference    = reference.pointCount();
   const auto texCoordCountReference = reference.texCoordCount();
   const auto triangleCountReference = reference.triangleCount();
   assert(triangleCountReference == reference.texCoordTriangleCount());
-  if (texCoordCountTarget != texCoordCountReference) {
-    return false;
-  }
+  if (texCoordCountTarget != texCoordCountReference) { return false; }
 
   std::vector<int32_t> mapPositionToTexCoordTarget(pointCountTarget, -1);
   for (int32_t t = 0; t < triangleCountTarget; ++t) {
-    const auto& tri = target.triangle(t);
+    const auto& tri         = target.triangle(t);
     const auto& texCoordTri = target.texCoordTriangle(t);
     for (int32_t k = 0; k < 3; ++k) {
       mapPositionToTexCoordTarget[tri[k]] = texCoordTri[k];
     }
   }
-  std::vector<int32_t> mapTexCoordToPositionReference(
-    texCoordCountReference, -1);
+  std::vector<int32_t> mapTexCoordToPositionReference(texCoordCountReference,
+                                                      -1);
   for (int32_t t = 0; t < triangleCountReference; ++t) {
-    const auto& tri = reference.triangle(t);
+    const auto& tri         = reference.triangle(t);
     const auto& texCoordTri = reference.texCoordTriangle(t);
     for (int32_t k = 0; k < 3; ++k) {
       mapTexCoordToPositionReference[texCoordTri[k]] = tri[k];
@@ -676,11 +671,11 @@ GeometryParametrization::ComputeMotion(
 
   std::cout << " [done]\n";
   std::cout << "\t Reference mesh: " << reference.pointCount() << "V "
-       << reference.triangleCount() << "T " << reference.texCoordCount()
-       << "UV " << reference.texCoordTriangleCount() << "TUV\n";
+            << reference.triangleCount() << "T " << reference.texCoordCount()
+            << "UV " << reference.texCoordTriangleCount() << "TUV\n";
   std::cout << "\t Target mesh: " << target.pointCount() << "V "
-       << target.triangleCount() << "T " << target.texCoordCount() << "UV "
-       << target.texCoordTriangleCount() << "TUV\n";
+            << target.triangleCount() << "T " << target.texCoordCount()
+            << "UV " << target.texCoordTriangleCount() << "TUV\n";
   return true;
 }
 

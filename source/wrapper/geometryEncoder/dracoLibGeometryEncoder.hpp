@@ -30,23 +30,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined( USE_DRACO_GEOMETRY_CODEC )
-#include "util/mesh.hpp"
-#include "virtualGeometryEncoder.hpp"
+#if defined(USE_DRACO_GEOMETRY_CODEC)
+#  include "util/mesh.hpp"
+#  include "virtualGeometryEncoder.hpp"
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class DracoLibGeometryEncoder : public VirtualGeometryEncoder<T> {
- public:
+public:
   DracoLibGeometryEncoder();
   ~DracoLibGeometryEncoder();
 
-  void encode(
-    TriangleMesh<T>& src,
-    GeometryEncoderParameters& params,
-    std::vector<uint8_t>& bitstream,
-    TriangleMesh<T>& rec);
+  void encode(TriangleMesh<T>&           src,
+              GeometryEncoderParameters& params,
+              std::vector<uint8_t>&      bitstream,
+              TriangleMesh<T>&           rec);
 };
 
 }  // namespace vmesh

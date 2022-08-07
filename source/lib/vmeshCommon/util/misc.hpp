@@ -54,53 +54,63 @@ std::string expandNum(const std::string& src, int num);
 //============================================================================
 
 static inline std::string
-removeExtension(const std::string& string)
-{
+removeExtension(const std::string& string) {
   size_t pos = string.find_last_of('.');
-  return pos != std::string::npos ? string.substr( 0, pos ) : string;
+  return pos != std::string::npos ? string.substr(0, pos) : string;
 }
 
 //============================================================================
 
 #ifdef WIN32
-#include <windows.h>
-static void mkdir( const char* pDirectory, int ) { CreateDirectory( pDirectory, NULL ); }
+#  include <windows.h>
+static void
+mkdir(const char* pDirectory, int) {
+  CreateDirectory(pDirectory, NULL);
+}
 #else
-#include <sys/dir.h>
+#  include <sys/dir.h>
 #endif
 
 //============================================================================
 
 #ifndef _WIN32
-static char getSeparator() { return '/'; }
+static char
+getSeparator() {
+  return '/';
+}
 #else
-static char getSeparator() { return '\\'; }
+static char
+getSeparator() {
+  return '\\';
+}
 #endif
 
 //============================================================================
 
-static char getSeparator( const std::string& eFilename ) {
+static char
+getSeparator(const std::string& eFilename) {
   auto pos1 = eFilename.find_last_of('/');
   auto pos2 = eFilename.find_last_of('\\');
-  auto pos = ( std::max )( pos1 != std::string::npos ? pos1 : 0, pos2 != std::string::npos ? pos2 : 0 );
-  return ( pos != 0 ? eFilename[pos] : getSeparator() );
+  auto pos  = (std::max)(pos1 != std::string::npos ? pos1 : 0,
+                        pos2 != std::string::npos ? pos2 : 0);
+  return (pos != 0 ? eFilename[pos] : getSeparator());
 }
 
 //============================================================================
 
-static std::string directoryName( const std::string& string ) {
-  auto position = string.find_last_of( getSeparator( string ) );
-  if ( position != std::string::npos ) { return string.substr( 0, position ); }
+static std::string
+directoryName(const std::string& string) {
+  auto position = string.find_last_of(getSeparator(string));
+  if (position != std::string::npos) { return string.substr(0, position); }
   return string;
 }
 
 //============================================================================
 static int
-save(const std::string& filename, std::vector<uint8_t>& buffer)
-{
+save(const std::string& filename, std::vector<uint8_t>& buffer) {
   std::ofstream file(filename, std::ios::binary);
-  if (!file.is_open()){
-    printf("Can not save: %s \n",filename.c_str());
+  if (!file.is_open()) {
+    printf("Can not save: %s \n", filename.c_str());
     return -1;
   }
   file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
@@ -110,9 +120,12 @@ save(const std::string& filename, std::vector<uint8_t>& buffer)
 
 //============================================================================
 
-static inline std::string basename( const std::string& string ) {
-  auto position = string.find_last_of( getSeparator( string ) );
-  if ( position != std::string::npos ) { return string.substr( position + 1, string.length() ); }
+static inline std::string
+basename(const std::string& string) {
+  auto position = string.find_last_of(getSeparator(string));
+  if (position != std::string::npos) {
+    return string.substr(position + 1, string.length());
+  }
   return string;
 }
 
@@ -120,8 +133,7 @@ static inline std::string basename( const std::string& string ) {
 
 template<class T>
 T
-Clamp(const T& v, const T& lo, const T& hi)
-{
+Clamp(const T& v, const T& lo, const T& hi) {
   assert(!(hi < lo));
   return (v < lo) ? lo : (hi < v) ? hi : v;
 }
@@ -130,8 +142,7 @@ Clamp(const T& v, const T& lo, const T& hi)
 // Round @x up to next power of two.
 //
 inline uint32_t
-ceilpow2(uint32_t x)
-{
+ceilpow2(uint32_t x) {
   x--;
   x = x | (x >> 1);
   x = x | (x >> 2);
@@ -145,8 +156,7 @@ ceilpow2(uint32_t x)
 // Population count -- return the number of bits set in @x.
 //
 inline int
-popcnt(uint32_t x)
-{
+popcnt(uint32_t x) {
   x = x - ((x >> 1) & 0x55555555U);
   x = (x & 0x33333333U) + ((x >> 2) & 0x33333333U);
   return (((x + (x >> 4)) & 0xF0F0F0FU) * 0x1010101U) >> 24;
@@ -156,8 +166,7 @@ popcnt(uint32_t x)
 // Compute \left\floor \text{log}_2(x) \right\floor.
 // NB: ilog2(0) = -1.
 inline int
-ilog2(uint32_t x)
-{
+ilog2(uint32_t x) {
   x = ceilpow2(x + 1) - 1;
   return popcnt(x) - 1;
 }
@@ -166,25 +175,17 @@ ilog2(uint32_t x)
 
 template<class T>
 Vec3<T>
-orderComponents(Vec3<T> v)
-{
-  if (v[0] > v[1]) {
-    std::swap(v[0], v[1]);
-  }
-  if (v[1] > v[2]) {
-    std::swap(v[1], v[2]);
-  }
-  if (v[0] > v[1]) {
-    std::swap(v[0], v[1]);
-  }
+orderComponents(Vec3<T> v) {
+  if (v[0] > v[1]) { std::swap(v[0], v[1]); }
+  if (v[1] > v[2]) { std::swap(v[1], v[2]); }
+  if (v[0] > v[1]) { std::swap(v[0], v[1]); }
   return v;
 }
 
 //----------------------------------------------------------------------------
 
 inline uint32_t
-extracOddBits(uint32_t x)
-{
+extracOddBits(uint32_t x) {
   x = x & 0x55555555;
   x = (x | (x >> 1)) & 0x33333333;
   x = (x | (x >> 2)) & 0x0F0F0F0F;
@@ -196,8 +197,7 @@ extracOddBits(uint32_t x)
 //----------------------------------------------------------------------------
 
 inline void
-computeMorton2D(const uint32_t i, int32_t& x, int32_t& y)
-{
+computeMorton2D(const uint32_t i, int32_t& x, int32_t& y) {
   x = int32_t(extracOddBits(i >> 1));
   y = int32_t(extracOddBits(i));
 }
@@ -206,19 +206,18 @@ computeMorton2D(const uint32_t i, int32_t& x, int32_t& y)
 
 template<class T>
 void
-computeLocalCoordinatesSystem(const Vec3<T>& n, Vec3<T>& t, Vec3<T>& b)
-{
-  const auto one = T(1);
-  const auto zero = T(0);
+computeLocalCoordinatesSystem(const Vec3<T>& n, Vec3<T>& t, Vec3<T>& b) {
+  const auto    one  = T(1);
+  const auto    zero = T(0);
   const Vec3<T> e0(one, zero, zero);
   const Vec3<T> e1(zero, one, zero);
   const Vec3<T> e2(zero, zero, one);
-  const auto d0 = n * e0;
-  const auto d1 = n * e1;
-  const auto d2 = n * e2;
-  const auto ad0 = std::abs(d0);
-  const auto ad1 = std::abs(d1);
-  const auto ad2 = std::abs(d2);
+  const auto    d0  = n * e0;
+  const auto    d1  = n * e1;
+  const auto    d2  = n * e2;
+  const auto    ad0 = std::abs(d0);
+  const auto    ad1 = std::abs(d1);
+  const auto    ad2 = std::abs(d2);
   if (ad0 <= ad1 && ad0 <= ad2) {
     t = e0 - d0 * n;
   } else if (ad1 <= ad2) {

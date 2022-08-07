@@ -38,5 +38,4 @@
 namespace vmesh {
 template class EntropyEncoderWrapper<dirac::ArithmeticEncoder>;
 template class EntropyDecoderWrapper<dirac::ArithmeticDecoder>;
-}
-
+}  // namespace vmesh

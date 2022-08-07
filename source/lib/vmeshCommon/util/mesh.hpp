@@ -55,8 +55,7 @@ namespace vmesh {
 
 //============================================================================
 
-enum GeometryCodecId
-{
+enum GeometryCodecId {
 #if defined(USE_DRACO_GEOMETRY_CODEC)
   DRACO = 0,
 #endif
@@ -66,17 +65,14 @@ enum GeometryCodecId
 //============================================================================
 
 static std::istream&
-operator>>(std::istream& in, GeometryCodecId& val)
-{
+operator>>(std::istream& in, GeometryCodecId& val) {
   std::string str;
   in >> str;
   val = GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
-  printf("GeometryCodecId: str = %s \n",str.c_str());
+  printf("GeometryCodecId: str = %s \n", str.c_str());
 #if defined(USE_DRACO_GEOMETRY_CODEC)
   printf("GeometryCodecId: here \n");
-  if (str == "DRACO") {
-    val = GeometryCodecId::DRACO;
-  }
+  if (str == "DRACO") { val = GeometryCodecId::DRACO; }
 #endif
   if (val == GeometryCodecId::UNKNOWN_GEOMETRY_CODEC) {
     in.setstate(std::ios::failbit);
@@ -86,8 +82,7 @@ operator>>(std::istream& in, GeometryCodecId& val)
 
 //============================================================================
 
-enum class SubdivisionMethod
-{
+enum class SubdivisionMethod {
   MID_POINT = 0,
 };
 
@@ -96,103 +91,92 @@ enum class SubdivisionMethod
 template<typename T>
 class StaticAdjacencyInformation {
 public:
-  StaticAdjacencyInformation() = default;
+  StaticAdjacencyInformation()                                  = default;
   StaticAdjacencyInformation(const StaticAdjacencyInformation&) = default;
   StaticAdjacencyInformation&
   operator=(const StaticAdjacencyInformation&) = default;
-  ~StaticAdjacencyInformation() = default;
+  ~StaticAdjacencyInformation()                = default;
 
-  void clear()
-  {
+  void clear() {
     _shift.resize(0);
     _neighbourCount.resize(0);
     _neighbours.resize(0);
   }
 
   int32_t size() const { return int32_t(_neighbourCount.size()); }
-  void reserve(const int32_t sz)
-  {
+  void    reserve(const int32_t sz) {
     _shift.reserve(sz + 1);
     _neighbourCount.reserve(sz);
     _neighbours.reserve(6 * sz);
   }
 
-  void resize(const int32_t sz)
-  {
+  void resize(const int32_t sz) {
     _shift.resize(0);
     _neighbourCount.resize(0);
     _shift.resize(sz + 1, 0);
     _neighbourCount.resize(sz, 0);
   }
 
-  void incrementNeighbourCount(const int32_t i)
-  {
+  void incrementNeighbourCount(const int32_t i) {
     assert(i < size());
     ++_shift[i + 1];
   }
 
-  void incrementNeighbourCount(const int32_t i, const int32_t count)
-  {
+  void incrementNeighbourCount(const int32_t i, const int32_t count) {
     assert(i < size());
     _shift[i + 1] += count;
   }
 
-  void updateShift()
-  {
+  void updateShift() {
     for (int32_t i = 1, count = int32_t(_shift.size()); i < count; ++i) {
       _shift[i] += _shift[i - 1];
     }
     _neighbours.resize(_shift.back());
   }
 
-  int32_t maxNeighbourCount(const int32_t i) const
-  {
+  int32_t maxNeighbourCount(const int32_t i) const {
     assert(i < size());
     assert(_shift[i + 1] >= _shift[i]);
     return _shift[i + 1] - _shift[i];
   }
 
-  int32_t neighbourCount(const int32_t i) const
-  {
+  int32_t neighbourCount(const int32_t i) const {
     assert(i < size());
     return _neighbourCount[i];
   }
 
-  void addNeighbour(const int32_t i, const T& neighbour)
-  {
+  void addNeighbour(const int32_t i, const T& neighbour) {
     assert(i >= 0 && i <= size());
     assert(neighbour >= 0);
     assert(_neighbourCount[i] < maxNeighbourCount(i));
     _neighbours[_shift[i] + _neighbourCount[i]++] = neighbour;
   }
 
-  int32_t neighboursStartIndex(const int32_t i) const
-  {
+  int32_t neighboursStartIndex(const int32_t i) const {
     assert(i < size());
     return _shift[i];
   }
 
-  int32_t neighboursEndIndex(const int32_t i) const
-  {
+  int32_t neighboursEndIndex(const int32_t i) const {
     assert(i < size());
     return _shift[i] + _neighbourCount[i];
   }
 
   const T* neighbours() const { return _neighbours.data(); }
-  T* neighbours() { return _neighbours.data(); }
+  T*       neighbours() { return _neighbours.data(); }
 
 private:
   std::vector<int32_t> _shift;
   std::vector<int32_t> _neighbourCount;
-  std::vector<T> _neighbours;
+  std::vector<T>       _neighbours;
 };
 
 //============================================================================
 
 struct SubdivisionLevelInfo {
-  int32_t pointCount = -1;
-  int32_t texCoordCount = -1;
-  int32_t triangleCount = -1;
+  int32_t pointCount            = -1;
+  int32_t texCoordCount         = -1;
+  int32_t triangleCount         = -1;
   int32_t texCoordTriangleCount = -1;
 };
 
@@ -200,10 +184,9 @@ struct SubdivisionLevelInfo {
 
 inline void
 ComputeVertexToTriangle(
-  const std::vector<Triangle>& triangles,
-  const int32_t vertexCount,
-  StaticAdjacencyInformation<int32_t>& vertexToTriangle)
-{
+  const std::vector<Triangle>&         triangles,
+  const int32_t                        vertexCount,
+  StaticAdjacencyInformation<int32_t>& vertexToTriangle) {
   const auto triangleCount = int32_t(triangles.size());
   vertexToTriangle.resize(vertexCount);
   for (int32_t triangleIndex = 0; triangleIndex < triangleCount;
@@ -218,9 +201,8 @@ ComputeVertexToTriangle(
       vertexToTriangle.incrementNeighbourCount(tri.j());
     }
 
-    if (
-      tri.k() != tri.i()
-      && tri.k() != tri.j()) {  // check for degenerated case
+    if (tri.k() != tri.i()
+        && tri.k() != tri.j()) {  // check for degenerated case
       vertexToTriangle.incrementNeighbourCount(tri.k());
     }
   }
@@ -234,9 +216,8 @@ ComputeVertexToTriangle(
       vertexToTriangle.addNeighbour(tri.j(), triangleIndex);
     }
 
-    if (
-      tri.k() != tri.i()
-      && tri.k() != tri.j()) {  // check for degenerated case
+    if (tri.k() != tri.i()
+        && tri.k() != tri.j()) {  // check for degenerated case
       vertexToTriangle.addNeighbour(tri.k(), triangleIndex);
     }
   }
@@ -246,56 +227,49 @@ ComputeVertexToTriangle(
 
 inline void
 TagAdjacentTriangles(
-  int32_t vindex,
-  const int8_t tag,
+  int32_t                                    vindex,
+  const int8_t                               tag,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  std::vector<int8_t>& ttags)
-{
+  std::vector<int8_t>&                       ttags) {
   assert(vindex < vertexToTriangle.size());
-  const auto& tadj = vertexToTriangle.neighbours();
-  const auto start = vertexToTriangle.neighboursStartIndex(vindex);
-  const auto end = vertexToTriangle.neighboursEndIndex(vindex);
-  for (int i = start; i < end; ++i) {
-    ttags[tadj[i]] = tag;
-  }
+  const auto& tadj  = vertexToTriangle.neighbours();
+  const auto  start = vertexToTriangle.neighboursStartIndex(vindex);
+  const auto  end   = vertexToTriangle.neighboursEndIndex(vindex);
+  for (int i = start; i < end; ++i) { ttags[tadj[i]] = tag; }
 }
 
 //----------------------------------------------------------------------------
 
 inline void
 IncrementTagAdjacentTriangles(
-  int32_t vindex,
+  int32_t                                    vindex,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  std::vector<int8_t>& ttags)
-{
+  std::vector<int8_t>&                       ttags) {
   assert(vindex < vertexToTriangle.size());
-  const auto& tadj = vertexToTriangle.neighbours();
-  const auto start = vertexToTriangle.neighboursStartIndex(vindex);
-  const auto end = vertexToTriangle.neighboursEndIndex(vindex);
-  for (int i = start; i < end; ++i) {
-    ++ttags[tadj[i]];
-  }
+  const auto& tadj  = vertexToTriangle.neighbours();
+  const auto  start = vertexToTriangle.neighboursStartIndex(vindex);
+  const auto  end   = vertexToTriangle.neighboursEndIndex(vindex);
+  for (int i = start; i < end; ++i) { ++ttags[tadj[i]]; }
 }
 
 //----------------------------------------------------------------------------
 
 inline int32_t
 ComputeAdjacentVertexCount(
-  int32_t vindex,
-  const std::vector<Triangle>& triangles,
+  int32_t                                    vindex,
+  const std::vector<Triangle>&               triangles,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  std::vector<int8_t>& vtags)
-{
+  std::vector<int8_t>&                       vtags) {
   int32_t vcount = 0;
   assert(vindex < vertexToTriangle.size());
-  const auto& tadj = vertexToTriangle.neighbours();
-  const auto start = vertexToTriangle.neighboursStartIndex(vindex);
-  const auto end = vertexToTriangle.neighboursEndIndex(vindex);
+  const auto& tadj  = vertexToTriangle.neighbours();
+  const auto  start = vertexToTriangle.neighboursStartIndex(vindex);
+  const auto  end   = vertexToTriangle.neighboursEndIndex(vindex);
   for (int i = start; i < end; ++i) {
     const auto& triangle = triangles[tadj[i]];
-    vtags[triangle[0]] = int8_t(1);
-    vtags[triangle[1]] = int8_t(1);
-    vtags[triangle[2]] = int8_t(1);
+    vtags[triangle[0]]   = int8_t(1);
+    vtags[triangle[1]]   = int8_t(1);
+    vtags[triangle[2]]   = int8_t(1);
   }
   vtags[vindex] = 0;
   for (int i = start; i < end; ++i) {
@@ -315,22 +289,21 @@ ComputeAdjacentVertexCount(
 
 inline void
 ComputeAdjacentVertices(
-  int32_t vindex,
-  const std::vector<Triangle>& triangles,
+  int32_t                                    vindex,
+  const std::vector<Triangle>&               triangles,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  std::vector<int8_t>& vtags,
-  std::vector<int32_t>& vadj)
-{
+  std::vector<int8_t>&                       vtags,
+  std::vector<int32_t>&                      vadj) {
   vadj.resize(0);
   assert(vindex < vertexToTriangle.size());
-  const auto& tadj = vertexToTriangle.neighbours();
-  const auto start = vertexToTriangle.neighboursStartIndex(vindex);
-  const auto end = vertexToTriangle.neighboursEndIndex(vindex);
+  const auto& tadj  = vertexToTriangle.neighbours();
+  const auto  start = vertexToTriangle.neighboursStartIndex(vindex);
+  const auto  end   = vertexToTriangle.neighboursEndIndex(vindex);
   for (int i = start; i < end; ++i) {
     const auto& triangle = triangles[tadj[i]];
-    vtags[triangle[0]] = int8_t(1);
-    vtags[triangle[1]] = int8_t(1);
-    vtags[triangle[2]] = int8_t(1);
+    vtags[triangle[0]]   = int8_t(1);
+    vtags[triangle[1]]   = int8_t(1);
+    vtags[triangle[2]]   = int8_t(1);
   }
   vtags[vindex] = 0;
   for (int i = start; i < end; ++i) {
@@ -349,11 +322,10 @@ ComputeAdjacentVertices(
 
 inline void
 ComputeAdjacentTriangles(
-  const Triangle& triangle,
+  const Triangle&                            triangle,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  std::vector<int8_t>& ttags,
-  std::vector<int32_t>& adj)
-{
+  std::vector<int8_t>&                       ttags,
+  std::vector<int32_t>&                      adj) {
   adj.resize(0);
   TagAdjacentTriangles(triangle[0], 0, vertexToTriangle, ttags);
   TagAdjacentTriangles(triangle[1], 0, vertexToTriangle, ttags);
@@ -363,7 +335,7 @@ ComputeAdjacentTriangles(
     const auto vindex = triangle[k];
     assert(vindex < vertexToTriangle.size());
     const auto start = vertexToTriangle.neighboursStartIndex(vindex);
-    const auto end = vertexToTriangle.neighboursEndIndex(vindex);
+    const auto end   = vertexToTriangle.neighboursEndIndex(vindex);
     for (int i = start; i < end; ++i) {
       const auto tindex = tadj[i];
       if (ttags[tindex] == 0) {
@@ -378,23 +350,20 @@ ComputeAdjacentTriangles(
 
 inline void
 ComputeEdgeAdjacentTriangles(
-  int32_t vindex0,
-  int32_t vindex1,
+  int32_t                                    vindex0,
+  int32_t                                    vindex1,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  std::vector<int8_t>& ttags,
-  std::vector<int32_t>& tadj)
-{
+  std::vector<int8_t>&                       ttags,
+  std::vector<int32_t>&                      tadj) {
   tadj.resize(0);
   TagAdjacentTriangles(vindex0, 0, vertexToTriangle, ttags);
   TagAdjacentTriangles(vindex1, 1, vertexToTriangle, ttags);
-  const auto start = vertexToTriangle.neighboursStartIndex(vindex0);
-  const auto end = vertexToTriangle.neighboursEndIndex(vindex0);
+  const auto  start = vertexToTriangle.neighboursStartIndex(vindex0);
+  const auto  end   = vertexToTriangle.neighboursEndIndex(vindex0);
   const auto& tadj0 = vertexToTriangle.neighbours();
   for (int i = start; i < end; ++i) {
     const auto tindex = tadj0[i];
-    if (ttags[tindex] != 0) {
-      tadj.push_back(tindex);
-    }
+    if (ttags[tindex] != 0) { tadj.push_back(tindex); }
   }
 }
 
@@ -402,17 +371,16 @@ ComputeEdgeAdjacentTriangles(
 
 inline int32_t
 ComputeEdgeAdjacentTriangleCount(
-  int32_t vindex0,
-  int32_t vindex1,
+  int32_t                                    vindex0,
+  int32_t                                    vindex1,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  std::vector<int8_t>& ttags)
-{
+  std::vector<int8_t>&                       ttags) {
   TagAdjacentTriangles(vindex0, 0, vertexToTriangle, ttags);
   TagAdjacentTriangles(vindex1, 1, vertexToTriangle, ttags);
-  const auto start = vertexToTriangle.neighboursStartIndex(vindex0);
-  const auto end = vertexToTriangle.neighboursEndIndex(vindex0);
+  const auto  start = vertexToTriangle.neighboursStartIndex(vindex0);
+  const auto  end   = vertexToTriangle.neighboursEndIndex(vindex0);
   const auto& tadj0 = vertexToTriangle.neighbours();
-  int32_t count = 0;
+  int32_t     count = 0;
   for (int i = start; i < end; ++i) {
     const auto tindex = tadj0[i];
     count += static_cast<int>(ttags[tindex] != 0);
@@ -424,29 +392,23 @@ ComputeEdgeAdjacentTriangleCount(
 
 inline void
 ComputeBoundaryVertices(
-  const std::vector<Triangle>& triangles,
+  const std::vector<Triangle>&               triangles,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  std::vector<int8_t>& vtags,
-  std::vector<int8_t>& ttags,
-  std::vector<int8_t>& isBoundaryVertex)
-{
+  std::vector<int8_t>&                       vtags,
+  std::vector<int8_t>&                       ttags,
+  std::vector<int8_t>&                       isBoundaryVertex) {
   const auto vertexCount = int32_t(vertexToTriangle.size());
-  if (vertexCount == 0) {
-    return;
-  }
+  if (vertexCount == 0) { return; }
   isBoundaryVertex.resize(vertexCount);
   std::fill(isBoundaryVertex.begin(), isBoundaryVertex.end(), int8_t(0));
   std::vector<int32_t> vadj;
   for (int32_t vindex0 = 0; vindex0 < vertexCount; ++vindex0) {
     ComputeAdjacentVertices(vindex0, triangles, vertexToTriangle, vtags, vadj);
     for (int vindex1 : vadj) {
-      if (vindex1 <= vindex0) {
-        continue;
-      }
-      if (
-        ComputeEdgeAdjacentTriangleCount(
-          vindex0, vindex1, vertexToTriangle, ttags)
-        == 1) {
+      if (vindex1 <= vindex0) { continue; }
+      if (ComputeEdgeAdjacentTriangleCount(
+            vindex0, vindex1, vertexToTriangle, ttags)
+          == 1) {
         isBoundaryVertex[vindex0] = int8_t(1);
         isBoundaryVertex[vindex1] = int8_t(1);
       }
@@ -457,23 +419,20 @@ ComputeBoundaryVertices(
 //----------------------------------------------------------------------------
 
 inline int64_t
-EdgeIndex(int32_t i0, int32_t i1)
-{
+EdgeIndex(int32_t i0, int32_t i1) {
   return (int64_t(std::min(i0, i1)) << 32) + std::max(i0, i1);
 }
 
 template<typename T1, typename T2>
 void
-SubdivideMidPoint(
-  std::vector<T1>& points,
-  std::vector<Triangle>& triangles,
-  StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  StaticAdjacencyInformation<int32_t>& vertexToEdge,
-  std::vector<int8_t>& vtags,
-  std::vector<int64_t>& edges,
-  std::vector<int32_t>* triangleToBaseMeshTriangle)
-{
-  const auto vertexCount = int32_t(points.size());
+SubdivideMidPoint(std::vector<T1>&                     points,
+                  std::vector<Triangle>&               triangles,
+                  StaticAdjacencyInformation<int32_t>& vertexToTriangle,
+                  StaticAdjacencyInformation<int32_t>& vertexToEdge,
+                  std::vector<int8_t>&                 vtags,
+                  std::vector<int64_t>&                edges,
+                  std::vector<int32_t>* triangleToBaseMeshTriangle) {
+  const auto vertexCount   = int32_t(points.size());
   const auto triangleCount = int32_t(triangles.size());
   ComputeVertexToTriangle(triangles, vertexCount, vertexToTriangle);
 
@@ -494,17 +453,15 @@ SubdivideMidPoint(
   edges.resize(vertexCount + edgeCount);
 
   std::vector<int32_t> vadj;
-  int32_t vertexCounter = vertexCount;
-  const auto r = T2(1) / T2(2);
+  int32_t              vertexCounter = vertexCount;
+  const auto           r             = T2(1) / T2(2);
   for (int32_t vindex0 = 0; vindex0 < vertexCount; ++vindex0) {
     ComputeAdjacentVertices(vindex0, triangles, vertexToTriangle, vtags, vadj);
     for (const auto vindex1 : vadj) {
-      if (vindex1 <= vindex0) {
-        continue;
-      }
+      if (vindex1 <= vindex0) { continue; }
       vertexToEdge.addNeighbour(vindex0, vertexCounter);
       vertexToEdge.addNeighbour(vindex1, vertexCounter);
-      edges[vertexCounter] = (int64_t(vindex0) << 32) + vindex1;
+      edges[vertexCounter]  = (int64_t(vindex0) << 32) + vindex1;
       points[vertexCounter] = (points[vindex0] + points[vindex1]) * r;
       ++vertexCounter;
     }
@@ -518,14 +475,14 @@ SubdivideMidPoint(
   int32_t triangleCounter = triangleCount;
   for (int32_t t = 0; t < triangleCount; ++t) {
     const auto tri = triangles[t];
-    Triangle tri0;
+    Triangle   tri0;
     for (int32_t k = 0; k < 3; ++k) {
-      const auto vindex0 = tri[k];
-      const auto vindex1 = tri[(k + 1) % 3];
-      const auto currentEdgeIndex = EdgeIndex(vindex0, vindex1);
-      const auto& edgeIndexes = vertexToEdge.neighbours();
-      const auto start = vertexToEdge.neighboursStartIndex(vindex0);
-      const auto end = vertexToEdge.neighboursEndIndex(vindex0);
+      const auto  vindex0          = tri[k];
+      const auto  vindex1          = tri[(k + 1) % 3];
+      const auto  currentEdgeIndex = EdgeIndex(vindex0, vindex1);
+      const auto& edgeIndexes      = vertexToEdge.neighbours();
+      const auto  start = vertexToEdge.neighboursStartIndex(vindex0);
+      const auto  end   = vertexToEdge.neighboursEndIndex(vindex0);
       for (int32_t n = start; n < end; ++n) {
         const auto eindex = edgeIndexes[n];
         if (edges[eindex] == currentEdgeIndex) {
@@ -537,7 +494,7 @@ SubdivideMidPoint(
     triangles[t] = tri0;
     if (triangleToBaseMeshTriangle) {
       const auto tindexBaseMesh = (*triangleToBaseMeshTriangle)[t];
-      (*triangleToBaseMeshTriangle)[triangleCounter] = tindexBaseMesh;
+      (*triangleToBaseMeshTriangle)[triangleCounter]     = tindexBaseMesh;
       (*triangleToBaseMeshTriangle)[triangleCounter + 1] = tindexBaseMesh;
       (*triangleToBaseMeshTriangle)[triangleCounter + 2] = tindexBaseMesh;
     }
@@ -551,16 +508,15 @@ SubdivideMidPoint(
 
 template<typename T>
 struct Material {
-  std::string name = "material0000";
-  std::string texture = "texture.png";
-  Vec3<double> ambiant = Vec3<double>(1.0);
-  Vec3<double> diffuse = Vec3<double>(1.0);
-  Vec3<double> specular = Vec3<double>(1.0);
-  double specularExponent = 0.1;
-  double transparency = 1.0;
-  int32_t illumination = 2;
-  bool save(const std::string& fileName)
-  {
+  std::string  name             = "material0000";
+  std::string  texture          = "texture.png";
+  Vec3<double> ambiant          = Vec3<double>(1.0);
+  Vec3<double> diffuse          = Vec3<double>(1.0);
+  Vec3<double> specular         = Vec3<double>(1.0);
+  double       specularExponent = 0.1;
+  double       transparency     = 1.0;
+  int32_t      illumination     = 2;
+  bool         save(const std::string& fileName) {
     std::ofstream fout(fileName);
     if (fout.is_open()) {
       fout << "newmtl " << name << '\n';
@@ -583,27 +539,23 @@ struct Material {
 template<typename T>
 class TriangleMesh {
 public:
-  bool loadFromOBJ(const std::string& fileName, int f)
-  {
+  bool loadFromOBJ(const std::string& fileName, int f) {
     std::string name = expandNum(fileName, f);
     return loadFromOBJ(name);
   }
-  bool loadFromOBJ(const std::string& fileName)
-  {
+  bool loadFromOBJ(const std::string& fileName) {
     std::ifstream fin(fileName);
     if (fin.is_open()) {
-      std::string line;
+      std::string              line;
       std::vector<std::string> tokens;
       clear();
       while (getline(fin, line)) {
         size_t prev = 0;
-        size_t pos = 0;
+        size_t pos  = 0;
         tokens.resize(0);
         while ((pos = line.find_first_of(" ,;:/", prev))
                != std::string::npos) {
-          if (pos > prev) {
-            tokens.push_back(line.substr(prev, pos - prev));
-          }
+          if (pos > prev) { tokens.push_back(line.substr(prev, pos - prev)); }
           prev = pos + 1;
         }
         if (prev < line.length()) {
@@ -651,16 +603,15 @@ public:
   }
 
   template<typename T1 = T>
-  bool saveToOBJ(const std::string& fileName, const T uvScale = T(1)) const
-  {
+  bool saveToOBJ(const std::string& fileName, const T uvScale = T(1)) const {
     std::ofstream fout(fileName);
     if (fout.is_open()) {
-      const int32_t ptCount = pointCount();
-      const int32_t triCount = triangleCount();
-      const int32_t tcCount = texCoordCount();
+      const int32_t ptCount    = pointCount();
+      const int32_t triCount   = triangleCount();
+      const int32_t tcCount    = texCoordCount();
       const int32_t tcTriCount = texCoordTriangleCount();
-      const int32_t nCount = normalCount();
-      const int32_t nTriCount = normalTriangleCount();
+      const int32_t nCount     = normalCount();
+      const int32_t nTriCount  = normalTriangleCount();
 
       assert(nTriCount == 0 || nTriCount == triCount);
       assert(tcTriCount == 0 || tcTriCount == triCount);
@@ -670,9 +621,7 @@ public:
       fout << "# TexCoord:  " << tcCount << '\n';
       fout << "# Triangles: " << triCount << '\n';
       fout << "####\n";
-      if (!_mtllib.empty()) {
-        fout << "mtllib " << _mtllib << '\n';
-      }
+      if (!_mtllib.empty()) { fout << "mtllib " << _mtllib << '\n'; }
       const auto hasColours =
         !_colour.empty() && _colour.size() == _coord.size();
       const auto hasDisplacements =
@@ -706,9 +655,9 @@ public:
         for (int32_t triangleIndex = 0; triangleIndex < triCount;
              ++triangleIndex) {
           const auto& tri = triangle(triangleIndex);
-          const auto i = (tri.x() + 1);
-          const auto j = (tri.y() + 1);
-          const auto k = (tri.z() + 1);
+          const auto  i   = (tri.x() + 1);
+          const auto  j   = (tri.y() + 1);
+          const auto  k   = (tri.z() + 1);
 
           assert(i != j && i != k && j != k);
           fout << "f " << i << ' ' << j << ' ' << k << '\n';
@@ -717,14 +666,14 @@ public:
         for (int32_t triangleIndex = 0; triangleIndex < triCount;
              ++triangleIndex) {
           const auto& tri = triangle(triangleIndex);
-          const auto i0 = (tri.x() + 1);
-          const auto j0 = (tri.y() + 1);
-          const auto k0 = (tri.z() + 1);
+          const auto  i0  = (tri.x() + 1);
+          const auto  j0  = (tri.y() + 1);
+          const auto  k0  = (tri.z() + 1);
 
           const auto& ntri = normalTriangle(triangleIndex);
-          const auto i1 = (ntri.x() + 1);
-          const auto j1 = (ntri.y() + 1);
-          const auto k1 = (ntri.z() + 1);
+          const auto  i1   = (ntri.x() + 1);
+          const auto  j1   = (ntri.y() + 1);
+          const auto  k1   = (ntri.z() + 1);
 
           assert(i0 != j0 && i0 != k0 && j0 != k0);
           assert(i1 != j1 && i1 != k1 && j1 != k1);
@@ -735,14 +684,14 @@ public:
         for (int32_t triangleIndex = 0; triangleIndex < triCount;
              ++triangleIndex) {
           const auto& tri = triangle(triangleIndex);
-          const auto i0 = (tri.x() + 1);
-          const auto j0 = (tri.y() + 1);
-          const auto k0 = (tri.z() + 1);
+          const auto  i0  = (tri.x() + 1);
+          const auto  j0  = (tri.y() + 1);
+          const auto  k0  = (tri.z() + 1);
 
           const auto& uvtri = texCoordTriangle(triangleIndex);
-          const auto i1 = (uvtri.x() + 1);
-          const auto j1 = (uvtri.y() + 1);
-          const auto k1 = (uvtri.z() + 1);
+          const auto  i1    = (uvtri.x() + 1);
+          const auto  j1    = (uvtri.y() + 1);
+          const auto  k1    = (uvtri.z() + 1);
 
           assert(i0 != j0 && i0 != k0 && j0 != k0);
           assert(i1 != j1 && i1 != k1 && j1 != k1);
@@ -753,19 +702,19 @@ public:
         for (int32_t triangleIndex = 0; triangleIndex < triCount;
              ++triangleIndex) {
           const auto& tri = triangle(triangleIndex);
-          const auto i0 = (tri.x() + 1);
-          const auto j0 = (tri.y() + 1);
-          const auto k0 = (tri.z() + 1);
+          const auto  i0  = (tri.x() + 1);
+          const auto  j0  = (tri.y() + 1);
+          const auto  k0  = (tri.z() + 1);
 
           const auto& uvtri = texCoordTriangle(triangleIndex);
-          const auto i1 = (uvtri.x() + 1);
-          const auto j1 = (uvtri.y() + 1);
-          const auto k1 = (uvtri.z() + 1);
+          const auto  i1    = (uvtri.x() + 1);
+          const auto  j1    = (uvtri.y() + 1);
+          const auto  k1    = (uvtri.z() + 1);
 
           const auto& ntri = normalTriangle(triangleIndex);
-          const auto i2 = (ntri.x() + 1);
-          const auto j2 = (ntri.y() + 1);
-          const auto k2 = (ntri.z() + 1);
+          const auto  i2   = (ntri.x() + 1);
+          const auto  j2   = (ntri.y() + 1);
+          const auto  k2   = (ntri.z() + 1);
 
           assert(i0 != j0 && i0 != k0 && j0 != k0);
           assert(i1 != j1 && i1 != k1 && j1 != k1);
@@ -780,18 +729,14 @@ public:
     }
     return false;
   }
-  TriangleMesh<T>&
-  operator=(const TriangleMesh<T>&) = default;
+  TriangleMesh<T>& operator=(const TriangleMesh<T>&) = default;
 
-  void scaleTextureCoordinates(int qt )
-  {
+  void scaleTextureCoordinates(int qt) {
     const auto scale = qt > 0 ? 1.0 / ((1 << qt) - 1) : 1.0;
-    for (auto& v : _texCoord) {
-      v *= scale;
-    }
+    for (auto& v : _texCoord) { v *= scale; }
   }
   const std::string& materialLibrary() const { return _mtllib; }
-  std::string& materialLibrary() { return _mtllib; }
+  std::string&       materialLibrary() { return _mtllib; }
   void setMaterialLibrary(const std::string& mtllib) { _mtllib = mtllib; }
 
   int32_t displacementCount() const { return int32_t(_disp.size()); }
@@ -800,76 +745,64 @@ public:
   int32_t triangleCount() const { return int32_t(_coordIndex.size()); }
   int32_t texCoordCount() const { return int32_t(_texCoord.size()); }
 
-  int32_t texCoordTriangleCount() const
-  {
+  int32_t texCoordTriangleCount() const {
     return int32_t(_texCoordIndex.size());
   }
 
   int32_t normalCount() const { return int32_t(_normal.size()); }
   int32_t normalTriangleCount() const { return int32_t(_normalIndex.size()); }
 
-  const Vec3<T>& displacement(const int32_t dispIndex) const
-  {
+  const Vec3<T>& displacement(const int32_t dispIndex) const {
     assert(dispIndex >= 0 && dispIndex < displacementCount());
     return _disp[dispIndex];
   }
 
-  Vec3<T>& displacement(const int32_t dispIndex)
-  {
+  Vec3<T>& displacement(const int32_t dispIndex) {
     assert(dispIndex >= 0 && dispIndex < displacementCount());
     return _disp[dispIndex];
   }
 
-  const Vec3<T>& point(const int32_t pointIndex) const
-  {
+  const Vec3<T>& point(const int32_t pointIndex) const {
     assert(pointIndex >= 0 && pointIndex < pointCount());
     return _coord[pointIndex];
   }
 
-  Vec3<T>& point(const int32_t pointIndex)
-  {
+  Vec3<T>& point(const int32_t pointIndex) {
     assert(pointIndex >= 0 && pointIndex < pointCount());
     return _coord[pointIndex];
   }
 
-  const Vec3<T>& colour(const int32_t colourIndex) const
-  {
+  const Vec3<T>& colour(const int32_t colourIndex) const {
     assert(colourIndex >= 0 && colourIndex < colourCount());
     return _colour[colourIndex];
   }
 
-  Vec3<T>& colour(const int32_t colourIndex)
-  {
+  Vec3<T>& colour(const int32_t colourIndex) {
     assert(colourIndex >= 0 && colourIndex < colourCount());
     return _colour[colourIndex];
   }
 
-  const Vec2<T>& texCoord(const int32_t texCoordIndex) const
-  {
+  const Vec2<T>& texCoord(const int32_t texCoordIndex) const {
     assert(texCoordIndex >= 0 && texCoordIndex < texCoordCount());
     return _texCoord[texCoordIndex];
   }
 
-  Vec2<T>& texCoord(const int32_t texCoordIndex)
-  {
+  Vec2<T>& texCoord(const int32_t texCoordIndex) {
     assert(texCoordIndex >= 0 && texCoordIndex < texCoordCount());
     return _texCoord[texCoordIndex];
   }
 
-  const Vec3<T>& normal(const int32_t normalIndex) const
-  {
+  const Vec3<T>& normal(const int32_t normalIndex) const {
     assert(normalIndex >= 0 && normalIndex < normalCount());
     return _normal[normalIndex];
   }
 
-  Vec3<T>& normal(const int32_t normalIndex)
-  {
+  Vec3<T>& normal(const int32_t normalIndex) {
     assert(normalIndex >= 0 && normalIndex < normalCount());
     return _normal[normalIndex];
   }
 
-  T area() const
-  {
+  T area() const {
     T area = T(0);
     for (const auto& tri : _coordIndex) {
       const auto i = tri[0];
@@ -884,20 +817,18 @@ public:
     return area;
   }
 
-  void computeTriangleNormals(
-    std::vector<Vec3<T>>& normals, const bool normalize = true) const
-  {
+  void computeTriangleNormals(std::vector<Vec3<T>>& normals,
+                              const bool            normalize = true) const {
     const auto triCount = triangleCount();
     normals.resize(triCount);
     for (int32_t t = 0; t < triCount; ++t) {
       const auto& tri = triangle(t);
-      normals[t] = computeTriangleNormal(
+      normals[t]      = computeTriangleNormal(
         _coord[tri[0]], _coord[tri[1]], _coord[tri[2]], normalize);
     }
   }
 
-  void computeNormals(const bool normalize = true)
-  {
+  void computeNormals(const bool normalize = true) {
     const auto ptCount = pointCount();
     _normal.resize(ptCount);
     std::fill(_normal.begin(), _normal.end(), T(0));
@@ -912,22 +843,16 @@ public:
       _normal[k] += n;
     }
     if (normalize) {
-      for (auto& n : _normal) {
-        n.normalize();
-      }
+      for (auto& n : _normal) { n.normalize(); }
     }
   }
 
-  void computeUnitaryFaceNormals()
-  {
+  void computeUnitaryFaceNormals() {
     computeNormals();
-    for (auto& n : _normal) {
-      n.normalize();
-    }
+    for (auto& n : _normal) { n.normalize(); }
   }
 
-  Box3<T> dispBoundingBox() const
-  {
+  Box3<T> dispBoundingBox() const {
     Box3<T> bbox;
     bbox.min = std::numeric_limits<T>::max();
     bbox.max = std::numeric_limits<T>::min();
@@ -940,8 +865,7 @@ public:
     return bbox;
   }
 
-  Box3<T> boundingBox() const
-  {
+  Box3<T> boundingBox() const {
     Box3<T> bbox;
     bbox.min = std::numeric_limits<T>::max();
     bbox.max = std::numeric_limits<T>::min();
@@ -954,8 +878,7 @@ public:
     return bbox;
   }
 
-  Box2<T> texCoordBoundingBox() const
-  {
+  Box2<T> texCoordBoundingBox() const {
     Box2<T> bbox;
     bbox.min = std::numeric_limits<T>::max();
     bbox.max = std::numeric_limits<T>::min();
@@ -968,8 +891,7 @@ public:
     return bbox;
   }
 
-  Box3<T> normalsBoundingBox() const
-  {
+  Box3<T> normalsBoundingBox() const {
     Box3<T> bbox;
     bbox.min = std::numeric_limits<T>::max();
     bbox.max = std::numeric_limits<T>::min();
@@ -982,11 +904,10 @@ public:
     return bbox;
   }
 
-  void invertOrientation()
-  {
-    const auto hasTriangles = triangleCount() > 0;
+  void invertOrientation() {
+    const auto hasTriangles         = triangleCount() > 0;
     const auto hasTexCoordTriangles = texCoordTriangleCount() > 0;
-    const auto hasNormalTriangles = normalTriangleCount() > 0;
+    const auto hasNormalTriangles   = normalTriangleCount() > 0;
     for (int32_t tindex = 0, tcount = triangleCount(); tindex < tcount;
          ++tindex) {
       if (hasTriangles) {
@@ -1009,306 +930,260 @@ public:
     }
   }
 
-  const std::vector<Vec3<T>>& displacements() const { return _disp; }
-  const std::vector<Vec3<T>>& points() const { return _coord; }
-  const std::vector<Vec3<T>>& colours() const { return _colour; }
+  const std::vector<Vec3<T>>&   displacements() const { return _disp; }
+  const std::vector<Vec3<T>>&   points() const { return _coord; }
+  const std::vector<Vec3<T>>&   colours() const { return _colour; }
   const std::vector<Vec3<int>>& triangles() const { return _coordIndex; }
-  const std::vector<Vec2<T>>& texCoords() const { return _texCoord; }
-  const std::vector<Vec3<int>>& texCoordTriangles() const
-  {
+  const std::vector<Vec2<T>>&   texCoords() const { return _texCoord; }
+  const std::vector<Vec3<int>>& texCoordTriangles() const {
     return _texCoordIndex;
   }
 
-  const std::vector<Vec3<T>>& normals() const { return _normal; }
-  const std::vector<Vec3<int>>& normalTriangles() const
-  {
+  const std::vector<Vec3<T>>&   normals() const { return _normal; }
+  const std::vector<Vec3<int>>& normalTriangles() const {
     return _normalIndex;
   }
 
-  std::vector<Vec3<T>>& displacements() { return _disp; }
-  std::vector<Vec3<T>>& points() { return _coord; }
-  std::vector<Vec3<T>>& colours() { return _colour; }
+  std::vector<Vec3<T>>&   displacements() { return _disp; }
+  std::vector<Vec3<T>>&   points() { return _coord; }
+  std::vector<Vec3<T>>&   colours() { return _colour; }
   std::vector<Vec3<int>>& triangles() { return _coordIndex; }
-  std::vector<Vec2<T>>& texCoords() { return _texCoord; }
+  std::vector<Vec2<T>>&   texCoords() { return _texCoord; }
   std::vector<Vec3<int>>& texCoordTriangles() { return _texCoordIndex; }
-  std::vector<Vec3<T>>& normals() { return _normal; }
+  std::vector<Vec3<T>>&   normals() { return _normal; }
   std::vector<Vec3<int>>& normalTriangles() { return _normalIndex; }
 
-  Vec3<int> triangle(const int32_t triangleIndex) const
-  {
+  Vec3<int> triangle(const int32_t triangleIndex) const {
     assert(triangleIndex >= 0 && triangleIndex < triangleCount());
     return _coordIndex[triangleIndex];
   }
 
-  Vec3<int> texCoordTriangle(const int32_t texCoordTriangleIndex) const
-  {
-    assert(
-      texCoordTriangleIndex >= 0
-      && texCoordTriangleIndex < texCoordTriangleCount());
+  Vec3<int> texCoordTriangle(const int32_t texCoordTriangleIndex) const {
+    assert(texCoordTriangleIndex >= 0
+           && texCoordTriangleIndex < texCoordTriangleCount());
     return _texCoordIndex[texCoordTriangleIndex];
   }
 
-  Vec3<int> normalTriangle(const int32_t normalTriangleIndex) const
-  {
-    assert(
-      normalTriangleIndex >= 0 && normalTriangleIndex < normalTriangleCount());
+  Vec3<int> normalTriangle(const int32_t normalTriangleIndex) const {
+    assert(normalTriangleIndex >= 0
+           && normalTriangleIndex < normalTriangleCount());
     return _normalIndex[normalTriangleIndex];
   }
 
-  void
-  setDisplacement(const int32_t dispIndex, const T dx, const T dy, const T dz)
-  {
+  void setDisplacement(const int32_t dispIndex,
+                       const T       dx,
+                       const T       dy,
+                       const T       dz) {
     assert(dispIndex >= 0 && dispIndex < displacementCount());
     auto& disp = _disp[dispIndex];
-    disp[0] = dx;
-    disp[1] = dy;
-    disp[2] = dz;
+    disp[0]    = dx;
+    disp[1]    = dy;
+    disp[2]    = dz;
   }
 
-  void setDisplacement(const int32_t dispIndex, const Vec3<T>& pt)
-  {
+  void setDisplacement(const int32_t dispIndex, const Vec3<T>& pt) {
     assert(dispIndex >= 0 && dispIndex < displacementCount());
     _disp[dispIndex] = pt;
   }
 
-  void setPoint(const int32_t pointIndex, const T x, const T y, const T z)
-  {
+  void setPoint(const int32_t pointIndex, const T x, const T y, const T z) {
     assert(pointIndex >= 0 && pointIndex < pointCount());
     auto& pt = _coord[pointIndex];
-    pt[0] = x;
-    pt[1] = y;
-    pt[2] = z;
+    pt[0]    = x;
+    pt[1]    = y;
+    pt[2]    = z;
   }
 
-  void setPoint(const int32_t pointIndex, const Vec3<T>& pt)
-  {
+  void setPoint(const int32_t pointIndex, const Vec3<T>& pt) {
     assert(pointIndex >= 0 && pointIndex < pointCount());
     _coord[pointIndex] = pt;
   }
 
-  void setColour(const int32_t colourIndex, const T r, const T g, const T b)
-  {
+  void setColour(const int32_t colourIndex, const T r, const T g, const T b) {
     assert(colourIndex >= 0 && colourIndex < colourCount());
     auto& rgb = _colour[colourIndex];
-    rgb[0] = r;
-    rgb[1] = g;
-    rgb[2] = b;
+    rgb[0]    = r;
+    rgb[1]    = g;
+    rgb[2]    = b;
   }
 
-  void setColour(const int32_t colourIndex, const Vec3<T>& rgb)
-  {
+  void setColour(const int32_t colourIndex, const Vec3<T>& rgb) {
     assert(colourIndex >= 0 && colourIndex < colourCount());
     _colour[colourIndex] = rgb;
   }
 
-  void setTexCoord(const int32_t texCoordIndex, const T x, const T y)
-  {
+  void setTexCoord(const int32_t texCoordIndex, const T x, const T y) {
     assert(texCoordIndex >= 0 && texCoordIndex < texCoordCount());
     auto& pt = _texCoord[texCoordIndex];
-    pt[0] = x;
-    pt[1] = y;
+    pt[0]    = x;
+    pt[1]    = y;
   }
 
-  void setTexCoord(const int32_t texCoordIndex, const Vec2<T>& texCoord)
-  {
+  void setTexCoord(const int32_t texCoordIndex, const Vec2<T>& texCoord) {
     assert(texCoordIndex >= 0 && texCoordIndex < texCoordCount());
     _texCoord[texCoordIndex] = texCoord;
   }
 
-  void setNormal(const int32_t normalIndex, const T x, const T y, const T z)
-  {
+  void setNormal(const int32_t normalIndex, const T x, const T y, const T z) {
     assert(normalIndex >= 0 && normalIndex < normalCount());
     auto& normal = _normal[normalIndex];
-    normal[0] = x;
-    normal[1] = y;
-    normal[2] = z;
+    normal[0]    = x;
+    normal[1]    = y;
+    normal[2]    = z;
   }
 
-  void setNormal(const int32_t normalIndex, const Vec3<T>& pt)
-  {
+  void setNormal(const int32_t normalIndex, const Vec3<T>& pt) {
     assert(normalIndex >= 0 && normalIndex < normalCount());
     _normal[normalIndex] = pt;
   }
 
   void addDisplacement(const Vec3<T>& disp) { _disp.push_back(disp); }
-  void addDisplacement(const T dx, const T dy, const T dz)
-  {
+  void addDisplacement(const T dx, const T dy, const T dz) {
     _disp.push_back(Vec3<T>(dx, dy, dz));
   }
 
   void addPoint(const Vec3<T>& pt) { _coord.push_back(pt); }
-  void addPoint(const T x, const T y, const T z)
-  {
+  void addPoint(const T x, const T y, const T z) {
     _coord.push_back(Vec3<T>(x, y, z));
   }
 
   void addColour(const Vec3<T>& rgb) { _colour.push_back(rgb); }
-  void addColour(const T r, const T g, const T b)
-  {
+  void addColour(const T r, const T g, const T b) {
     _colour.push_back(Vec3<T>(r, g, b));
   }
 
   void addTexCoord(const Vec2<T>& pt) { _texCoord.push_back(pt); }
-  void addTexCoord(const T u, const T v)
-  {
+  void addTexCoord(const T u, const T v) {
     _texCoord.push_back(Vec2<T>(u, v));
   }
 
   void addNormal(const Vec3<T>& pt) { _normal.push_back(pt); }
-  void addNormal(const T x, const T y, const T z)
-  {
+  void addNormal(const T x, const T y, const T z) {
     _normal.push_back(Vec3<T>(x, y, z));
   }
 
   void addTriangle(const Triangle& tri) { _coordIndex.push_back(tri); }
-  void addTriangle(const int32_t i, const int32_t j, const int32_t k)
-  {
+  void addTriangle(const int32_t i, const int32_t j, const int32_t k) {
     _coordIndex.emplace_back(i, j, k);
   }
 
-  void addTexCoordTriangle(const Triangle& tri)
-  {
+  void addTexCoordTriangle(const Triangle& tri) {
     _texCoordIndex.push_back(tri);
   }
 
-  void addTexCoordTriangle(const int32_t i, const int32_t j, const int32_t k)
-  {
+  void addTexCoordTriangle(const int32_t i, const int32_t j, const int32_t k) {
     _texCoordIndex.emplace_back(i, j, k);
   }
 
   void addNormalTriangle(const Triangle& tri) { _normalIndex.push_back(tri); }
-  void addNormalTriangle(const int32_t i, const int32_t j, const int32_t k)
-  {
+  void addNormalTriangle(const int32_t i, const int32_t j, const int32_t k) {
     _normalIndex.emplace_back(i, j, k);
   }
 
-  void setTriangle(
-    const int32_t triangleIndex,
-    const int32_t i,
-    const int32_t j,
-    const int32_t k)
-  {
+  void setTriangle(const int32_t triangleIndex,
+                   const int32_t i,
+                   const int32_t j,
+                   const int32_t k) {
     assert(triangleIndex >= 0 && triangleIndex < triangleCount());
     auto& tri = _coordIndex[triangleIndex];
-    tri[0] = i;
-    tri[1] = j;
-    tri[2] = k;
+    tri[0]    = i;
+    tri[1]    = j;
+    tri[2]    = k;
   }
 
-  void setTriangle(const int32_t triangleIndex, const Triangle& tri)
-  {
+  void setTriangle(const int32_t triangleIndex, const Triangle& tri) {
     assert(triangleIndex >= 0 && triangleIndex < triangleCount());
     _coordIndex[triangleIndex] = tri;
   }
 
-  void setTexCoordTriangle(
-    const int32_t triangleIndex,
-    const int32_t i,
-    const int32_t j,
-    const int32_t k)
-  {
+  void setTexCoordTriangle(const int32_t triangleIndex,
+                           const int32_t i,
+                           const int32_t j,
+                           const int32_t k) {
     assert(triangleIndex >= 0 && triangleIndex < texCoordTriangleCount());
     auto& tri = _texCoordIndex[triangleIndex];
-    tri[0] = i;
-    tri[1] = j;
-    tri[2] = k;
+    tri[0]    = i;
+    tri[1]    = j;
+    tri[2]    = k;
   }
 
-  void setTexCoordTriangle(const int32_t triangleIndex, const Triangle& tri)
-  {
+  void setTexCoordTriangle(const int32_t triangleIndex, const Triangle& tri) {
     assert(triangleIndex >= 0 && triangleIndex < texCoordTriangleCount());
     _texCoordIndex[triangleIndex] = tri;
   }
 
-  void setNormalTriangle(
-    const int32_t triangleIndex,
-    const int32_t i,
-    const int32_t j,
-    const int32_t k)
-  {
+  void setNormalTriangle(const int32_t triangleIndex,
+                         const int32_t i,
+                         const int32_t j,
+                         const int32_t k) {
     assert(triangleIndex >= 0 && triangleIndex < normalTriangleCount());
     auto& tri = _normalIndex[triangleIndex];
-    tri[0] = i;
-    tri[1] = j;
-    tri[2] = k;
+    tri[0]    = i;
+    tri[1]    = j;
+    tri[2]    = k;
   }
 
-  void setNormalTriangle(const int32_t triangleIndex, const Triangle& tri)
-  {
+  void setNormalTriangle(const int32_t triangleIndex, const Triangle& tri) {
     assert(triangleIndex >= 0 && triangleIndex < normalTriangleCount());
     _normalIndex[triangleIndex] = tri;
   }
 
-  void resizeDisplacements(const int32_t ptCount)
-  {
+  void resizeDisplacements(const int32_t ptCount) {
     _disp.resize(ptCount, 0.0);
   }
 
   void resizePoints(const int32_t ptCount) { _coord.resize(ptCount, 0.0); }
 
-  void resizeColours(const int32_t colourCount)
-  {
+  void resizeColours(const int32_t colourCount) {
     _colour.resize(colourCount, 0.0);
   }
 
-  void resizeTexCoords(const int32_t texCoordCount)
-  {
+  void resizeTexCoords(const int32_t texCoordCount) {
     _texCoord.resize(texCoordCount, 0.0);
   }
 
-  void resizeNormals(const int32_t normalCount)
-  {
+  void resizeNormals(const int32_t normalCount) {
     _normal.resize(normalCount, 0.0);
   }
 
-  void resizeTriangles(const int32_t triCount)
-  {
+  void resizeTriangles(const int32_t triCount) {
     _coordIndex.resize(triCount, -1);
   }
 
-  void resizeTexCoordTriangles(const int32_t texCoordTriangleCount)
-  {
+  void resizeTexCoordTriangles(const int32_t texCoordTriangleCount) {
     _texCoordIndex.resize(texCoordTriangleCount, -1);
   }
 
-  void resizeNormalTriangles(const int32_t normalTriangleCount)
-  {
+  void resizeNormalTriangles(const int32_t normalTriangleCount) {
     _normalIndex.resize(normalTriangleCount, -1);
   }
 
   void reserveDisplacements(const int32_t ptCount) { _disp.reserve(ptCount); }
   void reservePoints(const int32_t ptCount) { _coord.reserve(ptCount); }
-  void reserveColours(const int32_t colourCount)
-  {
+  void reserveColours(const int32_t colourCount) {
     _colour.reserve(colourCount);
   }
-  void reserveTriangles(const int32_t triCount)
-  {
+  void reserveTriangles(const int32_t triCount) {
     _coordIndex.reserve(triCount);
   }
 
-  void reserveTexCoords(const int32_t texCoordCount)
-  {
+  void reserveTexCoords(const int32_t texCoordCount) {
     _texCoord.reserve(texCoordCount);
   }
 
-  void reserveTexCoordTriangles(const int32_t texCoordTriangleCount)
-  {
+  void reserveTexCoordTriangles(const int32_t texCoordTriangleCount) {
     _texCoordIndex.reserve(texCoordTriangleCount);
   }
 
-  void reserveNormals(const int32_t normalCount)
-  {
+  void reserveNormals(const int32_t normalCount) {
     _normal.reserve(normalCount);
   }
 
-  void reserveNormalTriangles(const int32_t normalTriangleCount)
-  {
+  void reserveNormalTriangles(const int32_t normalTriangleCount) {
     _normalIndex.reserve(normalTriangleCount);
   }
 
-  void clear()
-  {
+  void clear() {
     _disp.clear();
     _coord.clear();
     _colour.clear();
@@ -1319,21 +1194,20 @@ public:
     _normalIndex.clear();
   }
 
-  void append(const TriangleMesh<double>& mesh)
-  {
-    const auto offsetPositions = pointCount();
-    const auto offsetTexCoord = texCoordCount();
-    const auto offsetNormal = normalCount();
-    const auto offsetTriangles = triangleCount();
+  void append(const TriangleMesh<double>& mesh) {
+    const auto offsetPositions         = pointCount();
+    const auto offsetTexCoord          = texCoordCount();
+    const auto offsetNormal            = normalCount();
+    const auto offsetTriangles         = triangleCount();
     const auto offsetTexCoordTriangles = texCoordTriangleCount();
-    const auto offsetNormalTriangles = normalTriangleCount();
+    const auto offsetNormalTriangles   = normalTriangleCount();
 
-    const auto posCount = mesh.pointCount();
-    const auto tcCount = mesh.texCoordCount();
-    const auto nCount = mesh.normalCount();
-    const auto triCount = mesh.triangleCount();
+    const auto posCount         = mesh.pointCount();
+    const auto tcCount          = mesh.texCoordCount();
+    const auto nCount           = mesh.normalCount();
+    const auto triCount         = mesh.triangleCount();
     const auto texCoordTriCount = mesh.texCoordTriangleCount();
-    const auto normalTriCount = mesh.normalTriangleCount();
+    const auto normalTriCount   = mesh.normalTriangleCount();
 
     resizePoints(offsetPositions + posCount);
     for (int v = 0; v < posCount; ++v) {
@@ -1370,33 +1244,28 @@ public:
   }
 
   void subdivideMidPoint(
-    int32_t iterationCount,
-    std::vector<SubdivisionLevelInfo>* infoLevelOfDetails = nullptr,
-    std::vector<int64_t>* coordEdges = nullptr,
-    std::vector<int64_t>* texCoordEdges = nullptr,
-    std::vector<int32_t>* triangleToBaseMeshTriangle = nullptr)
-  {
+    int32_t                            iterationCount,
+    std::vector<SubdivisionLevelInfo>* infoLevelOfDetails         = nullptr,
+    std::vector<int64_t>*              coordEdges                 = nullptr,
+    std::vector<int64_t>*              texCoordEdges              = nullptr,
+    std::vector<int32_t>*              triangleToBaseMeshTriangle = nullptr) {
     if (triangleToBaseMeshTriangle != nullptr) {
-      auto& triToBaseMeshTri = *triangleToBaseMeshTriangle;
-      const auto tCount0 = this->triangleCount();
+      auto&      triToBaseMeshTri = *triangleToBaseMeshTriangle;
+      const auto tCount0          = this->triangleCount();
       triToBaseMeshTri.resize(tCount0);
-      for (int32_t t = 0; t < tCount0; ++t) {
-        triToBaseMeshTri[t] = t;
-      }
+      for (int32_t t = 0; t < tCount0; ++t) { triToBaseMeshTri[t] = t; }
     }
 
     if (infoLevelOfDetails != nullptr) {
       infoLevelOfDetails->resize(iterationCount + 1);
-      auto& infoLevelOfDetail = (*infoLevelOfDetails)[0];
-      infoLevelOfDetail.pointCount = pointCount();
-      infoLevelOfDetail.triangleCount = triangleCount();
-      infoLevelOfDetail.texCoordCount = texCoordCount();
+      auto& infoLevelOfDetail                 = (*infoLevelOfDetails)[0];
+      infoLevelOfDetail.pointCount            = pointCount();
+      infoLevelOfDetail.triangleCount         = triangleCount();
+      infoLevelOfDetail.texCoordCount         = texCoordCount();
       infoLevelOfDetail.texCoordTriangleCount = texCoordTriangleCount();
     }
 
-    if (iterationCount <= 0) {
-      return;
-    }
+    if (iterationCount <= 0) { return; }
 
     const auto tCount = triangleCount() * std::pow(4, iterationCount - 1);
     if (texCoordTriangleCount() && texCoordCount()) {
@@ -1405,18 +1274,22 @@ public:
       reserveTexCoords(4 * tcCount);
       StaticAdjacencyInformation<int32_t> vertexToTriangleUV;
       StaticAdjacencyInformation<int32_t> vertexToEdgeUV;
-      std::vector<int8_t> vtagsUV;
+      std::vector<int8_t>                 vtagsUV;
       vertexToTriangleUV.reserve(tcCount);
       vertexToEdgeUV.reserve(tcCount);
       vtagsUV.reserve(tcCount);
       if (texCoordEdges == nullptr) {
         std::vector<int64_t> edges(4 * tcCount, int64_t(-1));
         for (int32_t it = 0; it < iterationCount; ++it) {
-          SubdivideMidPoint<Vec2<T>, T>(
-            texCoords(), texCoordTriangles(), vertexToTriangleUV,
-            vertexToEdgeUV, vtagsUV, edges, nullptr);
+          SubdivideMidPoint<Vec2<T>, T>(texCoords(),
+                                        texCoordTriangles(),
+                                        vertexToTriangleUV,
+                                        vertexToEdgeUV,
+                                        vtagsUV,
+                                        edges,
+                                        nullptr);
           if (infoLevelOfDetails != nullptr) {
-            auto& infoLevelOfDetail = (*infoLevelOfDetails)[it + 1];
+            auto& infoLevelOfDetail         = (*infoLevelOfDetails)[it + 1];
             infoLevelOfDetail.texCoordCount = texCoordCount();
             infoLevelOfDetail.texCoordTriangleCount = texCoordTriangleCount();
           }
@@ -1424,11 +1297,15 @@ public:
       } else {
         texCoordEdges->resize(4 * tcCount, int64_t(-1));
         for (int32_t it = 0; it < iterationCount; ++it) {
-          SubdivideMidPoint<Vec2<T>, T>(
-            texCoords(), texCoordTriangles(), vertexToTriangleUV,
-            vertexToEdgeUV, vtagsUV, *texCoordEdges, nullptr);
+          SubdivideMidPoint<Vec2<T>, T>(texCoords(),
+                                        texCoordTriangles(),
+                                        vertexToTriangleUV,
+                                        vertexToEdgeUV,
+                                        vtagsUV,
+                                        *texCoordEdges,
+                                        nullptr);
           if (infoLevelOfDetails != nullptr) {
-            auto& infoLevelOfDetail = (*infoLevelOfDetails)[it + 1];
+            auto& infoLevelOfDetail         = (*infoLevelOfDetails)[it + 1];
             infoLevelOfDetail.texCoordCount = texCoordCount();
             infoLevelOfDetail.texCoordTriangleCount = texCoordTriangleCount();
           }
@@ -1441,31 +1318,39 @@ public:
       reserveTriangles(4 * tCount);
       StaticAdjacencyInformation<int32_t> vertexToTriangle;
       StaticAdjacencyInformation<int32_t> vertexToEdge;
-      std::vector<int8_t> vtags;
+      std::vector<int8_t>                 vtags;
       vertexToTriangle.reserve(vCount);
       vertexToEdge.reserve(vCount);
       vtags.reserve(vCount);
       if (coordEdges == nullptr) {
         std::vector<int64_t> edges(4 * vCount, int64_t(-1));
         for (int32_t it = 0; it < iterationCount; ++it) {
-          SubdivideMidPoint<Vec3<T>, T>(
-            points(), triangles(), vertexToTriangle, vertexToEdge, vtags,
-            edges, triangleToBaseMeshTriangle);
+          SubdivideMidPoint<Vec3<T>, T>(points(),
+                                        triangles(),
+                                        vertexToTriangle,
+                                        vertexToEdge,
+                                        vtags,
+                                        edges,
+                                        triangleToBaseMeshTriangle);
           if (infoLevelOfDetails != nullptr) {
-            auto& infoLevelOfDetail = (*infoLevelOfDetails)[it + 1];
-            infoLevelOfDetail.pointCount = pointCount();
+            auto& infoLevelOfDetail         = (*infoLevelOfDetails)[it + 1];
+            infoLevelOfDetail.pointCount    = pointCount();
             infoLevelOfDetail.triangleCount = triangleCount();
           }
         }
       } else {
         coordEdges->resize(4 * vCount, int64_t(-1));
         for (int32_t it = 0; it < iterationCount; ++it) {
-          SubdivideMidPoint<Vec3<T>, T>(
-            points(), triangles(), vertexToTriangle, vertexToEdge, vtags,
-            *coordEdges, triangleToBaseMeshTriangle);
+          SubdivideMidPoint<Vec3<T>, T>(points(),
+                                        triangles(),
+                                        vertexToTriangle,
+                                        vertexToEdge,
+                                        vtags,
+                                        *coordEdges,
+                                        triangleToBaseMeshTriangle);
           if (infoLevelOfDetails != nullptr) {
-            auto& infoLevelOfDetail = (*infoLevelOfDetails)[it + 1];
-            infoLevelOfDetail.pointCount = pointCount();
+            auto& infoLevelOfDetail         = (*infoLevelOfDetails)[it + 1];
+            infoLevelOfDetail.pointCount    = pointCount();
             infoLevelOfDetail.triangleCount = triangleCount();
           }
         }
@@ -1474,25 +1359,22 @@ public:
   }
 
   void
-  computeTexCoordToPointMapping(std::vector<int32_t>& texCoordToPoint) const
-  {
+  computeTexCoordToPointMapping(std::vector<int32_t>& texCoordToPoint) const {
     const auto uvCount = texCoordCount();
     texCoordToPoint.resize(uvCount);
     std::fill(texCoordToPoint.begin(), texCoordToPoint.end(), -1);
     for (int32_t t = 0, tcount = triangleCount(); t < tcount; ++t) {
-      const auto& tri = triangle(t);
+      const auto& tri   = triangle(t);
       const auto& triUV = texCoordTriangle(t);
-      for (int32_t k = 0; k < 3; ++k) {
-        texCoordToPoint[triUV[k]] = tri[k];
-      }
+      for (int32_t k = 0; k < 3; ++k) { texCoordToPoint[triUV[k]] = tri[k]; }
     }
   }
   template<typename D>
-  void convert( const TriangleMesh<D>& src ){
+  void convert(const TriangleMesh<D>& src) {
     clear();
 
     _mtllib = src.materialLibrary();
-    
+
     _coordIndex.resize(src.triangles().size());
     for (int i = 0; i < src.triangles().size(); i++) {
       _coordIndex[i] = src.triangle(i);
@@ -1535,15 +1417,15 @@ public:
   }
 
 private:
-  std::vector<Vec3<T>> _disp;
-  std::vector<Vec3<T>> _coord;
-  std::vector<Vec3<T>> _colour;
+  std::vector<Vec3<T>>   _disp;
+  std::vector<Vec3<T>>   _coord;
+  std::vector<Vec3<T>>   _colour;
   std::vector<Vec3<int>> _coordIndex;
-  std::vector<Vec2<T>> _texCoord;
+  std::vector<Vec2<T>>   _texCoord;
   std::vector<Vec3<int>> _texCoordIndex;
-  std::vector<Vec3<T>> _normal;
+  std::vector<Vec3<T>>   _normal;
   std::vector<Vec3<int>> _normalIndex;
-  std::string _mtllib;
+  std::string            _mtllib;
 };
 
 //============================================================================
@@ -1551,32 +1433,31 @@ private:
 template<typename T>
 bool
 RemoveDuplicatedTriangles(
-  const std::vector<Triangle>& trianglesInput,
-  const std::vector<Vec3<T>>& triangleNormals,
+  const std::vector<Triangle>&               trianglesInput,
+  const std::vector<Vec3<T>>&                triangleNormals,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  std::vector<Triangle>& trianglesOutput,
-  const bool removeDegeneratedTriangles = true)
-{
+  std::vector<Triangle>&                     trianglesOutput,
+  const bool removeDegeneratedTriangles = true) {
   struct TriangleInfo {
-    double score;
+    double  score;
     int32_t outIdx;
-  };  
-  
+  };
+
   // Output index for the next unique triangle
   int32_t nextOutIdx = 0;
   trianglesOutput.resize(trianglesInput.size());
 
   const auto triangleCount = int32_t(trianglesInput.size());
   std::map<Triangle, TriangleInfo> uniqueTriangles;
-  const auto* neighbours = vertexToTriangle.neighbours();
+  const auto*                      neighbours = vertexToTriangle.neighbours();
   for (int32_t t = 0; t < triangleCount; ++t) {
-    const auto tri = orderComponents(trianglesInput[t]);    
-    double score = 0.0;
+    const auto tri   = orderComponents(trianglesInput[t]);
+    double     score = 0.0;
     for (int32_t k = 0; k < 3; ++k) {
       const auto vindex = tri[k];
-      const auto start = vertexToTriangle.neighboursStartIndex(vindex);
-      const auto end = vertexToTriangle.neighboursEndIndex(vindex);
-      for (int32_t n = start; n < end; ++n) {        
+      const auto start  = vertexToTriangle.neighboursStartIndex(vindex);
+      const auto end    = vertexToTriangle.neighboursEndIndex(vindex);
+      for (int32_t n = start; n < end; ++n) {
         score += triangleNormals[t] * triangleNormals[neighbours[n]];
       }
     }
@@ -1592,7 +1473,7 @@ RemoveDuplicatedTriangles(
       trianglesOutput[it->second.outIdx] = trianglesInput[t];
     }
   }
-  
+
   trianglesOutput.resize(uniqueTriangles.size());
   return true;
 }
@@ -1601,27 +1482,20 @@ RemoveDuplicatedTriangles(
 
 template<typename T>
 void
-RemoveDegeneratedTriangles(TriangleMesh<T>& mesh)
-{
+RemoveDegeneratedTriangles(TriangleMesh<T>& mesh) {
   const auto triangleCount = mesh.triangleCount();
-  if (triangleCount <= 0) {
-    return;
-  }
+  if (triangleCount <= 0) { return; }
 
   const auto hasTexCoords = mesh.texCoordTriangleCount() == triangleCount;
-  const auto hasNormals = mesh.normalTriangleCount() == triangleCount;
+  const auto hasNormals   = mesh.normalTriangleCount() == triangleCount;
   std::vector<Triangle> triangles;
   std::vector<Triangle> texCoordTriangles;
   std::vector<Triangle> normalTriangles;
   triangles.reserve(triangleCount);
 
-  if (hasTexCoords) {
-    texCoordTriangles.reserve(triangleCount);
-  }
+  if (hasTexCoords) { texCoordTriangles.reserve(triangleCount); }
 
-  if (hasNormals) {
-    normalTriangles.reserve(triangleCount);
-  }
+  if (hasNormals) { normalTriangles.reserve(triangleCount); }
 
   for (int32_t tindex = 0; tindex < triangleCount; tindex++) {
     const auto& tri = mesh.triangle(tindex);
@@ -1637,27 +1511,21 @@ RemoveDegeneratedTriangles(TriangleMesh<T>& mesh)
   }
 
   std::swap(mesh.triangles(), triangles);
-  if (hasTexCoords) {
-    std::swap(mesh.texCoordTriangles(), texCoordTriangles);
-  }
+  if (hasTexCoords) { std::swap(mesh.texCoordTriangles(), texCoordTriangles); }
 
-  if (hasNormals) {
-    std::swap(mesh.normalTriangles(), normalTriangles);
-  }
+  if (hasNormals) { std::swap(mesh.normalTriangles(), normalTriangles); }
 }
 
 //----------------------------------------------------------------------------
 
 template<typename T>
 int32_t
-UnifyVertices(
-  const std::vector<Vec3<T>>& pointsInput,
-  const std::vector<Triangle>& trianglesInput,
-  std::vector<Vec3<T>>& pointsOutput,
-  std::vector<Triangle>& trianglesOutput,
-  std::vector<int32_t>& mapping)
-{
-  const auto pointCount0 = int32_t(pointsInput.size());
+UnifyVertices(const std::vector<Vec3<T>>&  pointsInput,
+              const std::vector<Triangle>& trianglesInput,
+              std::vector<Vec3<T>>&        pointsOutput,
+              std::vector<Triangle>&       trianglesOutput,
+              std::vector<int32_t>&        mapping) {
+  const auto pointCount0    = int32_t(pointsInput.size());
   const auto triangleCount0 = int32_t(trianglesInput.size());
   pointsOutput.resize(0);
   pointsOutput.reserve(pointsInput.size());
@@ -1669,11 +1537,11 @@ UnifyVertices(
   int32_t pointCounter = 0;
   for (int32_t vindex = 0; vindex < pointCount0; ++vindex) {
     const auto& pt = pointsInput[vindex];
-    const auto it = uniquePoints.find(pt);
+    const auto  it = uniquePoints.find(pt);
     if (it == uniquePoints.end()) {
       pointsOutput.push_back(pt);
       uniquePoints[pt] = pointCounter;
-      mapping[vindex] = pointCounter;
+      mapping[vindex]  = pointCounter;
       ++pointCounter;
     } else {
       mapping[vindex] = it->second;
@@ -1684,7 +1552,7 @@ UnifyVertices(
   trianglesOutput.resize(triangleCount0);
   for (int32_t tindex = 0; tindex < triangleCount0; ++tindex) {
     const auto& tri0 = trianglesInput[tindex];
-    auto& tri1 = trianglesOutput[tindex];
+    auto&       tri1 = trianglesOutput[tindex];
     for (int32_t k = 0; k < 3; ++k) {
       tri1[k] = mapping[tri0[k]];
       assert(tri1[k] >= 0 && tri1[k] < pointCounter);
@@ -1698,32 +1566,25 @@ UnifyVertices(
 
 template<typename T>
 int32_t
-ExtractConnectedComponents(
-  const std::vector<Triangle>& triangles,
-  const int32_t vertexCount,
-  const TriangleMesh<T>& mesh,
-  std::vector<int32_t>& partition,
-  std::vector<std::shared_ptr<TriangleMesh<T>>>* connectedComponents = nullptr)
-{
-  if (connectedComponents) {
-    connectedComponents->clear();
-  }
+ExtractConnectedComponents(const std::vector<Triangle>& triangles,
+                           const int32_t                vertexCount,
+                           const TriangleMesh<T>&       mesh,
+                           std::vector<int32_t>&        partition,
+                           std::vector<std::shared_ptr<TriangleMesh<T>>>*
+                             connectedComponents = nullptr) {
+  if (connectedComponents) { connectedComponents->clear(); }
 
-  if (triangles.empty()) {
-    return 0;
-  }
+  if (triangles.empty()) { return 0; }
 
-  const auto pointCount = mesh.pointCount();
+  const auto pointCount    = mesh.pointCount();
   const auto texCoordCount = mesh.texCoordCount();
-  const auto normalCount = mesh.normalCount();
+  const auto normalCount   = mesh.normalCount();
   const auto triangleCount = int32_t(triangles.size());
   assert(mesh.triangleCount() == 0 || mesh.triangleCount() == triangleCount);
-  assert(
-    mesh.texCoordTriangleCount() == 0
-    || mesh.texCoordTriangleCount() == triangleCount);
-  assert(
-    mesh.normalTriangleCount() == 0
-    || mesh.normalTriangleCount() == triangleCount);
+  assert(mesh.texCoordTriangleCount() == 0
+         || mesh.texCoordTriangleCount() == triangleCount);
+  assert(mesh.normalTriangleCount() == 0
+         || mesh.normalTriangleCount() == triangleCount);
   partition.resize(0);
   partition.resize(triangleCount, -1);
 
@@ -1735,25 +1596,21 @@ ExtractConnectedComponents(
   std::vector<int32_t> normalMapping;
   std::vector<int32_t> triangleList;
   if (connectedComponents) {
-    if (mesh.triangleCount()) {
-      posMapping.resize(pointCount, -1);
-    }
+    if (mesh.triangleCount()) { posMapping.resize(pointCount, -1); }
     if (mesh.texCoordTriangleCount()) {
       texCoordMapping.resize(texCoordCount, -1);
     }
-    if (mesh.normalTriangleCount()) {
-      normalMapping.resize(normalCount, -1);
-    }
+    if (mesh.normalTriangleCount()) { normalMapping.resize(normalCount, -1); }
   }
 
-  const auto* neighbours = vertexToTriangle.neighbours();
+  const auto*          neighbours = vertexToTriangle.neighbours();
   std::vector<int32_t> lifo;
   lifo.reserve(triangleCount);
   int32_t ccCount = 0;
   for (int32_t triangleIndex = 0; triangleIndex < triangleCount;
        ++triangleIndex) {
     if (partition[triangleIndex] == -1) {
-      const auto ccIndex = ccCount++;
+      const auto ccIndex       = ccCount++;
       partition[triangleIndex] = ccIndex;
       lifo.push_back(triangleIndex);
 
@@ -1765,9 +1622,9 @@ ExtractConnectedComponents(
         triangleList.resize(0);
       }
 
-      int32_t ccPosCount = 0;
+      int32_t ccPosCount      = 0;
       int32_t ccTexCoordCount = 0;
-      int32_t ccNormalCount = 0;
+      int32_t ccNormalCount   = 0;
       while (!lifo.empty()) {
         const auto tIndex = lifo.back();
         lifo.pop_back();
@@ -1797,9 +1654,9 @@ ExtractConnectedComponents(
                 ccMesh->addTexCoord(mesh.texCoord(v));
               }
             }
-            ccMesh->addTexCoordTriangle(
-              texCoordMapping[texCoordTri[0]], texCoordMapping[texCoordTri[1]],
-              texCoordMapping[texCoordTri[2]]);
+            ccMesh->addTexCoordTriangle(texCoordMapping[texCoordTri[0]],
+                                        texCoordMapping[texCoordTri[1]],
+                                        texCoordMapping[texCoordTri[2]]);
           }
 
           if (mesh.normalTriangleCount()) {
@@ -1812,17 +1669,17 @@ ExtractConnectedComponents(
               }
             }
 
-            ccMesh->addNormalTriangle(
-              normalMapping[normalTri[0]], normalMapping[normalTri[1]],
-              normalMapping[normalTri[2]]);
+            ccMesh->addNormalTriangle(normalMapping[normalTri[0]],
+                                      normalMapping[normalTri[1]],
+                                      normalMapping[normalTri[2]]);
           }
         }
 
         const auto& tri = triangles[tIndex];
         for (int32_t k = 0; k < 3; ++k) {
-          const auto v = tri[k];
+          const auto v     = tri[k];
           const auto start = vertexToTriangle.neighboursStartIndex(v);
-          const auto end = vertexToTriangle.neighboursEndIndex(v);
+          const auto end   = vertexToTriangle.neighboursEndIndex(v);
           for (int32_t n = start; n < end; ++n) {
             const auto nIndex = neighbours[n];
             if (partition[nIndex] == -1) {
@@ -1837,9 +1694,7 @@ ExtractConnectedComponents(
         for (const auto tIndex : triangleList) {
           if (mesh.triangleCount()) {
             const auto& tri = mesh.triangle(tIndex);
-            for (int32_t k = 0; k < 3; ++k) {
-              posMapping[tri[k]] = -1;
-            }
+            for (int32_t k = 0; k < 3; ++k) { posMapping[tri[k]] = -1; }
           }
 
           if (mesh.texCoordTriangleCount()) {
@@ -1868,28 +1723,26 @@ ExtractConnectedComponents(
 template<typename T>
 void
 SmoothWithVertexConstraints(
-  TriangleMesh<T>& mesh,
+  TriangleMesh<T>&                           mesh,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-  const std::vector<int8_t>& isBoundaryVertex,
-  std::vector<int8_t>& vtags,
-  std::vector<int8_t>& ttags,
-  const T smoothingCoefficient,
-  const T maxError = 0.001,
-  const int32_t maxIterationCount = -1)
-{
-  const auto pointCount = mesh.pointCount();
+  const std::vector<int8_t>&                 isBoundaryVertex,
+  std::vector<int8_t>&                       vtags,
+  std::vector<int8_t>&                       ttags,
+  const T                                    smoothingCoefficient,
+  const T                                    maxError          = 0.001,
+  const int32_t                              maxIterationCount = -1) {
+  const auto pointCount    = mesh.pointCount();
   const auto triangleCount = mesh.triangleCount();
-  if (
-    !pointCount || !triangleCount || vertexToTriangle.size() != pointCount
-    || vtags.size() != size_t(pointCount)
-    || ttags.size() != size_t(triangleCount)) {
+  if (!pointCount || !triangleCount || vertexToTriangle.size() != pointCount
+      || vtags.size() != size_t(pointCount)
+      || ttags.size() != size_t(triangleCount)) {
     return;
   }
 
   std::vector<int32_t> vadj;
   std::vector<int32_t> tadj;
-  const auto n = 2 * pointCount;
-  SparseMatrix<T> A(n, pointCount);
+  const auto           n = 2 * pointCount;
+  SparseMatrix<T>      A(n, pointCount);
 
   for (int vindex0 = 0; vindex0 < pointCount; ++vindex0) {
     ComputeAdjacentVertices(
@@ -1942,41 +1795,33 @@ SmoothWithVertexConstraints(
       b[pointCount + i] =
         /*weights ? weights[i] * mesh.point(i)[dim] :*/ mesh.point(i)[dim];
     }
-    y = b - A * x;
-    r = At * y;
-    p = r;
+    y     = b - A * x;
+    r     = At * y;
+    p     = r;
     T rtr = T(0);
-    for (int32_t i = 0; i < pointCount; ++i) {
-      rtr += r[i] * r[i];
-    }
-    T error = std::sqrt(rtr / pointCount);
-    int32_t it = 0;
+    for (int32_t i = 0; i < pointCount; ++i) { rtr += r[i] * r[i]; }
+    T       error = std::sqrt(rtr / pointCount);
+    int32_t it    = 0;
     for (; it < itCount && error > maxError; ++it) {
-      y = A * p;
-      q = At * y;
+      y       = A * p;
+      q       = At * y;
       T pAtAp = T(0);
-      for (int32_t i = 0; i < pointCount; ++i) {
-        pAtAp += p[i] * q[i];
-      }
+      for (int32_t i = 0; i < pointCount; ++i) { pAtAp += p[i] * q[i]; }
       const auto alpha = rtr / pAtAp;
       for (int32_t i = 0; i < pointCount; ++i) {
         x[i] += alpha * p[i];
         r[i] -= alpha * q[i];
       }
       T r1tr1 = T(0);
-      for (int32_t i = 0; i < pointCount; ++i) {
-        r1tr1 += r[i] * r[i];
-      }
+      for (int32_t i = 0; i < pointCount; ++i) { r1tr1 += r[i] * r[i]; }
       const T betha = r1tr1 / rtr;
-      for (int32_t i = 0; i < pointCount; ++i) {
-        p[i] = r[i] + betha * p[i];
-      }
-      rtr = r1tr1;
+      for (int32_t i = 0; i < pointCount; ++i) { p[i] = r[i] + betha * p[i]; }
+      rtr   = r1tr1;
       error = std::sqrt(rtr / pointCount);
     }
     for (int32_t i = 0; i < pointCount; ++i) {
       Vec3<T>& point = mesh.point(i);
-      point[dim] = x[i];
+      point[dim]     = x[i];
     }
   }
 }
@@ -1985,22 +1830,18 @@ SmoothWithVertexConstraints(
 
 template<typename T>
 void
-SmoothWithVertexConstraints(
-  TriangleMesh<T>& mesh,
-  const T smoothingCoefficient,
-  const T maxError = 0.001,
-  const int32_t maxIterationCount = -1)
-{
-  const auto pointCount = mesh.pointCount();
+SmoothWithVertexConstraints(TriangleMesh<T>& mesh,
+                            const T          smoothingCoefficient,
+                            const T          maxError          = 0.001,
+                            const int32_t    maxIterationCount = -1) {
+  const auto pointCount    = mesh.pointCount();
   const auto triangleCount = mesh.triangleCount();
-  if (!pointCount || !triangleCount) {
-    return;
-  }
+  if (!pointCount || !triangleCount) { return; }
   StaticAdjacencyInformation<int32_t> vertexToTriangle;
   ComputeVertexToTriangle(
     mesh.triangles(), mesh.pointCount(), vertexToTriangle);
 
-  const auto& triangles = mesh.triangles();
+  const auto&         triangles = mesh.triangles();
   std::vector<int8_t> vtags(pointCount);
   std::vector<int8_t> ttags(triangleCount);
   std::vector<int8_t> isBoundaryVertex;
@@ -2009,8 +1850,8 @@ SmoothWithVertexConstraints(
 
   std::vector<int32_t> vadj;
   std::vector<int32_t> tadj;
-  const auto n = 2 * pointCount;
-  SparseMatrix<T> A(n, pointCount);
+  const auto           n = 2 * pointCount;
+  SparseMatrix<T>      A(n, pointCount);
 
   for (int vindex0 = 0; vindex0 < pointCount; ++vindex0) {
     ComputeAdjacentVertices(vindex0, triangles, vertexToTriangle, vtags, vadj);
@@ -2060,41 +1901,33 @@ SmoothWithVertexConstraints(
     for (int32_t i = 0; i < pointCount; ++i) {
       b[pointCount + i] = mesh.point(i)[dim];
     }
-    y = b - A * x;
-    r = At * y;
-    p = r;
+    y     = b - A * x;
+    r     = At * y;
+    p     = r;
     T rtr = T(0);
-    for (int32_t i = 0; i < pointCount; ++i) {
-      rtr += r[i] * r[i];
-    }
-    T error = std::sqrt(rtr / pointCount);
-    int32_t it = 0;
+    for (int32_t i = 0; i < pointCount; ++i) { rtr += r[i] * r[i]; }
+    T       error = std::sqrt(rtr / pointCount);
+    int32_t it    = 0;
     for (; it < itCount && error > maxError; ++it) {
-      y = A * p;
-      q = At * y;
+      y       = A * p;
+      q       = At * y;
       T pAtAp = T(0);
-      for (int32_t i = 0; i < pointCount; ++i) {
-        pAtAp += p[i] * q[i];
-      }
+      for (int32_t i = 0; i < pointCount; ++i) { pAtAp += p[i] * q[i]; }
       const auto alpha = rtr / pAtAp;
       for (int32_t i = 0; i < pointCount; ++i) {
         x[i] += alpha * p[i];
         r[i] -= alpha * q[i];
       }
       T r1tr1 = T(0);
-      for (int32_t i = 0; i < pointCount; ++i) {
-        r1tr1 += r[i] * r[i];
-      }
+      for (int32_t i = 0; i < pointCount; ++i) { r1tr1 += r[i] * r[i]; }
       const T betha = r1tr1 / rtr;
-      for (int32_t i = 0; i < pointCount; ++i) {
-        p[i] = r[i] + betha * p[i];
-      }
-      rtr = r1tr1;
+      for (int32_t i = 0; i < pointCount; ++i) { p[i] = r[i] + betha * p[i]; }
+      rtr   = r1tr1;
       error = std::sqrt(rtr / pointCount);
     }
     for (int32_t i = 0; i < pointCount; ++i) {
       Vec3<T>& point = mesh.point(i);
-      point[dim] = x[i];
+      point[dim]     = x[i];
     }
   }
 }
@@ -2104,13 +1937,12 @@ SmoothWithVertexConstraints(
 template<typename T>
 int32_t
 ComputeMidPointSubdivisionMatrix(
-  const int32_t vertexCount,
-  std::vector<Triangle>& triangles,
+  const int32_t                        vertexCount,
+  std::vector<Triangle>&               triangles,
   StaticAdjacencyInformation<int32_t>& vertexToTriangle,
   StaticAdjacencyInformation<int32_t>& vertexToEdge,
-  std::vector<int8_t>& vtags,
-  SparseMatrix<T>& M)
-{
+  std::vector<int8_t>&                 vtags,
+  SparseMatrix<T>&                     M) {
   struct Edge {
     int64_t eindex;
     int32_t vindex;
@@ -2138,21 +1970,19 @@ ComputeMidPointSubdivisionMatrix(
     M.addElementInOrder(vindex0, vindex0, T(1));
   }
 
-  std::vector<Edge> edges(edgeCount);
+  std::vector<Edge>    edges(edgeCount);
   std::vector<int32_t> vadj;
-  int32_t edgeCounter = 0;
-  int32_t vertexCounter = vertexCount;
-  const auto r2 = T(1) / 2;
+  int32_t              edgeCounter   = 0;
+  int32_t              vertexCounter = vertexCount;
+  const auto           r2            = T(1) / 2;
   for (int32_t vindex0 = 0; vindex0 < vertexCount; ++vindex0) {
     ComputeAdjacentVertices(vindex0, triangles, vertexToTriangle, vtags, vadj);
     for (const auto vindex1 : vadj) {
-      if (vindex1 <= vindex0) {
-        continue;
-      }
+      if (vindex1 <= vindex0) { continue; }
       vertexToEdge.addNeighbour(vindex0, edgeCounter);
       vertexToEdge.addNeighbour(vindex1, edgeCounter);
 
-      Edge& edge = edges[edgeCounter++];
+      Edge& edge  = edges[edgeCounter++];
       edge.vindex = vertexCounter;
       edge.eindex = (int64_t(vindex0) << 32) + vindex1;
 
@@ -2167,14 +1997,14 @@ ComputeMidPointSubdivisionMatrix(
   int32_t triangleCounter = triangleCount;
   for (int32_t t = 0; t < triangleCount; ++t) {
     const auto tri = triangles[t];
-    Triangle tri0;
+    Triangle   tri0;
     for (int32_t k = 0; k < 3; ++k) {
-      const auto vindex0 = tri[k];
-      const auto vindex1 = tri[(k + 1) % 3];
-      const auto currentEdgeIndex = EdgeIndex(vindex0, vindex1);
-      const auto& edgeIndexes = vertexToEdge.neighbours();
-      const auto start = vertexToEdge.neighboursStartIndex(vindex0);
-      const auto end = vertexToEdge.neighboursEndIndex(vindex0);
+      const auto  vindex0          = tri[k];
+      const auto  vindex1          = tri[(k + 1) % 3];
+      const auto  currentEdgeIndex = EdgeIndex(vindex0, vindex1);
+      const auto& edgeIndexes      = vertexToEdge.neighbours();
+      const auto  start = vertexToEdge.neighboursStartIndex(vindex0);
+      const auto  end   = vertexToEdge.neighboursEndIndex(vindex0);
       for (int32_t n = start; n < end; ++n) {
         const auto eindex = edgeIndexes[n];
         if (edges[eindex].eindex == currentEdgeIndex) {
@@ -2183,7 +2013,7 @@ ComputeMidPointSubdivisionMatrix(
         }
       }
     }
-    triangles[t] = tri0;
+    triangles[t]                 = tri0;
     triangles[triangleCounter++] = Triangle(tri[0], tri0[0], tri0[2]);
     triangles[triangleCounter++] = Triangle(tri0[0], tri[1], tri0[1]);
     triangles[triangleCounter++] = Triangle(tri0[2], tri0[1], tri[2]);
@@ -2197,13 +2027,11 @@ ComputeMidPointSubdivisionMatrix(
 
 template<typename T>
 void
-FitMidPointSubdivision(
-  const TriangleMesh<T>& referenceMesh,
-  TriangleMesh<T>& baseMesh,
-  const int32_t subdivIterationCount = 1,
-  const T maxError = 0.0001,
-  const int32_t maxIterationCount = -1)
-{
+FitMidPointSubdivision(const TriangleMesh<T>& referenceMesh,
+                       TriangleMesh<T>&       baseMesh,
+                       const int32_t          subdivIterationCount = 1,
+                       const T                maxError             = 0.0001,
+                       const int32_t          maxIterationCount    = -1) {
   const auto vCount =
     baseMesh.pointCount() * std::pow(4, subdivIterationCount - 1);
   const auto tCount =
@@ -2211,13 +2039,13 @@ FitMidPointSubdivision(
   std::vector<Triangle> triangles;
   triangles.reserve(4 * tCount);
   triangles.resize(baseMesh.triangleCount());
-  std::copy(
-    baseMesh.triangles().begin(), baseMesh.triangles().end(),
-    triangles.begin());
+  std::copy(baseMesh.triangles().begin(),
+            baseMesh.triangles().end(),
+            triangles.begin());
 
   StaticAdjacencyInformation<int32_t> vertexToTriangle;
   StaticAdjacencyInformation<int32_t> vertexToEdge;
-  std::vector<int8_t> vtags;
+  std::vector<int8_t>                 vtags;
 
   vertexToTriangle.reserve(vCount);
   vertexToEdge.reserve(vCount);
@@ -2225,7 +2053,7 @@ FitMidPointSubdivision(
 
   std::vector<SparseMatrix<T>> M(subdivIterationCount);
   std::vector<SparseMatrix<T>> Mt(subdivIterationCount);
-  int32_t vertexCount1 = baseMesh.pointCount();
+  int32_t                      vertexCount1 = baseMesh.pointCount();
   for (int32_t s = 0; s < subdivIterationCount; ++s) {
     vertexCount1 = ComputeMidPointSubdivisionMatrix(
       vertexCount1, triangles, vertexToTriangle, vertexToEdge, vtags, M[s]);
@@ -2233,7 +2061,7 @@ FitMidPointSubdivision(
   }
 
   const auto vertexCount0 = baseMesh.pointCount();
-  const auto n = M[subdivIterationCount - 1].rowCount();
+  const auto n            = M[subdivIterationCount - 1].rowCount();
   const auto itCount =
     maxIterationCount == -1 ? 2 * vertexCount0 : maxIterationCount;
   VecN<T> b(n) /*, q(vertexCount0), r(vertexCount0)*/;
@@ -2242,7 +2070,7 @@ FitMidPointSubdivision(
   std::vector<VecN<T>> P(subdivIterationCount + 1);
   std::vector<VecN<T>> Q(subdivIterationCount + 1);
   std::vector<VecN<T>> X(subdivIterationCount + 1);
-  auto& x = X[0];
+  auto&                x = X[0];
   x.resize(vertexCount0);
 
   b = T(0);
@@ -2250,9 +2078,7 @@ FitMidPointSubdivision(
     for (int32_t v = 0; v < vertexCount0; ++v) {
       x[v] = baseMesh.point(v)[dim];
     }
-    for (int32_t v = 0; v < n; ++v) {
-      b[v] = referenceMesh.point(v)[dim];
-    }
+    for (int32_t v = 0; v < n; ++v) { b[v] = referenceMesh.point(v)[dim]; }
     for (int32_t s = 0; s < subdivIterationCount; ++s) {
       X[s + 1] = M[s] * X[s];
     }
@@ -2262,11 +2088,9 @@ FitMidPointSubdivision(
     }
     auto& r = R[0];  // r = At * y
     auto& p = P[0];
-    p = r;
-    T rtr = T(0);
-    for (int32_t i = 0; i < vertexCount0; ++i) {
-      rtr += r[i] * r[i];
-    }
+    p       = r;
+    T rtr   = T(0);
+    for (int32_t i = 0; i < vertexCount0; ++i) { rtr += r[i] * r[i]; }
     T error = std::sqrt(rtr / vertexCount0);
     //    std::cout << "0 -> " << error << '\n';
 
@@ -2283,42 +2107,37 @@ FitMidPointSubdivision(
       auto& q = Q[0];  // q = At y
 
       T pAtAp = T(0);
-      for (int32_t i = 0; i < vertexCount0; ++i) {
-        pAtAp += p[i] * q[i];
-      }
+      for (int32_t i = 0; i < vertexCount0; ++i) { pAtAp += p[i] * q[i]; }
       const auto alpha = rtr / pAtAp;
       for (int32_t i = 0; i < vertexCount0; ++i) {
         x[i] += alpha * p[i];
         r[i] -= alpha * q[i];
       }
       T r1tr1 = T(0);
-      for (int32_t i = 0; i < vertexCount0; ++i) {
-        r1tr1 += r[i] * r[i];
-      }
+      for (int32_t i = 0; i < vertexCount0; ++i) { r1tr1 += r[i] * r[i]; }
       const T betha = r1tr1 / rtr;
       for (int32_t i = 0; i < vertexCount0; ++i) {
         p[i] = r[i] + betha * p[i];
       }
-      rtr = r1tr1;
+      rtr   = r1tr1;
       error = std::sqrt(rtr / vertexCount0);
       //      std::cout << it << " -> "<< error << '\n';
     }
     for (int32_t i = 0; i < vertexCount0; ++i) {
       Vec3<T>& point = baseMesh.point(i);
-      point[dim] = x[i];
+      point[dim]     = x[i];
     }
   }
 }
 template<class T1, class T2>
 void
 computeForwardLinearLifting(
-  std::vector<T1>& signal,
+  std::vector<T1>&                                signal,
   const std::vector<vmesh::SubdivisionLevelInfo>& infoLevelOfDetails,
-  const std::vector<int64_t>& edges,
-  const T2 predWeight,
-  const T2 updateWeight,
-  const bool skipUpdate)
-{
+  const std::vector<int64_t>&                     edges,
+  const T2                                        predWeight,
+  const T2                                        updateWeight,
+  const bool                                      skipUpdate) {
   const auto lodCount = int32_t(infoLevelOfDetails.size());
   assert(lodCount > 0);
   const auto rfmtCount = lodCount - 1;
@@ -2329,8 +2148,8 @@ computeForwardLinearLifting(
     // predict
     for (int32_t v = vcount0; v < vcount1; ++v) {
       const auto edge = edges[v];
-      const auto v1 = int32_t(edge & 0xFFFFFFFF);
-      const auto v2 = int32_t((edge >> 32) & 0xFFFFFFFF);
+      const auto v1   = int32_t(edge & 0xFFFFFFFF);
+      const auto v2   = int32_t((edge >> 32) & 0xFFFFFFFF);
       assert(v1 >= 0 && v1 <= vcount0);
       assert(v2 >= 0 && v2 <= vcount0);
       signal[v] -= predWeight * (signal[v1] + signal[v2]);
@@ -2338,8 +2157,8 @@ computeForwardLinearLifting(
     // update
     for (int32_t v = vcount0; !skipUpdate && v < vcount1; ++v) {
       const auto edge = edges[v];
-      const auto v1 = int32_t(edge & 0xFFFFFFFF);
-      const auto v2 = int32_t((edge >> 32) & 0xFFFFFFFF);
+      const auto v1   = int32_t(edge & 0xFFFFFFFF);
+      const auto v2   = int32_t((edge >> 32) & 0xFFFFFFFF);
       assert(v1 >= 0 && v1 <= vcount0);
       assert(v2 >= 0 && v2 <= vcount0);
       const auto d = updateWeight * signal[v];
@@ -2354,13 +2173,12 @@ computeForwardLinearLifting(
 template<class T1, class T2>
 void
 computeInverseLinearLifting(
-  std::vector<T1>& signal,
+  std::vector<T1>&                                signal,
   const std::vector<vmesh::SubdivisionLevelInfo>& infoLevelOfDetails,
-  const std::vector<int64_t>& edges,
-  const T2 predWeight,
-  const T2 updateWeight,
-  const bool skipUpdate)
-{
+  const std::vector<int64_t>&                     edges,
+  const T2                                        predWeight,
+  const T2                                        updateWeight,
+  const bool                                      skipUpdate) {
   const auto lodCount = int32_t(infoLevelOfDetails.size());
   assert(lodCount > 0);
   const auto rfmtCount = lodCount - 1;
@@ -2372,8 +2190,8 @@ computeInverseLinearLifting(
     // update
     for (int32_t v = vcount0; !skipUpdate && v < vcount1; ++v) {
       const auto edge = edges[v];
-      const auto v1 = int32_t(edge & 0xFFFFFFFF);
-      const auto v2 = int32_t((edge >> 32) & 0xFFFFFFFF);
+      const auto v1   = int32_t(edge & 0xFFFFFFFF);
+      const auto v2   = int32_t((edge >> 32) & 0xFFFFFFFF);
       assert(v1 >= 0 && v1 <= vcount0);
       assert(v2 >= 0 && v2 <= vcount0);
       const auto d = updateWeight * signal[v];
@@ -2384,8 +2202,8 @@ computeInverseLinearLifting(
     // predict
     for (int32_t v = vcount0; v < vcount1; ++v) {
       const auto edge = edges[v];
-      const auto v1 = int32_t(edge & 0xFFFFFFFF);
-      const auto v2 = int32_t((edge >> 32) & 0xFFFFFFFF);
+      const auto v1   = int32_t(edge & 0xFFFFFFFF);
+      const auto v2   = int32_t((edge >> 32) & 0xFFFFFFFF);
       assert(v1 >= 0 && v1 <= vcount0);
       assert(v2 >= 0 && v2 <= vcount0);
       signal[v] += predWeight * (signal[v1] + signal[v2]);
@@ -2398,13 +2216,12 @@ computeInverseLinearLifting(
 template<class T1, class T2>
 void
 interpolateSubdivision(
-  std::vector<T1>& signal,
+  std::vector<T1>&                                signal,
   const std::vector<vmesh::SubdivisionLevelInfo>& infoLevelOfDetails,
-  const std::vector<int64_t>& edges,
-  const T2 weight1,
-  const T2 weight2,
-  const bool normalize = false)
-{
+  const std::vector<int64_t>&                     edges,
+  const T2                                        weight1,
+  const T2                                        weight2,
+  const bool                                      normalize = false) {
   const auto lodCount = int32_t(infoLevelOfDetails.size());
   assert(lodCount >= 0);
   const auto rfmtCount = lodCount - 1;
@@ -2414,15 +2231,13 @@ interpolateSubdivision(
     assert(vcount0 < vcount1 && vcount1 <= int32_t(signal.size()));
     for (int32_t v = vcount0; v < vcount1; ++v) {
       const auto edge = edges[v];
-      const auto v1 = int32_t(edge & 0xFFFFFFFF);
-      const auto v2 = int32_t((edge >> 32) & 0xFFFFFFFF);
+      const auto v1   = int32_t(edge & 0xFFFFFFFF);
+      const auto v2   = int32_t((edge >> 32) & 0xFFFFFFFF);
       assert(v1 >= 0 && v1 <= vcount0);
       assert(v2 >= 0 && v2 <= vcount0);
       auto& vec = signal[v];
-      vec = weight1 * signal[v1] + weight2 * signal[v2];
-      if (normalize) {
-        vec.normalize();
-      }
+      vec       = weight1 * signal[v1] + weight2 * signal[v2];
+      if (normalize) { vec.normalize(); }
     }
   }
 }

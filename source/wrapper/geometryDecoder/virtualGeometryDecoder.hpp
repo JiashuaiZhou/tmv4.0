@@ -30,23 +30,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once 
+#pragma once
 
 #include "util/mesh.hpp"
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class VirtualGeometryDecoder {
- public:
-   VirtualGeometryDecoder() = default;
-   ~VirtualGeometryDecoder() = default;
+public:
+  VirtualGeometryDecoder()  = default;
+  ~VirtualGeometryDecoder() = default;
 
-   static std::shared_ptr<VirtualGeometryDecoder<T>>
-   create(GeometryCodecId codecId);
+  static std::shared_ptr<VirtualGeometryDecoder<T>>
+  create(GeometryCodecId codecId);
 
-   virtual void
-   decode(std::vector<uint8_t>& bitstream, TriangleMesh<T>& dec) = 0;
+  virtual void decode(std::vector<uint8_t>& bitstream,
+                      TriangleMesh<T>&      dec) = 0;
 };
 
 }  // namespace vmesh

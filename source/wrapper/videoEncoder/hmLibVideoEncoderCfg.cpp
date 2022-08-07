@@ -54,22 +54,18 @@
 namespace pcc_hm {
 template<class T1, class T2>
 static inline istream&
-operator>>(std::istream& in, std::map<T1, T2>& map)
-{
+operator>>(std::istream& in, std::map<T1, T2>& map) {
   T1 key;
   T2 value;
   try {
     in >> key;
     in >> value;
-  }
-  catch (...) {
-    in.setstate(ios::failbit);
-  }
+  } catch (...) { in.setstate(ios::failbit); }
 
   map[key] = value;
   return in;
 }
-}
+}  // namespace pcc_hm
 #  include "Utilities/program_options_lite.h"
 
 using namespace std;
@@ -77,20 +73,19 @@ using namespace pcc_hm;
 
 namespace po = pcc_hm::df::program_options_lite;
 
-
 enum UIProfileName  // this is used for determining profile strings, where
                     // multiple profiles map to a single profile idc with
                     // various constraint flag combinations
 {
-  UI_NONE = 0,
-  UI_MAIN = 1,
-  UI_MAIN10 = 2,
+  UI_NONE                 = 0,
+  UI_MAIN                 = 1,
+  UI_MAIN10               = 2,
   UI_MAIN10_STILL_PICTURE = 10002,
-  UI_MAINSTILLPICTURE = 3,
-  UI_MAINREXT = 4,
-  UI_HIGHTHROUGHPUTREXT = 5,
-  UI_MAINSCC = 9,
-  UI_HIGHTHROUGHPUTSCC = 11,
+  UI_MAINSTILLPICTURE     = 3,
+  UI_MAINREXT             = 4,
+  UI_HIGHTHROUGHPUTREXT   = 5,
+  UI_MAINSCC              = 9,
+  UI_HIGHTHROUGHPUTSCC    = 11,
   // The following are RExt profiles, which would map to the MAINREXT profile
   // idc.
   // The enumeration indicates the bit-depth constraint in the bottom 2 digits
@@ -99,27 +94,27 @@ enum UIProfileName  // this is used for determining profile strings, where
   // intra constraint, 2 for intra constraint)
   // If it is a RExt still picture, there is a '1' for
   // the top digit.
-  UI_MONOCHROME_8 = 1008,
+  UI_MONOCHROME_8  = 1008,
   UI_MONOCHROME_12 = 1012,
   UI_MONOCHROME_16 = 1016,
-  UI_MAIN_12 = 1112,
-  UI_MAIN_422_10 = 1210,
-  UI_MAIN_422_12 = 1212,
-  UI_MAIN_444 = 1308,
-  UI_MAIN_444_10 = 1310,
-  UI_MAIN_444_12 = 1312,
+  UI_MAIN_12       = 1112,
+  UI_MAIN_422_10   = 1210,
+  UI_MAIN_422_12   = 1212,
+  UI_MAIN_444      = 1308,
+  UI_MAIN_444_10   = 1310,
+  UI_MAIN_444_12   = 1312,
   UI_MAIN_444_16 =
     1316,  // non-standard profile definition, used for development purposes
-  UI_MAIN_INTRA = 2108,
-  UI_MAIN_10_INTRA = 2110,
-  UI_MAIN_12_INTRA = 2112,
-  UI_MAIN_422_10_INTRA = 2210,
-  UI_MAIN_422_12_INTRA = 2212,
-  UI_MAIN_444_INTRA = 2308,
-  UI_MAIN_444_10_INTRA = 2310,
-  UI_MAIN_444_12_INTRA = 2312,
-  UI_MAIN_444_16_INTRA = 2316,
-  UI_MAIN_444_STILL_PICTURE = 11308,
+  UI_MAIN_INTRA                = 2108,
+  UI_MAIN_10_INTRA             = 2110,
+  UI_MAIN_12_INTRA             = 2112,
+  UI_MAIN_422_10_INTRA         = 2210,
+  UI_MAIN_422_12_INTRA         = 2212,
+  UI_MAIN_444_INTRA            = 2308,
+  UI_MAIN_444_10_INTRA         = 2310,
+  UI_MAIN_444_12_INTRA         = 2312,
+  UI_MAIN_444_16_INTRA         = 2316,
+  UI_MAIN_444_STILL_PICTURE    = 11308,
   UI_MAIN_444_16_STILL_PICTURE = 12316,
   // The following are high throughput profiles, which would map to the
   // HIGHTHROUGHPUTREXT profile idc.
@@ -128,9 +123,9 @@ enum UIProfileName  // this is used for determining profile strings, where
   // the intra constraint in the next digit
   // There is a '2' for the top digit to indicate it
   // is high throughput profile
-  UI_HIGHTHROUGHPUT_444 = 21308,
-  UI_HIGHTHROUGHPUT_444_10 = 21310,
-  UI_HIGHTHROUGHPUT_444_14 = 21314,
+  UI_HIGHTHROUGHPUT_444          = 21308,
+  UI_HIGHTHROUGHPUT_444_10       = 21310,
+  UI_HIGHTHROUGHPUT_444_14       = 21314,
   UI_HIGHTHROUGHPUT_444_16_INTRA = 22316,
   // The following are SCC profiles, which would map to the MAINSCC profile idc.
   // The enumeration indicates the bit-depth constraint in the bottom 2 digits
@@ -140,11 +135,11 @@ enum UIProfileName  // this is used for determining profile strings, where
   // next digit.
   // If it is a highthroughput , there is a '2' for
   // the top digit else '1' for the top digit
-  UI_SCC_MAIN = 121108,
-  UI_SCC_MAIN_10 = 121110,
-  UI_SCC_MAIN_444 = 121308,
-  UI_SCC_MAIN_444_10 = 121310,
-  UI_SCC_HIGHTHROUGHPUT_444 = 221308,
+  UI_SCC_MAIN                  = 121108,
+  UI_SCC_MAIN_10               = 121110,
+  UI_SCC_MAIN_444              = 121308,
+  UI_SCC_MAIN_444_10           = 121310,
+  UI_SCC_HIGHTHROUGHPUT_444    = 221308,
   UI_SCC_HIGHTHROUGHPUT_444_10 = 221310,
   UI_SCC_HIGHTHROUGHPUT_444_14 = 221314
 };
@@ -164,43 +159,39 @@ hmLibVideoEncoderCfg::hmLibVideoEncoderCfg()
   , m_ext360(*this)
 #  endif
 {
-  m_aidQP = nullptr;
+  m_aidQP                = nullptr;
   m_startOfCodedInterval = nullptr;
-  m_codedPivotValue = nullptr;
-  m_targetPivotValue = nullptr;
+  m_codedPivotValue      = nullptr;
+  m_targetPivotValue     = nullptr;
 }
 
-hmLibVideoEncoderCfg::~hmLibVideoEncoderCfg()
-{
-    delete[] m_aidQP;
+hmLibVideoEncoderCfg::~hmLibVideoEncoderCfg() {
+  delete[] m_aidQP;
 
-    if (m_startOfCodedInterval != nullptr) {
+  if (m_startOfCodedInterval != nullptr) {
     delete[] m_startOfCodedInterval;
     m_startOfCodedInterval = nullptr;
-    }
-    if (m_codedPivotValue != nullptr) {
+  }
+  if (m_codedPivotValue != nullptr) {
     delete[] m_codedPivotValue;
     m_codedPivotValue = nullptr;
-    }
-    if (m_targetPivotValue != nullptr) {
+  }
+  if (m_targetPivotValue != nullptr) {
     delete[] m_targetPivotValue;
     m_targetPivotValue = nullptr;
-    }
+  }
 }
 
 Void
-hmLibVideoEncoderCfg::create()
-{}
+hmLibVideoEncoderCfg::create() {}
 
 Void
-hmLibVideoEncoderCfg::destroy()
-{}
+hmLibVideoEncoderCfg::destroy() {}
 
 namespace pcc_hm {
 std::istringstream&
-operator>>(
-  std::istringstream& in,
-  GOPEntry& entry)  // input
+operator>>(std::istringstream& in,
+           GOPEntry&           entry)  // input
 {
   in >> entry.m_sliceType;
   in >> entry.m_POC;
@@ -224,9 +215,7 @@ operator>>(
   if (entry.m_interRPSPrediction == 1) {
     in >> entry.m_deltaRPS;
     in >> entry.m_numRefIdc;
-    for (Int i = 0; i < entry.m_numRefIdc; i++) {
-      in >> entry.m_refIdc[i];
-    }
+    for (Int i = 0; i < entry.m_numRefIdc; i++) { in >> entry.m_refIdc[i]; }
   } else if (entry.m_interRPSPrediction == 2) {
     in >> entry.m_deltaRPS;
   }
@@ -236,8 +225,7 @@ Bool confirmPara(Bool bflag, const TChar* message);
 }  // namespace pcc_hm
 
 static inline ChromaFormat
-numberToChromaFormat(const Int val)
-{
+numberToChromaFormat(const Int val) {
   switch (val) {
   case 400: return CHROMA_400; break;
   case 420: return CHROMA_420; break;
@@ -248,21 +236,20 @@ numberToChromaFormat(const Int val)
 }
 
 static const struct MapStrToProfile {
-  const TChar* str;
+  const TChar*  str;
   Profile::Name value;
-} strToProfile[] = {
-  {"none", Profile::NONE},
-  {"main", Profile::MAIN},
-  {"main10", Profile::MAIN10},
-  {"main-still-picture", Profile::MAINSTILLPICTURE},
-  {"main10-still-picture", Profile::MAIN10},
-  {"main-RExt", Profile::MAINREXT},
-  {"high-throughput-RExt", Profile::HIGHTHROUGHPUTREXT},
-  {"main-SCC", Profile::MAINSCC},
-  {"high-throughput-SCC", Profile::HIGHTHROUGHPUTSCC}};
+} strToProfile[] = {{"none", Profile::NONE},
+                    {"main", Profile::MAIN},
+                    {"main10", Profile::MAIN10},
+                    {"main-still-picture", Profile::MAINSTILLPICTURE},
+                    {"main10-still-picture", Profile::MAIN10},
+                    {"main-RExt", Profile::MAINREXT},
+                    {"high-throughput-RExt", Profile::HIGHTHROUGHPUTREXT},
+                    {"main-SCC", Profile::MAINSCC},
+                    {"high-throughput-SCC", Profile::HIGHTHROUGHPUTSCC}};
 
 static const struct MapStrToUIProfileName {
-  const TChar* str;
+  const TChar*  str;
   UIProfileName value;
 } strToUIProfileName[] = {
   {"none", UI_NONE},
@@ -325,9 +312,13 @@ static const struct MapStrToUIProfileName {
 static const UIProfileName validRExtHighThroughPutProfileNames
   [2 /* intraConstraintFlag*/]
   [4 /* bit depth constraint 8=0, 10=1, 12=2, 16=3*/] = {
-    {UI_HIGHTHROUGHPUT_444, UI_HIGHTHROUGHPUT_444_10, UI_HIGHTHROUGHPUT_444_14,
+    {UI_HIGHTHROUGHPUT_444,
+     UI_HIGHTHROUGHPUT_444_10,
+     UI_HIGHTHROUGHPUT_444_14,
      UI_NONE},  // intraConstraintFlag 0 - 8-bit,10-bit,14-bit and 16-bit
-    {UI_NONE, UI_NONE, UI_NONE,
+    {UI_NONE,
+     UI_NONE,
+     UI_NONE,
      UI_HIGHTHROUGHPUT_444_16_INTRA}  // intraConstraintFlag 1 -
                                       // 8-bit,10-bit,14-bit and 16-bit
 };
@@ -336,24 +327,40 @@ static const UIProfileName validRExtProfileNames
   [2 /* intraConstraintFlag*/]
   [4 /* bit depth constraint 8=0, 10=1, 12=2, 16=3*/][4 /*chroma format*/] = {
     {
-      {UI_MONOCHROME_8, UI_NONE, UI_NONE,
+      {UI_MONOCHROME_8,
+       UI_NONE,
+       UI_NONE,
        UI_MAIN_444},  // 8-bit inter for 400, 420, 422 and 444
-      {UI_NONE, UI_NONE, UI_MAIN_422_10,
+      {UI_NONE,
+       UI_NONE,
+       UI_MAIN_422_10,
        UI_MAIN_444_10},  // 10-bit inter for 400, 420, 422 and 444
-      {UI_MONOCHROME_12, UI_MAIN_12, UI_MAIN_422_12,
+      {UI_MONOCHROME_12,
+       UI_MAIN_12,
+       UI_MAIN_422_12,
        UI_MAIN_444_12},  // 12-bit inter for 400, 420, 422 and 444
-      {UI_MONOCHROME_16, UI_NONE, UI_NONE,
+      {UI_MONOCHROME_16,
+       UI_NONE,
+       UI_NONE,
        UI_MAIN_444_16}  // 16-bit inter for 400, 420, 422 and 444 (the latter
       // is non standard used for development)
     },
     {
-      {UI_NONE, UI_MAIN_INTRA, UI_NONE,
+      {UI_NONE,
+       UI_MAIN_INTRA,
+       UI_NONE,
        UI_MAIN_444_INTRA},  // 8-bit intra for 400, 420, 422 and 444
-      {UI_NONE, UI_MAIN_10_INTRA, UI_MAIN_422_10_INTRA,
+      {UI_NONE,
+       UI_MAIN_10_INTRA,
+       UI_MAIN_422_10_INTRA,
        UI_MAIN_444_10_INTRA},  // 10-bit intra for 400, 420, 422 and 444
-      {UI_NONE, UI_MAIN_12_INTRA, UI_MAIN_422_12_INTRA,
+      {UI_NONE,
+       UI_MAIN_12_INTRA,
+       UI_MAIN_422_12_INTRA,
        UI_MAIN_444_12_INTRA},  // 12-bit intra for 400, 420, 422 and 444
-      {UI_NONE, UI_NONE, UI_NONE,
+      {UI_NONE,
+       UI_NONE,
+       UI_NONE,
        UI_MAIN_444_16_INTRA}  // 16-bit intra for 400, 420, 422 and 444
     }};
 
@@ -361,24 +368,40 @@ static const UIProfileName validSCCProfileNames
   [2 /* high throughput*/][4 /* bit depth constraint 8=0, 10=1, 12=2, 14=3*/]
   [4 /*chroma format*/] = {
     {
-      {UI_NONE, UI_SCC_MAIN, UI_NONE,
+      {UI_NONE,
+       UI_SCC_MAIN,
+       UI_NONE,
        UI_SCC_MAIN_444},  // 8-bit intra for 400, 420, 422 and 444
-      {UI_NONE, UI_SCC_MAIN_10, UI_NONE,
+      {UI_NONE,
+       UI_SCC_MAIN_10,
+       UI_NONE,
        UI_SCC_MAIN_444_10},  // 10-bit intra for 400, 420, 422 and 444
-      {UI_NONE, UI_NONE, UI_NONE,
+      {UI_NONE,
+       UI_NONE,
+       UI_NONE,
        UI_NONE},  // 12-bit intra for 400, 420, 422 and 444
-      {UI_NONE, UI_NONE, UI_NONE,
+      {UI_NONE,
+       UI_NONE,
+       UI_NONE,
        UI_NONE}  // 16-bit intra for 400, 420, 422 and 444
     },
     {
-      {UI_NONE, UI_NONE, UI_NONE,
+      {UI_NONE,
+       UI_NONE,
+       UI_NONE,
        UI_SCC_HIGHTHROUGHPUT_444},  // 8-bit inter for 400, 420, 422 and 444
-      {UI_NONE, UI_NONE, UI_NONE,
+      {UI_NONE,
+       UI_NONE,
+       UI_NONE,
        UI_SCC_HIGHTHROUGHPUT_444_10},  // 10-bit inter for 400, 420, 422 and
       // 444
-      {UI_NONE, UI_NONE, UI_NONE,
+      {UI_NONE,
+       UI_NONE,
+       UI_NONE,
        UI_NONE},  // 12-bit inter for 400, 420, 422 and 444
-      {UI_NONE, UI_NONE, UI_NONE,
+      {UI_NONE,
+       UI_NONE,
+       UI_NONE,
        UI_SCC_HIGHTHROUGHPUT_444_14}  // 16-bit inter for 400, 420, 422 and
       // 444 (the latter is non standard used
       // for development)
@@ -386,7 +409,7 @@ static const UIProfileName validSCCProfileNames
 
 static const struct MapStrToTier {
   const TChar* str;
-  Level::Tier value;
+  Level::Tier  value;
 } strToTier[] = {
   {"main", Level::MAIN},
   {"high", Level::HIGH},
@@ -394,13 +417,23 @@ static const struct MapStrToTier {
 
 static const struct MapStrToLevel {
   const TChar* str;
-  Level::Name value;
+  Level::Name  value;
 } strToLevel[] = {
-  {"none", Level::NONE},    {"1", Level::LEVEL1},     {"2", Level::LEVEL2},
-  {"2.1", Level::LEVEL2_1}, {"3", Level::LEVEL3},     {"3.1", Level::LEVEL3_1},
-  {"4", Level::LEVEL4},     {"4.1", Level::LEVEL4_1}, {"5", Level::LEVEL5},
-  {"5.1", Level::LEVEL5_1}, {"5.2", Level::LEVEL5_2}, {"6", Level::LEVEL6},
-  {"6.1", Level::LEVEL6_1}, {"6.2", Level::LEVEL6_2}, {"8.5", Level::LEVEL8_5},
+  {"none", Level::NONE},
+  {"1", Level::LEVEL1},
+  {"2", Level::LEVEL2},
+  {"2.1", Level::LEVEL2_1},
+  {"3", Level::LEVEL3},
+  {"3.1", Level::LEVEL3_1},
+  {"4", Level::LEVEL4},
+  {"4.1", Level::LEVEL4_1},
+  {"5", Level::LEVEL5},
+  {"5.1", Level::LEVEL5_1},
+  {"5.2", Level::LEVEL5_2},
+  {"6", Level::LEVEL6},
+  {"6.1", Level::LEVEL6_1},
+  {"6.2", Level::LEVEL6_2},
+  {"8.5", Level::LEVEL8_5},
 };
 
 namespace pcc_hm {
@@ -419,7 +452,7 @@ UInt g_uiMaxCpbSize[2][21] = {
 
 static const struct MapStrToCostMode {
   const TChar* str;
-  CostMode value;
+  CostMode     value;
 } strToCostMode[] = {
   {"lossy", COST_STANDARD_LOSSY},
   {"sequence_level_lossless", COST_SEQUENCE_LEVEL_LOSSLESS},
@@ -427,36 +460,32 @@ static const struct MapStrToCostMode {
   {"mixed_lossless_lossy", COST_MIXED_LOSSLESS_LOSSY_CODING}};
 
 static const struct MapStrToScalingListMode {
-  const TChar* str;
+  const TChar*    str;
   ScalingListMode value;
-} strToScalingListMode[] = {
-  {"0", SCALING_LIST_OFF},           {"1", SCALING_LIST_DEFAULT},
-  {"2", SCALING_LIST_FILE_READ},     {"off", SCALING_LIST_OFF},
-  {"default", SCALING_LIST_DEFAULT}, {"file", SCALING_LIST_FILE_READ}};
+} strToScalingListMode[] = {{"0", SCALING_LIST_OFF},
+                            {"1", SCALING_LIST_DEFAULT},
+                            {"2", SCALING_LIST_FILE_READ},
+                            {"off", SCALING_LIST_OFF},
+                            {"default", SCALING_LIST_DEFAULT},
+                            {"file", SCALING_LIST_FILE_READ}};
 
 template<typename T, typename P>
 static std::string
-enumToString(P map[], UInt mapLen, const T val)
-{
+enumToString(P map[], UInt mapLen, const T val) {
   for (UInt i = 0; i < mapLen; i++) {
-    if (val == map[i].value) {
-      return map[i].str;
-    }
+    if (val == map[i].value) { return map[i].str; }
   }
   return {};
 }
 
 template<typename T, typename P>
 static istream&
-readStrToEnum(P map[], UInt mapLen, istream& in, T& val)
-{
+readStrToEnum(P map[], UInt mapLen, istream& in, T& val) {
   string str;
   in >> str;
 
   UInt i = 0;
-  for (; i < mapLen && str != map[i].str; i++) {
-    ;
-  }
+  for (; i < mapLen && str != map[i].str; i++) { ; }
 
   if (i < mapLen) {
     val = map[i].value;
@@ -468,56 +497,48 @@ readStrToEnum(P map[], UInt mapLen, istream& in, T& val)
 
 template<class T>
 struct SMultiValueInputHM {
-  const T minValIncl;
-  const T maxValIncl;
+  const T           minValIncl;
+  const T           maxValIncl;
   const std::size_t minNumValuesIncl;
   const std::size_t maxNumValuesIncl;  // Use 0 for unlimited
-  std::vector<T> values;
+  std::vector<T>    values;
   SMultiValueInputHM()
     : minValIncl(0)
     , maxValIncl(0)
     , minNumValuesIncl(0)
     , maxNumValuesIncl(0)
-    , values()
-  {}
+    , values() {}
   SMultiValueInputHM(std::vector<T>& defaults)
     : minValIncl(0)
     , maxValIncl(0)
     , minNumValuesIncl(0)
     , maxNumValuesIncl(0)
-    , values(defaults)
-  {}
-  SMultiValueInputHM(
-    const T& minValue,
-    const T& maxValue,
-    std::size_t minNumberValues = 0,
-    std::size_t maxNumberValues = 0)
+    , values(defaults) {}
+  SMultiValueInputHM(const T&    minValue,
+                     const T&    maxValue,
+                     std::size_t minNumberValues = 0,
+                     std::size_t maxNumberValues = 0)
     : minValIncl(minValue)
     , maxValIncl(maxValue)
     , minNumValuesIncl(minNumberValues)
     , maxNumValuesIncl(maxNumberValues)
-    , values()
-  {}
-  SMultiValueInputHM(
-    const T& minValue,
-    const T& maxValue,
-    std::size_t minNumberValues,
-    std::size_t maxNumberValues,
-    const T* defValues,
-    const UInt numDefValues)
+    , values() {}
+  SMultiValueInputHM(const T&    minValue,
+                     const T&    maxValue,
+                     std::size_t minNumberValues,
+                     std::size_t maxNumberValues,
+                     const T*    defValues,
+                     const UInt  numDefValues)
     : minValIncl(minValue)
     , maxValIncl(maxValue)
     , minNumValuesIncl(minNumberValues)
     , maxNumValuesIncl(maxNumberValues)
-    , values(defValues, defValues + numDefValues)
-  {}
-  SMultiValueInputHM<T>& operator=(const std::vector<T>& userValues)
-  {
+    , values(defValues, defValues + numDefValues) {}
+  SMultiValueInputHM<T>& operator=(const std::vector<T>& userValues) {
     values = userValues;
     return *this;
   }
-  SMultiValueInputHM<T>& operator=(const SMultiValueInputHM<T>& userValues)
-  {
+  SMultiValueInputHM<T>& operator=(const SMultiValueInputHM<T>& userValues) {
     values = userValues.values;
     return *this;
   }
@@ -529,56 +550,51 @@ struct SMultiValueInputHM {
 
 template<>
 UInt
-SMultiValueInputHM<UInt>::readValue(const TChar*& pStr, Bool& bSuccess)
-{
+SMultiValueInputHM<UInt>::readValue(const TChar*& pStr, Bool& bSuccess) {
   TChar* eptr = nullptr;
-  UInt val = strtoul(pStr, &eptr, 0);
-  pStr = eptr;
-  bSuccess = (*eptr == 0 || (isspace(*eptr) != 0) || *eptr == ',')
-    && val >= minValIncl && val <= maxValIncl;
+  UInt   val  = strtoul(pStr, &eptr, 0);
+  pStr        = eptr;
+  bSuccess    = (*eptr == 0 || (isspace(*eptr) != 0) || *eptr == ',')
+             && val >= minValIncl && val <= maxValIncl;
   return val;
 }
 
 template<>
 Int
-SMultiValueInputHM<Int>::readValue(const TChar*& pStr, Bool& bSuccess)
-{
+SMultiValueInputHM<Int>::readValue(const TChar*& pStr, Bool& bSuccess) {
   TChar* eptr = nullptr;
-  Int val = strtol(pStr, &eptr, 0);
-  pStr = eptr;
-  bSuccess = (*eptr == 0 || (isspace(*eptr) != 0) || *eptr == ',')
-    && val >= minValIncl && val <= maxValIncl;
+  Int    val  = strtol(pStr, &eptr, 0);
+  pStr        = eptr;
+  bSuccess    = (*eptr == 0 || (isspace(*eptr) != 0) || *eptr == ',')
+             && val >= minValIncl && val <= maxValIncl;
   return val;
 }
 
 template<>
 Double
-SMultiValueInputHM<Double>::readValue(const TChar*& pStr, Bool& bSuccess)
-{
+SMultiValueInputHM<Double>::readValue(const TChar*& pStr, Bool& bSuccess) {
   TChar* eptr = nullptr;
-  Double val = strtod(pStr, &eptr);
-  pStr = eptr;
-  bSuccess = (*eptr == 0 || (isspace(*eptr) != 0) || *eptr == ',')
-    && val >= minValIncl && val <= maxValIncl;
+  Double val  = strtod(pStr, &eptr);
+  pStr        = eptr;
+  bSuccess    = (*eptr == 0 || (isspace(*eptr) != 0) || *eptr == ',')
+             && val >= minValIncl && val <= maxValIncl;
   return val;
 }
 
 template<>
 Bool
-SMultiValueInputHM<Bool>::readValue(const TChar*& pStr, Bool& bSuccess)
-{
+SMultiValueInputHM<Bool>::readValue(const TChar*& pStr, Bool& bSuccess) {
   TChar* eptr = nullptr;
-  Int val = strtol(pStr, &eptr, 0);
-  pStr = eptr;
-  bSuccess = (*eptr == 0 || (isspace(*eptr) != 0) || *eptr == ',')
-    && val >= Int(minValIncl) && val <= Int(maxValIncl);
+  Int    val  = strtol(pStr, &eptr, 0);
+  pStr        = eptr;
+  bSuccess    = (*eptr == 0 || (isspace(*eptr) != 0) || *eptr == ',')
+             && val >= Int(minValIncl) && val <= Int(maxValIncl);
   return val != 0;
 }
 
 template<class T>
 istream&
-SMultiValueInputHM<T>::readValues(std::istream& in)
-{
+SMultiValueInputHM<T>::readValues(std::istream& in) {
   values.clear();
   string str;
   while (!in.eof()) {
@@ -589,13 +605,11 @@ SMultiValueInputHM<T>::readValues(std::istream& in)
   if (!str.empty()) {
     const TChar* pStr = str.c_str();
     // soak up any whitespace
-    for (; isspace(*pStr) != 0; pStr++) {
-      ;
-    }
+    for (; isspace(*pStr) != 0; pStr++) { ; }
 
     while (*pStr != 0) {
       Bool bSuccess = true;
-      T val = readValue(pStr, bSuccess);
+      T    val      = readValue(pStr, bSuccess);
       if (!bSuccess) {
         in.setstate(ios::failbit);
         break;
@@ -607,20 +621,12 @@ SMultiValueInputHM<T>::readValues(std::istream& in)
       }
       values.push_back(val);
       // soak up any whitespace and up to 1 comma.
-      for (; isspace(*pStr) != 0; pStr++) {
-        ;
-      }
-      if (*pStr == ',') {
-        pStr++;
-      }
-      for (; isspace(*pStr) != 0; pStr++) {
-        ;
-      }
+      for (; isspace(*pStr) != 0; pStr++) { ; }
+      if (*pStr == ',') { pStr++; }
+      for (; isspace(*pStr) != 0; pStr++) { ; }
     }
   }
-  if (values.size() < minNumValuesIncl) {
-    in.setstate(ios::failbit);
-  }
+  if (values.size() < minNumValuesIncl) { in.setstate(ios::failbit); }
   return in;
 }
 
@@ -629,25 +635,24 @@ SMultiValueInputHM<T>::readValues(std::istream& in)
 // inline to prevent compiler warnings for "unused static function"
 
 static inline istream&
-operator>>(istream& in, UIProfileName& profile)
-{
-  return readStrToEnum(
-    strToUIProfileName,
-    sizeof(strToUIProfileName) / sizeof(*strToUIProfileName), in, profile);
+operator>>(istream& in, UIProfileName& profile) {
+  return readStrToEnum(strToUIProfileName,
+                       sizeof(strToUIProfileName)
+                         / sizeof(*strToUIProfileName),
+                       in,
+                       profile);
 }
 
 template<class T>
 static inline istream&
-operator>>(std::istream& in, SMultiValueInputHM<T>& values)
-{
+operator>>(std::istream& in, SMultiValueInputHM<T>& values) {
   return values.readValues(in);
 }
 
 #  if JVET_E0059_FLOATING_POINT_QP_FIX
 template<class T>
 static inline istream&
-operator>>(std::istream& in, hmLibVideoEncoderCfg::OptionalValue<T>& value)
-{
+operator>>(std::istream& in, hmLibVideoEncoderCfg::OptionalValue<T>& value) {
   in >> std::ws;
   if (in.eof()) {
     value.bPresent = false;
@@ -663,27 +668,25 @@ operator>>(std::istream& in, hmLibVideoEncoderCfg::OptionalValue<T>& value)
 namespace pcc_hm {
 
 static inline istream&
-operator>>(istream& in, CostMode& mode)
-{
+operator>>(istream& in, CostMode& mode) {
   return readStrToEnum(
     strToCostMode, sizeof(strToCostMode) / sizeof(*strToCostMode), in, mode);
 }
 static inline istream&
-operator>>(istream& in, ScalingListMode& mode)
-{
-  return readStrToEnum(
-    strToScalingListMode,
-    sizeof(strToScalingListMode) / sizeof(*strToScalingListMode), in, mode);
+operator>>(istream& in, ScalingListMode& mode) {
+  return readStrToEnum(strToScalingListMode,
+                       sizeof(strToScalingListMode)
+                         / sizeof(*strToScalingListMode),
+                       in,
+                       mode);
 }
 namespace Level {
-  static inline istream& operator>>(istream& in, Tier& tier)
-  {
+  static inline istream& operator>>(istream& in, Tier& tier) {
     return readStrToEnum(
       strToTier, sizeof(strToTier) / sizeof(*strToTier), in, tier);
   }
 
-  static inline istream& operator>>(istream& in, Name& level)
-  {
+  static inline istream& operator>>(istream& in, Name& level) {
     return readStrToEnum(
       strToLevel, sizeof(strToLevel) / sizeof(*strToLevel), in, level);
   }
@@ -692,16 +695,14 @@ namespace Level {
 }  // namespace pcc_hm
 
 static Void
-automaticallySelectRExtProfile(
-  const Bool bUsingGeneralRExtTools,
-  const Bool bUsingChromaQPAdjustment,
-  const Bool bUsingExtendedPrecision,
-  const Bool bIntraConstraintFlag,
-  UInt& bitDepthConstraint,
-  ChromaFormat& chromaFormatConstraint,
-  const Int maxBitDepth,
-  const ChromaFormat chromaFormat)
-{
+automaticallySelectRExtProfile(const Bool         bUsingGeneralRExtTools,
+                               const Bool         bUsingChromaQPAdjustment,
+                               const Bool         bUsingExtendedPrecision,
+                               const Bool         bIntraConstraintFlag,
+                               UInt&              bitDepthConstraint,
+                               ChromaFormat&      chromaFormatConstraint,
+                               const Int          maxBitDepth,
+                               const ChromaFormat chromaFormat) {
   // Try to choose profile, according to table in Q1013.
   UInt trialBitDepthConstraint = maxBitDepth;
   if (trialBitDepthConstraint < 8) {
@@ -720,22 +721,22 @@ automaticallySelectRExtProfile(
                                                             : CHROMA_444;
   } else if (bUsingGeneralRExtTools) {
     if (chromaFormat == CHROMA_400 && !bIntraConstraintFlag) {
-      bitDepthConstraint = 16;
+      bitDepthConstraint     = 16;
       chromaFormatConstraint = CHROMA_400;
     } else {
-      bitDepthConstraint = trialBitDepthConstraint;
+      bitDepthConstraint     = trialBitDepthConstraint;
       chromaFormatConstraint = CHROMA_444;
     }
   } else if (chromaFormat == CHROMA_400) {
     if (bIntraConstraintFlag) {
       chromaFormatConstraint = CHROMA_420;  // there is no intra 4:0:0 profile.
-      bitDepthConstraint = trialBitDepthConstraint;
+      bitDepthConstraint     = trialBitDepthConstraint;
     } else {
       chromaFormatConstraint = CHROMA_400;
-      bitDepthConstraint = trialBitDepthConstraint == 8 ? 8 : 12;
+      bitDepthConstraint     = trialBitDepthConstraint == 8 ? 8 : 12;
     }
   } else {
-    bitDepthConstraint = trialBitDepthConstraint;
+    bitDepthConstraint     = trialBitDepthConstraint;
     chromaFormatConstraint = chromaFormat;
     if (bUsingChromaQPAdjustment && chromaFormat == CHROMA_420) {
       chromaFormatConstraint =
@@ -759,23 +760,22 @@ automaticallySelectRExtProfile(
  \retval true when success
  */
 Bool
-hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
-{
+hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[]) {
   Bool do_help = false;
 
-  Int tmpChromaFormat = 0;
-  Int tmpInputChromaFormat = 0;
-  Int tmpConstraintChromaFormat = 0;
-  Int tmpWeightedPredictionMethod = 0;
-  Int tmpFastInterSearchMode = 0;
-  Int tmpMotionEstimationSearchMethod = 0;
-  Int tmpSliceMode = 0;
-  Int tmpSliceSegmentMode = 0;
-  Int tmpDecodedPictureHashSEIMappedType = 0;
-  string inputColourSpaceConvert;
-  string inputPathPrefix;
+  Int           tmpChromaFormat                    = 0;
+  Int           tmpInputChromaFormat               = 0;
+  Int           tmpConstraintChromaFormat          = 0;
+  Int           tmpWeightedPredictionMethod        = 0;
+  Int           tmpFastInterSearchMode             = 0;
+  Int           tmpMotionEstimationSearchMethod    = 0;
+  Int           tmpSliceMode                       = 0;
+  Int           tmpSliceSegmentMode                = 0;
+  Int           tmpDecodedPictureHashSEIMappedType = 0;
+  string        inputColourSpaceConvert;
+  string        inputPathPrefix;
   UIProfileName UIProfile;
-  Int saoOffsetBitShift[MAX_NUM_CHANNEL_TYPE];
+  Int           saoOffsetBitShift[MAX_NUM_CHANNEL_TYPE];
 
   // Multi-value input fields: // minval, maxval
   // (incl), min_entries, max_entries (incl) [, default values, number of
@@ -785,52 +785,80 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
   SMultiValueInputHM<UInt> cfg_RowHeight(
     0, std::numeric_limits<UInt>::max(), 0, std::numeric_limits<UInt>::max());
   SMultiValueInputHM<Int> cfg_startOfCodedInterval(
-    std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max(), 0,
+    std::numeric_limits<Int>::min(),
+    std::numeric_limits<Int>::max(),
+    0,
     1 << 16);
-  SMultiValueInputHM<Int> cfg_codedPivotValue(
-    std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max(), 0,
-    1 << 16);
-  SMultiValueInputHM<Int> cfg_targetPivotValue(
-    std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max(), 0,
-    1 << 16);
+  SMultiValueInputHM<Int> cfg_codedPivotValue(std::numeric_limits<Int>::min(),
+                                              std::numeric_limits<Int>::max(),
+                                              0,
+                                              1 << 16);
+  SMultiValueInputHM<Int> cfg_targetPivotValue(std::numeric_limits<Int>::min(),
+                                               std::numeric_limits<Int>::max(),
+                                               0,
+                                               1 << 16);
 
   SMultiValueInputHM<Double> cfg_adIntraLambdaModifier(
-    0, std::numeric_limits<Double>::max(), 0,
+    0,
+    std::numeric_limits<Double>::max(),
+    0,
     MAX_TLAYER);  ///< Lambda modifier for Intra pictures, one for each
   /// temporal layer. If size>temporalLayer, then use
   ///[temporalLayer], else if size>0, use [size()-1], else use
   /// m_adLambdaModifier.
 
-  const Int defaultLumaLevelTodQp_QpChangePoints[] = {-3, -2, -1, 0, 1,
-                                                      2,  3,  4,  5, 6};
+  const Int defaultLumaLevelTodQp_QpChangePoints[] = {
+    -3, -2, -1, 0, 1, 2, 3, 4, 5, 6};
   const Int defaultLumaLevelTodQp_LumaChangePoints[] = {
     0, 301, 367, 434, 501, 567, 634, 701, 767, 834};
   SMultiValueInputHM<Int> cfg_lumaLeveltoDQPMappingQP(
-    -MAX_QP, MAX_QP, 0, LUMA_LEVEL_TO_DQP_LUT_MAXSIZE,
+    -MAX_QP,
+    MAX_QP,
+    0,
+    LUMA_LEVEL_TO_DQP_LUT_MAXSIZE,
     defaultLumaLevelTodQp_QpChangePoints,
     sizeof(defaultLumaLevelTodQp_QpChangePoints) / sizeof(Int));
   SMultiValueInputHM<Int> cfg_lumaLeveltoDQPMappingLuma(
-    0, std::numeric_limits<Int>::max(), 0, LUMA_LEVEL_TO_DQP_LUT_MAXSIZE,
+    0,
+    std::numeric_limits<Int>::max(),
+    0,
+    LUMA_LEVEL_TO_DQP_LUT_MAXSIZE,
     defaultLumaLevelTodQp_LumaChangePoints,
     sizeof(defaultLumaLevelTodQp_LumaChangePoints) / sizeof(Int));
   UInt lumaLevelToDeltaQPMode = 0;
 
-  const UInt defaultInputKneeCodes[3] = {600, 800, 900};
-  const UInt defaultOutputKneeCodes[3] = {100, 250, 450};
-  Int cfg_kneeSEINumKneePointsMinus1 = 0;
+  const UInt               defaultInputKneeCodes[3]       = {600, 800, 900};
+  const UInt               defaultOutputKneeCodes[3]      = {100, 250, 450};
+  Int                      cfg_kneeSEINumKneePointsMinus1 = 0;
   SMultiValueInputHM<UInt> cfg_kneeSEIInputKneePointValue(
-    1, 999, 0, 999, defaultInputKneeCodes,
+    1,
+    999,
+    0,
+    999,
+    defaultInputKneeCodes,
     sizeof(defaultInputKneeCodes) / sizeof(UInt));
   SMultiValueInputHM<UInt> cfg_kneeSEIOutputKneePointValue(
-    0, 1000, 0, 999, defaultOutputKneeCodes,
+    0,
+    1000,
+    0,
+    999,
+    defaultOutputKneeCodes,
     sizeof(defaultOutputKneeCodes) / sizeof(UInt));
-  const Int defaultPrimaryCodes[6] = {0, 50000, 0, 0, 50000, 0};
-  const Int defaultWhitePointCode[2] = {16667, 16667};
-  SMultiValueInputHM<Int> cfg_DisplayPrimariesCode(
-    0, 50000, 6, 6, defaultPrimaryCodes,
-    sizeof(defaultPrimaryCodes) / sizeof(Int));
+  const Int               defaultPrimaryCodes[6] = {0, 50000, 0, 0, 50000, 0};
+  const Int               defaultWhitePointCode[2] = {16667, 16667};
+  SMultiValueInputHM<Int> cfg_DisplayPrimariesCode(0,
+                                                   50000,
+                                                   6,
+                                                   6,
+                                                   defaultPrimaryCodes,
+                                                   sizeof(defaultPrimaryCodes)
+                                                     / sizeof(Int));
   SMultiValueInputHM<Int> cfg_DisplayWhitePointCode(
-    0, 50000, 2, 2, defaultWhitePointCode,
+    0,
+    50000,
+    2,
+    2,
+    defaultWhitePointCode,
     sizeof(defaultWhitePointCode) / sizeof(Int));
 
   SMultiValueInputHM<Bool> cfg_timeCodeSeiTimeStampFlag(
@@ -862,7 +890,9 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
   SMultiValueInputHM<Int> cfg_timeCodeSeiTimeOffsetLength(
     0, 31, 0, MAX_TIMECODE_SEI_SETS);
   SMultiValueInputHM<Int> cfg_timeCodeSeiTimeOffsetValue(
-    std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max(), 0,
+    std::numeric_limits<Int>::min(),
+    std::numeric_limits<Int>::max(),
+    0,
     MAX_TIMECODE_SEI_SETS);
 #  if ERP_SR_OV_SEI_MESSAGE
   SMultiValueInputHM<Int> cfg_omniViewportSEIAzimuthCentre(
@@ -888,42 +918,62 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
   SMultiValueInputHM<UInt> cfg_rwpSEIProjRegionLeft(
     0, std::numeric_limits<UInt>::max(), 0, std::numeric_limits<UChar>::max());
   SMultiValueInputHM<UInt> cfg_rwpSEIPackedRegionWidth(
-    0, std::numeric_limits<UShort>::max(), 0,
+    0,
+    std::numeric_limits<UShort>::max(),
+    0,
     std::numeric_limits<UChar>::max());
   SMultiValueInputHM<UInt> cfg_rwpSEIPackedRegionHeight(
-    0, std::numeric_limits<UShort>::max(), 0,
+    0,
+    std::numeric_limits<UShort>::max(),
+    0,
     std::numeric_limits<UChar>::max());
   SMultiValueInputHM<UInt> cfg_rwpSEIPackedRegionTop(
-    0, std::numeric_limits<UShort>::max(), 0,
+    0,
+    std::numeric_limits<UShort>::max(),
+    0,
     std::numeric_limits<UChar>::max());
   SMultiValueInputHM<UInt> cfg_rwpSEIPackedRegionLeft(
-    0, std::numeric_limits<UShort>::max(), 0,
+    0,
+    std::numeric_limits<UShort>::max(),
+    0,
     std::numeric_limits<UChar>::max());
   SMultiValueInputHM<UInt> cfg_rwpSEIRwpLeftGuardBandWidth(
-    0, std::numeric_limits<UChar>::max(), 0,
+    0,
+    std::numeric_limits<UChar>::max(),
+    0,
     std::numeric_limits<UChar>::max());
   SMultiValueInputHM<UInt> cfg_rwpSEIRwpRightGuardBandWidth(
-    0, std::numeric_limits<UChar>::max(), 0,
+    0,
+    std::numeric_limits<UChar>::max(),
+    0,
     std::numeric_limits<UChar>::max());
   SMultiValueInputHM<UInt> cfg_rwpSEIRwpTopGuardBandHeight(
-    0, std::numeric_limits<UChar>::max(), 0,
+    0,
+    std::numeric_limits<UChar>::max(),
+    0,
     std::numeric_limits<UChar>::max());
   SMultiValueInputHM<UInt> cfg_rwpSEIRwpBottomGuardBandHeight(
-    0, std::numeric_limits<UChar>::max(), 0,
+    0,
+    std::numeric_limits<UChar>::max(),
+    0,
     std::numeric_limits<UChar>::max());
   SMultiValueInputHM<Bool> cfg_rwpSEIRwpGuardBandNotUsedForPredFlag(
     0, 1, 0, std::numeric_limits<UChar>::max());
   SMultiValueInputHM<UInt> cfg_rwpSEIRwpGuardBandType(
     0, 7, 0, 4 * std::numeric_limits<UChar>::max());
 #  endif
-#if FVI_SEI_MESSAGE
+#  if FVI_SEI_MESSAGE
   SMultiValueInputHM<UInt> cfg_fviSEIFisheyeCircularRegionCentreX(
-    0, std::numeric_limits<UInt>::max(), 0,
+    0,
+    std::numeric_limits<UInt>::max(),
+    0,
     4);  // CONFIRM: all the '3's have been changed to '4's since "The value of fisheye_num_active_areas_minus1 shall be in the range of 0 to 3, inclusive", so up to 4 entries.
   SMultiValueInputHM<UInt> cfg_fviSEIFisheyeCircularRegionCentreY(
     0, std::numeric_limits<UInt>::max(), 0, 4);
   SMultiValueInputHM<UInt> cfg_fviSEIFisheyeRectRegionTop(
-    0, std::numeric_limits<UInt>::max(), 0,
+    0,
+    std::numeric_limits<UInt>::max(),
+    0,
     4);  // do not know the height of the picture at this point, so cannot limit region top.
   SMultiValueInputHM<UInt> cfg_fviSEIFisheyeRectRegionLeft(
     0, std::numeric_limits<UInt>::max(), 0, 4);
@@ -949,12 +999,14 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     0, std::numeric_limits<UInt>::max(), 0, 4);
   SMultiValueInputHM<UInt> cfg_fviSEIFisheyeFieldOfView(0, 360 * 65536, 0, 4);
   SMultiValueInputHM<UInt> cfg_fviSEIFisheyeNumPolynomialCoeffs(0, 8, 0, 4);
-  SMultiValueInputHM<Int> cfg_fviSEIFisheyePolynomialCoeff(
-    std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max(), 0,
+  SMultiValueInputHM<Int>  cfg_fviSEIFisheyePolynomialCoeff(
+    std::numeric_limits<Int>::min(),
+    std::numeric_limits<Int>::max(),
+    0,
     4 * 8);
   UInt cfg_fviSEIFisheyeNumActiveAreasMinus1 = 0;
-#endif
-  Int warnUnknowParameter = 0;
+#  endif
+  Int         warnUnknowParameter = 0;
   po::Options opts;
   opts.addOptions()
     // clang-format off
@@ -1528,14 +1580,17 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
 #endif
     // clang-format on
     ;
-  opts.addOptions()(
-    "TemporalFilter", m_gopBasedTemporalFilterEnabled, false,
-    "Enable GOP based temporal filter. Disabled per default")(
-    "TemporalFilterFutureReference", m_gopBasedTemporalFilterFutureReference,
+  opts.addOptions()("TemporalFilter",
+                    m_gopBasedTemporalFilterEnabled,
+                    false,
+                    "Enable GOP based temporal filter. Disabled per default")(
+    "TemporalFilterFutureReference",
+    m_gopBasedTemporalFilterFutureReference,
     true,
     "Enable referencing of future frames in the GOP based temporal filter. "
     "This is typically disabled for Low Delay configurations.")(
-    "TemporalFilterStrengthFrame*", m_gopBasedTemporalFilterStrengths,
+    "TemporalFilterStrengthFrame*",
+    m_gopBasedTemporalFilterStrengths,
     std::map<Int, Double>(),
     "Strength for every * frame in GOP based temporal filter, where * is an "
     "integer."
@@ -1553,7 +1608,7 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     opts.addOptions()(cOSS.str(), m_GOPList[i - 1], GOPEntry());
   }
   po::setDefaults(opts);
-  po::ErrorReporter err;
+  po::ErrorReporter         err;
   const list<const TChar*>& argv_unhandled =
     po::scanArgv(opts, argc, (const TChar**)argv, err);
 
@@ -1577,18 +1632,17 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
   /*
  * Set any derived parameters
  */
-  m_inputFileWidth = m_iSourceWidth;
+  m_inputFileWidth  = m_iSourceWidth;
   m_inputFileHeight = m_iSourceHeight;
 
-  if (
-    !inputPathPrefix.empty() && inputPathPrefix.back() != '/'
-    && inputPathPrefix.back() != '\\') {
+  if (!inputPathPrefix.empty() && inputPathPrefix.back() != '/'
+      && inputPathPrefix.back() != '\\') {
     inputPathPrefix += "/";
   }
   m_inputFileName = inputPathPrefix + m_inputFileName;
 
   m_framesToBeEncoded = (m_framesToBeEncoded + m_temporalSubsampleRatio - 1)
-    / m_temporalSubsampleRatio;
+                        / m_temporalSubsampleRatio;
   m_adIntraLambdaModifier = cfg_adIntraLambdaModifier.values;
   if (m_isField) {
     // Frame height
@@ -1620,9 +1674,8 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
 
   if (!m_tileUniformSpacingFlag && m_numTileRowsMinus1 > 0) {
     if (cfg_RowHeight.values.size() > m_numTileRowsMinus1) {
-      printf(
-        "The number of rows whose height are defined is larger than the "
-        "allowed number of rows.\n");
+      printf("The number of rows whose height are defined is larger than the "
+             "allowed number of rows.\n");
       exit(EXIT_FAILURE);
     } else if (cfg_RowHeight.values.size() < m_numTileRowsMinus1) {
       printf("The height of some rows is not defined.\n");
@@ -1678,32 +1731,28 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
   assert(
     tmpWeightedPredictionMethod >= 0
     && tmpWeightedPredictionMethod
-      <= WP_PER_PICTURE_WITH_HISTOGRAM_AND_PER_COMPONENT_AND_CLIPPING_AND_EXTENSION);
+         <= WP_PER_PICTURE_WITH_HISTOGRAM_AND_PER_COMPONENT_AND_CLIPPING_AND_EXTENSION);
   if (
     tmpWeightedPredictionMethod < 0
     || tmpWeightedPredictionMethod
-      > WP_PER_PICTURE_WITH_HISTOGRAM_AND_PER_COMPONENT_AND_CLIPPING_AND_EXTENSION) {
+         > WP_PER_PICTURE_WITH_HISTOGRAM_AND_PER_COMPONENT_AND_CLIPPING_AND_EXTENSION) {
     exit(EXIT_FAILURE);
   }
   m_weightedPredictionMethod =
     WeightedPredictionMethod(tmpWeightedPredictionMethod);
 
-  assert(
-    tmpFastInterSearchMode >= 0
-    && tmpFastInterSearchMode <= FASTINTERSEARCH_MODE3);
-  if (
-    tmpFastInterSearchMode < 0
-    || tmpFastInterSearchMode > FASTINTERSEARCH_MODE3) {
+  assert(tmpFastInterSearchMode >= 0
+         && tmpFastInterSearchMode <= FASTINTERSEARCH_MODE3);
+  if (tmpFastInterSearchMode < 0
+      || tmpFastInterSearchMode > FASTINTERSEARCH_MODE3) {
     exit(EXIT_FAILURE);
   }
   m_fastInterSearchMode = FastInterSearchMode(tmpFastInterSearchMode);
 
-  assert(
-    tmpMotionEstimationSearchMethod >= 0
-    && tmpMotionEstimationSearchMethod < MESEARCH_NUMBER_OF_METHODS);
-  if (
-    tmpMotionEstimationSearchMethod < 0
-    || tmpMotionEstimationSearchMethod >= MESEARCH_NUMBER_OF_METHODS) {
+  assert(tmpMotionEstimationSearchMethod >= 0
+         && tmpMotionEstimationSearchMethod < MESEARCH_NUMBER_OF_METHODS);
+  if (tmpMotionEstimationSearchMethod < 0
+      || tmpMotionEstimationSearchMethod >= MESEARCH_NUMBER_OF_METHODS) {
     exit(EXIT_FAILURE);
   }
   m_motionEstimationSearchMethod =
@@ -1711,53 +1760,52 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
 
   switch (UIProfile) {
   case UI_NONE:
-    m_profile = Profile::NONE;
+    m_profile                      = Profile::NONE;
     m_onePictureOnlyConstraintFlag = false;
     break;
   case UI_MAIN:
-    m_profile = Profile::MAIN;
+    m_profile                      = Profile::MAIN;
     m_onePictureOnlyConstraintFlag = false;
     break;
   case UI_MAIN10:
-    m_profile = Profile::MAIN10;
+    m_profile                      = Profile::MAIN10;
     m_onePictureOnlyConstraintFlag = false;
     break;
   case UI_MAINSTILLPICTURE:
-    m_profile = Profile::MAINSTILLPICTURE;
+    m_profile                      = Profile::MAINSTILLPICTURE;
     m_onePictureOnlyConstraintFlag = false;
     break;
   case UI_MAIN10_STILL_PICTURE:
-    m_profile = Profile::MAIN10;
+    m_profile                      = Profile::MAIN10;
     m_onePictureOnlyConstraintFlag = true;
     break;
   case UI_MAINREXT:
-    m_profile = Profile::MAINREXT;
+    m_profile                      = Profile::MAINREXT;
     m_onePictureOnlyConstraintFlag = false;
     break;
   case UI_HIGHTHROUGHPUTREXT:
-    m_profile = Profile::HIGHTHROUGHPUTREXT;
+    m_profile                      = Profile::HIGHTHROUGHPUTREXT;
     m_onePictureOnlyConstraintFlag = false;
     break;
   case UI_MAINSCC:
-    m_profile = Profile::MAINSCC;
+    m_profile                      = Profile::MAINSCC;
     m_onePictureOnlyConstraintFlag = false;
     break;
   case UI_HIGHTHROUGHPUTSCC:
-    m_profile = Profile::HIGHTHROUGHPUTSCC;
+    m_profile                      = Profile::HIGHTHROUGHPUTSCC;
     m_onePictureOnlyConstraintFlag = false;
     break;
   default:
     if (UIProfile >= 1000 && UIProfile <= 12316) {
       m_profile = Profile::MAINREXT;
       if (m_bitDepthConstraint != 0 || tmpConstraintChromaFormat != 0) {
-        fprintf(
-          stderr,
-          "Error: The bit depth and chroma format constraints are not "
-          "used when an explicit RExt profile is specified\n");
+        fprintf(stderr,
+                "Error: The bit depth and chroma format constraints are not "
+                "used when an explicit RExt profile is specified\n");
         exit(EXIT_FAILURE);
       }
-      m_bitDepthConstraint = (UIProfile % 100);
-      m_intraConstraintFlag = ((UIProfile % 10000) >= 2000);
+      m_bitDepthConstraint           = (UIProfile % 100);
+      m_intraConstraintFlag          = ((UIProfile % 10000) >= 2000);
       m_onePictureOnlyConstraintFlag = (UIProfile >= 10000);
       switch ((UIProfile / 100) % 10) {
       case 0: tmpConstraintChromaFormat = 400; break;
@@ -1768,18 +1816,16 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     } else if (UIProfile >= 21308 && UIProfile <= 22316) {
       m_profile = Profile::HIGHTHROUGHPUTREXT;
       if (m_bitDepthConstraint != 0 || tmpConstraintChromaFormat != 0) {
-        fprintf(
-          stderr,
-          "Error: The bit depth and chroma format constraints are not "
-          "used when an explicit RExt profile is specified\n");
+        fprintf(stderr,
+                "Error: The bit depth and chroma format constraints are not "
+                "used when an explicit RExt profile is specified\n");
         exit(EXIT_FAILURE);
       }
-      m_bitDepthConstraint = (UIProfile % 100);
-      m_intraConstraintFlag = ((UIProfile % 10000) >= 2000);
+      m_bitDepthConstraint           = (UIProfile % 100);
+      m_intraConstraintFlag          = ((UIProfile % 10000) >= 2000);
       m_onePictureOnlyConstraintFlag = 0;
-      if (
-        (UIProfile == UI_HIGHTHROUGHPUT_444)
-        || (UIProfile == UI_HIGHTHROUGHPUT_444_10)) {
+      if ((UIProfile == UI_HIGHTHROUGHPUT_444)
+          || (UIProfile == UI_HIGHTHROUGHPUT_444_10)) {
         assert(m_cabacBypassAlignmentEnabledFlag == 0);
       }
       switch ((UIProfile / 100) % 10) {
@@ -1791,14 +1837,13 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     } else if (UIProfile >= 121108 && UIProfile <= 221314) {
       m_profile = Profile::MAINSCC;
       if (m_bitDepthConstraint != 0 || tmpConstraintChromaFormat != 0) {
-        fprintf(
-          stderr,
-          "Error: The bit depth and chroma format constraints are not "
-          "used when an explicit SCC profile is specified\n");
+        fprintf(stderr,
+                "Error: The bit depth and chroma format constraints are not "
+                "used when an explicit SCC profile is specified\n");
         exit(EXIT_FAILURE);
       }
-      m_bitDepthConstraint = (UIProfile % 100);
-      m_intraConstraintFlag = ((UIProfile % 10000) >= 2000);
+      m_bitDepthConstraint    = (UIProfile % 100);
+      m_intraConstraintFlag   = ((UIProfile % 10000) >= 2000);
       m_sccHighThroughputFlag = (UIProfile > 121308);
       assert(m_intraConstraintFlag == 0);
       m_onePictureOnlyConstraintFlag = 0;
@@ -1820,59 +1865,58 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
   switch (m_profile) {
   case Profile::HIGHTHROUGHPUTREXT:
   case Profile::HIGHTHROUGHPUTSCC: {
-    if (m_bitDepthConstraint == 0) {
-      m_bitDepthConstraint = 16;
-    }
-    m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0)
-      ? CHROMA_444
-      : numberToChromaFormat(tmpConstraintChromaFormat);
+    if (m_bitDepthConstraint == 0) { m_bitDepthConstraint = 16; }
+    m_chromaFormatConstraint =
+      (tmpConstraintChromaFormat == 0)
+        ? CHROMA_444
+        : numberToChromaFormat(tmpConstraintChromaFormat);
   } break;
   case Profile::MAINREXT: {
     if (m_bitDepthConstraint == 0 && tmpConstraintChromaFormat == 0) {
       // produce a valid combination, if possible.
-      const Bool bUsingGeneralRExtTools = m_transformSkipRotationEnabledFlag
-        || m_transformSkipContextEnabledFlag
+      const Bool bUsingGeneralRExtTools =
+        m_transformSkipRotationEnabledFlag || m_transformSkipContextEnabledFlag
         || m_rdpcmEnabledFlag[RDPCM_SIGNAL_IMPLICIT]
         || m_rdpcmEnabledFlag[RDPCM_SIGNAL_EXPLICIT]
         || !m_enableIntraReferenceSmoothing
         || m_persistentRiceAdaptationEnabledFlag
         || m_log2MaxTransformSkipBlockSize != 2;
       const Bool bUsingChromaQPAdjustment = m_diffCuChromaQpOffsetDepth >= 0;
-      const Bool bUsingExtendedPrecision = m_extendedPrecisionProcessingFlag;
+      const Bool bUsingExtendedPrecision  = m_extendedPrecisionProcessingFlag;
       if (m_onePictureOnlyConstraintFlag) {
         m_chromaFormatConstraint = CHROMA_444;
         if (!m_intraConstraintFlag) {
-          fprintf(
-            stderr,
-            "Error: Intra constraint flag must be true when "
-            "one_picture_only_constraint_flag is true\n");
+          fprintf(stderr,
+                  "Error: Intra constraint flag must be true when "
+                  "one_picture_only_constraint_flag is true\n");
           exit(EXIT_FAILURE);
         }
-        const Int maxBitDepth = m_chromaFormatIDC == CHROMA_400
-          ? m_internalBitDepth[CHANNEL_TYPE_LUMA]
-          : std::max(
-            m_internalBitDepth[CHANNEL_TYPE_LUMA],
-            m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+        const Int maxBitDepth =
+          m_chromaFormatIDC == CHROMA_400
+            ? m_internalBitDepth[CHANNEL_TYPE_LUMA]
+            : std::max(m_internalBitDepth[CHANNEL_TYPE_LUMA],
+                       m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
         m_bitDepthConstraint = maxBitDepth > 8 ? 16 : 8;
       } else {
         m_chromaFormatConstraint = NUM_CHROMA_FORMAT;
         automaticallySelectRExtProfile(
-          bUsingGeneralRExtTools, bUsingChromaQPAdjustment,
-          bUsingExtendedPrecision, m_intraConstraintFlag, m_bitDepthConstraint,
+          bUsingGeneralRExtTools,
+          bUsingChromaQPAdjustment,
+          bUsingExtendedPrecision,
+          m_intraConstraintFlag,
+          m_bitDepthConstraint,
           m_chromaFormatConstraint,
           m_chromaFormatIDC == CHROMA_400
             ? m_internalBitDepth[CHANNEL_TYPE_LUMA]
-            : std::max(
-              m_internalBitDepth[CHANNEL_TYPE_LUMA],
-              m_internalBitDepth[CHANNEL_TYPE_CHROMA]),
+            : std::max(m_internalBitDepth[CHANNEL_TYPE_LUMA],
+                       m_internalBitDepth[CHANNEL_TYPE_CHROMA]),
           m_chromaFormatIDC);
       }
     } else if (m_bitDepthConstraint == 0 || tmpConstraintChromaFormat == 0) {
-      fprintf(
-        stderr,
-        "Error: The bit depth and chroma format constraints must "
-        "either both be specified or both be configured "
-        "automatically\n");
+      fprintf(stderr,
+              "Error: The bit depth and chroma format constraints must "
+              "either both be specified or both be configured "
+              "automatically\n");
       exit(EXIT_FAILURE);
     } else {
       m_chromaFormatConstraint =
@@ -1881,11 +1925,11 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
   } break;
   case Profile::MAINSCC: {
     if (m_bitDepthConstraint == 0 && tmpConstraintChromaFormat == 0) {
-      int tmpMaximumBitDepth = m_chromaFormatIDC == CHROMA_400
-        ? m_internalBitDepth[CHANNEL_TYPE_LUMA]
-        : std::max(
-          m_internalBitDepth[CHANNEL_TYPE_LUMA],
-          m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+      int tmpMaximumBitDepth =
+        m_chromaFormatIDC == CHROMA_400
+          ? m_internalBitDepth[CHANNEL_TYPE_LUMA]
+          : std::max(m_internalBitDepth[CHANNEL_TYPE_LUMA],
+                     m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
       if (tmpMaximumBitDepth <= 8) {
         m_bitDepthConstraint = 8;
       } else if (tmpMaximumBitDepth <= 10) {
@@ -1899,11 +1943,10 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
         m_chromaFormatConstraint = CHROMA_444;
       }
     } else if (m_bitDepthConstraint == 0 || tmpConstraintChromaFormat == 0) {
-      fprintf(
-        stderr,
-        "Error: The bit depth and chroma format constraints must "
-        "either both be specified or both be configured "
-        "automatically\n");
+      fprintf(stderr,
+              "Error: The bit depth and chroma format constraints must "
+              "either both be specified or both be configured "
+              "automatically\n");
       exit(EXIT_FAILURE);
     } else {
       m_chromaFormatConstraint =
@@ -1913,18 +1956,19 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
   case Profile::MAIN:
   case Profile::MAIN10:
   case Profile::MAINSTILLPICTURE:
-    m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0)
-      ? m_chromaFormatIDC
-      : numberToChromaFormat(tmpConstraintChromaFormat);
+    m_chromaFormatConstraint =
+      (tmpConstraintChromaFormat == 0)
+        ? m_chromaFormatIDC
+        : numberToChromaFormat(tmpConstraintChromaFormat);
     m_bitDepthConstraint = (m_profile == Profile::MAIN10 ? 10 : 8);
     break;
   case Profile::NONE:
     m_chromaFormatConstraint = m_chromaFormatIDC;
-    m_bitDepthConstraint = m_chromaFormatIDC == CHROMA_400
-      ? m_internalBitDepth[CHANNEL_TYPE_LUMA]
-      : std::max(
-        m_internalBitDepth[CHANNEL_TYPE_LUMA],
-        m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+    m_bitDepthConstraint =
+      m_chromaFormatIDC == CHROMA_400
+        ? m_internalBitDepth[CHANNEL_TYPE_LUMA]
+        : std::max(m_internalBitDepth[CHANNEL_TYPE_LUMA],
+                   m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
     break;
   default:
     fprintf(stderr, "Unknown profile selected\n");
@@ -1935,7 +1979,7 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
   m_inputColourSpaceConvert =
     stringToInputColourSpaceConvert(inputColourSpaceConvert, true);
   m_bRGBformat = m_inputColourSpaceConvert == IPCOLOURSPACE_RGBtoGBR
-    && m_chromaFormatIDC == CHROMA_444;
+                 && m_chromaFormatIDC == CHROMA_444;
   m_useLL = m_costMode == COST_LOSSLESS_CODING;
 
   switch (m_conformanceWindowMode) {
@@ -1963,17 +2007,15 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
       }
     }
     if (m_aiPad[0] % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0) {
-      fprintf(
-        stderr,
-        "Error: picture width is not an integer multiple of the "
-        "specified chroma subsampling\n");
+      fprintf(stderr,
+              "Error: picture width is not an integer multiple of the "
+              "specified chroma subsampling\n");
       exit(EXIT_FAILURE);
     }
     if (m_aiPad[1] % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0) {
-      fprintf(
-        stderr,
-        "Error: picture height is not an integer multiple of the "
-        "specified chroma subsampling\n");
+      fprintf(stderr,
+              "Error: picture height is not an integer multiple of the "
+              "specified chroma subsampling\n");
       exit(EXIT_FAILURE);
     }
     break;
@@ -1982,49 +2024,43 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     // padding
     m_iSourceWidth += m_aiPad[0];
     m_iSourceHeight += m_aiPad[1];
-    m_confWinRight = m_aiPad[0];
+    m_confWinRight  = m_aiPad[0];
     m_confWinBottom = m_aiPad[1];
     break;
   }
   case 3: {
     // conformance
-    if (
-      (m_confWinLeft == 0) && (m_confWinRight == 0) && (m_confWinTop == 0)
-      && (m_confWinBottom == 0)) {
-      fprintf(
-        stderr,
-        "Warning: Conformance window enabled, but all conformance "
-        "window parameters set to zero\n");
+    if ((m_confWinLeft == 0) && (m_confWinRight == 0) && (m_confWinTop == 0)
+        && (m_confWinBottom == 0)) {
+      fprintf(stderr,
+              "Warning: Conformance window enabled, but all conformance "
+              "window parameters set to zero\n");
     }
     if ((m_aiPad[1] != 0) || (m_aiPad[0] != 0)) {
-      fprintf(
-        stderr,
-        "Warning: Conformance window enabled, padding parameters will "
-        "be ignored\n");
+      fprintf(stderr,
+              "Warning: Conformance window enabled, padding parameters will "
+              "be ignored\n");
     }
     m_aiPad[1] = m_aiPad[0] = 0;
     break;
   }
   }
 
-  if (
-    tmpSliceMode < 0
-    || tmpSliceMode >= Int(NUMBER_OF_SLICE_CONSTRAINT_MODES)) {
+  if (tmpSliceMode < 0
+      || tmpSliceMode >= Int(NUMBER_OF_SLICE_CONSTRAINT_MODES)) {
     fprintf(stderr, "Error: bad slice mode\n");
     exit(EXIT_FAILURE);
   }
   m_sliceMode = SliceConstraint(tmpSliceMode);
-  if (
-    tmpSliceSegmentMode < 0
-    || tmpSliceSegmentMode >= Int(NUMBER_OF_SLICE_CONSTRAINT_MODES)) {
+  if (tmpSliceSegmentMode < 0
+      || tmpSliceSegmentMode >= Int(NUMBER_OF_SLICE_CONSTRAINT_MODES)) {
     fprintf(stderr, "Error: bad slice segment mode\n");
     exit(EXIT_FAILURE);
   }
   m_sliceSegmentMode = SliceConstraint(tmpSliceSegmentMode);
 
-  if (
-    tmpDecodedPictureHashSEIMappedType < 0
-    || tmpDecodedPictureHashSEIMappedType >= Int(NUMBER_OF_HASHTYPES)) {
+  if (tmpDecodedPictureHashSEIMappedType < 0
+      || tmpDecodedPictureHashSEIMappedType >= Int(NUMBER_OF_HASHTYPES)) {
     fprintf(stderr, "Error: bad checksum mode\n");
     exit(EXIT_FAILURE);
   }
@@ -2050,7 +2086,7 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
       // if ssf=10, fs=2, tsr=2, then for this simulation, switch at POC 4
       // (=(10-2)/2): POC0=Src2, POC1=Src4, POC2=Src6, POC3=Src8, POC4=Src10
       switchingPOC = (m_qpIncrementAtSourceFrame.value - m_FrameSkip)
-        / m_temporalSubsampleRatio;
+                     / m_temporalSubsampleRatio;
     }
     for (UInt i = switchingPOC; i < (m_framesToBeEncoded + m_iGOPSize + 1);
          i++) {
@@ -2077,7 +2113,8 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     if (saoOffsetBitShift[ch] < 0) {
       if (m_internalBitDepth[ch] > 10) {
         m_log2SaoOffsetScale[ch] = UInt(Clip3<Int>(
-          0, m_internalBitDepth[ch] - 10,
+          0,
+          m_internalBitDepth[ch] - 10,
           Int(m_internalBitDepth[ch] - 10 + 0.165 * m_iQP - 3.22 + 0.5)));
       } else {
         m_log2SaoOffsetScale[ch] = 0;
@@ -2095,15 +2132,14 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     LumaLevelToDQPMode(lumaLevelToDeltaQPMode);
 
   if (m_lumaLevelToDeltaQPMapping.mode != 0U) {
-    assert(
-      cfg_lumaLeveltoDQPMappingLuma.values.size()
-      == cfg_lumaLeveltoDQPMappingQP.values.size());
+    assert(cfg_lumaLeveltoDQPMappingLuma.values.size()
+           == cfg_lumaLeveltoDQPMappingQP.values.size());
     m_lumaLevelToDeltaQPMapping.mapping.resize(
       cfg_lumaLeveltoDQPMappingLuma.values.size());
     for (UInt i = 0; i < cfg_lumaLeveltoDQPMappingLuma.values.size(); i++) {
-      m_lumaLevelToDeltaQPMapping.mapping[i] = std::pair<Int, Int>(
-        cfg_lumaLeveltoDQPMappingLuma.values[i],
-        cfg_lumaLeveltoDQPMappingQP.values[i]);
+      m_lumaLevelToDeltaQPMapping.mapping[i] =
+        std::pair<Int, Int>(cfg_lumaLeveltoDQPMappingLuma.values[i],
+                            cfg_lumaLeveltoDQPMappingQP.values[i]);
     }
   }
 
@@ -2112,11 +2148,9 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     FILE* fpt = fopen(m_dQPFileName.c_str(), "r");
     if (fpt != nullptr) {
       Int iValue = 0;
-      Int iPOC = 0;
+      Int iPOC   = 0;
       while (iPOC < m_framesToBeEncoded) {
-        if (fscanf(fpt, "%d", &iValue) == EOF) {
-          break;
-        }
+        if (fscanf(fpt, "%d", &iValue) == EOF) { break; }
         m_aidQP[iPOC] = iValue;
         iPOC++;
       }
@@ -2126,69 +2160,66 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
 
   if (m_masteringDisplay.colourVolumeSEIEnabled) {
     for (UInt idx = 0; idx < 6; idx++) {
-      m_masteringDisplay.primaries[idx / 2][idx % 2] = UShort(
-        (cfg_DisplayPrimariesCode.values.size() > idx)
-          ? cfg_DisplayPrimariesCode.values[idx]
-          : 0);
+      m_masteringDisplay.primaries[idx / 2][idx % 2] =
+        UShort((cfg_DisplayPrimariesCode.values.size() > idx)
+                 ? cfg_DisplayPrimariesCode.values[idx]
+                 : 0);
     }
     for (UInt idx = 0; idx < 2; idx++) {
-      m_masteringDisplay.whitePoint[idx] = UShort(
-        (cfg_DisplayWhitePointCode.values.size() > idx)
-          ? cfg_DisplayWhitePointCode.values[idx]
-          : 0);
+      m_masteringDisplay.whitePoint[idx] =
+        UShort((cfg_DisplayWhitePointCode.values.size() > idx)
+                 ? cfg_DisplayWhitePointCode.values[idx]
+                 : 0);
     }
   }
 
   if (m_toneMappingInfoSEIEnabled && !m_toneMapCancelFlag) {
     if (m_toneMapModelId == 2 && !cfg_startOfCodedInterval.values.empty()) {
-      const UInt num = 1U << m_toneMapTargetBitDepth;
+      const UInt num         = 1U << m_toneMapTargetBitDepth;
       m_startOfCodedInterval = new Int[num];
       for (UInt i = 0; i < num; i++) {
         m_startOfCodedInterval[i] = cfg_startOfCodedInterval.values.size() > i
-          ? cfg_startOfCodedInterval.values[i]
-          : 0;
+                                      ? cfg_startOfCodedInterval.values[i]
+                                      : 0;
       }
     } else {
       m_startOfCodedInterval = nullptr;
     }
     if ((m_toneMapModelId == 3) && (m_numPivots > 0)) {
-      if (
-        !cfg_codedPivotValue.values.empty()
-        && !cfg_targetPivotValue.values.empty()) {
-        m_codedPivotValue = new Int[m_numPivots];
+      if (!cfg_codedPivotValue.values.empty()
+          && !cfg_targetPivotValue.values.empty()) {
+        m_codedPivotValue  = new Int[m_numPivots];
         m_targetPivotValue = new Int[m_numPivots];
         for (UInt i = 0; i < m_numPivots; i++) {
-          m_codedPivotValue[i] = cfg_codedPivotValue.values.size() > i
-            ? cfg_codedPivotValue.values[i]
-            : 0;
+          m_codedPivotValue[i]  = cfg_codedPivotValue.values.size() > i
+                                    ? cfg_codedPivotValue.values[i]
+                                    : 0;
           m_targetPivotValue[i] = cfg_targetPivotValue.values.size() > i
-            ? cfg_targetPivotValue.values[i]
-            : 0;
+                                    ? cfg_targetPivotValue.values[i]
+                                    : 0;
         }
       }
     } else {
-      m_codedPivotValue = nullptr;
+      m_codedPivotValue  = nullptr;
       m_targetPivotValue = nullptr;
     }
   }
 
-  if (
-    m_kneeSEIEnabled
-    && !m_kneeFunctionInformationSEI.m_kneeFunctionCancelFlag) {
-    assert(
-      cfg_kneeSEINumKneePointsMinus1 >= 0
-      && cfg_kneeSEINumKneePointsMinus1 < 999);
+  if (m_kneeSEIEnabled
+      && !m_kneeFunctionInformationSEI.m_kneeFunctionCancelFlag) {
+    assert(cfg_kneeSEINumKneePointsMinus1 >= 0
+           && cfg_kneeSEINumKneePointsMinus1 < 999);
     m_kneeFunctionInformationSEI.m_kneeSEIKneePointPairs.resize(
       cfg_kneeSEINumKneePointsMinus1 + 1);
     for (Int i = 0; i < (cfg_kneeSEINumKneePointsMinus1 + 1); i++) {
       TEncCfg::TEncSEIKneeFunctionInformation::KneePointPair& kpp =
         m_kneeFunctionInformationSEI.m_kneeSEIKneePointPairs[i];
-      kpp.inputKneePoint = cfg_kneeSEIInputKneePointValue.values.size() > i
-        ? cfg_kneeSEIInputKneePointValue.values[i]
-        : 1;
+      kpp.inputKneePoint  = cfg_kneeSEIInputKneePointValue.values.size() > i
+                              ? cfg_kneeSEIInputKneePointValue.values[i]
+                              : 1;
       kpp.outputKneePoint = cfg_kneeSEIOutputKneePointValue.values.size() > i
-        ? cfg_kneeSEIOutputKneePointValue.values[i]
-        : 0;
+                              ? cfg_kneeSEIOutputKneePointValue.values[i]
+                              : 0;
     }
   }
 
@@ -2203,40 +2234,39 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     for (Int i = 0; i < (m_omniViewportSEICntMinus1 + 1); i++) {
       m_omniViewportSEIAzimuthCentre[i] =
         cfg_omniViewportSEIAzimuthCentre.values.size() > i
-        ? cfg_omniViewportSEIAzimuthCentre.values[i]
-        : 0;
+          ? cfg_omniViewportSEIAzimuthCentre.values[i]
+          : 0;
       m_omniViewportSEIElevationCentre[i] =
         cfg_omniViewportSEIElevationCentre.values.size() > i
-        ? cfg_omniViewportSEIElevationCentre.values[i]
-        : 0;
+          ? cfg_omniViewportSEIElevationCentre.values[i]
+          : 0;
       m_omniViewportSEITiltCentre[i] =
         cfg_omniViewportSEITiltCentre.values.size() > i
-        ? cfg_omniViewportSEITiltCentre.values[i]
-        : 0;
+          ? cfg_omniViewportSEITiltCentre.values[i]
+          : 0;
       m_omniViewportSEIHorRange[i] =
         cfg_omniViewportSEIHorRange.values.size() > i
-        ? cfg_omniViewportSEIHorRange.values[i]
-        : 0;
+          ? cfg_omniViewportSEIHorRange.values[i]
+          : 0;
       m_omniViewportSEIVerRange[i] =
         cfg_omniViewportSEIVerRange.values.size() > i
-        ? cfg_omniViewportSEIVerRange.values[i]
-        : 0;
+          ? cfg_omniViewportSEIVerRange.values[i]
+          : 0;
     }
   }
 #  endif
 
 #  if RWP_SEI_MESSAGE
   if (!m_rwpSEIRwpCancelFlag && m_rwpSEIEnabled) {
-    assert(
-      m_rwpSEINumPackedRegions > 0
-      && m_rwpSEINumPackedRegions <= std::numeric_limits<UChar>::max());
+    assert(m_rwpSEINumPackedRegions > 0
+           && m_rwpSEINumPackedRegions <= std::numeric_limits<UChar>::max());
     assert(
       cfg_rwpSEIRwpTransformType.values.size() == m_rwpSEINumPackedRegions
       && cfg_rwpSEIRwpGuardBandFlag.values.size() == m_rwpSEINumPackedRegions
       && cfg_rwpSEIProjRegionWidth.values.size() == m_rwpSEINumPackedRegions
       && cfg_rwpSEIProjRegionHeight.values.size() == m_rwpSEINumPackedRegions
       && cfg_rwpSEIRwpSEIProjRegionTop.values.size()
-        == m_rwpSEINumPackedRegions
+           == m_rwpSEINumPackedRegions
       && cfg_rwpSEIProjRegionLeft.values.size() == m_rwpSEINumPackedRegions
       && cfg_rwpSEIPackedRegionWidth.values.size() == m_rwpSEINumPackedRegions
       && cfg_rwpSEIPackedRegionHeight.values.size() == m_rwpSEINumPackedRegions
@@ -2260,17 +2290,17 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     m_rwpSEIRwpGuardBandType.resize(4 * m_rwpSEINumPackedRegions);
     for (Int i = 0; i < m_rwpSEINumPackedRegions; i++) {
       m_rwpSEIRwpTransformType[i] = cfg_rwpSEIRwpTransformType.values[i];
-      assert(
-        m_rwpSEIRwpTransformType[i] >= 0 && m_rwpSEIRwpTransformType[i] <= 7);
-      m_rwpSEIRwpGuardBandFlag[i] = cfg_rwpSEIRwpGuardBandFlag.values[i];
-      m_rwpSEIProjRegionWidth[i] = cfg_rwpSEIProjRegionWidth.values[i];
-      m_rwpSEIProjRegionHeight[i] = cfg_rwpSEIProjRegionHeight.values[i];
+      assert(m_rwpSEIRwpTransformType[i] >= 0
+             && m_rwpSEIRwpTransformType[i] <= 7);
+      m_rwpSEIRwpGuardBandFlag[i]    = cfg_rwpSEIRwpGuardBandFlag.values[i];
+      m_rwpSEIProjRegionWidth[i]     = cfg_rwpSEIProjRegionWidth.values[i];
+      m_rwpSEIProjRegionHeight[i]    = cfg_rwpSEIProjRegionHeight.values[i];
       m_rwpSEIRwpSEIProjRegionTop[i] = cfg_rwpSEIRwpSEIProjRegionTop.values[i];
-      m_rwpSEIProjRegionLeft[i] = cfg_rwpSEIProjRegionLeft.values[i];
-      m_rwpSEIPackedRegionWidth[i] = cfg_rwpSEIPackedRegionWidth.values[i];
-      m_rwpSEIPackedRegionHeight[i] = cfg_rwpSEIPackedRegionHeight.values[i];
-      m_rwpSEIPackedRegionTop[i] = cfg_rwpSEIPackedRegionTop.values[i];
-      m_rwpSEIPackedRegionLeft[i] = cfg_rwpSEIPackedRegionLeft.values[i];
+      m_rwpSEIProjRegionLeft[i]      = cfg_rwpSEIProjRegionLeft.values[i];
+      m_rwpSEIPackedRegionWidth[i]   = cfg_rwpSEIPackedRegionWidth.values[i];
+      m_rwpSEIPackedRegionHeight[i]  = cfg_rwpSEIPackedRegionHeight.values[i];
+      m_rwpSEIPackedRegionTop[i]     = cfg_rwpSEIPackedRegionTop.values[i];
+      m_rwpSEIPackedRegionLeft[i]    = cfg_rwpSEIPackedRegionLeft.values[i];
       if (m_rwpSEIRwpGuardBandFlag[i]) {
         m_rwpSEIRwpLeftGuardBandWidth[i] =
           cfg_rwpSEIRwpLeftGuardBandWidth.values[i];
@@ -2280,11 +2310,10 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
           cfg_rwpSEIRwpTopGuardBandHeight.values[i];
         m_rwpSEIRwpBottomGuardBandHeight[i] =
           cfg_rwpSEIRwpBottomGuardBandHeight.values[i];
-        assert(
-          m_rwpSEIRwpLeftGuardBandWidth[i] > 0
-          || m_rwpSEIRwpRightGuardBandWidth[i] > 0
-          || m_rwpSEIRwpTopGuardBandHeight[i] > 0
-          || m_rwpSEIRwpBottomGuardBandHeight[i] > 0);
+        assert(m_rwpSEIRwpLeftGuardBandWidth[i] > 0
+               || m_rwpSEIRwpRightGuardBandWidth[i] > 0
+               || m_rwpSEIRwpTopGuardBandHeight[i] > 0
+               || m_rwpSEIRwpBottomGuardBandHeight[i] > 0);
         m_rwpSEIRwpGuardBandNotUsedForPredFlag[i] =
           cfg_rwpSEIRwpGuardBandNotUsedForPredFlag.values[i];
         for (Int j = 0; j < 4; j++) {
@@ -2295,104 +2324,87 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     }
   }
 #  endif
-#if FVI_SEI_MESSAGE
-  if (
-    !m_fisheyeVideoInfoSEI.m_fisheyeCancelFlag
-    && m_fisheyeVIdeoInfoSEIEnabled) {
-    if (
-      cfg_fviSEIFisheyeNumActiveAreasMinus1 < 0
-      || cfg_fviSEIFisheyeNumActiveAreasMinus1 > 3) {
+#  if FVI_SEI_MESSAGE
+  if (!m_fisheyeVideoInfoSEI.m_fisheyeCancelFlag
+      && m_fisheyeVIdeoInfoSEIEnabled) {
+    if (cfg_fviSEIFisheyeNumActiveAreasMinus1 < 0
+        || cfg_fviSEIFisheyeNumActiveAreasMinus1 > 3) {
       fprintf(stderr, "Bad number of FVI active areas\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeCircularRegionCentreX.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeCircularRegionCentreX.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI circular region centre X entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeCircularRegionCentreY.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeCircularRegionCentreY.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI circular region centre Y entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeRectRegionTop.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeRectRegionTop.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI rect region top entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeRectRegionLeft.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeRectRegionLeft.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI rect region left entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeRectRegionWidth.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeRectRegionWidth.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI rect region width entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeRectRegionHeight.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeRectRegionHeight.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI rect region height entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeCircularRegionRadius.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeCircularRegionRadius.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI circular region radius entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeSceneRadius.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeSceneRadius.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI scene radius entries\n");
       exit(EXIT_FAILURE);
     }
 
-    if (
-      cfg_fviSEIFisheyeCameraCentreAzimuth.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeCameraCentreAzimuth.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI camera centre azimuth entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeCameraCentreElevation.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeCameraCentreElevation.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI camera centre elevation entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeCameraCentreTilt.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeCameraCentreTilt.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI camera centre tilt entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeCameraCentreOffsetX.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeCameraCentreOffsetX.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI camera centre offsetX entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeCameraCentreOffsetY.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeCameraCentreOffsetY.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI camera centre offsetY entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeCameraCentreOffsetZ.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeCameraCentreOffsetZ.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI camera centre offsetZ entries\n");
       exit(EXIT_FAILURE);
     }
-    if (
-      cfg_fviSEIFisheyeFieldOfView.values.size()
-      != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
+    if (cfg_fviSEIFisheyeFieldOfView.values.size()
+        != cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1) {
       fprintf(stderr, "Bad number of FVI field of view entries\n");
       exit(EXIT_FAILURE);
     }
@@ -2401,14 +2413,15 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
       cfg_fviSEIFisheyeNumActiveAreasMinus1 + 1);
 
     for (std::size_t i = 0, extractPolynomialIdx = 0;
-         i < m_fisheyeVideoInfoSEI.m_fisheyeActiveAreas.size(); i++) {
+         i < m_fisheyeVideoInfoSEI.m_fisheyeActiveAreas.size();
+         i++) {
       TComSEIFisheyeVideoInfo::ActiveAreaInfo& info =
         m_fisheyeVideoInfoSEI.m_fisheyeActiveAreas[i];
       info.m_fisheyeCircularRegionCentreX =
         cfg_fviSEIFisheyeCircularRegionCentreX.values[i];
       info.m_fisheyeCircularRegionCentreY =
         cfg_fviSEIFisheyeCircularRegionCentreY.values[i];
-      info.m_fisheyeRectRegionTop = cfg_fviSEIFisheyeRectRegionTop.values[i];
+      info.m_fisheyeRectRegionTop  = cfg_fviSEIFisheyeRectRegionTop.values[i];
       info.m_fisheyeRectRegionLeft = cfg_fviSEIFisheyeRectRegionLeft.values[i];
       info.m_fisheyeRectRegionWidth =
         cfg_fviSEIFisheyeRectRegionWidth.values[i];
@@ -2419,17 +2432,14 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
       info.m_fisheyeSceneRadius = cfg_fviSEIFisheyeSceneRadius.values[i];
 
       // check rectangular region is within the conformance window.
-      if (
-        (
-          info.m_fisheyeRectRegionHeight < 1
-            || m_confWinTop > info.m_fisheyeRectRegionTop
-            || info.m_fisheyeRectRegionTop + info.m_fisheyeRectRegionHeight
-              >= m_iSourceHeight - m_confWinBottom)
-        || (
-          info.m_fisheyeRectRegionWidth < 1
-          || m_confWinLeft > info.m_fisheyeRectRegionLeft
-          || info.m_fisheyeRectRegionLeft + info.m_fisheyeRectRegionWidth
-            >= m_iSourceWidth - m_confWinRight)) {
+      if ((info.m_fisheyeRectRegionHeight < 1
+           || m_confWinTop > info.m_fisheyeRectRegionTop
+           || info.m_fisheyeRectRegionTop + info.m_fisheyeRectRegionHeight
+                >= m_iSourceHeight - m_confWinBottom)
+          || (info.m_fisheyeRectRegionWidth < 1
+              || m_confWinLeft > info.m_fisheyeRectRegionLeft
+              || info.m_fisheyeRectRegionLeft + info.m_fisheyeRectRegionWidth
+                   >= m_iSourceWidth - m_confWinRight)) {
         fprintf(stderr, "Fisheye region is not within visible area\n");
         exit(EXIT_FAILURE);
       }
@@ -2448,27 +2458,25 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
         cfg_fviSEIFisheyeCameraCentreOffsetZ.values[i];
 
       info.m_fisheyeFieldOfView = cfg_fviSEIFisheyeFieldOfView.values[i];
-      assert(
-        cfg_fviSEIFisheyeNumPolynomialCoeffs.values[i] >= 0
-        && cfg_fviSEIFisheyeNumPolynomialCoeffs.values[i] <= 8);
+      assert(cfg_fviSEIFisheyeNumPolynomialCoeffs.values[i] >= 0
+             && cfg_fviSEIFisheyeNumPolynomialCoeffs.values[i] <= 8);
       info.m_fisheyePolynomialCoeff.resize(
         cfg_fviSEIFisheyeNumPolynomialCoeffs.values[i]);
 
       for (int& j : info.m_fisheyePolynomialCoeff) {
-        assert(
-          cfg_fviSEIFisheyePolynomialCoeff.values.size()
-          > extractPolynomialIdx);
+        assert(cfg_fviSEIFisheyePolynomialCoeff.values.size()
+               > extractPolynomialIdx);
         j = cfg_fviSEIFisheyePolynomialCoeff.values[extractPolynomialIdx++];
       }
     }
   }
-#endif
+#  endif
   if (m_timeCodeSEIEnabled) {
     for (Int i = 0; i < m_timeCodeSEINumTs && i < MAX_TIMECODE_SEI_SETS; i++) {
       m_timeSetArray[i].clockTimeStampFlag =
         cfg_timeCodeSeiTimeStampFlag.values.size() > i
-        ? cfg_timeCodeSeiTimeStampFlag.values[i]
-        : false;
+          ? cfg_timeCodeSeiTimeStampFlag.values[i]
+          : false;
       m_timeSetArray[i].numUnitFieldBasedFlag =
         ((cfg_timeCodeSeiNumUnitFieldBasedFlag.values.size() > i
             ? static_cast<int>(cfg_timeCodeSeiNumUnitFieldBasedFlag.values[i])
@@ -2476,8 +2484,8 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
          != 0);
       m_timeSetArray[i].countingType =
         cfg_timeCodeSeiCountingType.values.size() > i
-        ? cfg_timeCodeSeiCountingType.values[i]
-        : 0;
+          ? cfg_timeCodeSeiCountingType.values[i]
+          : 0;
       m_timeSetArray[i].fullTimeStampFlag =
         ((cfg_timeCodeSeiFullTimeStampFlag.values.size() > i
             ? static_cast<int>(cfg_timeCodeSeiFullTimeStampFlag.values[i])
@@ -2495,20 +2503,20 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
          != 0);
       m_timeSetArray[i].numberOfFrames =
         cfg_timeCodeSeiNumberOfFrames.values.size() > i
-        ? cfg_timeCodeSeiNumberOfFrames.values[i]
-        : 0;
+          ? cfg_timeCodeSeiNumberOfFrames.values[i]
+          : 0;
       m_timeSetArray[i].secondsValue =
         cfg_timeCodeSeiSecondsValue.values.size() > i
-        ? cfg_timeCodeSeiSecondsValue.values[i]
-        : 0;
+          ? cfg_timeCodeSeiSecondsValue.values[i]
+          : 0;
       m_timeSetArray[i].minutesValue =
         cfg_timeCodeSeiMinutesValue.values.size() > i
-        ? cfg_timeCodeSeiMinutesValue.values[i]
-        : 0;
+          ? cfg_timeCodeSeiMinutesValue.values[i]
+          : 0;
       m_timeSetArray[i].hoursValue =
         cfg_timeCodeSeiHoursValue.values.size() > i
-        ? cfg_timeCodeSeiHoursValue.values[i]
-        : 0;
+          ? cfg_timeCodeSeiHoursValue.values[i]
+          : 0;
       m_timeSetArray[i].secondsFlag =
         ((cfg_timeCodeSeiSecondsFlag.values.size() > i
             ? static_cast<int>(cfg_timeCodeSeiSecondsFlag.values[i])
@@ -2526,12 +2534,12 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
          != 0);
       m_timeSetArray[i].timeOffsetLength =
         cfg_timeCodeSeiTimeOffsetLength.values.size() > i
-        ? cfg_timeCodeSeiTimeOffsetLength.values[i]
-        : 0;
+          ? cfg_timeCodeSeiTimeOffsetLength.values[i]
+          : 0;
       m_timeSetArray[i].timeOffsetValue =
         cfg_timeCodeSeiTimeOffsetValue.values.size() > i
-        ? cfg_timeCodeSeiTimeOffsetValue.values[i]
-        : 0;
+          ? cfg_timeCodeSeiTimeOffsetValue.values[i]
+          : 0;
     }
   }
 
@@ -2545,7 +2553,8 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
     uiAddCUDepth++;
   }
 
-  m_uiMaxTotalCUDepth = m_uiMaxCUDepth + uiAddCUDepth
+  m_uiMaxTotalCUDepth =
+    m_uiMaxCUDepth + uiAddCUDepth
     + getMaxCUDepthOffset(m_chromaFormatIDC,
                           m_uiQuadtreeTULog2MinSize);  // if minimum TU larger
   // than 4x4, allow for
@@ -2565,8 +2574,7 @@ hmLibVideoEncoderCfg::parseCfg(Int argc, TChar* argv[])
 // ====================================================================================================================
 
 Void
-hmLibVideoEncoderCfg::xCheckParameter()
-{
+hmLibVideoEncoderCfg::xCheckParameter() {
   if (m_decodedPictureHashSEIType == HASHTYPE_NONE) {
     fprintf(
       stderr,
@@ -2585,10 +2593,9 @@ hmLibVideoEncoderCfg::xCheckParameter()
       stderr,
       "******************************************************************"
       "*********\n");
-    fprintf(
-      stderr,
-      "** WARNING: For conforming bitstreams a valid Profile value must "
-      "be set! **\n");
+    fprintf(stderr,
+            "** WARNING: For conforming bitstreams a valid Profile value must "
+            "be set! **\n");
     fprintf(
       stderr,
       "******************************************************************"
@@ -2613,42 +2620,37 @@ hmLibVideoEncoderCfg::xCheckParameter()
     false; /* abort if there is a fatal configuration problem */
 #  define xConfirmPara(a, b) check_failed |= confirmPara(a, b)
 
-  xConfirmPara(
-    m_bitstreamFileName.empty(),
-    "A bitstream file name must be specified (BitstreamFile)");
-  const UInt maxBitDepth = (m_chromaFormatIDC == CHROMA_400)
-    ? m_internalBitDepth[CHANNEL_TYPE_LUMA]
-    : std::max(
-      m_internalBitDepth[CHANNEL_TYPE_LUMA],
-      m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-  xConfirmPara(
-    m_bitDepthConstraint < maxBitDepth,
-    "The internalBitDepth must not be greater than the "
-    "bitDepthConstraint value");
-  xConfirmPara(
-    m_chromaFormatConstraint < m_chromaFormatIDC,
-    "The chroma format used must not be greater than the "
-    "chromaFormatConstraint value");
+  xConfirmPara(m_bitstreamFileName.empty(),
+               "A bitstream file name must be specified (BitstreamFile)");
+  const UInt maxBitDepth =
+    (m_chromaFormatIDC == CHROMA_400)
+      ? m_internalBitDepth[CHANNEL_TYPE_LUMA]
+      : std::max(m_internalBitDepth[CHANNEL_TYPE_LUMA],
+                 m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+  xConfirmPara(m_bitDepthConstraint < maxBitDepth,
+               "The internalBitDepth must not be greater than the "
+               "bitDepthConstraint value");
+  xConfirmPara(m_chromaFormatConstraint < m_chromaFormatIDC,
+               "The chroma format used must not be greater than the "
+               "chromaFormatConstraint value");
 
   switch (m_profile) {
   case Profile::MAINREXT:
   case Profile::HIGHTHROUGHPUTREXT:
   case Profile::MAINSCC:
   case Profile::HIGHTHROUGHPUTSCC: {
-    xConfirmPara(
-      m_lowerBitRateConstraintFlag == false && m_intraConstraintFlag == false,
-      "The lowerBitRateConstraint flag cannot be false when "
-      "intraConstraintFlag is false");
-    xConfirmPara(
-      m_cabacBypassAlignmentEnabledFlag
-        && m_profile != Profile::HIGHTHROUGHPUTREXT,
-      "AlignCABACBeforeBypass must not be enabled unless the high "
-      "throughput profile is being used.");
+    xConfirmPara(m_lowerBitRateConstraintFlag == false
+                   && m_intraConstraintFlag == false,
+                 "The lowerBitRateConstraint flag cannot be false when "
+                 "intraConstraintFlag is false");
+    xConfirmPara(m_cabacBypassAlignmentEnabledFlag
+                   && m_profile != Profile::HIGHTHROUGHPUTREXT,
+                 "AlignCABACBeforeBypass must not be enabled unless the high "
+                 "throughput profile is being used.");
     xConfirmPara(
       m_useIntraBlockCopy
-        && !(
-          m_profile == Profile::MAINSCC
-          || m_profile == Profile::HIGHTHROUGHPUTSCC),
+        && !(m_profile == Profile::MAINSCC
+             || m_profile == Profile::HIGHTHROUGHPUTSCC),
       "UseIntraBlockCopy must not be enabled unless the SCC profile is "
       "being used.");
     if (m_profile == Profile::MAINREXT) {
@@ -2656,88 +2658,74 @@ hmLibVideoEncoderCfg::xCheckParameter()
       const UInt bitDepthIdx =
         (m_bitDepthConstraint == 8
            ? 0
-           : (
-             m_bitDepthConstraint == 10
-               ? 1
-               : (
-                 m_bitDepthConstraint == 12
-                   ? 2
-                   : (m_bitDepthConstraint == 16 ? 3 : 4))));
+           : (m_bitDepthConstraint == 10
+                ? 1
+                : (m_bitDepthConstraint == 12
+                     ? 2
+                     : (m_bitDepthConstraint == 16 ? 3 : 4))));
       const UInt chromaFormatIdx = UInt(m_chromaFormatConstraint);
-      const Bool bValidProfile = (bitDepthIdx > 3 || chromaFormatIdx > 3)
-        ? false
-        : (
-          validRExtProfileNames[intraIdx][bitDepthIdx][chromaFormatIdx]
-          != UI_NONE);
-      xConfirmPara(
-        !bValidProfile,
-        "Invalid intra constraint flag, bit depth constraint flag "
-        "and chroma format constraint flag combination for a RExt "
-        "profile");
-      const Bool bUsingGeneralRExtTools = m_transformSkipRotationEnabledFlag
-        || m_transformSkipContextEnabledFlag
+      const Bool bValidProfile =
+        (bitDepthIdx > 3 || chromaFormatIdx > 3)
+          ? false
+          : (validRExtProfileNames[intraIdx][bitDepthIdx][chromaFormatIdx]
+             != UI_NONE);
+      xConfirmPara(!bValidProfile,
+                   "Invalid intra constraint flag, bit depth constraint flag "
+                   "and chroma format constraint flag combination for a RExt "
+                   "profile");
+      const Bool bUsingGeneralRExtTools =
+        m_transformSkipRotationEnabledFlag || m_transformSkipContextEnabledFlag
         || m_rdpcmEnabledFlag[RDPCM_SIGNAL_IMPLICIT]
         || m_rdpcmEnabledFlag[RDPCM_SIGNAL_EXPLICIT]
         || !m_enableIntraReferenceSmoothing
         || m_persistentRiceAdaptationEnabledFlag
         || m_log2MaxTransformSkipBlockSize != 2;
-      const Bool bUsingChromaQPTool = m_diffCuChromaQpOffsetDepth >= 0;
+      const Bool bUsingChromaQPTool      = m_diffCuChromaQpOffsetDepth >= 0;
       const Bool bUsingExtendedPrecision = m_extendedPrecisionProcessingFlag;
 
-      xConfirmPara(
-        (m_chromaFormatConstraint == CHROMA_420
-         || m_chromaFormatConstraint == CHROMA_400)
-          && bUsingChromaQPTool,
-        "CU Chroma QP adjustment cannot be used for 4:0:0 or "
-        "4:2:0 RExt profiles");
+      xConfirmPara((m_chromaFormatConstraint == CHROMA_420
+                    || m_chromaFormatConstraint == CHROMA_400)
+                     && bUsingChromaQPTool,
+                   "CU Chroma QP adjustment cannot be used for 4:0:0 or "
+                   "4:2:0 RExt profiles");
       xConfirmPara(
         m_bitDepthConstraint != 16 && bUsingExtendedPrecision,
         "Extended precision can only be used in 16-bit RExt profiles");
-      if (
-        (m_chromaFormatConstraint != CHROMA_400 || m_bitDepthConstraint != 16)
-        && m_chromaFormatConstraint != CHROMA_444) {
-        xConfirmPara(
-          bUsingGeneralRExtTools,
-          "Combination of tools and profiles are not possible in "
-          "the specified RExt profile.");
+      if ((m_chromaFormatConstraint != CHROMA_400
+           || m_bitDepthConstraint != 16)
+          && m_chromaFormatConstraint != CHROMA_444) {
+        xConfirmPara(bUsingGeneralRExtTools,
+                     "Combination of tools and profiles are not possible in "
+                     "the specified RExt profile.");
       }
-      xConfirmPara(
-        m_onePictureOnlyConstraintFlag
-          && m_chromaFormatConstraint != CHROMA_444,
-        "chroma format constraint must be 4:4:4 when "
-        "one-picture-only constraint flag is 1");
-      xConfirmPara(
-        m_onePictureOnlyConstraintFlag && m_bitDepthConstraint != 8
-          && m_bitDepthConstraint != 16,
-        "bit depth constraint must be 8 or 16 when "
-        "one-picture-only constraint flag is 1");
-      xConfirmPara(
-        m_onePictureOnlyConstraintFlag && m_framesToBeEncoded > 1,
-        "Number of frames to be encoded must be 1 when "
-        "one-picture-only constraint flag is 1.");
+      xConfirmPara(m_onePictureOnlyConstraintFlag
+                     && m_chromaFormatConstraint != CHROMA_444,
+                   "chroma format constraint must be 4:4:4 when "
+                   "one-picture-only constraint flag is 1");
+      xConfirmPara(m_onePictureOnlyConstraintFlag && m_bitDepthConstraint != 8
+                     && m_bitDepthConstraint != 16,
+                   "bit depth constraint must be 8 or 16 when "
+                   "one-picture-only constraint flag is 1");
+      xConfirmPara(m_onePictureOnlyConstraintFlag && m_framesToBeEncoded > 1,
+                   "Number of frames to be encoded must be 1 when "
+                   "one-picture-only constraint flag is 1.");
 
-      if (
-        !m_intraConstraintFlag && m_bitDepthConstraint == 16
-        && m_chromaFormatConstraint == CHROMA_444) {
-        fprintf(
-          stderr,
-          "************************************************************"
-          "********************************************\n");
-        fprintf(
-          stderr,
-          "** WARNING: The RExt constraint flags describe a non "
-          "standard combination (used for development only) **\n");
-        fprintf(
-          stderr,
-          "************************************************************"
-          "********************************************\n");
+      if (!m_intraConstraintFlag && m_bitDepthConstraint == 16
+          && m_chromaFormatConstraint == CHROMA_444) {
+        fprintf(stderr,
+                "************************************************************"
+                "********************************************\n");
+        fprintf(stderr,
+                "** WARNING: The RExt constraint flags describe a non "
+                "standard combination (used for development only) **\n");
+        fprintf(stderr,
+                "************************************************************"
+                "********************************************\n");
       }
-    } else if (
-      m_profile == Profile::MAINSCC
-      || m_profile == Profile::HIGHTHROUGHPUTSCC) {
-      xConfirmPara(
-        m_intraConstraintFlag,
-        "intra constraint flag must be 0 for SCC profiles");
+    } else if (m_profile == Profile::MAINSCC
+               || m_profile == Profile::HIGHTHROUGHPUTSCC) {
+      xConfirmPara(m_intraConstraintFlag,
+                   "intra constraint flag must be 0 for SCC profiles");
       xConfirmPara(
         m_onePictureOnlyConstraintFlag,
         "one-picture-only constraint flag shall be 0 for SCC profiles");
@@ -2746,81 +2734,69 @@ hmLibVideoEncoderCfg::xCheckParameter()
       const UInt bitDepthIdx =
         (m_bitDepthConstraint == 8
            ? 0
-           : (
-             m_bitDepthConstraint == 10
-               ? 1
-               : (
-                 m_bitDepthConstraint == 12
-                   ? 2
-                   : (m_bitDepthConstraint == 16 ? 3 : 4))));
+           : (m_bitDepthConstraint == 10
+                ? 1
+                : (m_bitDepthConstraint == 12
+                     ? 2
+                     : (m_bitDepthConstraint == 16 ? 3 : 4))));
       const UInt chromaFormatIdx = UInt(m_chromaFormatConstraint);
-      const Bool bValidProfile = (bitDepthIdx > 2 || chromaFormatIdx > 3)
-        ? false
-        : (
-          validSCCProfileNames[sccHighThroughputIdx][bitDepthIdx]
-                              [chromaFormatIdx]
-          != UI_NONE);
-      xConfirmPara(
-        !bValidProfile,
-        "Invalid intra constraint flag, bit depth constraint flag "
-        "and chroma format constraint flag combination for a RExt "
-        "profile");
+      const Bool bValidProfile =
+        (bitDepthIdx > 2 || chromaFormatIdx > 3)
+          ? false
+          : (validSCCProfileNames[sccHighThroughputIdx][bitDepthIdx]
+                                 [chromaFormatIdx]
+             != UI_NONE);
+      xConfirmPara(!bValidProfile,
+                   "Invalid intra constraint flag, bit depth constraint flag "
+                   "and chroma format constraint flag combination for a RExt "
+                   "profile");
 
-      const Bool bUsingChromaQPTool = m_diffCuChromaQpOffsetDepth >= 0;
+      const Bool bUsingChromaQPTool      = m_diffCuChromaQpOffsetDepth >= 0;
       const Bool bUsingExtendedPrecision = m_extendedPrecisionProcessingFlag;
 
-      xConfirmPara(
-        (m_chromaFormatConstraint == CHROMA_420
-         || m_chromaFormatConstraint == CHROMA_400)
-          && bUsingChromaQPTool,
-        "CU Chroma QP adjustment cannot be used for 4:0:0 or "
-        "4:2:0 RExt profiles");
-      xConfirmPara(
-        bUsingExtendedPrecision,
-        "Extended precision cannot be used for SCC profile");
+      xConfirmPara((m_chromaFormatConstraint == CHROMA_420
+                    || m_chromaFormatConstraint == CHROMA_400)
+                     && bUsingChromaQPTool,
+                   "CU Chroma QP adjustment cannot be used for 4:0:0 or "
+                   "4:2:0 RExt profiles");
+      xConfirmPara(bUsingExtendedPrecision,
+                   "Extended precision cannot be used for SCC profile");
     } else {
-      xConfirmPara(
-        m_chromaFormatConstraint != CHROMA_444,
-        "chroma format constraint must be 4:4:4 in the High "
-        "Throughput 4:4:4 16-bit Intra profile.");
+      xConfirmPara(m_chromaFormatConstraint != CHROMA_444,
+                   "chroma format constraint must be 4:4:4 in the High "
+                   "Throughput 4:4:4 16-bit Intra profile.");
       const UInt intraIdx = m_intraConstraintFlag ? 1 : 0;
       const UInt bitDepthIdx =
         (m_bitDepthConstraint == 8
            ? 0
-           : (
-             m_bitDepthConstraint == 10
-               ? 1
-               : (
-                 m_bitDepthConstraint == 14
-                   ? 2
-                   : (m_bitDepthConstraint == 16 ? 3 : 4))));
-      const Bool bValidProfile = (bitDepthIdx > 3)
-        ? false
-        : (
-          validRExtHighThroughPutProfileNames[intraIdx][bitDepthIdx]
-          != UI_NONE);
-      xConfirmPara(
-        !bValidProfile,
-        "Invalid intra constraint flag and bit depth constraint "
-        "flag combination for a RExt high profile throughput "
-        "profile");
+           : (m_bitDepthConstraint == 10
+                ? 1
+                : (m_bitDepthConstraint == 14
+                     ? 2
+                     : (m_bitDepthConstraint == 16 ? 3 : 4))));
+      const Bool bValidProfile =
+        (bitDepthIdx > 3)
+          ? false
+          : (validRExtHighThroughPutProfileNames[intraIdx][bitDepthIdx]
+             != UI_NONE);
+      xConfirmPara(!bValidProfile,
+                   "Invalid intra constraint flag and bit depth constraint "
+                   "flag combination for a RExt high profile throughput "
+                   "profile");
       if (bitDepthIdx < 2) {
-        xConfirmPara(
-          (m_extendedPrecisionProcessingFlag
-           || m_cabacBypassAlignmentEnabledFlag),
-          "Invalid configuration for a RExt high throughput 8 and "
-          "10 bit profile");
+        xConfirmPara((m_extendedPrecisionProcessingFlag
+                      || m_cabacBypassAlignmentEnabledFlag),
+                     "Invalid configuration for a RExt high throughput 8 and "
+                     "10 bit profile");
       }
       if (bitDepthIdx == 3) {
-        xConfirmPara(
-          !m_cabacBypassAlignmentEnabledFlag,
-          "Cabac Bypass Alignment flag must be 1 in the High "
-          "Throughput 4:4:4 16-bit Intra profile");
+        xConfirmPara(!m_cabacBypassAlignmentEnabledFlag,
+                     "Cabac Bypass Alignment flag must be 1 in the High "
+                     "Throughput 4:4:4 16-bit Intra profile");
       } else if (bitDepthIdx < 3) {
-        xConfirmPara(
-          !m_entropyCodingSyncEnabledFlag,
-          "WPP flag must be 1 in the High Throughput 4:4:4 non "
-          "16-bit Intra profile");
+        xConfirmPara(!m_entropyCodingSyncEnabledFlag,
+                     "WPP flag must be 1 in the High Throughput 4:4:4 non "
+                     "16-bit Intra profile");
       }
     }
   } break;
@@ -2837,61 +2813,49 @@ hmLibVideoEncoderCfg::xCheckParameter()
     xConfirmPara(
       m_intraConstraintFlag == true,
       "IntraConstraintFlag must be false for non main_RExt profiles.");
-    xConfirmPara(
-      m_lowerBitRateConstraintFlag == false,
-      "LowerBitrateConstraintFlag must be true for non main-RExt "
-      "profiles.");
+    xConfirmPara(m_lowerBitRateConstraintFlag == false,
+                 "LowerBitrateConstraintFlag must be true for non main-RExt "
+                 "profiles.");
     xConfirmPara(
       m_profile == Profile::MAINSTILLPICTURE && m_framesToBeEncoded > 1,
       "Number of frames to be encoded must be 1 when main still picture "
       "profile is used.");
 
-    xConfirmPara(
-      m_crossComponentPredictionEnabledFlag == true,
-      "CrossComponentPrediction must not be used for non "
-      "main-RExt profiles.");
-    xConfirmPara(
-      m_log2MaxTransformSkipBlockSize != 2,
-      "Transform Skip Log2 Max Size must be 2 for V1 profiles.");
-    xConfirmPara(
-      m_transformSkipRotationEnabledFlag == true,
-      "UseResidualRotation must not be enabled for non main-RExt "
-      "profiles.");
-    xConfirmPara(
-      m_transformSkipContextEnabledFlag == true,
-      "UseSingleSignificanceMapContext must not be enabled for "
-      "non main-RExt profiles.");
-    xConfirmPara(
-      m_rdpcmEnabledFlag[RDPCM_SIGNAL_IMPLICIT] == true,
-      "ImplicitResidualDPCM must not be enabled for non main-RExt "
-      "profiles.");
-    xConfirmPara(
-      m_rdpcmEnabledFlag[RDPCM_SIGNAL_EXPLICIT] == true,
-      "ExplicitResidualDPCM must not be enabled for non main-RExt "
-      "profiles.");
-    xConfirmPara(
-      m_persistentRiceAdaptationEnabledFlag == true,
-      "GolombRiceParameterAdaption must not be enabled for non "
-      "main-RExt profiles.");
-    xConfirmPara(
-      m_extendedPrecisionProcessingFlag == true,
-      "UseExtendedPrecision must not be enabled for non main-RExt "
-      "profiles.");
-    xConfirmPara(
-      m_highPrecisionOffsetsEnabledFlag == true,
-      "UseHighPrecisionPredictionWeighting must not be enabled "
-      "for non main-RExt profiles.");
+    xConfirmPara(m_crossComponentPredictionEnabledFlag == true,
+                 "CrossComponentPrediction must not be used for non "
+                 "main-RExt profiles.");
+    xConfirmPara(m_log2MaxTransformSkipBlockSize != 2,
+                 "Transform Skip Log2 Max Size must be 2 for V1 profiles.");
+    xConfirmPara(m_transformSkipRotationEnabledFlag == true,
+                 "UseResidualRotation must not be enabled for non main-RExt "
+                 "profiles.");
+    xConfirmPara(m_transformSkipContextEnabledFlag == true,
+                 "UseSingleSignificanceMapContext must not be enabled for "
+                 "non main-RExt profiles.");
+    xConfirmPara(m_rdpcmEnabledFlag[RDPCM_SIGNAL_IMPLICIT] == true,
+                 "ImplicitResidualDPCM must not be enabled for non main-RExt "
+                 "profiles.");
+    xConfirmPara(m_rdpcmEnabledFlag[RDPCM_SIGNAL_EXPLICIT] == true,
+                 "ExplicitResidualDPCM must not be enabled for non main-RExt "
+                 "profiles.");
+    xConfirmPara(m_persistentRiceAdaptationEnabledFlag == true,
+                 "GolombRiceParameterAdaption must not be enabled for non "
+                 "main-RExt profiles.");
+    xConfirmPara(m_extendedPrecisionProcessingFlag == true,
+                 "UseExtendedPrecision must not be enabled for non main-RExt "
+                 "profiles.");
+    xConfirmPara(m_highPrecisionOffsetsEnabledFlag == true,
+                 "UseHighPrecisionPredictionWeighting must not be enabled "
+                 "for non main-RExt profiles.");
     xConfirmPara(
       m_useIntraBlockCopy == true,
       "UseIntraBlockCopy must not be enabled for non main-RExt profiles.");
-    xConfirmPara(
-      m_enableIntraReferenceSmoothing == false,
-      "EnableIntraReferenceSmoothing must be enabled for non "
-      "main-RExt profiles.");
-    xConfirmPara(
-      m_cabacBypassAlignmentEnabledFlag,
-      "AlignCABACBeforeBypass cannot be enabled for non main-RExt "
-      "profiles.");
+    xConfirmPara(m_enableIntraReferenceSmoothing == false,
+                 "EnableIntraReferenceSmoothing must be enabled for non "
+                 "main-RExt profiles.");
+    xConfirmPara(m_cabacBypassAlignmentEnabledFlag,
+                 "AlignCABACBeforeBypass cannot be enabled for non main-RExt "
+                 "profiles.");
   } break;
   case Profile::NONE:
     // Non-conforming configuration, so all settings are valid.
@@ -2900,29 +2864,25 @@ hmLibVideoEncoderCfg::xCheckParameter()
   }
 
   // check range of parameters
-  xConfirmPara(
-    m_inputBitDepth[CHANNEL_TYPE_LUMA] < 8,
-    "InputBitDepth must be at least 8");
-  xConfirmPara(
-    m_inputBitDepth[CHANNEL_TYPE_CHROMA] < 8,
-    "InputBitDepthC must be at least 8");
+  xConfirmPara(m_inputBitDepth[CHANNEL_TYPE_LUMA] < 8,
+               "InputBitDepth must be at least 8");
+  xConfirmPara(m_inputBitDepth[CHANNEL_TYPE_CHROMA] < 8,
+               "InputBitDepthC must be at least 8");
 
 #  if !RExt__HIGH_BIT_DEPTH_SUPPORT
   if (m_extendedPrecisionProcessingFlag) {
     for (int channelType : m_internalBitDepth) {
-      xConfirmPara(
-        (channelType > 8),
-        "Model is not configured to support high enough internal "
-        "accuracies - enable RExt__HIGH_BIT_DEPTH_SUPPORT to use "
-        "increased precision internal data types etc...");
+      xConfirmPara((channelType > 8),
+                   "Model is not configured to support high enough internal "
+                   "accuracies - enable RExt__HIGH_BIT_DEPTH_SUPPORT to use "
+                   "increased precision internal data types etc...");
     }
   } else {
     for (int channelType : m_internalBitDepth) {
-      xConfirmPara(
-        (channelType > 12),
-        "Model is not configured to support high enough internal "
-        "accuracies - enable RExt__HIGH_BIT_DEPTH_SUPPORT to use "
-        "increased precision internal data types etc...");
+      xConfirmPara((channelType > 12),
+                   "Model is not configured to support high enough internal "
+                   "accuracies - enable RExt__HIGH_BIT_DEPTH_SUPPORT to use "
+                   "increased precision internal data types etc...");
     }
   }
 #  endif
@@ -2933,57 +2893,53 @@ hmLibVideoEncoderCfg::xCheckParameter()
     "MSB-extended bit depth for luma channel "
     "(--MSBExtendedBitDepth) must be greater than or equal to input "
     "bit depth for luma channel (--InputBitDepth)");
-  xConfirmPara(
-    (m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]
-     < m_inputBitDepth[CHANNEL_TYPE_CHROMA]),
-    "MSB-extended bit depth for chroma channel "
-    "(--MSBExtendedBitDepthC) must be greater than or equal to "
-    "input bit depth for chroma channel (--InputBitDepthC)");
+  xConfirmPara((m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]
+                < m_inputBitDepth[CHANNEL_TYPE_CHROMA]),
+               "MSB-extended bit depth for chroma channel "
+               "(--MSBExtendedBitDepthC) must be greater than or equal to "
+               "input bit depth for chroma channel (--InputBitDepthC)");
 
-  xConfirmPara(
-    m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA]
-      > (m_internalBitDepth[CHANNEL_TYPE_LUMA] < 10 ? 0 : (m_internalBitDepth[CHANNEL_TYPE_LUMA] - 10)),
-    "SaoLumaOffsetBitShift must be in the range of 0 to "
-    "InternalBitDepth-10, inclusive");
-  xConfirmPara(
-    m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA]
-      > (m_internalBitDepth[CHANNEL_TYPE_CHROMA] < 10 ? 0 : (m_internalBitDepth[CHANNEL_TYPE_CHROMA] - 10)),
-    "SaoChromaOffsetBitShift must be in the range of 0 to "
-    "InternalBitDepthC-10, inclusive");
+  xConfirmPara(m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA]
+                 > (m_internalBitDepth[CHANNEL_TYPE_LUMA] < 10
+                      ? 0
+                      : (m_internalBitDepth[CHANNEL_TYPE_LUMA] - 10)),
+               "SaoLumaOffsetBitShift must be in the range of 0 to "
+               "InternalBitDepth-10, inclusive");
+  xConfirmPara(m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA]
+                 > (m_internalBitDepth[CHANNEL_TYPE_CHROMA] < 10
+                      ? 0
+                      : (m_internalBitDepth[CHANNEL_TYPE_CHROMA] - 10)),
+               "SaoChromaOffsetBitShift must be in the range of 0 to "
+               "InternalBitDepthC-10, inclusive");
 
-  xConfirmPara(
-    m_chromaFormatIDC >= NUM_CHROMA_FORMAT,
-    "ChromaFormatIDC must be either 400, 420, 422 or 444");
+  xConfirmPara(m_chromaFormatIDC >= NUM_CHROMA_FORMAT,
+               "ChromaFormatIDC must be either 400, 420, 422 or 444");
   std::string sTempIPCSC = "InputColourSpaceConvert must be empty, "
-    + getListOfColourSpaceConverts(true);
-  xConfirmPara(
-    m_inputColourSpaceConvert >= NUMBER_INPUT_COLOUR_SPACE_CONVERSIONS,
-    sTempIPCSC.c_str());
-  xConfirmPara(
-    m_InputChromaFormatIDC >= NUM_CHROMA_FORMAT,
-    "InputChromaFormatIDC must be either 400, 420, 422 or 444");
+                           + getListOfColourSpaceConverts(true);
+  xConfirmPara(m_inputColourSpaceConvert
+                 >= NUMBER_INPUT_COLOUR_SPACE_CONVERSIONS,
+               sTempIPCSC.c_str());
+  xConfirmPara(m_InputChromaFormatIDC >= NUM_CHROMA_FORMAT,
+               "InputChromaFormatIDC must be either 400, 420, 422 or 444");
   xConfirmPara(m_iFrameRate <= 0, "Frame rate must be more than 1");
-  xConfirmPara(
-    m_temporalSubsampleRatio < 1,
-    "Temporal subsample rate must be no less than 1");
-  xConfirmPara(
-    m_framesToBeEncoded <= 0,
-    "Total Number Of Frames encoded must be more than 0");
+  xConfirmPara(m_temporalSubsampleRatio < 1,
+               "Temporal subsample rate must be no less than 1");
+  xConfirmPara(m_framesToBeEncoded <= 0,
+               "Total Number Of Frames encoded must be more than 0");
   xConfirmPara(m_iGOPSize < 1, "GOP Size must be greater or equal to 1");
   xConfirmPara(
     m_iGOPSize > 1 && m_iGOPSize % 2,
     "GOP Size must be a multiple of 2, if GOP Size is greater than 1");
-  xConfirmPara(
-    (m_iIntraPeriod > 0 && m_iIntraPeriod < m_iGOPSize) || m_iIntraPeriod == 0,
-    "Intra period must be more than GOP size, or -1 , not 0");
+  xConfirmPara((m_iIntraPeriod > 0 && m_iIntraPeriod < m_iGOPSize)
+                 || m_iIntraPeriod == 0,
+               "Intra period must be more than GOP size, or -1 , not 0");
   xConfirmPara(
     m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 3,
     "Decoding Refresh Type must be comprised between 0 and 3 included");
   if (m_iDecodingRefreshType == 3) {
-    xConfirmPara(
-      !m_recoveryPointSEIEnabled,
-      "When using RecoveryPointSEI messages as RA points, "
-      "recoveryPointSEI must be enabled");
+    xConfirmPara(!m_recoveryPointSEIEnabled,
+                 "When using RecoveryPointSEI messages as RA points, "
+                 "recoveryPointSEI must be enabled");
   }
 
   if (m_isField) {
@@ -2992,10 +2948,9 @@ hmLibVideoEncoderCfg::xCheckParameter()
         stderr,
         "****************************************************************"
         "************\n");
-      fprintf(
-        stderr,
-        "** WARNING: Picture Timing SEI should be enabled for field "
-        "coding! **\n");
+      fprintf(stderr,
+              "** WARNING: Picture Timing SEI should be enabled for field "
+              "coding! **\n");
       fprintf(
         stderr,
         "****************************************************************"
@@ -3003,17 +2958,15 @@ hmLibVideoEncoderCfg::xCheckParameter()
     }
   }
 
-  if (
-    m_crossComponentPredictionEnabledFlag
-    && (m_chromaFormatIDC != CHROMA_444)) {
+  if (m_crossComponentPredictionEnabledFlag
+      && (m_chromaFormatIDC != CHROMA_444)) {
     fprintf(
       stderr,
       "******************************************************************"
       "**********\n");
-    fprintf(
-      stderr,
-      "** WARNING: Cross-component prediction is specified for 4:4:4 "
-      "format only **\n");
+    fprintf(stderr,
+            "** WARNING: Cross-component prediction is specified for 4:4:4 "
+            "format only **\n");
     fprintf(
       stderr,
       "******************************************************************"
@@ -3027,28 +2980,9 @@ hmLibVideoEncoderCfg::xCheckParameter()
       stderr,
       "******************************************************************"
       "*********\n");
-    fprintf(
-      stderr,
-      "** WARNING: Adaptive Colour transform is specified for 4:4:4 "
-      "format only **\n");
-    fprintf(
-      stderr,
-      "******************************************************************"
-      "*********\n");
-
-    m_useColourTrans = false;
-  }
-  if (
-    m_useColourTrans && m_profile != Profile::MAINSCC
-    && m_profile != Profile::HIGHTHROUGHPUTSCC) {
-    fprintf(
-      stderr,
-      "******************************************************************"
-      "*********\n");
-    fprintf(
-      stderr,
-      "** WARNING: Adaptive Colour transform can be used in SCC profile "
-      "only **\n");
+    fprintf(stderr,
+            "** WARNING: Adaptive Colour transform is specified for 4:4:4 "
+            "format only **\n");
     fprintf(
       stderr,
       "******************************************************************"
@@ -3056,23 +2990,36 @@ hmLibVideoEncoderCfg::xCheckParameter()
 
     m_useColourTrans = false;
   }
-  if (
-    m_useColourTrans && m_TransquantBypassEnabledFlag
-    && m_CUTransquantBypassFlagForce
-    && m_internalBitDepth[CHANNEL_TYPE_LUMA]
-      != m_internalBitDepth[CHANNEL_TYPE_CHROMA]) {
+  if (m_useColourTrans && m_profile != Profile::MAINSCC
+      && m_profile != Profile::HIGHTHROUGHPUTSCC) {
     fprintf(
       stderr,
       "******************************************************************"
       "*********\n");
+    fprintf(stderr,
+            "** WARNING: Adaptive Colour transform can be used in SCC profile "
+            "only **\n");
     fprintf(
       stderr,
-      "** WARNING: Adaptive Colour transform is not used for lossless "
-      "coding **\n");
+      "******************************************************************"
+      "*********\n");
+
+    m_useColourTrans = false;
+  }
+  if (m_useColourTrans && m_TransquantBypassEnabledFlag
+      && m_CUTransquantBypassFlagForce
+      && m_internalBitDepth[CHANNEL_TYPE_LUMA]
+           != m_internalBitDepth[CHANNEL_TYPE_CHROMA]) {
     fprintf(
       stderr,
-      "** with different luma and chroma bit depth "
-      " **\n");
+      "******************************************************************"
+      "*********\n");
+    fprintf(stderr,
+            "** WARNING: Adaptive Colour transform is not used for lossless "
+            "coding **\n");
+    fprintf(stderr,
+            "** with different luma and chroma bit depth "
+            " **\n");
     fprintf(
       stderr,
       "******************************************************************"
@@ -3081,15 +3028,14 @@ hmLibVideoEncoderCfg::xCheckParameter()
     m_useColourTrans = false;
   }
 
-  if (
-    m_usePaletteMode && m_profile != Profile::MAINSCC
-    && m_profile != Profile::HIGHTHROUGHPUTSCC) {
+  if (m_usePaletteMode && m_profile != Profile::MAINSCC
+      && m_profile != Profile::HIGHTHROUGHPUTSCC) {
     fprintf(
       stderr,
       "******************************************************************"
       "*********\n");
-    fprintf(
-      stderr, "** WARNING: Palette mode can be used in SCC profile only **\n");
+    fprintf(stderr,
+            "** WARNING: Palette mode can be used in SCC profile only **\n");
     fprintf(
       stderr,
       "******************************************************************"
@@ -3107,10 +3053,9 @@ hmLibVideoEncoderCfg::xCheckParameter()
       stderr,
       "** WARNING: --HadamardME has been disabled due to the enabling of "
       " **\n");
-    fprintf(
-      stderr,
-      "** --CUTransquantBypassFlagForce "
-      " **\n");
+    fprintf(stderr,
+            "** --CUTransquantBypassFlagForce "
+            " **\n");
     fprintf(
       stderr,
       "******************************************************************"
@@ -3121,23 +3066,20 @@ hmLibVideoEncoderCfg::xCheckParameter()
     // (as a result of JCTVC-R0104).
   }
 
-  xConfirmPara(
-    m_log2MaxTransformSkipBlockSize < 2,
-    "Transform Skip Log2 Max Size must be at least 2 (4x4)");
+  xConfirmPara(m_log2MaxTransformSkipBlockSize < 2,
+               "Transform Skip Log2 Max Size must be at least 2 (4x4)");
 
   if (!m_TransquantBypassEnabledFlag && m_bTransquantBypassInferTUSplit) {
     fprintf(
       stderr,
       "******************************************************************"
       "**********\n");
-    fprintf(
-      stderr,
-      "** WARNING: --TransquantbypassInferTUSplit has been disabled "
-      " **\n");
-    fprintf(
-      stderr,
-      "** due to the disabling of --TransquantBypassEnableFlag "
-      " **\n");
+    fprintf(stderr,
+            "** WARNING: --TransquantbypassInferTUSplit has been disabled "
+            " **\n");
+    fprintf(stderr,
+            "** due to the disabling of --TransquantBypassEnableFlag "
+            " **\n");
     fprintf(
       stderr,
       "******************************************************************"
@@ -3151,14 +3093,12 @@ hmLibVideoEncoderCfg::xCheckParameter()
       stderr,
       "******************************************************************"
       "**********\n");
-    fprintf(
-      stderr,
-      "** WARNING: --CUNoSplitIntraACT has been disabled "
-      " **\n");
-    fprintf(
-      stderr,
-      "** due to the disabling of --ColourTransform "
-      " **\n");
+    fprintf(stderr,
+            "** WARNING: --CUNoSplitIntraACT has been disabled "
+            " **\n");
+    fprintf(stderr,
+            "** due to the disabling of --ColourTransform "
+            " **\n");
     fprintf(
       stderr,
       "******************************************************************"
@@ -3172,32 +3112,28 @@ hmLibVideoEncoderCfg::xCheckParameter()
       stderr,
       "******************************************************************"
       "*********\n");
-    fprintf(
-      stderr,
-      "** WARNING: Transform skip fast is enabled (which only tests NxN "
-      "splits),**\n");
-    fprintf(
-      stderr,
-      "** but transform skip log2 max size is not 2 (4x4) "
-      " **\n");
-    fprintf(
-      stderr,
-      "** It may be better to disable transform skip fast mode "
-      " **\n");
+    fprintf(stderr,
+            "** WARNING: Transform skip fast is enabled (which only tests NxN "
+            "splits),**\n");
+    fprintf(stderr,
+            "** but transform skip log2 max size is not 2 (4x4) "
+            " **\n");
+    fprintf(stderr,
+            "** It may be better to disable transform skip fast mode "
+            " **\n");
     fprintf(
       stderr,
       "******************************************************************"
       "*********\n");
   }
 
-  xConfirmPara(
-    m_iQP < -6 * (m_internalBitDepth[CHANNEL_TYPE_LUMA] - 8) || m_iQP > 51,
-    "QP exceeds supported range (-QpBDOffsety to 51)");
-  xConfirmPara(
-    m_deblockingFilterMetric != 0
-      && (m_bLoopFilterDisable || m_loopFilterOffsetInPPS),
-    "If DeblockingFilterMetric is non-zero then both "
-    "LoopFilterDisable and LoopFilterOffsetInPPS must be 0");
+  xConfirmPara(m_iQP < -6 * (m_internalBitDepth[CHANNEL_TYPE_LUMA] - 8)
+                 || m_iQP > 51,
+               "QP exceeds supported range (-QpBDOffsety to 51)");
+  xConfirmPara(m_deblockingFilterMetric != 0
+                 && (m_bLoopFilterDisable || m_loopFilterOffsetInPPS),
+               "If DeblockingFilterMetric is non-zero then both "
+               "LoopFilterDisable and LoopFilterOffsetInPPS must be 0");
   xConfirmPara(
     m_loopFilterBetaOffsetDiv2 < -6 || m_loopFilterBetaOffsetDiv2 > 6,
     "Loop Filter Beta Offset div. 2 exceeds supported range (-6 to 6)");
@@ -3205,19 +3141,16 @@ hmLibVideoEncoderCfg::xCheckParameter()
     m_loopFilterTcOffsetDiv2 < -6 || m_loopFilterTcOffsetDiv2 > 6,
     "Loop Filter Tc Offset div. 2 exceeds supported range (-6 to 6)");
   xConfirmPara(m_iSearchRange < 0, "Search Range must be more than 0");
-  xConfirmPara(
-    m_bipredSearchRange < 0,
-    "Bi-prediction refinement search range must be more than 0");
-  xConfirmPara(
-    m_minSearchWindow < 0,
-    "Minimum motion search window size for the adaptive window ME "
-    "must be greater than or equal to 0");
-  xConfirmPara(
-    m_iMaxDeltaQP > 7, "Absolute Delta QP exceeds supported range (0 to 7)");
-  xConfirmPara(
-    m_lumaLevelToDeltaQPMapping.mode && m_uiDeltaQpRD > 0,
-    "Luma-level-based Delta QP cannot be used together with slice "
-    "level multiple-QP optimization\n");
+  xConfirmPara(m_bipredSearchRange < 0,
+               "Bi-prediction refinement search range must be more than 0");
+  xConfirmPara(m_minSearchWindow < 0,
+               "Minimum motion search window size for the adaptive window ME "
+               "must be greater than or equal to 0");
+  xConfirmPara(m_iMaxDeltaQP > 7,
+               "Absolute Delta QP exceeds supported range (0 to 7)");
+  xConfirmPara(m_lumaLevelToDeltaQPMapping.mode && m_uiDeltaQpRD > 0,
+               "Luma-level-based Delta QP cannot be used together with slice "
+               "level multiple-QP optimization\n");
   xConfirmPara(
     m_iMaxCuDQPDepth > m_uiMaxCUDepth - 1,
     "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
@@ -3227,8 +3160,8 @@ hmLibVideoEncoderCfg::xCheckParameter()
   xConfirmPara(m_crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");
   xConfirmPara(m_crQpOffset > 12, "Max. Chroma Cr QP Offset is 12");
 
-  xConfirmPara(
-    m_iQPAdaptationRange <= 0, "QP Adaptation Range must be more than 0");
+  xConfirmPara(m_iQPAdaptationRange <= 0,
+               "QP Adaptation Range must be more than 0");
   if (m_iDecodingRefreshType == 2) {
     xConfirmPara(
       m_iIntraPeriod > 0 && m_iIntraPeriod <= m_iGOPSize,
@@ -3237,15 +3170,14 @@ hmLibVideoEncoderCfg::xCheckParameter()
 #  if !ADD_RESET_ENCODER_DECISIONS_AFTER_IRAP
 #    if !FIXSAORESETAFTERIRAP
   if (m_saoResetEncoderStateAfterIRAP) {
-    xConfirmPara(
-      m_iIntraPeriod > 0 && m_iIntraPeriod <= m_iGOPSize,
-      "Intra period must be larger than GOP size when "
-      "SAOResetEncoderStateAfterIRAP is enabled");
+    xConfirmPara(m_iIntraPeriod > 0 && m_iIntraPeriod <= m_iGOPSize,
+                 "Intra period must be larger than GOP size when "
+                 "SAOResetEncoderStateAfterIRAP is enabled");
   }
 #    endif
 #  endif
-  xConfirmPara(
-    m_uiMaxCUDepth < 1, "MaxPartitionDepth must be greater than zero");
+  xConfirmPara(m_uiMaxCUDepth < 1,
+               "MaxPartitionDepth must be greater than zero");
   xConfirmPara(
     (m_uiMaxCUWidth >> m_uiMaxCUDepth) < 4,
     "Minimum partition width size should be larger than or equal to 8");
@@ -3265,40 +3197,32 @@ hmLibVideoEncoderCfg::xCheckParameter()
     (m_iSourceHeight % (m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1))) != 0,
     "Resulting coded frame height must be a multiple of the minimum CU size");
 
-  xConfirmPara(
-    m_uiQuadtreeTULog2MinSize < 2,
-    "QuadtreeTULog2MinSize must be 2 or greater.");
-  xConfirmPara(
-    m_uiQuadtreeTULog2MaxSize > 5,
-    "QuadtreeTULog2MaxSize must be 5 or smaller.");
-  xConfirmPara(
-    m_uiQuadtreeTULog2MaxSize < m_uiQuadtreeTULog2MinSize,
-    "QuadtreeTULog2MaxSize must be greater than or equal to "
-    "m_uiQuadtreeTULog2MinSize.");
-  xConfirmPara(
-    (1 << m_uiQuadtreeTULog2MaxSize) > m_uiMaxCUWidth,
-    "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
-  xConfirmPara(
-    (1 << m_uiQuadtreeTULog2MinSize)
-      >= (m_uiMaxCUWidth >> (m_uiMaxCUDepth - 1)),
-    "QuadtreeTULog2MinSize must not be greater than or equal to "
-    "minimum CU size");
-  xConfirmPara(
-    (1 << m_uiQuadtreeTULog2MinSize)
-      >= (m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1)),
-    "QuadtreeTULog2MinSize must not be greater than or equal to "
-    "minimum CU size");
-  xConfirmPara(
-    m_uiQuadtreeTUMaxDepthInter < 1,
-    "QuadtreeTUMaxDepthInter must be greater than or equal to 1");
+  xConfirmPara(m_uiQuadtreeTULog2MinSize < 2,
+               "QuadtreeTULog2MinSize must be 2 or greater.");
+  xConfirmPara(m_uiQuadtreeTULog2MaxSize > 5,
+               "QuadtreeTULog2MaxSize must be 5 or smaller.");
+  xConfirmPara(m_uiQuadtreeTULog2MaxSize < m_uiQuadtreeTULog2MinSize,
+               "QuadtreeTULog2MaxSize must be greater than or equal to "
+               "m_uiQuadtreeTULog2MinSize.");
+  xConfirmPara((1 << m_uiQuadtreeTULog2MaxSize) > m_uiMaxCUWidth,
+               "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
+  xConfirmPara((1 << m_uiQuadtreeTULog2MinSize)
+                 >= (m_uiMaxCUWidth >> (m_uiMaxCUDepth - 1)),
+               "QuadtreeTULog2MinSize must not be greater than or equal to "
+               "minimum CU size");
+  xConfirmPara((1 << m_uiQuadtreeTULog2MinSize)
+                 >= (m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1)),
+               "QuadtreeTULog2MinSize must not be greater than or equal to "
+               "minimum CU size");
+  xConfirmPara(m_uiQuadtreeTUMaxDepthInter < 1,
+               "QuadtreeTUMaxDepthInter must be greater than or equal to 1");
   xConfirmPara(
     m_uiMaxCUWidth
       < (1 << (m_uiQuadtreeTULog2MinSize + m_uiQuadtreeTUMaxDepthInter - 1)),
     "QuadtreeTUMaxDepthInter must be less than or equal to the difference "
     "between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
-  xConfirmPara(
-    m_uiQuadtreeTUMaxDepthIntra < 1,
-    "QuadtreeTUMaxDepthIntra must be greater than or equal to 1");
+  xConfirmPara(m_uiQuadtreeTUMaxDepthIntra < 1,
+               "QuadtreeTUMaxDepthIntra must be greater than or equal to 1");
   xConfirmPara(
     m_uiMaxCUWidth
       < (1 << (m_uiQuadtreeTULog2MinSize + m_uiQuadtreeTUMaxDepthIntra - 1)),
@@ -3309,9 +3233,8 @@ hmLibVideoEncoderCfg::xCheckParameter()
   xConfirmPara(m_maxNumMergeCand > 5, "MaxNumMergeCand must be 5 or smaller.");
 
 #  if ADAPTIVE_QP_SELECTION
-  xConfirmPara(
-    m_bUseAdaptQpSelect == true && m_iQP < 0,
-    "AdaptiveQpSelection must be disabled when QP < 0.");
+  xConfirmPara(m_bUseAdaptQpSelect == true && m_iQP < 0,
+               "AdaptiveQpSelection must be disabled when QP < 0.");
   xConfirmPara(
     m_bUseAdaptQpSelect == true && (m_cbQpOffset != 0 || m_crQpOffset != 0),
     "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal "
@@ -3328,10 +3251,10 @@ hmLibVideoEncoderCfg::xCheckParameter()
         "(PCMInputBitDepthFlag cannot be used when InputBitDepth or "
         "MSBExtendedBitDepth > InternalBitDepth)");
     }
-    xConfirmPara(
-      m_uiPCMLog2MinSize < 3, "PCMLog2MinSize must be 3 or greater.");
-    xConfirmPara(
-      m_uiPCMLog2MinSize > 5, "PCMLog2MinSize must be 5 or smaller.");
+    xConfirmPara(m_uiPCMLog2MinSize < 3,
+                 "PCMLog2MinSize must be 3 or greater.");
+    xConfirmPara(m_uiPCMLog2MinSize > 5,
+                 "PCMLog2MinSize must be 5 or smaller.");
     xConfirmPara(m_pcmLog2MaxSize > 5, "PCMLog2MaxSize must be 5 or smaller.");
     xConfirmPara(
       m_pcmLog2MaxSize < m_uiPCMLog2MinSize,
@@ -3339,63 +3262,52 @@ hmLibVideoEncoderCfg::xCheckParameter()
   }
 
   if (m_sliceMode != NO_SLICES) {
-    xConfirmPara(
-      m_sliceArgument < 1,
-      "SliceArgument should be larger than or equal to 1");
+    xConfirmPara(m_sliceArgument < 1,
+                 "SliceArgument should be larger than or equal to 1");
   }
   if (m_sliceSegmentMode != NO_SLICES) {
-    xConfirmPara(
-      m_sliceSegmentArgument < 1,
-      "SliceSegmentArgument should be larger than or equal to 1");
+    xConfirmPara(m_sliceSegmentArgument < 1,
+                 "SliceSegmentArgument should be larger than or equal to 1");
   }
 
   Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0);
   if (m_profile != Profile::HIGHTHROUGHPUTREXT) {
-    xConfirmPara(
-      tileFlag && m_entropyCodingSyncEnabledFlag,
-      "Tiles and entropy-coding-sync (Wavefronts) can not be "
-      "applied together, except in the High Throughput Intra 4:4:4 "
-      "16 profile");
+    xConfirmPara(tileFlag && m_entropyCodingSyncEnabledFlag,
+                 "Tiles and entropy-coding-sync (Wavefronts) can not be "
+                 "applied together, except in the High Throughput Intra 4:4:4 "
+                 "16 profile");
   }
 
-  xConfirmPara(
-    m_iSourceWidth % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0,
-    "Picture width must be an integer multiple of the specified "
-    "chroma subsampling");
-  xConfirmPara(
-    m_iSourceHeight % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0,
-    "Picture height must be an integer multiple of the specified "
-    "chroma subsampling");
+  xConfirmPara(m_iSourceWidth % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0,
+               "Picture width must be an integer multiple of the specified "
+               "chroma subsampling");
+  xConfirmPara(m_iSourceHeight % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0,
+               "Picture height must be an integer multiple of the specified "
+               "chroma subsampling");
 
-  xConfirmPara(
-    m_aiPad[0] % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0,
-    "Horizontal padding must be an integer multiple of the "
-    "specified chroma subsampling");
-  xConfirmPara(
-    m_aiPad[1] % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0,
-    "Vertical padding must be an integer multiple of the specified "
-    "chroma subsampling");
+  xConfirmPara(m_aiPad[0] % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0,
+               "Horizontal padding must be an integer multiple of the "
+               "specified chroma subsampling");
+  xConfirmPara(m_aiPad[1] % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0,
+               "Vertical padding must be an integer multiple of the specified "
+               "chroma subsampling");
 
-  xConfirmPara(
-    m_confWinLeft % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0,
-    "Left conformance window offset must be an integer multiple of "
-    "the specified chroma subsampling");
+  xConfirmPara(m_confWinLeft % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0,
+               "Left conformance window offset must be an integer multiple of "
+               "the specified chroma subsampling");
   xConfirmPara(
     m_confWinRight % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0,
     "Right conformance window offset must be an integer multiple of "
     "the specified chroma subsampling");
-  xConfirmPara(
-    m_confWinTop % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0,
-    "Top conformance window offset must be an integer multiple of "
-    "the specified chroma subsampling");
-  xConfirmPara(
-    m_confWinBottom % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0,
-    "Bottom conformance window offset must be an integer multiple "
-    "of the specified chroma subsampling");
+  xConfirmPara(m_confWinTop % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0,
+               "Top conformance window offset must be an integer multiple of "
+               "the specified chroma subsampling");
+  xConfirmPara(m_confWinBottom % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0,
+               "Bottom conformance window offset must be an integer multiple "
+               "of the specified chroma subsampling");
 
-  xConfirmPara(
-    m_defaultDisplayWindowFlag && !m_vuiParametersPresentFlag,
-    "VUI needs to be enabled for default display window");
+  xConfirmPara(m_defaultDisplayWindowFlag && !m_vuiParametersPresentFlag,
+               "VUI needs to be enabled for default display window");
 
   if (m_defaultDisplayWindowFlag) {
     xConfirmPara(
@@ -3420,63 +3332,51 @@ hmLibVideoEncoderCfg::xCheckParameter()
   UInt ui = m_uiMaxCUWidth;
   while (ui != 0U) {
     ui >>= 1;
-    if ((ui & 1) == 1) {
-      xConfirmPara(ui != 1, "Width should be 2^n");
-    }
+    if ((ui & 1) == 1) { xConfirmPara(ui != 1, "Width should be 2^n"); }
   }
   ui = m_uiMaxCUHeight;
   while (ui != 0U) {
     ui >>= 1;
-    if ((ui & 1) == 1) {
-      xConfirmPara(ui != 1, "Height should be 2^n");
-    }
+    if ((ui & 1) == 1) { xConfirmPara(ui != 1, "Height should be 2^n"); }
   }
 
   /* if this is an intra-only sequence, ie IntraPeriod=1, don't verify the GOP
  * structure
  * This permits the ability to omit a GOP structure specification */
   if (m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1) {
-    m_GOPList[0] = GOPEntry();
-    m_GOPList[0].m_QPFactor = 1;
-    m_GOPList[0].m_betaOffsetDiv2 = 0;
-    m_GOPList[0].m_tcOffsetDiv2 = 0;
-    m_GOPList[0].m_POC = 1;
+    m_GOPList[0]                    = GOPEntry();
+    m_GOPList[0].m_QPFactor         = 1;
+    m_GOPList[0].m_betaOffsetDiv2   = 0;
+    m_GOPList[0].m_tcOffsetDiv2     = 0;
+    m_GOPList[0].m_POC              = 1;
     m_GOPList[0].m_numRefPicsActive = 4;
   } else {
-    xConfirmPara(
-      m_intraConstraintFlag,
-      "IntraConstraintFlag cannot be 1 for inter sequences");
+    xConfirmPara(m_intraConstraintFlag,
+                 "IntraConstraintFlag cannot be 1 for inter sequences");
   }
 
   Bool verifiedGOP = false;
-  Bool errorGOP = false;
-  Int checkGOP = 1;
-  Int numRefs = m_isField ? 2 : 1;
-  Int refList[MAX_NUM_REF_PICS + 1];
+  Bool errorGOP    = false;
+  Int  checkGOP    = 1;
+  Int  numRefs     = m_isField ? 2 : 1;
+  Int  refList[MAX_NUM_REF_PICS + 1];
   refList[0] = 0;
-  if (m_isField) {
-    refList[1] = 1;
-  }
+  if (m_isField) { refList[1] = 1; }
   Bool isOK[MAX_GOP];
-  for (bool& i : isOK) {
-    i = false;
-  }
+  for (bool& i : isOK) { i = false; }
   Int numOK = 0;
-  xConfirmPara(
-    m_iIntraPeriod >= 0 && (m_iIntraPeriod % m_iGOPSize != 0),
-    "Intra period must be a multiple of GOPSize, or -1");
+  xConfirmPara(m_iIntraPeriod >= 0 && (m_iIntraPeriod % m_iGOPSize != 0),
+               "Intra period must be a multiple of GOPSize, or -1");
 
   for (Int i = 0; i < m_iGOPSize; i++) {
     if (m_GOPList[i].m_POC == m_iGOPSize) {
-      xConfirmPara(
-        m_GOPList[i].m_temporalId != 0,
-        "The last frame in each GOP must have temporal ID = 0 ");
+      xConfirmPara(m_GOPList[i].m_temporalId != 0,
+                   "The last frame in each GOP must have temporal ID = 0 ");
     }
   }
 
-  if (
-    (m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS
-    && (!m_bLoopFilterDisable)) {
+  if ((m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS
+      && (!m_bLoopFilterDisable)) {
     for (Int i = 0; i < m_iGOPSize; i++) {
       xConfirmPara(
         (m_GOPList[i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) < -6
@@ -3492,37 +3392,33 @@ hmLibVideoEncoderCfg::xCheckParameter()
   }
 
   for (Int i = 0; i < m_iGOPSize; i++) {
-    xConfirmPara(
-      abs(m_GOPList[i].m_CbQPoffset) > 12,
-      "Cb QP Offset for one of the GOP entries exceeds supported "
-      "range (-12 to 12)");
-    xConfirmPara(
-      abs(m_GOPList[i].m_CbQPoffset + m_cbQpOffset) > 12,
-      "Cb QP Offset for one of the GOP entries, when combined with "
-      "the PPS Cb offset, exceeds supported range (-12 to 12)");
-    xConfirmPara(
-      abs(m_GOPList[i].m_CrQPoffset) > 12,
-      "Cr QP Offset for one of the GOP entries exceeds supported "
-      "range (-12 to 12)");
-    xConfirmPara(
-      abs(m_GOPList[i].m_CrQPoffset + m_crQpOffset) > 12,
-      "Cr QP Offset for one of the GOP entries, when combined with "
-      "the PPS Cr offset, exceeds supported range (-12 to 12)");
+    xConfirmPara(abs(m_GOPList[i].m_CbQPoffset) > 12,
+                 "Cb QP Offset for one of the GOP entries exceeds supported "
+                 "range (-12 to 12)");
+    xConfirmPara(abs(m_GOPList[i].m_CbQPoffset + m_cbQpOffset) > 12,
+                 "Cb QP Offset for one of the GOP entries, when combined with "
+                 "the PPS Cb offset, exceeds supported range (-12 to 12)");
+    xConfirmPara(abs(m_GOPList[i].m_CrQPoffset) > 12,
+                 "Cr QP Offset for one of the GOP entries exceeds supported "
+                 "range (-12 to 12)");
+    xConfirmPara(abs(m_GOPList[i].m_CrQPoffset + m_crQpOffset) > 12,
+                 "Cr QP Offset for one of the GOP entries, when combined with "
+                 "the PPS Cr offset, exceeds supported range (-12 to 12)");
   }
   xConfirmPara(
     abs(m_sliceChromaQpOffsetIntraOrPeriodic[0]) > 12,
     "Intra/periodic Cb QP Offset exceeds supported range (-12 to 12)");
-  xConfirmPara(
-    abs(m_sliceChromaQpOffsetIntraOrPeriodic[0] + m_cbQpOffset) > 12,
-    "Intra/periodic Cb QP Offset, when combined with the PPS Cb "
-    "offset, exceeds supported range (-12 to 12)");
+  xConfirmPara(abs(m_sliceChromaQpOffsetIntraOrPeriodic[0] + m_cbQpOffset)
+                 > 12,
+               "Intra/periodic Cb QP Offset, when combined with the PPS Cb "
+               "offset, exceeds supported range (-12 to 12)");
   xConfirmPara(
     abs(m_sliceChromaQpOffsetIntraOrPeriodic[1]) > 12,
     "Intra/periodic Cr QP Offset exceeds supported range (-12 to 12)");
-  xConfirmPara(
-    abs(m_sliceChromaQpOffsetIntraOrPeriodic[1] + m_crQpOffset) > 12,
-    "Intra/periodic Cr QP Offset, when combined with the PPS Cr "
-    "offset, exceeds supported range (-12 to 12)");
+  xConfirmPara(abs(m_sliceChromaQpOffsetIntraOrPeriodic[1] + m_crQpOffset)
+                 > 12,
+               "Intra/periodic Cr QP Offset, when combined with the PPS Cr "
+               "offset, exceeds supported range (-12 to 12)");
 
   m_extraRPSs = 0;
   // start looping through frames in coding order until we can verify that the
@@ -3549,9 +3445,8 @@ hmLibVideoEncoderCfg::xCheckParameter()
               found = true;
               for (Int k = 0; k < m_iGOPSize; k++) {
                 if (absPOC % m_iGOPSize == m_GOPList[k].m_POC % m_iGOPSize) {
-                  if (
-                    m_GOPList[k].m_temporalId
-                    <= m_GOPList[curGOP].m_temporalId) {
+                  if (m_GOPList[k].m_temporalId
+                      <= m_GOPList[curGOP].m_temporalId) {
                     m_GOPList[k].m_refPic = true;
                   }
                   m_GOPList[curGOP].m_usedByCurrPic[i] =
@@ -3563,9 +3458,9 @@ hmLibVideoEncoderCfg::xCheckParameter()
             }
           }
           if (!found) {
-            printf(
-              "\nError: ref pic %d is not available for GOP frame %d\n",
-              m_GOPList[curGOP].m_referencePics[i], curGOP + 1);
+            printf("\nError: ref pic %d is not available for GOP frame %d\n",
+                   m_GOPList[curGOP].m_referencePics[i],
+                   curGOP + 1);
             errorGOP = true;
           }
         }
@@ -3575,15 +3470,13 @@ hmLibVideoEncoderCfg::xCheckParameter()
         if (!isOK[curGOP]) {
           numOK++;
           isOK[curGOP] = true;
-          if (numOK == m_iGOPSize) {
-            verifiedGOP = true;
-          }
+          if (numOK == m_iGOPSize) { verifiedGOP = true; }
         }
       } else {
         // create a new GOPEntry for this frame containing all the reference
         // pictures that were available (POC > 0)
         m_GOPList[m_iGOPSize + m_extraRPSs] = m_GOPList[curGOP];
-        Int newRefs = 0;
+        Int newRefs                         = 0;
         for (Int i = 0; i < m_GOPList[curGOP].m_numRefPics; i++) {
           Int absPOC = curPOC + m_GOPList[curGOP].m_referencePics[i];
           if (absPOC >= 0) {
@@ -3601,21 +3494,17 @@ hmLibVideoEncoderCfg::xCheckParameter()
           // pictures we might find useful to replace the ones with POC < 0.
           Int offGOP = (checkGOP - 1 + offset) % m_iGOPSize;
           Int offPOC = ((checkGOP - 1 + offset) / m_iGOPSize) * m_iGOPSize
-            + m_GOPList[offGOP].m_POC;
-          if (
-            offPOC >= 0
-            && m_GOPList[offGOP].m_temporalId
-              <= m_GOPList[curGOP].m_temporalId) {
+                       + m_GOPList[offGOP].m_POC;
+          if (offPOC >= 0
+              && m_GOPList[offGOP].m_temporalId
+                   <= m_GOPList[curGOP].m_temporalId) {
             Bool newRef = false;
             for (Int i = 0; i < numRefs; i++) {
-              if (refList[i] == offPOC) {
-                newRef = true;
-              }
+              if (refList[i] == offPOC) { newRef = true; }
             }
             for (Int i = 0; i < newRefs; i++) {
-              if (
-                m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[i]
-                == offPOC - curPOC) {
+              if (m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[i]
+                  == offPOC - curPOC) {
                 newRef = false;
               }
             }
@@ -3623,25 +3512,23 @@ hmLibVideoEncoderCfg::xCheckParameter()
               Int insertPoint = newRefs;
               // this picture can be added, find appropriate place in list and
               // insert it.
-              if (
-                m_GOPList[offGOP].m_temporalId
-                <= m_GOPList[curGOP].m_temporalId) {
+              if (m_GOPList[offGOP].m_temporalId
+                  <= m_GOPList[curGOP].m_temporalId) {
                 m_GOPList[offGOP].m_refPic = true;
               }
               for (Int j = 0; j < newRefs; j++) {
-                if (
-                  m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j]
-                    < offPOC - curPOC
-                  || m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j]
-                    > 0) {
+                if (m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j]
+                      < offPOC - curPOC
+                    || m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j]
+                         > 0) {
                   insertPoint = j;
                   break;
                 }
               }
               Int prev = offPOC - curPOC;
-              Int prevUsed = static_cast<pcc_hm::Int>(
-                m_GOPList[offGOP].m_temporalId
-                <= m_GOPList[curGOP].m_temporalId);
+              Int prevUsed =
+                static_cast<pcc_hm::Int>(m_GOPList[offGOP].m_temporalId
+                                         <= m_GOPList[curGOP].m_temporalId);
               for (Int j = insertPoint; j < newRefs + 1; j++) {
                 Int newPrev =
                   m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j];
@@ -3651,39 +3538,36 @@ hmLibVideoEncoderCfg::xCheckParameter()
                 m_GOPList[m_iGOPSize + m_extraRPSs].m_usedByCurrPic[j] =
                   prevUsed;
                 prevUsed = newUsed;
-                prev = newPrev;
+                prev     = newPrev;
               }
               newRefs++;
             }
           }
-          if (newRefs >= numPrefRefs) {
-            break;
-          }
+          if (newRefs >= numPrefRefs) { break; }
         }
         m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefPics = newRefs;
-        m_GOPList[m_iGOPSize + m_extraRPSs].m_POC = curPOC;
+        m_GOPList[m_iGOPSize + m_extraRPSs].m_POC        = curPOC;
         if (m_extraRPSs == 0) {
           m_GOPList[m_iGOPSize + m_extraRPSs].m_interRPSPrediction = 0;
-          m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefIdc = 0;
+          m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefIdc          = 0;
         } else {
-          Int rIdx = m_iGOPSize + m_extraRPSs - 1;
-          Int refPOC = m_GOPList[rIdx].m_POC;
+          Int rIdx    = m_iGOPSize + m_extraRPSs - 1;
+          Int refPOC  = m_GOPList[rIdx].m_POC;
           Int refPics = m_GOPList[rIdx].m_numRefPics;
-          Int newIdc = 0;
+          Int newIdc  = 0;
           for (Int i = 0; i <= refPics; i++) {
             Int deltaPOC =
               ((i != refPics) ? m_GOPList[rIdx].m_referencePics[i]
                               : 0);  // check if the reference abs POC is >= 0
             Int absPOCref = refPOC + deltaPOC;
-            Int refIdc = 0;
+            Int refIdc    = 0;
             for (Int j = 0;
-                 j < m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefPics; j++) {
-              if (
-                (absPOCref - curPOC)
-                == m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j]) {
-                if (
-                  m_GOPList[m_iGOPSize + m_extraRPSs].m_usedByCurrPic[j]
-                  != 0) {
+                 j < m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefPics;
+                 j++) {
+              if ((absPOCref - curPOC)
+                  == m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j]) {
+                if (m_GOPList[m_iGOPSize + m_extraRPSs].m_usedByCurrPic[j]
+                    != 0) {
                   refIdc = 1;
                 } else {
                   refIdc = 2;
@@ -3694,7 +3578,7 @@ hmLibVideoEncoderCfg::xCheckParameter()
             newIdc++;
           }
           m_GOPList[m_iGOPSize + m_extraRPSs].m_interRPSPrediction = 1;
-          m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefIdc = newIdc;
+          m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefIdc          = newIdc;
           m_GOPList[m_iGOPSize + m_extraRPSs].m_deltaRPS =
             refPOC - m_GOPList[m_iGOPSize + m_extraRPSs].m_POC;
         }
@@ -3720,19 +3604,18 @@ hmLibVideoEncoderCfg::xCheckParameter()
     if (m_GOPList[i].m_temporalId >= m_maxTempLayer) {
       m_maxTempLayer = m_GOPList[i].m_temporalId + 1;
     }
-    xConfirmPara(
-      m_GOPList[i].m_sliceType != 'B' && m_GOPList[i].m_sliceType != 'P'
-        && m_GOPList[i].m_sliceType != 'I',
-      "Slice type must be equal to B or P or I");
+    xConfirmPara(m_GOPList[i].m_sliceType != 'B'
+                   && m_GOPList[i].m_sliceType != 'P'
+                   && m_GOPList[i].m_sliceType != 'I',
+                 "Slice type must be equal to B or P or I");
   }
   for (Int i = 0; i < MAX_TLAYER; i++) {
-    m_numReorderPics[i] = 0;
+    m_numReorderPics[i]     = 0;
     m_maxDecPicBuffering[i] = 1 + static_cast<int>(m_useIntraBlockCopy);
   }
   for (Int i = 0; i < m_iGOPSize; i++) {
-    if (
-      m_GOPList[i].m_numRefPics + 1
-      > m_maxDecPicBuffering[m_GOPList[i].m_temporalId]) {
+    if (m_GOPList[i].m_numRefPics + 1
+        > m_maxDecPicBuffering[m_GOPList[i].m_temporalId]) {
       m_maxDecPicBuffering[m_GOPList[i].m_temporalId] =
         m_GOPList[i].m_numRefPics + 1 + static_cast<int>(m_useIntraBlockCopy);
     }
@@ -3744,9 +3627,8 @@ hmLibVideoEncoderCfg::xCheckParameter()
     }
     Int numReorder = 0;
     for (Int j = 0; j < highestDecodingNumberWithLowerPOC; j++) {
-      if (
-        m_GOPList[j].m_temporalId <= m_GOPList[i].m_temporalId
-        && m_GOPList[j].m_POC > m_GOPList[i].m_POC) {
+      if (m_GOPList[j].m_temporalId <= m_GOPList[i].m_temporalId
+          && m_GOPList[j].m_POC > m_GOPList[i].m_POC) {
         numReorder++;
       }
     }
@@ -3774,35 +3656,35 @@ hmLibVideoEncoderCfg::xCheckParameter()
 
   // the value of num_reorder_pics[ i ] shall be in the range of 0 to
   // max_dec_pic_buffering[ i ] - 1, inclusive
-  if (
-    m_numReorderPics[MAX_TLAYER - 1]
-    > m_maxDecPicBuffering[MAX_TLAYER - 1] - 1) {
+  if (m_numReorderPics[MAX_TLAYER - 1]
+      > m_maxDecPicBuffering[MAX_TLAYER - 1] - 1) {
     m_maxDecPicBuffering[MAX_TLAYER - 1] =
       m_numReorderPics[MAX_TLAYER - 1] + 1;
   }
   if (m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag) {
     Int PicSizeInSamplesY = m_iSourceWidth * m_iSourceHeight;
     if (tileFlag) {
-      Int maxTileWidth = 0;
+      Int maxTileWidth  = 0;
       Int maxTileHeight = 0;
-      Int widthInCU = (m_iSourceWidth % m_uiMaxCUWidth) != 0U
-        ? m_iSourceWidth / m_uiMaxCUWidth + 1
-        : m_iSourceWidth / m_uiMaxCUWidth;
-      Int heightInCU = (m_iSourceHeight % m_uiMaxCUHeight) != 0U
-        ? m_iSourceHeight / m_uiMaxCUHeight + 1
-        : m_iSourceHeight / m_uiMaxCUHeight;
+      Int widthInCU     = (m_iSourceWidth % m_uiMaxCUWidth) != 0U
+                            ? m_iSourceWidth / m_uiMaxCUWidth + 1
+                            : m_iSourceWidth / m_uiMaxCUWidth;
+      Int heightInCU    = (m_iSourceHeight % m_uiMaxCUHeight) != 0U
+                            ? m_iSourceHeight / m_uiMaxCUHeight + 1
+                            : m_iSourceHeight / m_uiMaxCUHeight;
       if (m_tileUniformSpacingFlag) {
         maxTileWidth = m_uiMaxCUWidth
-          * ((widthInCU + m_numTileColumnsMinus1)
-             / (m_numTileColumnsMinus1 + 1));
-        maxTileHeight = m_uiMaxCUHeight
+                       * ((widthInCU + m_numTileColumnsMinus1)
+                          / (m_numTileColumnsMinus1 + 1));
+        maxTileHeight =
+          m_uiMaxCUHeight
           * ((heightInCU + m_numTileRowsMinus1) / (m_numTileRowsMinus1 + 1));
         // if only the last tile-row is one treeblock higher than the others
         // the maxTileHeight becomes smaller if the last row of treeblocks has
         // lower height than the others
         if (((heightInCU - 1) % (m_numTileRowsMinus1 + 1)) == 0) {
           maxTileHeight = maxTileHeight - m_uiMaxCUHeight
-            + (m_iSourceHeight % m_uiMaxCUHeight);
+                          + (m_iSourceHeight % m_uiMaxCUHeight);
         }
         // if only the last tile-column is one treeblock wider than the others
         // the maxTileWidth becomes smaller if the last column of treeblocks has
@@ -3819,13 +3701,13 @@ hmLibVideoEncoderCfg::xCheckParameter()
           Int accColumnWidth = 0;
           for (Int col = 0; col < (m_numTileColumnsMinus1); col++) {
             maxTileWidth = m_tileColumnWidth[col] > maxTileWidth
-              ? m_tileColumnWidth[col]
-              : maxTileWidth;
+                             ? m_tileColumnWidth[col]
+                             : maxTileWidth;
             accColumnWidth += m_tileColumnWidth[col];
           }
           maxTileWidth = (widthInCU - accColumnWidth) > maxTileWidth
-            ? m_uiMaxCUWidth * (widthInCU - accColumnWidth)
-            : m_uiMaxCUWidth * maxTileWidth;
+                           ? m_uiMaxCUWidth * (widthInCU - accColumnWidth)
+                           : m_uiMaxCUWidth * maxTileWidth;
         }
         if (m_numTileRowsMinus1 < 1) {
           maxTileHeight = m_iSourceHeight;
@@ -3833,24 +3715,26 @@ hmLibVideoEncoderCfg::xCheckParameter()
           Int accRowHeight = 0;
           for (Int row = 0; row < (m_numTileRowsMinus1); row++) {
             maxTileHeight = m_tileRowHeight[row] > maxTileHeight
-              ? m_tileRowHeight[row]
-              : maxTileHeight;
+                              ? m_tileRowHeight[row]
+                              : maxTileHeight;
             accRowHeight += m_tileRowHeight[row];
           }
           maxTileHeight = (heightInCU - accRowHeight) > maxTileHeight
-            ? m_uiMaxCUHeight * (heightInCU - accRowHeight)
-            : m_uiMaxCUHeight * maxTileHeight;
+                            ? m_uiMaxCUHeight * (heightInCU - accRowHeight)
+                            : m_uiMaxCUHeight * maxTileHeight;
         }
       }
       Int maxSizeInSamplesY = maxTileWidth * maxTileHeight;
       m_minSpatialSegmentationIdc =
         4 * PicSizeInSamplesY / maxSizeInSamplesY - 4;
     } else if (m_entropyCodingSyncEnabledFlag) {
-      m_minSpatialSegmentationIdc = 4 * PicSizeInSamplesY
+      m_minSpatialSegmentationIdc =
+        4 * PicSizeInSamplesY
           / ((2 * m_iSourceHeight + m_iSourceWidth) * m_uiMaxCUHeight)
         - 4;
     } else if (m_sliceMode == FIXED_NUMBER_OF_CTU) {
-      m_minSpatialSegmentationIdc = 4 * PicSizeInSamplesY
+      m_minSpatialSegmentationIdc =
+        4 * PicSizeInSamplesY
           / (m_sliceArgument * m_uiMaxCUWidth * m_uiMaxCUHeight)
         - 4;
     } else {
@@ -3859,26 +3743,22 @@ hmLibVideoEncoderCfg::xCheckParameter()
   }
 
   if (m_toneMappingInfoSEIEnabled) {
-    xConfirmPara(
-      m_toneMapCodedDataBitDepth < 8 || m_toneMapCodedDataBitDepth > 14,
-      "SEIToneMapCodedDataBitDepth must be in rage 8 to 14");
+    xConfirmPara(m_toneMapCodedDataBitDepth < 8
+                   || m_toneMapCodedDataBitDepth > 14,
+                 "SEIToneMapCodedDataBitDepth must be in rage 8 to 14");
     xConfirmPara(
       m_toneMapTargetBitDepth < 1
         || (m_toneMapTargetBitDepth > 16 && m_toneMapTargetBitDepth < 255),
       "SEIToneMapTargetBitDepth must be in rage 1 to 16 or equal to 255");
-    xConfirmPara(
-      m_toneMapModelId < 0 || m_toneMapModelId > 4,
-      "SEIToneMapModelId must be in rage 0 to 4");
-    xConfirmPara(
-      m_cameraIsoSpeedValue == 0,
-      "SEIToneMapCameraIsoSpeedValue shall not be equal to 0");
-    xConfirmPara(
-      m_exposureIndexValue == 0,
-      "SEIToneMapExposureIndexValue shall not be equal to 0");
-    xConfirmPara(
-      m_extendedRangeWhiteLevel < 100,
-      "SEIToneMapExtendedRangeWhiteLevel should be greater than or "
-      "equal to 100");
+    xConfirmPara(m_toneMapModelId < 0 || m_toneMapModelId > 4,
+                 "SEIToneMapModelId must be in rage 0 to 4");
+    xConfirmPara(m_cameraIsoSpeedValue == 0,
+                 "SEIToneMapCameraIsoSpeedValue shall not be equal to 0");
+    xConfirmPara(m_exposureIndexValue == 0,
+                 "SEIToneMapExposureIndexValue shall not be equal to 0");
+    xConfirmPara(m_extendedRangeWhiteLevel < 100,
+                 "SEIToneMapExtendedRangeWhiteLevel should be greater than or "
+                 "equal to 100");
     xConfirmPara(
       m_nominalBlackLevelLumaCodeValue >= m_nominalWhiteLevelLumaCodeValue,
       "SEIToneMapNominalWhiteLevelLumaCodeValue shall be greater than "
@@ -3889,9 +3769,8 @@ hmLibVideoEncoderCfg::xCheckParameter()
       "equal to SEIToneMapNominalWhiteLevelLumaCodeValue");
   }
 
-  if (
-    m_kneeSEIEnabled
-    && !m_kneeFunctionInformationSEI.m_kneeFunctionCancelFlag) {
+  if (m_kneeSEIEnabled
+      && !m_kneeFunctionInformationSEI.m_kneeFunctionCancelFlag) {
     Int kneeSEINumKneePointsMinus1 =
       Int(m_kneeFunctionInformationSEI.m_kneeSEIKneePointPairs.size()) - 1;
     xConfirmPara(
@@ -3904,30 +3783,26 @@ hmLibVideoEncoderCfg::xCheckParameter()
         kpp.inputKneePoint < 1 || kpp.inputKneePoint > 999,
         "SEIKneeFunctionInputKneePointValue must be in the range of "
         "1 to 999");
-      xConfirmPara(
-        kpp.outputKneePoint < 0 || kpp.outputKneePoint > 1000,
-        "SEIKneeFunctionOutputKneePointValue must be in the range "
-        "of 0 to 1000");
+      xConfirmPara(kpp.outputKneePoint < 0 || kpp.outputKneePoint > 1000,
+                   "SEIKneeFunctionOutputKneePointValue must be in the range "
+                   "of 0 to 1000");
       if (i > 0) {
         TEncCfg::TEncSEIKneeFunctionInformation::KneePointPair& kppPrev =
           m_kneeFunctionInformationSEI.m_kneeSEIKneePointPairs[i - 1];
-        xConfirmPara(
-          kppPrev.inputKneePoint >= kpp.inputKneePoint,
-          "The i-th SEIKneeFunctionInputKneePointValue must be "
-          "greater than the (i-1)-th value");
-        xConfirmPara(
-          kppPrev.outputKneePoint >= kpp.outputKneePoint,
-          "The i-th SEIKneeFunctionOutputKneePointValue must be "
-          "greater than or equal to the (i-1)-th value");
+        xConfirmPara(kppPrev.inputKneePoint >= kpp.inputKneePoint,
+                     "The i-th SEIKneeFunctionInputKneePointValue must be "
+                     "greater than the (i-1)-th value");
+        xConfirmPara(kppPrev.outputKneePoint >= kpp.outputKneePoint,
+                     "The i-th SEIKneeFunctionOutputKneePointValue must be "
+                     "greater than or equal to the (i-1)-th value");
       }
     }
   }
 
   if (m_chromaResamplingFilterSEIenabled) {
-    xConfirmPara(
-      (m_chromaFormatIDC == CHROMA_400),
-      "chromaResamplingFilterSEI is not allowed to be present when "
-      "ChromaFormatIDC is equal to zero (4:0:0)");
+    xConfirmPara((m_chromaFormatIDC == CHROMA_400),
+                 "chromaResamplingFilterSEI is not allowed to be present when "
+                 "ChromaFormatIDC is equal to zero (4:0:0)");
     xConfirmPara(
       m_vuiParametersPresentFlag && m_chromaLocInfoPresentFlag
         && (m_chromaSampleLocTypeTopField != m_chromaSampleLocTypeBottomField),
@@ -3945,20 +3820,18 @@ hmLibVideoEncoderCfg::xCheckParameter()
         m_RCForceIntraQP = false;
       }
     }
-    xConfirmPara(
-      m_uiDeltaQpRD > 0,
-      "Rate control cannot be used together with slice level "
-      "multiple-QP optimization!\n");
-    if (
-      (m_RCCpbSaturationEnabled) && (m_level != Level::NONE)
-      && (m_profile != Profile::NONE)) {
-      UInt uiLevelIdx = (m_level / 10)
+    xConfirmPara(m_uiDeltaQpRD > 0,
+                 "Rate control cannot be used together with slice level "
+                 "multiple-QP optimization!\n");
+    if ((m_RCCpbSaturationEnabled) && (m_level != Level::NONE)
+        && (m_profile != Profile::NONE)) {
+      UInt uiLevelIdx =
+        (m_level / 10)
         + (UInt)((m_level % 10)
                  / 3);  // (m_level / 30)*3 + ((m_level % 10) / 3);
-      xConfirmPara(
-        m_RCCpbSize > g_uiMaxCpbSize[m_levelTier][uiLevelIdx],
-        "RCCpbSize should be smaller than or equal to Max CPB size "
-        "according to tier and level");
+      xConfirmPara(m_RCCpbSize > g_uiMaxCpbSize[m_levelTier][uiLevelIdx],
+                   "RCCpbSize should be smaller than or equal to Max CPB size "
+                   "according to tier and level");
       xConfirmPara(
         m_RCInitialCpbFullness > 1,
         "RCInitialCpbFullness should be smaller than or equal to 1");
@@ -3980,19 +3853,16 @@ hmLibVideoEncoderCfg::xCheckParameter()
     }
   }
 
-  xConfirmPara(
-    !m_TransquantBypassEnabledFlag && m_CUTransquantBypassFlagForce,
-    "CUTransquantBypassFlagForce cannot be 1 when "
-    "TransquantBypassEnableFlag is 0");
+  xConfirmPara(!m_TransquantBypassEnabledFlag && m_CUTransquantBypassFlagForce,
+               "CUTransquantBypassFlagForce cannot be 1 when "
+               "TransquantBypassEnableFlag is 0");
 
-  xConfirmPara(
-    m_log2ParallelMergeLevel < 2,
-    "Log2ParallelMergeLevel should be larger than or equal to 2");
+  xConfirmPara(m_log2ParallelMergeLevel < 2,
+               "Log2ParallelMergeLevel should be larger than or equal to 2");
 
   if (m_framePackingSEIEnabled) {
-    xConfirmPara(
-      m_framePackingSEIType < 3 || m_framePackingSEIType > 5,
-      "SEIFramePackingType must be in rage 3 to 5");
+    xConfirmPara(m_framePackingSEIType < 3 || m_framePackingSEIType > 5,
+                 "SEIFramePackingType must be in rage 3 to 5");
   }
 
   if (m_segmentedRectFramePackingSEIEnabled) {
@@ -4001,9 +3871,8 @@ hmLibVideoEncoderCfg::xCheckParameter()
       "SEISegmentedRectFramePacking must be 0 when SEIFramePacking is 1");
   }
 
-  if (
-    (m_numTileColumnsMinus1 <= 0) && (m_numTileRowsMinus1 <= 0)
-    && m_tmctsSEIEnabled) {
+  if ((m_numTileColumnsMinus1 <= 0) && (m_numTileRowsMinus1 <= 0)
+      && m_tmctsSEIEnabled) {
     printf(
       "Warning: SEITempMotionConstrainedTileSets is set to false to disable "
       "temporal motion-constrained tile sets SEI message because there are "
@@ -4012,9 +3881,8 @@ hmLibVideoEncoderCfg::xCheckParameter()
   }
 
 #  if MCTS_ENC_CHECK
-  if (
-    (m_tmctsSEIEnabled) && (m_tmctsSEITileConstraint)
-    && (m_bLFCrossTileBoundaryFlag)) {
+  if ((m_tmctsSEIEnabled) && (m_tmctsSEITileConstraint)
+      && (m_bLFCrossTileBoundaryFlag)) {
     printf(
       "Warning: Constrained Encoding for Temporal Motion Constrained Tile "
       "Sets is enabled. Disabling filtering across tile boundaries!\n");
@@ -4023,34 +3891,29 @@ hmLibVideoEncoderCfg::xCheckParameter()
 #  endif
 
 #  if MCTS_EXTRACTION
-  if (
-    (m_tmctsSEIEnabled) && (m_tmctsSEITileConstraint)
-    && (m_tmctsExtractionSEIEnabled) && (m_sliceSegmentMode != 3)
-    && (m_sliceSegmentArgument != 1)) {
-    printf(
-      "Warning: SEITMCTSExtractionInfo is enabled. Enabling segmentation "
-      "with one slice per tile.");
-    m_sliceMode = FIXED_NUMBER_OF_TILES;
+  if ((m_tmctsSEIEnabled) && (m_tmctsSEITileConstraint)
+      && (m_tmctsExtractionSEIEnabled) && (m_sliceSegmentMode != 3)
+      && (m_sliceSegmentArgument != 1)) {
+    printf("Warning: SEITMCTSExtractionInfo is enabled. Enabling segmentation "
+           "with one slice per tile.");
+    m_sliceMode     = FIXED_NUMBER_OF_TILES;
     m_sliceArgument = 1;
   }
 #  endif
 
   if (m_timeCodeSEIEnabled) {
-    xConfirmPara(
-      m_timeCodeSEINumTs > MAX_TIMECODE_SEI_SETS,
-      "Number of time sets cannot exceed 3");
+    xConfirmPara(m_timeCodeSEINumTs > MAX_TIMECODE_SEI_SETS,
+                 "Number of time sets cannot exceed 3");
   }
 
-  xConfirmPara(
-    m_preferredTransferCharacteristics > 255,
-    "transfer_characteristics_idc should not be greater than 255.");
+  xConfirmPara(m_preferredTransferCharacteristics > 255,
+               "transfer_characteristics_idc should not be greater than 255.");
 
 #  if ERP_SR_OV_SEI_MESSAGE
   if (m_erpSEIEnabled && !m_erpSEICancelFlag) {
-    xConfirmPara(
-      m_erpSEIGuardBandType < 0 || m_erpSEIGuardBandType > 8,
-      "SEIEquirectangularprojectionGuardBandType must be in the "
-      "range of 0 to 7");
+    xConfirmPara(m_erpSEIGuardBandType < 0 || m_erpSEIGuardBandType > 8,
+                 "SEIEquirectangularprojectionGuardBandType must be in the "
+                 "range of 0 to 7");
     xConfirmPara(
       (m_chromaFormatIDC == CHROMA_420 || m_chromaFormatIDC == CHROMA_422)
         && (m_erpSEILeftGuardBandWidth % 2 == 1),
@@ -4064,11 +3927,10 @@ hmLibVideoEncoderCfg::xCheckParameter()
   }
 
   if (m_sphereRotationSEIEnabled && !m_sphereRotationSEICancelFlag) {
-    xConfirmPara(
-      m_sphereRotationSEIYaw < -(180 << 16)
-        || m_sphereRotationSEIYaw > (180 << 16) - 1,
-      "SEISphereRotationYaw must be in the range of -11 796 480 to "
-      "11 796 479");
+    xConfirmPara(m_sphereRotationSEIYaw < -(180 << 16)
+                   || m_sphereRotationSEIYaw > (180 << 16) - 1,
+                 "SEISphereRotationYaw must be in the range of -11 796 480 to "
+                 "11 796 479");
     xConfirmPara(
       m_sphereRotationSEIPitch < -(90 << 16)
         || m_sphereRotationSEIYaw > (90 << 16),
@@ -4079,35 +3941,30 @@ hmLibVideoEncoderCfg::xCheckParameter()
         || m_sphereRotationSEIYaw > (180 << 16) - 1,
       "SEISphereRotationRoll must be in the range of -11 796 480 to "
       "11 796 479");
-    xConfirmPara(
-      m_erpSEICancelFlag == 1 && m_cmpSEICmpCancelFlag == 1,
-      "erp_cancel_flag equal to 0 or cmp_cancel_flag equal to 0 "
-      "must be present");
+    xConfirmPara(m_erpSEICancelFlag == 1 && m_cmpSEICmpCancelFlag == 1,
+                 "erp_cancel_flag equal to 0 or cmp_cancel_flag equal to 0 "
+                 "must be present");
   }
 
   if (m_omniViewportSEIEnabled && !m_omniViewportSEICancelFlag) {
-    xConfirmPara(
-      m_omniViewportSEIId < 0 || m_omniViewportSEIId > 1023,
-      "SEIomniViewportId must be in the range of 0 to 1023");
-    xConfirmPara(
-      m_omniViewportSEICntMinus1 < 0 || m_omniViewportSEICntMinus1 > 15,
-      "SEIomniViewportCntMinus1 must be in the range of 0 to 15");
+    xConfirmPara(m_omniViewportSEIId < 0 || m_omniViewportSEIId > 1023,
+                 "SEIomniViewportId must be in the range of 0 to 1023");
+    xConfirmPara(m_omniViewportSEICntMinus1 < 0
+                   || m_omniViewportSEICntMinus1 > 15,
+                 "SEIomniViewportCntMinus1 must be in the range of 0 to 15");
     for (UInt i = 0; i <= m_omniViewportSEICntMinus1; i++) {
-      xConfirmPara(
-        m_omniViewportSEIAzimuthCentre[i] < -(180 << 16)
-          || m_omniViewportSEIAzimuthCentre[i] > (180 << 16) - 1,
-        "SEIOmniViewportAzimuthCentre must be in the range of -11 "
-        "796 480 to 11 796 479");
-      xConfirmPara(
-        m_omniViewportSEIElevationCentre[i] < -(90 << 16)
-          || m_omniViewportSEIElevationCentre[i] > (90 << 16),
-        "SEIOmniViewportSEIElevationCentre must be in the range of "
-        "-5 898 240 to 5 898 240");
-      xConfirmPara(
-        m_omniViewportSEITiltCentre[i] < -(180 << 16)
-          || m_omniViewportSEITiltCentre[i] > (180 << 16) - 1,
-        "SEIOmniViewportTiltCentre must be in the range of -11 796 "
-        "480 to 11 796 479");
+      xConfirmPara(m_omniViewportSEIAzimuthCentre[i] < -(180 << 16)
+                     || m_omniViewportSEIAzimuthCentre[i] > (180 << 16) - 1,
+                   "SEIOmniViewportAzimuthCentre must be in the range of -11 "
+                   "796 480 to 11 796 479");
+      xConfirmPara(m_omniViewportSEIElevationCentre[i] < -(90 << 16)
+                     || m_omniViewportSEIElevationCentre[i] > (90 << 16),
+                   "SEIOmniViewportSEIElevationCentre must be in the range of "
+                   "-5 898 240 to 5 898 240");
+      xConfirmPara(m_omniViewportSEITiltCentre[i] < -(180 << 16)
+                     || m_omniViewportSEITiltCentre[i] > (180 << 16) - 1,
+                   "SEIOmniViewportTiltCentre must be in the range of -11 796 "
+                   "480 to 11 796 479");
       xConfirmPara(
         m_omniViewportSEIHorRange[i] < 1
           || m_omniViewportSEIHorRange[i] > (360 << 16),
@@ -4136,37 +3993,33 @@ hmLibVideoEncoderCfg::xCheckParameter()
         m_intraBlockCopySearchWidthInCTUs < -1,
         "IntraBlockCopySearchWidth should be greater than or equal to -1\n");
       if (m_intraBlockCopySearchWidthInCTUs >= 0) {
-        xConfirmPara(
-          (Int)m_intraBlockCopyNonHashSearchWidthInCTUs
-            > m_intraBlockCopySearchWidthInCTUs,
-          "IntraBlockCopyNonHashSearchWidth should be less than or "
-          "equal to IntraBlockCopySearchWidth\n");
-        if (
-          m_intraBlockCopySearchWidthInCTUs
-          == (Int)m_intraBlockCopyNonHashSearchWidthInCTUs) {
+        xConfirmPara((Int)m_intraBlockCopyNonHashSearchWidthInCTUs
+                       > m_intraBlockCopySearchWidthInCTUs,
+                     "IntraBlockCopyNonHashSearchWidth should be less than or "
+                     "equal to IntraBlockCopySearchWidth\n");
+        if (m_intraBlockCopySearchWidthInCTUs
+            == (Int)m_intraBlockCopyNonHashSearchWidthInCTUs) {
           m_useHashBasedIntraBlockCopySearch = false;
         }
       }
     } else {
-      xConfirmPara(
-        m_intraBlockCopySearchWidthInCTUs < 0,
-        "HashBasedIntraBlockCopySearch must be set to 1 to enable "
-        "IntraBlockCopy full frame search\n");
+      xConfirmPara(m_intraBlockCopySearchWidthInCTUs < 0,
+                   "HashBasedIntraBlockCopySearch must be set to 1 to enable "
+                   "IntraBlockCopy full frame search\n");
       m_intraBlockCopySearchWidthInCTUs =
         (Int)m_intraBlockCopyNonHashSearchWidthInCTUs;
     }
-    if (
-      (m_intraBlockCopySearchWidthInCTUs != -1
-       || m_intraBlockCopyNonHashSearchWidthInCTUs != 1)
-      && (m_intraBlockCopySearchWidthInCTUs != 3 || m_intraBlockCopyNonHashSearchWidthInCTUs != 1)) {
+    if ((m_intraBlockCopySearchWidthInCTUs != -1
+         || m_intraBlockCopyNonHashSearchWidthInCTUs != 1)
+        && (m_intraBlockCopySearchWidthInCTUs != 3
+            || m_intraBlockCopyNonHashSearchWidthInCTUs != 1)) {
       fprintf(
         stderr,
         "****************************************************************"
         "***********\n");
-      fprintf(
-        stderr,
-        "** WARNING: IntraBC search ranges are not part of CTC/CE test "
-        "conditions **\n");
+      fprintf(stderr,
+              "** WARNING: IntraBC search ranges are not part of CTC/CE test "
+              "conditions **\n");
       fprintf(
         stderr,
         "****************************************************************"
@@ -4175,21 +4028,16 @@ hmLibVideoEncoderCfg::xCheckParameter()
   }
 
 #  undef xConfirmPara
-  if (check_failed) {
-    exit(EXIT_FAILURE);
-  }
+  if (check_failed) { exit(EXIT_FAILURE); }
 }
 
 const TChar*
-profileToString(const Profile::Name profile)
-{
+profileToString(const Profile::Name profile) {
   static const UInt numberOfProfiles =
     sizeof(strToProfile) / sizeof(*strToProfile);
 
   for (auto profileIndex : strToProfile) {
-    if (profileIndex.value == profile) {
-      return profileIndex.str;
-    }
+    if (profileIndex.value == profile) { return profileIndex.str; }
   }
 
   // if we get here, we didn't find this profile in the list - so there is an
@@ -4202,20 +4050,17 @@ profileToString(const Profile::Name profile)
 }
 
 Void
-hmLibVideoEncoderCfg::xPrintParameter()
-{
+hmLibVideoEncoderCfg::xPrintParameter() {
   printf("\n");
   printf("Input File : %s\n", m_inputFileName.c_str());
   printf("Bitstream File : %s\n", m_bitstreamFileName.c_str());
   printf("Reconstruction File : %s\n", m_reconFileName.c_str());
-#if SAMPLE_STREAM
-  printf(
-    "FileFormat : %s\n",
-    (m_fileformatSampleStream ? "SampleStream" : "ByteStream(AnnexB)"));
-  printf(
-    "SampleStreamUnitSizePrecisionBytes : %u\n",
-    m_SampleStreamUnitSizePrecisionBytes);
-#endif
+#  if SAMPLE_STREAM
+  printf("FileFormat : %s\n",
+         (m_fileformatSampleStream ? "SampleStream" : "ByteStream(AnnexB)"));
+  printf("SampleStreamUnitSizePrecisionBytes : %u\n",
+         m_SampleStreamUnitSizePrecisionBytes);
+#  endif
 #  if PATCH_BASED_MVP || PCC_ME_EXT
   printf("PCCExt : %s\n", (m_usePCCExt ? "Enabled" : "Disabled"));
   if (m_usePCCExt) {
@@ -4224,132 +4069,131 @@ hmLibVideoEncoderCfg::xPrintParameter()
     printf("PatchInfo File : %s\n", (m_patchInfoFileName.c_str()));
   }
 #  endif
-  printf(
-    "Real Format : %dx%d %gHz\n",
-    m_iSourceWidth - m_confWinLeft - m_confWinRight,
-    m_iSourceHeight - m_confWinTop - m_confWinBottom,
-    (Double)m_iFrameRate / m_temporalSubsampleRatio);
-  printf(
-    "Internal Format : %dx%d %gHz\n", m_iSourceWidth, m_iSourceHeight,
-    (Double)m_iFrameRate / m_temporalSubsampleRatio);
-  printf(
-    "Sequence PSNR output : %s\n",
-    (m_printMSEBasedSequencePSNR ? "Linear average, MSE-based"
-                                 : "Linear average only"));
-  printf(
-    "Sequence MSE output : %s\n",
-    (m_printSequenceMSE ? "Enabled" : "Disabled"));
-  printf(
-    "Frame MSE output : %s\n", (m_printFrameMSE ? "Enabled" : "Disabled"));
-  printf(
-    "Print Clipped PSNR : %s\n",
-    (m_printClippedPSNR ? "Enabled" : "Disabled"));
+  printf("Real Format : %dx%d %gHz\n",
+         m_iSourceWidth - m_confWinLeft - m_confWinRight,
+         m_iSourceHeight - m_confWinTop - m_confWinBottom,
+         (Double)m_iFrameRate / m_temporalSubsampleRatio);
+  printf("Internal Format : %dx%d %gHz\n",
+         m_iSourceWidth,
+         m_iSourceHeight,
+         (Double)m_iFrameRate / m_temporalSubsampleRatio);
+  printf("Sequence PSNR output : %s\n",
+         (m_printMSEBasedSequencePSNR ? "Linear average, MSE-based"
+                                      : "Linear average only"));
+  printf("Sequence MSE output : %s\n",
+         (m_printSequenceMSE ? "Enabled" : "Disabled"));
+  printf("Frame MSE output : %s\n",
+         (m_printFrameMSE ? "Enabled" : "Disabled"));
+  printf("Print Clipped PSNR : %s\n",
+         (m_printClippedPSNR ? "Enabled" : "Disabled"));
 #  if JVET_F0064_MSSSIM
   printf("MS-SSIM output : %s\n", (m_printMSSSIM ? "Enabled" : "Disabled"));
 #  endif
 #  if JCTVC_Y0037_XPSNR
-  printf(
-    "xPSNR calculation : %s\n", (m_bXPSNREnableFlag ? "Enabled" : "Disabled"));
+  printf("xPSNR calculation : %s\n",
+         (m_bXPSNREnableFlag ? "Enabled" : "Disabled"));
   if (m_bXPSNREnableFlag) {
-    printf(
-      "xPSNR Weights : (%8.3f, %8.3f, %8.3f)\n", m_dXPSNRWeight[COMPONENT_Y],
-      m_dXPSNRWeight[COMPONENT_Cb], m_dXPSNRWeight[COMPONENT_Cr]);
+    printf("xPSNR Weights : (%8.3f, %8.3f, %8.3f)\n",
+           m_dXPSNRWeight[COMPONENT_Y],
+           m_dXPSNRWeight[COMPONENT_Cb],
+           m_dXPSNRWeight[COMPONENT_Cr]);
   }
 #  endif
-  printf(
-    "Cabac-zero-word-padding : %s\n",
-    (m_cabacZeroWordPaddingEnabled ? "Enabled" : "Disabled"));
+  printf("Cabac-zero-word-padding : %s\n",
+         (m_cabacZeroWordPaddingEnabled ? "Enabled" : "Disabled"));
   if (m_isField) {
     printf("Frame/Field : Field based coding\n");
-    printf(
-      "Field index : %u - %d (%d fields)\n", m_FrameSkip,
-      m_FrameSkip + m_framesToBeEncoded - 1, m_framesToBeEncoded);
-    printf(
-      "Field Order : %s field first\n", m_isTopFieldFirst ? "Top" : "Bottom");
+    printf("Field index : %u - %d (%d fields)\n",
+           m_FrameSkip,
+           m_FrameSkip + m_framesToBeEncoded - 1,
+           m_framesToBeEncoded);
+    printf("Field Order : %s field first\n",
+           m_isTopFieldFirst ? "Top" : "Bottom");
 
   } else {
     printf("Frame/Field : Frame based coding\n");
-    printf(
-      "Frame index : %u - %d (%d frames)\n", m_FrameSkip,
-      m_FrameSkip + m_framesToBeEncoded - 1, m_framesToBeEncoded);
+    printf("Frame index : %u - %d (%d frames)\n",
+           m_FrameSkip,
+           m_FrameSkip + m_framesToBeEncoded - 1,
+           m_framesToBeEncoded);
   }
   if (m_profile == Profile::MAINREXT) {
     UIProfileName validProfileName;
     if (m_onePictureOnlyConstraintFlag) {
-      validProfileName = m_bitDepthConstraint == 8
-        ? UI_MAIN_444_STILL_PICTURE
-        : (
-          m_bitDepthConstraint == 16 ? UI_MAIN_444_16_STILL_PICTURE : UI_NONE);
+      validProfileName =
+        m_bitDepthConstraint == 8
+          ? UI_MAIN_444_STILL_PICTURE
+          : (m_bitDepthConstraint == 16 ? UI_MAIN_444_16_STILL_PICTURE
+                                        : UI_NONE);
     } else {
       const UInt intraIdx = m_intraConstraintFlag ? 1 : 0;
       const UInt bitDepthIdx =
         (m_bitDepthConstraint == 8
            ? 0
-           : (
-             m_bitDepthConstraint == 10
-               ? 1
-               : (
-                 m_bitDepthConstraint == 12
-                   ? 2
-                   : (m_bitDepthConstraint == 16 ? 3 : 4))));
+           : (m_bitDepthConstraint == 10
+                ? 1
+                : (m_bitDepthConstraint == 12
+                     ? 2
+                     : (m_bitDepthConstraint == 16 ? 3 : 4))));
       const UInt chromaFormatIdx = UInt(m_chromaFormatConstraint);
-      validProfileName = (bitDepthIdx > 3 || chromaFormatIdx > 3)
-        ? UI_NONE
-        : validRExtProfileNames[intraIdx][bitDepthIdx][chromaFormatIdx];
+      validProfileName =
+        (bitDepthIdx > 3 || chromaFormatIdx > 3)
+          ? UI_NONE
+          : validRExtProfileNames[intraIdx][bitDepthIdx][chromaFormatIdx];
     }
     std::string rextSubProfile;
     if (validProfileName != UI_NONE) {
-      rextSubProfile = enumToString(
-        strToUIProfileName,
-        sizeof(strToUIProfileName) / sizeof(*strToUIProfileName),
-        validProfileName);
+      rextSubProfile =
+        enumToString(strToUIProfileName,
+                     sizeof(strToUIProfileName) / sizeof(*strToUIProfileName),
+                     validProfileName);
     }
     if (rextSubProfile == "main_444_16") {
       rextSubProfile = "main_444_16 [NON STANDARD]";
     }
-    printf(
-      "Profile : %s (%s)\n", profileToString(m_profile),
-      (rextSubProfile.empty()) ? "INVALID REXT PROFILE"
-                               : rextSubProfile.c_str());
+    printf("Profile : %s (%s)\n",
+           profileToString(m_profile),
+           (rextSubProfile.empty()) ? "INVALID REXT PROFILE"
+                                    : rextSubProfile.c_str());
   } else if (m_profile == Profile::HIGHTHROUGHPUTREXT) {
     UIProfileName validProfileName;
-    const UInt intraIdx = m_intraConstraintFlag ? 1 : 0;
-    const UInt bitDepthIdx =
+    const UInt    intraIdx = m_intraConstraintFlag ? 1 : 0;
+    const UInt    bitDepthIdx =
       (m_bitDepthConstraint == 8
          ? 0
-         : (
-           m_bitDepthConstraint == 10
-             ? 1
-             : (
-               m_bitDepthConstraint == 12
-                 ? 2
-                 : (m_bitDepthConstraint == 16 ? 3 : 4))));
-    validProfileName = (bitDepthIdx > 3)
-      ? UI_NONE
-      : validRExtHighThroughPutProfileNames[intraIdx][bitDepthIdx];
+         : (m_bitDepthConstraint == 10
+              ? 1
+              : (m_bitDepthConstraint == 12
+                   ? 2
+                   : (m_bitDepthConstraint == 16 ? 3 : 4))));
+    validProfileName =
+      (bitDepthIdx > 3)
+        ? UI_NONE
+        : validRExtHighThroughPutProfileNames[intraIdx][bitDepthIdx];
     std::string subProfile;
     if (validProfileName != UI_NONE) {
-      subProfile = enumToString(
-        strToUIProfileName,
-        sizeof(strToUIProfileName) / sizeof(*strToUIProfileName),
-        validProfileName);
+      subProfile =
+        enumToString(strToUIProfileName,
+                     sizeof(strToUIProfileName) / sizeof(*strToUIProfileName),
+                     validProfileName);
     }
-    printf(
-      "Profile : %s (%s)\n", profileToString(m_profile),
-      (subProfile.empty()) ? "INVALID HIGH THROUGHPUT REXT PROFILE"
-                           : subProfile.c_str());
+    printf("Profile : %s (%s)\n",
+           profileToString(m_profile),
+           (subProfile.empty()) ? "INVALID HIGH THROUGHPUT REXT PROFILE"
+                                : subProfile.c_str());
   } else if (m_profile == Profile::MAIN10 && m_onePictureOnlyConstraintFlag) {
-    printf(
-      "Profile : %s (main10-still-picture)\n", profileToString(m_profile));
+    printf("Profile : %s (main10-still-picture)\n",
+           profileToString(m_profile));
   } else {
     printf("Profile : %s\n", profileToString(m_profile));
   }
-  printf(
-    "CU size / depth / total-depth : %d / %d / %d\n", m_uiMaxCUWidth,
-    m_uiMaxCUDepth, m_uiMaxTotalCUDepth);
-  printf(
-    "RQT trans. size (min / max) : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize,
-    1 << m_uiQuadtreeTULog2MaxSize);
+  printf("CU size / depth / total-depth : %d / %d / %d\n",
+         m_uiMaxCUWidth,
+         m_uiMaxCUDepth,
+         m_uiMaxTotalCUDepth);
+  printf("RQT trans. size (min / max) : %d / %d\n",
+         1 << m_uiQuadtreeTULog2MinSize,
+         1 << m_uiQuadtreeTULog2MaxSize);
   printf("Max RQT depth inter : %d\n", m_uiQuadtreeTUMaxDepthInter);
   printf("Max RQT depth intra : %d\n", m_uiQuadtreeTUMaxDepthIntra);
   printf("Min PCM size : %d\n", 1 << m_uiPCMLog2MinSize);
@@ -4358,10 +4202,10 @@ hmLibVideoEncoderCfg::xPrintParameter()
   printf("Decoding refresh type : %d\n", m_iDecodingRefreshType);
 #  if JVET_E0059_FLOATING_POINT_QP_FIX
   if (m_qpIncrementAtSourceFrame.bPresent) {
-    printf(
-      "QP : %d (incrementing internal QP "
-      "at source frame %d)\n",
-      m_iQP, m_qpIncrementAtSourceFrame.value);
+    printf("QP : %d (incrementing internal QP "
+           "at source frame %d)\n",
+           m_iQP,
+           m_qpIncrementAtSourceFrame.value);
   } else {
     printf("QP : %d\n", m_iQP);
   }
@@ -4372,79 +4216,62 @@ hmLibVideoEncoderCfg::xPrintParameter()
 
   printf("Cb QP Offset : %d\n", m_cbQpOffset);
   printf("Cr QP Offset : %d\n", m_crQpOffset);
-  printf(
-    "QP adaptation : %d (range=%d)\n", static_cast<int>(m_bUseAdaptiveQP),
-    (m_bUseAdaptiveQP ? m_iQPAdaptationRange : 0));
+  printf("QP adaptation : %d (range=%d)\n",
+         static_cast<int>(m_bUseAdaptiveQP),
+         (m_bUseAdaptiveQP ? m_iQPAdaptationRange : 0));
   printf("GOP size : %d\n", m_iGOPSize);
-  printf(
-    "Input bit depth : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA],
-    m_inputBitDepth[CHANNEL_TYPE_CHROMA]);
-  printf(
-    "MSB-extended bit depth : (Y:%d, C:%d)\n",
-    m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA],
-    m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]);
-  printf(
-    "Internal bit depth : (Y:%d, C:%d)\n",
-    m_internalBitDepth[CHANNEL_TYPE_LUMA],
-    m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-  printf(
-    "PCM sample bit depth : (Y:%d, C:%d)\n",
-    m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA]
-                            : m_internalBitDepth[CHANNEL_TYPE_LUMA],
-    m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]
-                            : m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-  printf(
-    "Intra reference smoothing : %s\n",
-    (m_enableIntraReferenceSmoothing ? "Enabled" : "Disabled"));
+  printf("Input bit depth : (Y:%d, C:%d)\n",
+         m_inputBitDepth[CHANNEL_TYPE_LUMA],
+         m_inputBitDepth[CHANNEL_TYPE_CHROMA]);
+  printf("MSB-extended bit depth : (Y:%d, C:%d)\n",
+         m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA],
+         m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]);
+  printf("Internal bit depth : (Y:%d, C:%d)\n",
+         m_internalBitDepth[CHANNEL_TYPE_LUMA],
+         m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+  printf("PCM sample bit depth : (Y:%d, C:%d)\n",
+         m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA]
+                                 : m_internalBitDepth[CHANNEL_TYPE_LUMA],
+         m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]
+                                 : m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+  printf("Intra reference smoothing : %s\n",
+         (m_enableIntraReferenceSmoothing ? "Enabled" : "Disabled"));
   printf("diff_cu_chroma_qp_offset_depth : %d\n", m_diffCuChromaQpOffsetDepth);
-  printf(
-    "extended_precision_processing_flag : %s\n",
-    (m_extendedPrecisionProcessingFlag ? "Enabled" : "Disabled"));
-  printf(
-    "implicit_rdpcm_enabled_flag : %s\n",
-    (m_rdpcmEnabledFlag[RDPCM_SIGNAL_IMPLICIT] ? "Enabled" : "Disabled"));
-  printf(
-    "explicit_rdpcm_enabled_flag : %s\n",
-    (m_rdpcmEnabledFlag[RDPCM_SIGNAL_EXPLICIT] ? "Enabled" : "Disabled"));
-  printf(
-    "transform_skip_rotation_enabled_flag : %s\n",
-    (m_transformSkipRotationEnabledFlag ? "Enabled" : "Disabled"));
-  printf(
-    "transform_skip_context_enabled_flag : %s\n",
-    (m_transformSkipContextEnabledFlag ? "Enabled" : "Disabled"));
-  printf(
-    "cross_component_prediction_enabled_flag: %s\n",
-    (m_crossComponentPredictionEnabledFlag ? (
-       m_reconBasedCrossCPredictionEstimate
-         ? "Enabled (reconstructed-residual-based estimate)"
-         : "Enabled (encoder-side-residual-based estimate)")
-                                           : "Disabled"));
-  printf(
-    "high_precision_offsets_enabled_flag : %s\n",
-    (m_highPrecisionOffsetsEnabledFlag ? "Enabled" : "Disabled"));
-  printf(
-    "persistent_rice_adaptation_enabled_flag: %s\n",
-    (m_persistentRiceAdaptationEnabledFlag ? "Enabled" : "Disabled"));
-  printf(
-    "cabac_bypass_alignment_enabled_flag : %s\n",
-    (m_cabacBypassAlignmentEnabledFlag ? "Enabled" : "Disabled"));
-  printf(
-    "Intra block copying : %s\n",
-    (m_useIntraBlockCopy ? (
-       m_intraBlockCopyFastSearch ? "Enabled (fast search)"
-                                  : "Enabled (full search)")
-                         : "Disabled"));
-  printf(
-    "Adaptive colour transform : %s\n",
-    (m_useColourTrans ? "Enabled" : "Disabled"));
+  printf("extended_precision_processing_flag : %s\n",
+         (m_extendedPrecisionProcessingFlag ? "Enabled" : "Disabled"));
+  printf("implicit_rdpcm_enabled_flag : %s\n",
+         (m_rdpcmEnabledFlag[RDPCM_SIGNAL_IMPLICIT] ? "Enabled" : "Disabled"));
+  printf("explicit_rdpcm_enabled_flag : %s\n",
+         (m_rdpcmEnabledFlag[RDPCM_SIGNAL_EXPLICIT] ? "Enabled" : "Disabled"));
+  printf("transform_skip_rotation_enabled_flag : %s\n",
+         (m_transformSkipRotationEnabledFlag ? "Enabled" : "Disabled"));
+  printf("transform_skip_context_enabled_flag : %s\n",
+         (m_transformSkipContextEnabledFlag ? "Enabled" : "Disabled"));
+  printf("cross_component_prediction_enabled_flag: %s\n",
+         (m_crossComponentPredictionEnabledFlag
+            ? (m_reconBasedCrossCPredictionEstimate
+                 ? "Enabled (reconstructed-residual-based estimate)"
+                 : "Enabled (encoder-side-residual-based estimate)")
+            : "Disabled"));
+  printf("high_precision_offsets_enabled_flag : %s\n",
+         (m_highPrecisionOffsetsEnabledFlag ? "Enabled" : "Disabled"));
+  printf("persistent_rice_adaptation_enabled_flag: %s\n",
+         (m_persistentRiceAdaptationEnabledFlag ? "Enabled" : "Disabled"));
+  printf("cabac_bypass_alignment_enabled_flag : %s\n",
+         (m_cabacBypassAlignmentEnabledFlag ? "Enabled" : "Disabled"));
+  printf("Intra block copying : %s\n",
+         (m_useIntraBlockCopy
+            ? (m_intraBlockCopyFastSearch ? "Enabled (fast search)"
+                                          : "Enabled (full search)")
+            : "Disabled"));
+  printf("Adaptive colour transform : %s\n",
+         (m_useColourTrans ? "Enabled" : "Disabled"));
   printf("Palette mode : %s\n", (m_usePaletteMode ? "Enabled" : "Disabled"));
   if (m_bUseSAO) {
-    printf(
-      "log2_sao_offset_scale_luma : %d\n",
-      m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA]);
-    printf(
-      "log2_sao_offset_scale_chroma : %d\n",
-      m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA]);
+    printf("log2_sao_offset_scale_luma : %d\n",
+           m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA]);
+    printf("log2_sao_offset_scale_chroma : %d\n",
+           m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA]);
   }
 
   switch (m_costMode) {
@@ -4452,21 +4279,18 @@ hmLibVideoEncoderCfg::xPrintParameter()
     printf("Cost function: : Lossy coding (default)\n");
     break;
   case COST_SEQUENCE_LEVEL_LOSSLESS:
-    printf(
-      "Cost function: : Sequence_level_lossless "
-      "coding\n");
+    printf("Cost function: : Sequence_level_lossless "
+           "coding\n");
     break;
   case COST_LOSSLESS_CODING:
-    printf(
-      "Cost function: : Lossless coding with fixed "
-      "QP of %d\n",
-      LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP);
+    printf("Cost function: : Lossless coding with fixed "
+           "QP of %d\n",
+           LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP);
     break;
   case COST_MIXED_LOSSLESS_LOSSY_CODING:
-    printf(
-      "Cost function: : Mixed_lossless_lossy "
-      "coding with QP'=%d for lossless evaluation\n",
-      LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME);
+    printf("Cost function: : Mixed_lossless_lossy "
+           "coding with QP'=%d for lossless evaluation\n",
+           LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME);
     break;
   default: printf("Cost function: : Unknown\n"); break;
   }
@@ -4484,21 +4308,18 @@ hmLibVideoEncoderCfg::xPrintParameter()
   }
 
   if (m_useIntraBlockCopy) {
-    printf(
-      "Hash based IntraBC search : %s\n",
-      (m_useHashBasedIntraBlockCopySearch ? "Enabled" : "Disabled"));
+    printf("Hash based IntraBC search : %s\n",
+           (m_useHashBasedIntraBlockCopySearch ? "Enabled" : "Disabled"));
     if (m_intraBlockCopySearchWidthInCTUs == -1) {
       printf("IntraBC search range : full frame\n");
     } else {
-      printf(
-        "IntraBC search range : 1x%d CTU%s\n",
-        m_intraBlockCopySearchWidthInCTUs + 1,
-        m_intraBlockCopySearchWidthInCTUs != 0 ? "s" : "");
+      printf("IntraBC search range : 1x%d CTU%s\n",
+             m_intraBlockCopySearchWidthInCTUs + 1,
+             m_intraBlockCopySearchWidthInCTUs != 0 ? "s" : "");
     }
-    printf(
-      "IntraBC non-hash search range : 1x%d CTU%s\n",
-      m_intraBlockCopyNonHashSearchWidthInCTUs + 1,
-      m_intraBlockCopyNonHashSearchWidthInCTUs != 0U ? "s" : "");
+    printf("IntraBC non-hash search range : 1x%d CTU%s\n",
+           m_intraBlockCopyNonHashSearchWidthInCTUs + 1,
+           m_intraBlockCopyNonHashSearchWidthInCTUs != 0U ? "s" : "");
   }
   printf("HashME : %d\n", m_useHashBasedME ? 1 : 0);
 
@@ -4509,8 +4330,8 @@ hmLibVideoEncoderCfg::xPrintParameter()
     printf("TargetBitrate : %d\n", m_RCTargetBitrate);
     printf("KeepHierarchicalBit : %d\n", m_RCKeepHierarchicalBit);
     printf("LCULevelRC : %d\n", static_cast<int>(m_RCLCULevelRC));
-    printf(
-      "UseLCUSeparateModel : %d\n", static_cast<int>(m_RCUseLCUSeparateModel));
+    printf("UseLCUSeparateModel : %d\n",
+           static_cast<int>(m_RCUseLCUSeparateModel));
     printf("InitialQP : %d\n", m_RCInitialQP);
     printf("ForceIntraQP : %d\n", static_cast<int>(m_RCForceIntraQP));
     printf("CpbSaturation : %d\n", static_cast<int>(m_RCCpbSaturationEnabled));
@@ -4524,12 +4345,11 @@ hmLibVideoEncoderCfg::xPrintParameter()
   printf("\n");
 
   printf("TOOL CFG: ");
-  printf(
-    "IBD:%d ",
-    static_cast<int>(
-      (m_internalBitDepth[CHANNEL_TYPE_LUMA]
-       > m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA])
-      || (m_internalBitDepth[CHANNEL_TYPE_CHROMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA])));
+  printf("IBD:%d ",
+         static_cast<int>((m_internalBitDepth[CHANNEL_TYPE_LUMA]
+                           > m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA])
+                          || (m_internalBitDepth[CHANNEL_TYPE_CHROMA]
+                              > m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA])));
   printf("HAD:%d ", static_cast<int>(m_bUseHADME));
   printf("RDQ:%d ", static_cast<int>(m_useRDOQ));
   printf("RDQTS:%d ", static_cast<int>(m_useRDOQTS));
@@ -4549,49 +4369,46 @@ hmLibVideoEncoderCfg::xPrintParameter()
   printf("TransformSkipFast:%d ", static_cast<int>(m_useTransformSkipFast));
   printf("TransformSkipLog2MaxSize:%d ", m_log2MaxTransformSkipBlockSize);
   printf("Slice: M=%d ", Int(m_sliceMode));
-  if (m_sliceMode != NO_SLICES) {
-    printf("A=%d ", m_sliceArgument);
-  }
+  if (m_sliceMode != NO_SLICES) { printf("A=%d ", m_sliceArgument); }
   printf("SliceSegment: M=%d ", m_sliceSegmentMode);
   if (m_sliceSegmentMode != NO_SLICES) {
     printf("A=%d ", m_sliceSegmentArgument);
   }
   printf("CIP:%d ", static_cast<int>(m_bUseConstrainedIntraPred));
   printf("SAO:%d ", (m_bUseSAO) ? (1) : (0));
-  printf(
-    "PCM:%d ",
-    (m_usePCM && (1 << m_uiPCMLog2MinSize) <= m_uiMaxCUWidth) ? 1 : 0);
+  printf("PCM:%d ",
+         (m_usePCM && (1 << m_uiPCMLog2MinSize) <= m_uiMaxCUWidth) ? 1 : 0);
 
   if (m_TransquantBypassEnabledFlag && m_CUTransquantBypassFlagForce) {
     printf("TransQuantBypassEnabled: =1");
   } else {
-    printf(
-      "TransQuantBypassEnabled:%d ", (m_TransquantBypassEnabledFlag) ? 1 : 0);
+    printf("TransQuantBypassEnabled:%d ",
+           (m_TransquantBypassEnabledFlag) ? 1 : 0);
   }
 
   printf("WPP:%d ", (Int)m_useWeightedPred);
   printf("WPB:%d ", (Int)m_useWeightedBiPred);
   printf("PME:%d ", m_log2ParallelMergeLevel);
-  const Int iWaveFrontSubstreams = m_entropyCodingSyncEnabledFlag
-    ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight
-    : 1;
-  printf(
-    " WaveFrontSynchro:%d WaveFrontSubstreams:%d",
-    m_entropyCodingSyncEnabledFlag ? 1 : 0, iWaveFrontSubstreams);
+  const Int iWaveFrontSubstreams =
+    m_entropyCodingSyncEnabledFlag
+      ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight
+      : 1;
+  printf(" WaveFrontSynchro:%d WaveFrontSubstreams:%d",
+         m_entropyCodingSyncEnabledFlag ? 1 : 0,
+         iWaveFrontSubstreams);
   printf(" ScalingList:%d ", m_useScalingListId);
   printf("TMVPMode:%d ", m_TMVPModeId);
 #  if ADAPTIVE_QP_SELECTION
   printf("AQpS:%d", static_cast<int>(m_bUseAdaptQpSelect));
 #  endif
 
-  printf(
-    " SignBitHidingFlag:%d ", static_cast<int>(m_signDataHidingEnabledFlag));
+  printf(" SignBitHidingFlag:%d ",
+         static_cast<int>(m_signDataHidingEnabledFlag));
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0);
-  printf(
-    "TransQuantBypassInferTUSplit:%d ",
-    static_cast<int>(m_bTransquantBypassInferTUSplit));
-  printf(
-    "CUNoSplitIntraACT:%d ", static_cast<int>(m_bNoTUSplitIntraACTEnabled));
+  printf("TransQuantBypassInferTUSplit:%d ",
+         static_cast<int>(m_bTransquantBypassInferTUSplit));
+  printf("CUNoSplitIntraACT:%d ",
+         static_cast<int>(m_bNoTUSplitIntraACTEnabled));
   if (m_usePaletteMode) {
     printf(" MaxPaletteSize:%d", m_paletteMaxSize);
     printf(" MaxPalettePredictorSize:%d", m_paletteMaxPredSize);
@@ -4609,11 +4426,8 @@ hmLibVideoEncoderCfg::xPrintParameter()
 
 namespace pcc_hm {
 Bool
-confirmPara(Bool bflag, const TChar* message)
-{
-  if (!bflag) {
-    return false;
-  }
+confirmPara(Bool bflag, const TChar* message) {
+  if (!bflag) { return false; }
 
   printf("Error: %s\n", message);
   return true;

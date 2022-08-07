@@ -57,13 +57,12 @@
 
 namespace vmesh {
 
-// Force truncation of mesh coordinates to get the same results as P11 
-// Note: this function is a fix to reproduce the results of P11 and 
+// Force truncation of mesh coordinates to get the same results as P11
+// Note: this function is a fix to reproduce the results of P11 and
 // will be removed in future version.
 template<typename T>
 void
-forceCoordinateTruncation(TriangleMesh<T>& obj, const std::string name)
-{
+forceCoordinateTruncation(TriangleMesh<T>& obj, const std::string name) {
   obj.saveToOBJ(name);
   obj.clear();
   obj.loadFromOBJ(name);
@@ -74,43 +73,42 @@ forceCoordinateTruncation(TriangleMesh<T>& obj, const std::string name)
 
 static Vec3<double>
 computeNearestPointColour(
-  const Vec3<double>& point0,
-  const Frame<uint8_t>& targetTexture,  // ColourSpace::BGR444p
-  const TriangleMesh<double>& targetMesh,
-  const KdTree& kdtree,
+  const Vec3<double>&                        point0,
+  const Frame<uint8_t>&                      targetTexture,
+  const TriangleMesh<double>&                targetMesh,
+  const KdTree&                              kdtree,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangleTarget,
-  double& minDist2)
-{
+  double&                                    minDist2) {
   const auto* const neighboursTarget = vertexToTriangleTarget.neighbours();
-  const auto nnCount = 1;
-  int32_t index = 0;
-  double sqrDist = NAN;
+  const auto        nnCount          = 1;
+  int32_t           index            = 0;
+  double            sqrDist          = NAN;
   nanoflann::KNNResultSet<double, int32_t> resultSet(nnCount);
   resultSet.init(&index, &sqrDist);
   kdtree.query(point0.data(), resultSet);
-  auto ruv = targetMesh.texCoord(index);
-  minDist2 = std::numeric_limits<double>::max();
+  auto ruv         = targetMesh.texCoord(index);
+  minDist2         = std::numeric_limits<double>::max();
   const auto start = vertexToTriangleTarget.neighboursStartIndex(index);
-  const auto end = vertexToTriangleTarget.neighboursEndIndex(index);
+  const auto end   = vertexToTriangleTarget.neighboursEndIndex(index);
   for (int j = start; j < end; ++j) {
     const auto tindex = neighboursTarget[j];
     assert(tindex < targetMesh.triangleCount());
-    const auto& tri = targetMesh.triangle(tindex);
-    const auto& pt0 = targetMesh.point(tri[0]);
-    const auto& pt1 = targetMesh.point(tri[1]);
-    const auto& pt2 = targetMesh.point(tri[2]);
+    const auto&  tri = targetMesh.triangle(tindex);
+    const auto&  pt0 = targetMesh.point(tri[0]);
+    const auto&  pt1 = targetMesh.point(tri[1]);
+    const auto&  pt2 = targetMesh.point(tri[2]);
     Vec3<double> bcoord{};
     const auto cpoint = ClosestPointInTriangle(point0, pt0, pt1, pt2, &bcoord);
     //    assert(bcoord[0] >= 0.0 && bcoord[1] >= 0.0 && bcoord[2] >= 0.0);
     assert(fabs(1.0 - bcoord[0] - bcoord[1] - bcoord[2]) < 0.000001);
     const auto d2 = (cpoint - point0).norm2();
     if (d2 < minDist2) {
-      minDist2 = d2;
+      minDist2          = d2;
       const auto& triUV = targetMesh.texCoordTriangle(tindex);
-      const auto& uv0 = targetMesh.texCoord(triUV[0]);
-      const auto& uv1 = targetMesh.texCoord(triUV[1]);
-      const auto& uv2 = targetMesh.texCoord(triUV[2]);
-      ruv = bcoord[0] * uv0 + bcoord[1] * uv1 + bcoord[2] * uv2;
+      const auto& uv0   = targetMesh.texCoord(triUV[0]);
+      const auto& uv1   = targetMesh.texCoord(triUV[1]);
+      const auto& uv2   = targetMesh.texCoord(triUV[2]);
+      ruv               = bcoord[0] * uv0 + bcoord[1] * uv1 + bcoord[2] * uv2;
     }
   }
   return targetTexture.bilinear(ruv[1], ruv[0]);
@@ -119,25 +117,24 @@ computeNearestPointColour(
 //============================================================================
 
 int32_t
-VMCEncoder::compressDisplacementsVideo(
-  Bitstream& bitstream, const VMCEncoderParameters& params)
-{
+VMCEncoder::compressDisplacementsVideo(Bitstream&                  bitstream,
+                                       const VMCEncoderParameters& params) {
   //Encode
   VideoEncoderParameters videoEncoderParams;
-  videoEncoderParams.encoderConfig_ = params.geometryVideoEncoderConfig;
-  videoEncoderParams.inputBitDepth_ = params.geometryVideoBitDepth;
+  videoEncoderParams.encoderConfig_    = params.geometryVideoEncoderConfig;
+  videoEncoderParams.inputBitDepth_    = params.geometryVideoBitDepth;
   videoEncoderParams.internalBitDepth_ = params.geometryVideoBitDepth;
-  videoEncoderParams.outputBitDepth_ = params.geometryVideoBitDepth;
-  videoEncoderParams.qp_ = 8;
+  videoEncoderParams.outputBitDepth_   = params.geometryVideoBitDepth;
+  videoEncoderParams.qp_               = 8;
   FrameSequence<uint16_t> rec;
-  std::vector<uint8_t> videoBitstream;
+  std::vector<uint8_t>    videoBitstream;
   auto encoder = VirtualVideoEncoder<uint16_t>::create(VideoCodecId::HM);
   encoder->encode(_dispVideo, videoEncoderParams, videoBitstream, rec);
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-      + std::to_string(_gofInfo.index_) + "_disp";
+                  + std::to_string(_gofInfo.index_) + "_disp";
     _dispVideo.save(_dispVideo.createName(prefix + "_enc", 10));
     rec.save(rec.createName(prefix + "_rec", 10));
     save(prefix + ".h265", videoBitstream);
@@ -152,38 +149,35 @@ VMCEncoder::compressDisplacementsVideo(
 //============================================================================
 
 void
-VMCEncoder::unifyVertices(
-  const VMCGroupOfFramesInfo& gofInfo,
-  VMCGroupOfFrames& gof,
-  const VMCEncoderParameters& params)
-{
-  const auto startFrame = gofInfo.startFrameIndex_;
-  const auto frameCount = gofInfo.frameCount_;
-  const auto lastFrame = startFrame + frameCount - 1;
+VMCEncoder::unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
+                          VMCGroupOfFrames&           gof,
+                          const VMCEncoderParameters& params) {
+  const auto                        startFrame = gofInfo.startFrameIndex_;
+  const auto                        frameCount = gofInfo.frameCount_;
+  const auto                        lastFrame  = startFrame + frameCount - 1;
   std::vector<std::vector<int32_t>> umappings(frameCount);
   for (int f = startFrame; f <= lastFrame; ++f) {
     const auto findex = f - startFrame;
-    auto& frame = gof.frames[findex];
+    auto&      frame  = gof.frames[findex];
     frame.base.resizeNormals(0);
     frame.base.resizeNormalTriangles(0);
     frame.subdiv.resizeNormals(0);
     frame.subdiv.resizeNormalTriangles(0);
-    printf(
-      "liftingSubdivisionIterationCount = %d \n",
-      params.liftingSubdivisionIterationCount);
+    printf("liftingSubdivisionIterationCount = %d \n",
+           params.liftingSubdivisionIterationCount);
     if (params.unifyVertices && params.liftingSubdivisionIterationCount == 0) {
       printf("unifyVertices \n");
-      auto& base = frame.base;
+      auto& base   = frame.base;
       auto& subdiv = frame.subdiv;
       assert(base.pointCount() == subdiv.pointCount());
       assert(base.triangleCount() == subdiv.triangleCount());
       assert(base.texCoordCount() == subdiv.texCoordCount());
       assert(base.texCoordTriangleCount() == subdiv.texCoordTriangleCount());
       std::vector<Vec3<double>> upoints;
-      std::vector<Triangle> utriangles;
-      const auto pointCount0 = base.pointCount();
-      const auto& frameInfo = gofInfo.frameInfo(findex);
-      auto& umapping = umappings[findex];
+      std::vector<Triangle>     utriangles;
+      const auto                pointCount0 = base.pointCount();
+      const auto&               frameInfo   = gofInfo.frameInfo(findex);
+      auto&                     umapping    = umappings[findex];
       if (frameInfo.type == FrameType::INTRA) {
         printf("INTRA \n");
         UnifyVertices(
@@ -198,21 +192,22 @@ VMCEncoder::unifyVertices(
           upoints[umapping[vindex]] = subdiv.point(vindex);
         }
         std::swap(subdiv.points(), upoints);
-        subdiv.triangles() = base.triangles();
+        subdiv.triangles()         = base.triangles();
         subdiv.texCoordTriangles() = base.texCoordTriangles();
       } else {
-        printf(
-          "INTER: Index = %d ref = %d Previous = %d \n", frameInfo.frameIndex,
-          frameInfo.referenceFrameIndex, frameInfo.previousFrameIndex);
-        umapping = umappings[frameInfo.previousFrameIndex ];
-        const auto& refFrame = gof.frames[frameInfo.previousFrameIndex ];
-        upoints = base.points();
-        base = refFrame.base;
+        printf("INTER: Index = %d ref = %d Previous = %d \n",
+               frameInfo.frameIndex,
+               frameInfo.referenceFrameIndex,
+               frameInfo.previousFrameIndex);
+        umapping             = umappings[frameInfo.previousFrameIndex];
+        const auto& refFrame = gof.frames[frameInfo.previousFrameIndex];
+        upoints              = base.points();
+        base                 = refFrame.base;
         for (int32_t vindex = 0; vindex < pointCount0; ++vindex) {
           base.setPoint(umapping[vindex], upoints[vindex]);
         }
         upoints = subdiv.points();
-        subdiv = refFrame.subdiv;
+        subdiv  = refFrame.subdiv;
         for (int32_t vindex = 0; vindex < pointCount0; ++vindex) {
           subdiv.setPoint(umapping[vindex], upoints[vindex]);
         }
@@ -224,13 +219,11 @@ VMCEncoder::unifyVertices(
 //----------------------------------------------------------------------------
 
 int32_t
-VMCEncoder::compressTextureVideo(
-  VMCGroupOfFrames& gof,
-  Bitstream& bitstream,
-  const VMCEncoderParameters& params) const
-{
-  const auto width = params.textureWidth;
-  const auto height = params.textureHeight;
+VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
+                                 Bitstream&                  bitstream,
+                                 const VMCEncoderParameters& params) const {
+  const auto width      = params.textureWidth;
+  const auto height     = params.textureHeight;
   const auto frameCount = gof.frameCount();
 
   // convert BGR444 to YUV420
@@ -246,13 +239,13 @@ VMCEncoder::compressTextureVideo(
 
   //Encode
   VideoEncoderParameters videoEncoderParams;
-  videoEncoderParams.encoderConfig_ = params.textureVideoEncoderConfig;
-  videoEncoderParams.inputBitDepth_ = params.textureVideoBitDepth;
+  videoEncoderParams.encoderConfig_    = params.textureVideoEncoderConfig;
+  videoEncoderParams.inputBitDepth_    = params.textureVideoBitDepth;
   videoEncoderParams.internalBitDepth_ = params.textureVideoBitDepth;
-  videoEncoderParams.outputBitDepth_ = params.textureVideoBitDepth;
-  videoEncoderParams.qp_ = params.textureVideoQP;
+  videoEncoderParams.outputBitDepth_   = params.textureVideoBitDepth;
+  videoEncoderParams.qp_               = params.textureVideoQP;
   FrameSequence<uint16_t> yuvRec;
-  std::vector<uint8_t> videoBitstream;
+  std::vector<uint8_t>    videoBitstream;
   auto encoder = VirtualVideoEncoder<uint16_t>::create(VideoCodecId::HM);
   encoder->encode(yuvSrc, videoEncoderParams, videoBitstream, yuvRec);
   bitstream.write((uint32_t)videoBitstream.size());
@@ -268,8 +261,8 @@ VMCEncoder::compressTextureVideo(
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     FrameSequence<uint8_t> bgrRec8(bgrRec);
-    auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-      + std::to_string(_gofInfo.index_) + "_tex";
+    auto                   prefix = params.intermediateFilesPathPrefix + "GOF_"
+                  + std::to_string(_gofInfo.index_) + "_tex";
     bgrSrc.save(bgrSrc.createName(prefix + "_enc", 8));
     yuvSrc.save(yuvSrc.createName(prefix + "_enc", 10));
     yuvRec.save(yuvRec.createName(prefix + "_rec", 10));
@@ -282,17 +275,14 @@ VMCEncoder::compressTextureVideo(
 //----------------------------------------------------------------------------
 
 int32_t
-VMCEncoder::computeDracoMapping(
-  TriangleMesh<double> base,
-  std::vector<int32_t>& mapping,
-  const int32_t frameIndex,
-  const VMCEncoderParameters& params) const
-{
+VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
+                                std::vector<int32_t>&       mapping,
+                                const int32_t               frameIndex,
+                                const VMCEncoderParameters& params) const {
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto prefix = "GOF_"
-      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
-      + "_mapping_src.obj";
+    auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
+                  + std::to_string(frameIndex) + "_mapping_src.obj";
     base.saveToOBJ<int64_t>(prefix);
   }
   // Scale
@@ -306,9 +296,8 @@ VMCEncoder::computeDracoMapping(
   }
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto prefix = "GOF_"
-      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
-      + "_mapping_scale.obj";
+    auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
+                  + std::to_string(frameIndex) + "_mapping_scale.obj";
     base.saveToOBJ<int64_t>(prefix);
   }
 
@@ -318,31 +307,29 @@ VMCEncoder::computeDracoMapping(
 
   TriangleMesh<double> rec;
   std::vector<uint8_t> geometryBitstream;
-  auto encoder =
+  auto                 encoder =
     VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
   encoder->encode(base, dracoParams, geometryBitstream, rec);
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
-      + "_mapping";
+                  + std::to_string(_gofInfo.index_) + "_fr_"
+                  + std::to_string(frameIndex) + "_mapping";
     base.saveToOBJ<int64_t>(prefix + "_enc.obj");
     rec.saveToOBJ<int64_t>(prefix + "_rec.obj");
     save(prefix + ".drc", geometryBitstream);
   }
 
   // Geometry parametrisation base
-  printf(
-    "subdivideMidPoint 1: liftingSubdivisionIterationCount = %d \n",
-    params.liftingSubdivisionIterationCount);
+  printf("subdivideMidPoint 1: liftingSubdivisionIterationCount = %d \n",
+         params.liftingSubdivisionIterationCount);
   auto fsubdiv0 = base;
   fsubdiv0.subdivideMidPoint(params.liftingSubdivisionIterationCount);
   std::vector<int32_t> texCoordToPoint0;
   fsubdiv0.computeTexCoordToPointMapping(texCoordToPoint0);
   struct ArrayHasher {
-    std::size_t operator()(const std::array<double, 5>& a) const
-    {
+    std::size_t operator()(const std::array<double, 5>& a) const {
       std::size_t h = 0;
       for (auto e : a) {
         h ^= std::hash<double>{}(e) + 0x9e3779b9 + (h << 6) + (h >> 2);
@@ -353,7 +340,7 @@ VMCEncoder::computeDracoMapping(
   std::map<std::array<double, 5>, int32_t> map0;
   const auto texCoordCount0 = fsubdiv0.texCoordCount();
   for (int32_t v = 0; v < texCoordCount0; ++v) {
-    const auto& point0 = fsubdiv0.point(std::max(0, texCoordToPoint0[v]));
+    const auto& point0    = fsubdiv0.point(std::max(0, texCoordToPoint0[v]));
     const auto& texCoord0 = fsubdiv0.texCoord(v);
     const std::array<double, 5> vertex0{
       point0[0], point0[1], point0[2], texCoord0[0], texCoord0[1]};
@@ -364,30 +351,27 @@ VMCEncoder::computeDracoMapping(
   // Force truncation of mesh coordinates to get the same results as P11
   if (params.forceCoordTruncation) {
     auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
-      + std::to_string(frameIndex);
+                  + std::to_string(frameIndex);
     forceCoordinateTruncation(rec, prefix + "fsubdiv1.obj");
   }
   auto fsubdiv1 = rec;
-  printf(
-    "subdivideMidPoint 2: liftingSubdivisionIterationCount = %d \n",
-    params.liftingSubdivisionIterationCount);
+  printf("subdivideMidPoint 2: liftingSubdivisionIterationCount = %d \n",
+         params.liftingSubdivisionIterationCount);
   fsubdiv1.subdivideMidPoint(params.liftingSubdivisionIterationCount);
   const auto pointCount1 = fsubdiv1.pointCount();
   mapping.resize(pointCount1, -1);
   std::vector<bool> tags(pointCount1, false);
   for (int32_t t = 0, tcount = fsubdiv1.triangleCount(); t < tcount; ++t) {
-    const auto& tri = fsubdiv1.triangle(t);
+    const auto& tri   = fsubdiv1.triangle(t);
     const auto& triUV = fsubdiv1.texCoordTriangle(t);
     for (int32_t k = 0; k < 3; ++k) {
       const auto indexPos = tri[k];
-      if (tags[indexPos]) {
-        continue;
-      }
-      tags[indexPos] = true;
-      const auto indexTexCoord = triUV[k];
-      const auto& point1 = fsubdiv1.point(indexPos);
-      const auto& texCoord1 = fsubdiv1.texCoord(indexTexCoord);
-      const std::array<double, 5> vertex1 = {
+      if (tags[indexPos]) { continue; }
+      tags[indexPos]                            = true;
+      const auto                  indexTexCoord = triUV[k];
+      const auto&                 point1        = fsubdiv1.point(indexPos);
+      const auto&                 texCoord1 = fsubdiv1.texCoord(indexTexCoord);
+      const std::array<double, 5> vertex1   = {
         point1[0], point1[1], point1[2], texCoord1[0], texCoord1[1]};
       const auto it = map0.find(vertex1);
       if (it != map0.end()) {
@@ -403,25 +387,23 @@ VMCEncoder::computeDracoMapping(
 //----------------------------------------------------------------------------
 
 int32_t
-VMCEncoder::compressMotion(
-  const std::vector<Vec3<int32_t>>& triangles,
-  const std::vector<Vec3<int32_t>>& current,
-  const std::vector<Vec3<int32_t>>& reference,
-  Bitstream& bitstream,
-  const VMCEncoderParameters& /*params*/)
-{
-  const auto pointCount = int32_t(current.size());
-  const auto maxAcBufLen = pointCount * 3 * 4 + 1024;
+VMCEncoder::compressMotion(const std::vector<Vec3<int32_t>>& triangles,
+                           const std::vector<Vec3<int32_t>>& current,
+                           const std::vector<Vec3<int32_t>>& reference,
+                           Bitstream&                        bitstream,
+                           const VMCEncoderParameters& /*params*/) {
+  const auto         pointCount  = int32_t(current.size());
+  const auto         maxAcBufLen = pointCount * 3 * 4 + 1024;
   VMCMotionACContext ctx;
-  EntropyEncoder arithmeticEncoder;
+  EntropyEncoder     arithmeticEncoder;
   arithmeticEncoder.setBuffer(maxAcBufLen, nullptr);
   arithmeticEncoder.start();
   StaticAdjacencyInformation<int32_t> vertexToTriangle;
   ComputeVertexToTriangle(triangles, pointCount, vertexToTriangle);
-  std::vector<int8_t> available(pointCount, 0);
-  std::vector<int8_t> vtags(pointCount);
-  std::vector<int32_t> vadj;
-  std::vector<int32_t> tadj;
+  std::vector<int8_t>        available(pointCount, 0);
+  std::vector<int8_t>        vtags(pointCount);
+  std::vector<int32_t>       vadj;
+  std::vector<int32_t>       tadj;
   std::vector<Vec3<int32_t>> motion(pointCount);
   for (int vindex = 0; vindex < pointCount; ++vindex) {
     motion[vindex] = current[vindex] - reference[vindex];
@@ -429,13 +411,11 @@ VMCEncoder::compressMotion(
   for (int vindex0 = 0; vindex0 < pointCount; ++vindex0) {
     ComputeAdjacentVertices(vindex0, triangles, vertexToTriangle, vtags, vadj);
     Vec3<int32_t> pred(0);
-    int32_t predCount = 0;
+    int32_t       predCount = 0;
     for (int vindex1 : vadj) {
       if (available[vindex1] != 0) {
         const auto& mv1 = motion[vindex1];
-        for (int32_t k = 0; k < 3; ++k) {
-          pred[k] += mv1[k];
-        }
+        for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
         ++predCount;
       }
     }
@@ -446,11 +426,11 @@ VMCEncoder::compressMotion(
                                : -(-pred[k] + bias) / predCount;
       }
     }
-    available[vindex0] = 1;
-    const auto res0 = motion[vindex0];
-    const auto res1 = motion[vindex0] - pred;
-    const auto bits0 = ctx.estimateBits(res0, 0);
-    const auto bits1 = ctx.estimateBits(res1, 1);
+    available[vindex0]  = 1;
+    const auto    res0  = motion[vindex0];
+    const auto    res1  = motion[vindex0] - pred;
+    const auto    bits0 = ctx.estimateBits(res0, 0);
+    const auto    bits1 = ctx.estimateBits(res1, 1);
     Vec3<int32_t> res{};
     if (bits0 <= bits1) {
       res = res0;
@@ -461,18 +441,14 @@ VMCEncoder::compressMotion(
     }
     for (int32_t k = 0; k < 3; ++k) {
       auto value = res[k];
-      arithmeticEncoder.encode(
-        static_cast<int>(value != 0), ctx.ctxCoeffGtN[0][k]);
-      if (value == 0) {
-        continue;
-      }
+      arithmeticEncoder.encode(static_cast<int>(value != 0),
+                               ctx.ctxCoeffGtN[0][k]);
+      if (value == 0) { continue; }
       arithmeticEncoder.encode(static_cast<int>(value < 0), ctx.ctxSign[k]);
       value = std::abs(value) - 1;
-      arithmeticEncoder.encode(
-        static_cast<int>(value != 0), ctx.ctxCoeffGtN[1][k]);
-      if (value == 0) {
-        continue;
-      }
+      arithmeticEncoder.encode(static_cast<int>(value != 0),
+                               ctx.ctxCoeffGtN[1][k]);
+      if (value == 0) { continue; }
       assert(value > 0);
       arithmeticEncoder.encodeExpGolomb(
         --value, 0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
@@ -486,52 +462,48 @@ VMCEncoder::compressMotion(
   bitstream.write(byteCount);
   const auto offset = bitstream.size();
   bitstream.resize(offset + byteCount);
-  std::copy(
-    arithmeticEncoder.buffer(), arithmeticEncoder.buffer() + byteCount,
-    bitstream.buffer.begin() + offset);
+  std::copy(arithmeticEncoder.buffer(),
+            arithmeticEncoder.buffer() + byteCount,
+            bitstream.buffer.begin() + offset);
   return 0;
 }
 
 //----------------------------------------------------------------------------
 
 int32_t
-VMCEncoder::compressBaseMesh(
-  const VMCGroupOfFrames& gof,
-  const VMCFrameInfo& frameInfo,
-  VMCFrame& frame,
-  Bitstream& bitstream,
-  VMCStats& stats,
-  const VMCEncoderParameters& params) const
-{
-  if (encodeFrameHeader(frameInfo, bitstream) != 0) {
-    return -1;
-  }
+VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
+                             const VMCFrameInfo&         frameInfo,
+                             VMCFrame&                   frame,
+                             Bitstream&                  bitstream,
+                             VMCStats&                   stats,
+                             const VMCEncoderParameters& params) const {
+  if (encodeFrameHeader(frameInfo, bitstream) != 0) { return -1; }
   const int32_t frameIndex = frameInfo.frameIndex + _gofInfo.startFrameIndex_;
-  const auto scalePosition =
+  const auto    scalePosition =
     ((1 << params.qpPosition) - 1.0) / ((1 << params.bitDepthPosition) - 1.0);
-  const auto scaleTexCoord = std::pow(2.0, params.qpTexCoord) - 1.0;
+  const auto scaleTexCoord  = std::pow(2.0, params.qpTexCoord) - 1.0;
   const auto iscalePosition = 1.0 / scalePosition;
   const auto iscaleTexCoord = 1.0 / scaleTexCoord;
 
-  auto& base = frame.base;
-  auto& subdiv = frame.subdiv;
-  auto& mapping = frame.mapping;
+  auto& base       = frame.base;
+  auto& subdiv     = frame.subdiv;
+  auto& mapping    = frame.mapping;
   auto& qpositions = frame.qpositions;
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto prefix = "GOF_"
-      + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex);
-    base.saveToOBJ<int64_t>(prefix  + "_base_compress.obj");
+    auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
+                  + std::to_string(frameIndex);
+    base.saveToOBJ<int64_t>(prefix + "_base_compress.obj");
     subdiv.saveToOBJ<int64_t>(prefix + "_subdiv_compress.obj");
   }
-  printf(
-    "Frame %4d: type = %s \n", frameIndex,
-    frameInfo.type == FrameType::INTRA ? "Intra" : "Inter");
+  printf("Frame %4d: type = %s \n",
+         frameIndex,
+         frameInfo.type == FrameType::INTRA ? "Intra" : "Inter");
   if (frameInfo.type == FrameType::INTRA) {
     printf("Intra: \n");
     const auto texCoordBBox = base.texCoordBoundingBox();
-    const auto delta = texCoordBBox.max - texCoordBBox.min;
-    const auto d = std::max(delta[0], delta[1]);
+    const auto delta        = texCoordBBox.max - texCoordBBox.min;
+    const auto d            = std::max(delta[0], delta[1]);
     if (d > 2.0) {  // make sure texCoords are between 0.0 and 1.0
       const auto scale = 1.0 / (std::pow(2.0, params.bitDepthTexCoord) - 1.0);
       for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount;
@@ -540,11 +512,11 @@ VMCEncoder::compressBaseMesh(
       }
     }
     computeDracoMapping(base, mapping, frameIndex, params);
-    
+
     if (params.keepIntermediateFiles) {
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-        + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
-        + "_post_mapping";
+                    + std::to_string(_gofInfo.index_) + "_fr_"
+                    + std::to_string(frameIndex) + "_post_mapping";
       base.saveToOBJ(prefix + "_base.obj");
     }
 
@@ -554,20 +526,20 @@ VMCEncoder::compressBaseMesh(
     }
     for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
       base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
-    }    
+    }
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-        + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
-        + "_post_mapping";
+                    + std::to_string(_gofInfo.index_) + "_fr_"
+                    + std::to_string(frameIndex) + "_post_mapping";
       base.saveToOBJ(prefix + "_base_quant.obj");
     }
 
     // Force truncation of mesh coordinates to get the same results as P11
     if (params.forceCoordTruncation) {
       auto prefix = params.intermediateFilesPathPrefix + "fr_"
-        + std::to_string(frameIndex);
+                    + std::to_string(frameIndex);
       forceCoordinateTruncation(base, prefix + "base_before_enc.obj");
     }
 
@@ -575,28 +547,28 @@ VMCEncoder::compressBaseMesh(
     GeometryEncoderParameters dracoParams;
     dracoParams.qp_ = params.qpPosition;
     dracoParams.qt_ = params.qpTexCoord;
-    
+
     printf("draco param: \n");
     printf(" - qp = %d \n", params.qpPosition);
     printf(" - qt = %d \n", params.qpTexCoord);
     TriangleMesh<double> rec;
     std::vector<uint8_t> geometryBitstream;
-    auto encoder =
+    auto                 encoder =
       VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
     encoder->encode(base, dracoParams, geometryBitstream, rec);
 
     // Force truncation of mesh coordinates to get the same results as P11
     if (params.forceCoordTruncation) {
       auto prefix = params.intermediateFilesPathPrefix + "fr_"
-        + std::to_string(frameIndex);
+                    + std::to_string(frameIndex);
       forceCoordinateTruncation(rec, prefix + "new_base.obj");
     }
-    
+
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-        + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex)
-        + "_base";
+                    + std::to_string(_gofInfo.index_) + "_fr_"
+                    + std::to_string(frameIndex) + "_base";
       base.saveToOBJ<int64_t>(prefix + "_enc.obj");
       rec.saveToOBJ<int64_t>(prefix + "_rec.obj");
       save(prefix + ".drc", geometryBitstream);
@@ -612,7 +584,7 @@ VMCEncoder::compressBaseMesh(
     base = rec;
     qpositions.resize(base.pointCount());
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-      auto& qpos = qpositions[v];
+      auto&       qpos  = qpositions[v];
       const auto& point = base.point(v);
       for (int32_t k = 0; k < 3; ++k) {
         qpos[k] = int32_t(std::round(point[k]));
@@ -622,31 +594,29 @@ VMCEncoder::compressBaseMesh(
       base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
     }
   } else {
-    printf(
-      "Inter: index = %d ref = %d \n", frameInfo.frameIndex,
-      frameInfo.referenceFrameIndex);
+    printf("Inter: index = %d ref = %d \n",
+           frameInfo.frameIndex,
+           frameInfo.referenceFrameIndex);
     fflush(stdout);
 
     // quantize base mesh
-    const auto& refFrame = gof.frame( frameInfo.referenceFrameIndex );
-    mapping = refFrame.mapping;
+    const auto& refFrame = gof.frame(frameInfo.referenceFrameIndex);
+    mapping              = refFrame.mapping;
     const auto pointCountRecBaseMesh = refFrame.base.pointCount();
     qpositions.resize(pointCountRecBaseMesh);
     for (int32_t v = 0; v < pointCountRecBaseMesh; ++v) {
       assert(mapping[v] >= 0 && mapping[v] < base.pointCount());
       const auto point = Round(base.point(mapping[v]) * scalePosition);
-      auto& qpos = qpositions[v];
+      auto&      qpos  = qpositions[v];
       for (int32_t k = 0; k < 3; ++k) {
         qpos[k] = int32_t(std::round(point[k]));
       }
     }
     base = refFrame.base;
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-      const auto& qpos = qpositions[v];
-      auto& point = base.point(v);
-      for (int32_t k = 0; k < 3; ++k) {
-        point[k] = qpos[k];
-      }
+      const auto& qpos  = qpositions[v];
+      auto&       point = base.point(v);
+      for (int32_t k = 0; k < 3; ++k) { point[k] = qpos[k]; }
     }
     auto bitstreamByteCount0 = bitstream.size();
     compressMotion(
@@ -657,11 +627,11 @@ VMCEncoder::compressBaseMesh(
     base.setPoint(v, base.point(v) * iscalePosition);
   }
 
-  printf(
-    "subdivideBaseMesh: liftingSubdivisionIterationCount = %d \n",
-    params.liftingSubdivisionIterationCount);
-  subdivideBaseMesh(
-    frame, params.intraGeoParams.subdivisionMethod, params.liftingSubdivisionIterationCount);
+  printf("subdivideBaseMesh: liftingSubdivisionIterationCount = %d \n",
+         params.liftingSubdivisionIterationCount);
+  subdivideBaseMesh(frame,
+                    params.intraGeoParams.subdivisionMethod,
+                    params.liftingSubdivisionIterationCount);
   const auto& rec = frame.rec;
 
   auto rsubdiv = rec;
@@ -677,25 +647,23 @@ VMCEncoder::compressBaseMesh(
 //----------------------------------------------------------------------------
 
 int32_t
-VMCEncoder::computeDisplacements(
-  VMCFrame& frame, const VMCEncoderParameters& params)
-{
+VMCEncoder::computeDisplacements(VMCFrame&                   frame,
+                                 const VMCEncoderParameters& params) {
   const auto& subdiv = frame.subdiv;
-  const auto& rec = frame.rec;
-  auto& disp = frame.disp;
+  const auto& rec    = frame.rec;
+  auto&       disp   = frame.disp;
   disp.resize(rec.pointCount());
   for (int32_t v = 0, vcount = rec.pointCount(); v < vcount; ++v) {
-    if (
-      params.displacementCoordinateSystem
-      == DisplacementCoordinateSystem::LOCAL) {
-      const auto n = rec.normal(v);
+    if (params.displacementCoordinateSystem
+        == DisplacementCoordinateSystem::LOCAL) {
+      const auto   n = rec.normal(v);
       Vec3<double> t{};
       Vec3<double> b{};
       computeLocalCoordinatesSystem(n, t, b);
-      const auto& pt0 = rec.point(v);
-      const auto& pt1 = subdiv.point(v);
-      const auto delta = pt1 - pt0;
-      disp[v] = Vec3<double>(delta * n, delta * t, delta * b);
+      const auto& pt0   = rec.point(v);
+      const auto& pt1   = subdiv.point(v);
+      const auto  delta = pt1 - pt0;
+      disp[v]           = Vec3<double>(delta * n, delta * t, delta * b);
     } else {
       disp[v] = subdiv.point(v) - rec.point(v);
     }
@@ -705,11 +673,10 @@ VMCEncoder::computeDisplacements(
 }
 
 int32_t
-VMCEncoder::quantizeDisplacements(
-  VMCFrame& frame, const VMCEncoderParameters& params)
-{
+VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
+                                  const VMCEncoderParameters& params) {
   const auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
-  const auto lodCount = int32_t(infoLevelOfDetails.size());
+  const auto  lodCount           = int32_t(infoLevelOfDetails.size());
   assert(lodCount > 0);
   double scale[3];
   double lodScale[3];
@@ -725,15 +692,15 @@ VMCEncoder::quantizeDisplacements(
     for (int32_t v = vcount0; v < vcount1; ++v) {
       auto& d = disp[v];
       for (int32_t k = 0; k < 3; ++k) {
-        d[k] = d[k] >= 0.0
-          ? std::floor(d[k] * scale[k] + params.liftingQuantizationBias[k])
-          : -std::floor(-d[k] * scale[k] + params.liftingQuantizationBias[k]);
+        d[k] =
+          d[k] >= 0.0
+            ? std::floor(d[k] * scale[k] + params.liftingQuantizationBias[k])
+            : -std::floor(-d[k] * scale[k]
+                          + params.liftingQuantizationBias[k]);
       }
     }
     vcount0 = vcount1;
-    for (int32_t k = 0; k < 3; ++k) {
-      scale[k] *= lodScale[k];
-    }
+    for (int32_t k = 0; k < 3; ++k) { scale[k] *= lodScale[k]; }
   }
   return 0;
 }
@@ -741,9 +708,8 @@ VMCEncoder::quantizeDisplacements(
 //----------------------------------------------------------------------------
 
 int32_t
-VMCEncoder::transferTexture(
-  VMCFrame& frame, const VMCEncoderParameters& params)
-{
+VMCEncoder::transferTexture(VMCFrame&                   frame,
+                            const VMCEncoderParameters& params) {
   auto targetMesh = frame.input;
   // normalize texcoords so they are between 0.0 and 1.0
   const auto tcCount = targetMesh.texCoordCount();
@@ -756,14 +722,10 @@ VMCEncoder::transferTexture(
   frame.outputTexture.resize(
     params.textureWidth, params.textureHeight, ColourSpace::BGR444p);
 
-  if (params.invertOrientation) {
-    frame.rec.invertOrientation();
-  }
+  if (params.invertOrientation) { frame.rec.invertOrientation(); }
   const auto ret = transferTexture(
     targetMesh, frame.rec, frame.inputTexture, frame.outputTexture, params);
-  if (params.invertOrientation) {
-    frame.rec.invertOrientation();
-  }
+  if (params.invertOrientation) { frame.rec.invertOrientation(); }
   return ret;
 }
 
@@ -771,15 +733,13 @@ int32_t
 VMCEncoder::transferTexture(
   const TriangleMesh<double>& targetMesh,
   const TriangleMesh<double>& sourceMesh,
-  const Frame<uint8_t>& targetTexture,  // , ColourSpace::BGR444p
-  Frame<uint8_t>& outputTexture,        // , ColourSpace::BGR444p
-  const VMCEncoderParameters& params)
-{
-  if (
-    (targetMesh.pointCount() == 0) || (sourceMesh.pointCount() == 0)
-    || targetMesh.triangleCount() != targetMesh.texCoordTriangleCount()
-    || sourceMesh.triangleCount() != sourceMesh.texCoordTriangleCount()
-    || outputTexture.width() <= 0 || outputTexture.height() <= 0) {
+  const Frame<uint8_t>&       targetTexture,  // , ColourSpace::BGR444p
+  Frame<uint8_t>&             outputTexture,  // , ColourSpace::BGR444p
+  const VMCEncoderParameters& params) {
+  if ((targetMesh.pointCount() == 0) || (sourceMesh.pointCount() == 0)
+      || targetMesh.triangleCount() != targetMesh.texCoordTriangleCount()
+      || sourceMesh.triangleCount() != sourceMesh.texCoordTriangleCount()
+      || outputTexture.width() <= 0 || outputTexture.height() <= 0) {
     return -1;
   }
 
@@ -789,14 +749,14 @@ VMCEncoder::transferTexture(
 
   KdTree kdtree(3, targetMesh.points(), 10);  // dim, cloud, max leaf
 
-  const auto oWidth = outputTexture.width();
-  const auto oHeight = outputTexture.height();
-  const auto oWidthMinus1 = oWidth - 1;
-  const auto oHeightMinus1 = oHeight - 1;
-  auto& oB = outputTexture.plane(0);
-  auto& oG = outputTexture.plane(1);
-  auto& oR = outputTexture.plane(2);
-  const auto sTriangleCount = sourceMesh.triangleCount();
+  const auto     oWidth         = outputTexture.width();
+  const auto     oHeight        = outputTexture.height();
+  const auto     oWidthMinus1   = oWidth - 1;
+  const auto     oHeightMinus1  = oHeight - 1;
+  auto&          oB             = outputTexture.plane(0);
+  auto&          oG             = outputTexture.plane(1);
+  auto&          oR             = outputTexture.plane(2);
+  const auto     sTriangleCount = sourceMesh.triangleCount();
   Plane<int32_t> triangleMap;
   triangleMap.resize(oWidth, oHeight);
   Plane<uint8_t> occupancy;
@@ -804,31 +764,29 @@ VMCEncoder::transferTexture(
   occupancy.fill(uint8_t(0));
 
   for (int32_t t = 0; t < sTriangleCount; ++t) {
-    const auto& triUV = sourceMesh.texCoordTriangle(t);
-    const Vec2<double> uv[3] = {
-      sourceMesh.texCoord(triUV[0]), sourceMesh.texCoord(triUV[1]),
-      sourceMesh.texCoord(triUV[2])};
-    const auto& triPos = sourceMesh.triangle(t);
-    const Vec3<double> pos[3] = {
-      sourceMesh.point(triPos[0]), sourceMesh.point(triPos[1]),
-      sourceMesh.point(triPos[2])};
-    const auto area = (uv[1] - uv[0]) ^ (uv[2] - uv[0]);
-    if (area <= 0.0) {
-      continue;
-    }
+    const auto&        triUV  = sourceMesh.texCoordTriangle(t);
+    const Vec2<double> uv[3]  = {sourceMesh.texCoord(triUV[0]),
+                                 sourceMesh.texCoord(triUV[1]),
+                                 sourceMesh.texCoord(triUV[2])};
+    const auto&        triPos = sourceMesh.triangle(t);
+    const Vec3<double> pos[3] = {sourceMesh.point(triPos[0]),
+                                 sourceMesh.point(triPos[1]),
+                                 sourceMesh.point(triPos[2])};
+    const auto         area   = (uv[1] - uv[0]) ^ (uv[2] - uv[0]);
+    if (area <= 0.0) { continue; }
     assert(area > 0.0);
     const auto iarea = area > 0.0 ? 1.0 / area : 1.0;
-    auto i0 = oHeightMinus1;
-    auto i1 = 0;
-    auto j0 = oWidthMinus1;
-    auto j1 = 0;
+    auto       i0    = oHeightMinus1;
+    auto       i1    = 0;
+    auto       j0    = oWidthMinus1;
+    auto       j1    = 0;
     for (const auto& k : uv) {
       const auto i = int32_t(std::floor(k[1] * oHeightMinus1));
       const auto j = int32_t(std::floor(k[0] * oWidthMinus1));
-      i0 = std::min(i0, i);
-      j0 = std::min(j0, j);
-      i1 = std::max(i1, i);
-      j1 = std::max(j1, j);
+      i0           = std::min(i0, i);
+      j0           = std::min(j0, j);
+      i1           = std::max(i1, i);
+      j1           = std::max(j1, j);
     }
     i0 = std::max(i0, 0);
     i1 = std::min(i1, oHeightMinus1);
@@ -837,18 +795,21 @@ VMCEncoder::transferTexture(
     for (int32_t i = i0; i <= i1; ++i) {
       const auto y = double(i) / oHeightMinus1;
       for (int32_t j = j0; j <= j1; ++j) {
-        const auto x = double(j) / oWidthMinus1;
+        const auto         x = double(j) / oWidthMinus1;
         const Vec2<double> uvP(x, y);
-        auto w0 = ((uv[2] - uv[1]) ^ (uvP - uv[1])) * iarea;
-        auto w1 = ((uv[0] - uv[2]) ^ (uvP - uv[2])) * iarea;
-        auto w2 = ((uv[1] - uv[0]) ^ (uvP - uv[0])) * iarea;
+        auto               w0 = ((uv[2] - uv[1]) ^ (uvP - uv[1])) * iarea;
+        auto               w1 = ((uv[0] - uv[2]) ^ (uvP - uv[2])) * iarea;
+        auto               w2 = ((uv[1] - uv[0]) ^ (uvP - uv[0])) * iarea;
         if (w0 >= 0.0 && w1 >= 0.0 && w2 >= 0.0) {
-          const auto point0 = w0 * pos[0] + w1 * pos[1] + w2 * pos[2];
-          double minDist2 = NAN;
-          const auto bgr = computeNearestPointColour(
-            point0, targetTexture, targetMesh, kdtree, vertexToTriangleTarget,
-            minDist2);
-          const auto ii = oHeightMinus1 - i;
+          const auto point0   = w0 * pos[0] + w1 * pos[1] + w2 * pos[2];
+          double     minDist2 = NAN;
+          const auto bgr      = computeNearestPointColour(point0,
+                                                     targetTexture,
+                                                     targetMesh,
+                                                     kdtree,
+                                                     vertexToTriangleTarget,
+                                                     minDist2);
+          const auto ii       = oHeightMinus1 - i;
           oB.set(ii, j, uint8_t(std::round(bgr[0])));
           oG.set(ii, j, uint8_t(std::round(bgr[1])));
           oR.set(ii, j, uint8_t(std::round(bgr[2])));
@@ -860,22 +821,20 @@ VMCEncoder::transferTexture(
   }
   const int32_t shift[4][2] = {{-1, -0}, {0, -1}, {1, 0}, {0, 1}};
   for (int32_t it = 0;
-       it < params.textureTransferPaddingBoundaryIterationCount; ++it) {
+       it < params.textureTransferPaddingBoundaryIterationCount;
+       ++it) {
     const auto checkValue = uint8_t(255 - it);
     for (int32_t i = 0; i < oHeight; ++i) {
       for (int32_t j = 0; j < oWidth; ++j) {
-        if (occupancy(i, j) != 0U) {
-          continue;
-        }
-        double minTriangleDist2 = std::numeric_limits<double>::max();
+        if (occupancy(i, j) != 0U) { continue; }
+        double       minTriangleDist2 = std::numeric_limits<double>::max();
         Vec3<double> bgr(0.0);
-        int32_t count = 0;
+        int32_t      count = 0;
         for (const auto* k : shift) {
           const auto i1 = i + k[0];
           const auto j1 = j + k[1];
-          if (
-            i1 < 0 || j1 < 0 || i1 >= oHeight || j1 >= oWidth
-            || occupancy(i1, j1) != checkValue) {
+          if (i1 < 0 || j1 < 0 || i1 >= oHeight || j1 >= oWidth
+              || occupancy(i1, j1) != checkValue) {
             continue;
           }
 
@@ -884,27 +843,30 @@ VMCEncoder::transferTexture(
 
           const Vec2<double> uvP(x, y);
 
-          const auto t = triangleMap(i1, j1);
-          const auto& triUV = sourceMesh.texCoordTriangle(t);
-          const Vec2<double> uv[3] = {
-            sourceMesh.texCoord(triUV[0]), sourceMesh.texCoord(triUV[1]),
-            sourceMesh.texCoord(triUV[2])};
+          const auto         t     = triangleMap(i1, j1);
+          const auto&        triUV = sourceMesh.texCoordTriangle(t);
+          const Vec2<double> uv[3] = {sourceMesh.texCoord(triUV[0]),
+                                      sourceMesh.texCoord(triUV[1]),
+                                      sourceMesh.texCoord(triUV[2])};
 
-          const auto& triPos = sourceMesh.triangle(t);
-          const Vec3<double> pos[3] = {
-            sourceMesh.point(triPos[0]), sourceMesh.point(triPos[1]),
-            sourceMesh.point(triPos[2])};
-          const auto area = (uv[1] - uv[0]) ^ (uv[2] - uv[0]);
+          const auto&        triPos = sourceMesh.triangle(t);
+          const Vec3<double> pos[3] = {sourceMesh.point(triPos[0]),
+                                       sourceMesh.point(triPos[1]),
+                                       sourceMesh.point(triPos[2])};
+          const auto         area   = (uv[1] - uv[0]) ^ (uv[2] - uv[0]);
           assert(area > 0.0);
-          const auto iarea = area > 0.0 ? 1.0 / area : 1.0;
-          const auto w0 = ((uv[2] - uv[1]) ^ (uvP - uv[1])) * iarea;
-          const auto w1 = ((uv[0] - uv[2]) ^ (uvP - uv[2])) * iarea;
-          const auto w2 = ((uv[1] - uv[0]) ^ (uvP - uv[0])) * iarea;
-          const auto point0 = w0 * pos[0] + w1 * pos[1] + w2 * pos[2];
-          double minDist2 = NAN;
-          bgr += computeNearestPointColour(
-            point0, targetTexture, targetMesh, kdtree, vertexToTriangleTarget,
-            minDist2);
+          const auto iarea    = area > 0.0 ? 1.0 / area : 1.0;
+          const auto w0       = ((uv[2] - uv[1]) ^ (uvP - uv[1])) * iarea;
+          const auto w1       = ((uv[0] - uv[2]) ^ (uvP - uv[2])) * iarea;
+          const auto w2       = ((uv[1] - uv[0]) ^ (uvP - uv[0])) * iarea;
+          const auto point0   = w0 * pos[0] + w1 * pos[1] + w2 * pos[2];
+          double     minDist2 = NAN;
+          bgr += computeNearestPointColour(point0,
+                                           targetTexture,
+                                           targetMesh,
+                                           kdtree,
+                                           vertexToTriangleTarget,
+                                           minDist2);
           ++count;
           if (minDist2 < minTriangleDist2) {
             minTriangleDist2 = minDist2;
@@ -922,22 +884,23 @@ VMCEncoder::transferTexture(
     }
   }
   if (params.textureTransferPaddingDilateIterationCount != 0) {
-    Frame<uint8_t> tmpTexture;  // ColourSpace::BGR444p
+    Frame<uint8_t> tmpTexture;
     Plane<uint8_t> tmpOccupancy;
     for (int32_t it = 0;
-         it < params.textureTransferPaddingDilateIterationCount; ++it) {
+         it < params.textureTransferPaddingDilateIterationCount;
+         ++it) {
       DilatePadding(outputTexture, occupancy, tmpTexture, tmpOccupancy);
       DilatePadding(tmpTexture, tmpOccupancy, outputTexture, occupancy);
     }
   }
   if (params.textureTransferPaddingMethod == PaddingMethod::PUSH_PULL) {
     PullPushPadding(outputTexture, occupancy);
-  } else if (
-    params.textureTransferPaddingMethod == PaddingMethod::SPARSE_LINEAR) {
+  } else if (params.textureTransferPaddingMethod
+             == PaddingMethod::SPARSE_LINEAR) {
     PullPushPadding(outputTexture, occupancy);
-    SparseLinearPadding(
-      outputTexture, occupancy,
-      params.textureTransferPaddingSparseLinearThreshold);
+    SparseLinearPadding(outputTexture,
+                        occupancy,
+                        params.textureTransferPaddingSparseLinearThreshold);
   }
   return 0;
 }
@@ -946,13 +909,11 @@ VMCEncoder::transferTexture(
 
 // Note: deprecated function
 int32_t
-VMCEncoder::compressOnly(
-  const VMCGroupOfFramesInfo& gofInfo,
-  VMCGroupOfFrames& gof,
-  Bitstream& bitstream,
-  const VMCEncoderParameters& params)
-{
-  _gofInfo = gofInfo;
+VMCEncoder::compressOnly(const VMCGroupOfFramesInfo& gofInfo,
+                         VMCGroupOfFrames&           gof,
+                         Bitstream&                  bitstream,
+                         const VMCEncoderParameters& params) {
+  _gofInfo                 = gofInfo;
   const int32_t frameCount = _gofInfo.frameCount_;
   const int32_t pixelsPerBlock =
     params.geometryVideoBlockSize * params.geometryVideoBlockSize;
@@ -969,9 +930,9 @@ VMCEncoder::compressOnly(
 
   Bitstream bitstreamCompressedMeshes;
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-    const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
-    auto& frame = gof.frame(frameIndex);
-    auto& dispVideoFrame = _dispVideo.frame(frameIndex);
+    const auto& frameInfo      = _gofInfo.frameInfo(frameIndex);
+    auto&       frame          = gof.frame(frameIndex);
+    auto&       dispVideoFrame = _dispVideo.frame(frameIndex);
     compressBaseMesh(
       gof, frameInfo, frame, bitstreamCompressedMeshes, stats, params);
     const auto vertexCount = frame.subdiv.pointCount();
@@ -984,16 +945,18 @@ VMCEncoder::compressOnly(
       const auto geometryVideoHeightInBlocks =
         (blockCount + params.geometryVideoWidthInBlocks - 1)
         / params.geometryVideoWidthInBlocks;
-      heightDispVideo = std::max(
-        heightDispVideo,
-        geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
+      heightDispVideo =
+        std::max(heightDispVideo,
+                 geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
       dispVideoFrame.resize(
         widthDispVideo, heightDispVideo, ColourSpace::BGR444p);
       computeDisplacements(frame, params);
-      computeForwardLinearLifting(
-        frame.disp, frame.subdivInfoLevelOfDetails, frame.subdivEdges,
-        params.liftingPredictionWeight, params.liftingUpdateWeight,
-        params.liftingSkipUpdate);
+      computeForwardLinearLifting(frame.disp,
+                                  frame.subdivInfoLevelOfDetails,
+                                  frame.subdivEdges,
+                                  params.liftingPredictionWeight,
+                                  params.liftingUpdateWeight,
+                                  params.liftingSkipUpdate);
       quantizeDisplacements(frame, params);
       computeDisplacementVideoFrame(frame, dispVideoFrame, params);
     }
@@ -1006,16 +969,13 @@ VMCEncoder::compressOnly(
     _dispVideo.resize(0, 0, ColourSpace::YUV444p, 0);
   }
 
-  if (encodeSequenceHeader(gof, bitstream, params) != 0) {
-    return -1;
-  }
+  if (encodeSequenceHeader(gof, bitstream, params) != 0) { return -1; }
   bitstream.append(bitstreamCompressedMeshes.buffer);
 
-  stats.frameCount = frameCount;
+  stats.frameCount             = frameCount;
   stats.displacementsByteCount = bitstream.size();
-  if (
-    params.encodeDisplacementsVideo
-    && (compressDisplacementsVideo(bitstream, params) != 0)) {
+  if (params.encodeDisplacementsVideo
+      && (compressDisplacementsVideo(bitstream, params) != 0)) {
     return -1;
   }
   stats.displacementsByteCount =
@@ -1025,37 +985,36 @@ VMCEncoder::compressOnly(
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       auto& frame = gof.frame(frameIndex);
       if (params.encodeDisplacementsVideo) {
-        reconstructDisplacementFromVideoFrame(
-          _dispVideo.frame(frameIndex), frame, params.geometryVideoBlockSize,
-          params.geometryVideoBitDepth);
-        inverseQuantizeDisplacements(
-          frame, params.bitDepthPosition,
-          params.liftingLevelOfDetailInverseScale,
-          params.liftingQuantizationParameters);
-        computeInverseLinearLifting(
-          frame.disp, frame.subdivInfoLevelOfDetails, frame.subdivEdges,
-          params.liftingPredictionWeight, params.liftingUpdateWeight,
-          params.liftingSkipUpdate);
+        reconstructDisplacementFromVideoFrame(_dispVideo.frame(frameIndex),
+                                              frame,
+                                              params.geometryVideoBlockSize,
+                                              params.geometryVideoBitDepth);
+        inverseQuantizeDisplacements(frame,
+                                     params.bitDepthPosition,
+                                     params.liftingLevelOfDetailInverseScale,
+                                     params.liftingQuantizationParameters);
+        computeInverseLinearLifting(frame.disp,
+                                    frame.subdivInfoLevelOfDetails,
+                                    frame.subdivEdges,
+                                    params.liftingPredictionWeight,
+                                    params.liftingUpdateWeight,
+                                    params.liftingSkipUpdate);
         applyDisplacements(frame, params.displacementCoordinateSystem);
       }
-      if (transferTexture(frame, params) != 0) {
-        return -1;
-      }
+      if (transferTexture(frame, params) != 0) { return -1; }
       std::cout << '.';
     }
     std::cout << '\n';
     // compress texture
     stats.textureByteCount = bitstream.size();
-    if (compressTextureVideo(gof, bitstream, params) != 0) {
-      return -1;
-    }
+    if (compressTextureVideo(gof, bitstream, params) != 0) { return -1; }
   }
   stats.textureByteCount = bitstream.size() - stats.textureByteCount;
-  stats.totalByteCount = bitstream.size() - stats.totalByteCount;
+  stats.totalByteCount   = bitstream.size() - stats.totalByteCount;
   if (!params.normalizeUV) {
     const auto scale = (1 << params.bitDepthTexCoord) - 1.0;
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      auto& rec = gof.frame(frameIndex).rec;
+      auto&      rec           = gof.frame(frameIndex).rec;
       const auto texCoordCount = rec.texCoordCount();
       for (int32_t i = 0; i < texCoordCount; ++i) {
         rec.setTexCoord(i, rec.texCoord(i) * scale);
@@ -1069,12 +1028,10 @@ VMCEncoder::compressOnly(
 //----------------------------------------------------------------------------
 
 int32_t
-VMCEncoder::compress(
-  const VMCGroupOfFramesInfo& gofInfo,
-  VMCGroupOfFrames& gof,
-  Bitstream& bitstream,
-  const VMCEncoderParameters& params)
-{
+VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
+                     VMCGroupOfFrames&           gof,
+                     Bitstream&                  bitstream,
+                     const VMCEncoderParameters& params) {
   _gofInfo = gofInfo;
   _gofInfo.trace();
   const int32_t frameCount = _gofInfo.frameCount_;
@@ -1092,10 +1049,8 @@ VMCEncoder::compress(
   if (params.baseIsSrc && params.subdivIsBase) {
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       auto& frameInfo = _gofInfo.frameInfo(frameIndex);
-      auto& frame = gof.frame(frameIndex);
-      if (params.baseIsSrc) {
-        frame.base = frame.input;
-      }
+      auto& frame     = gof.frame(frameIndex);
+      if (params.baseIsSrc) { frame.base = frame.input; }
       if (params.subdivIsBase) {
         frame.subdiv = frame.base;
         if (params.subdivInter && frameInfo.referenceFrameIndex != -1) {
@@ -1110,21 +1065,22 @@ VMCEncoder::compress(
     // # this implements a bug in the CfP submission whereby a mode decision that
     // # changes inter to intra forces the rest of the subgof to be intra too
     // # for fitsubdiv_with_mapping=1
-    bool forceSubGofRestToIntra = false;
-    GeometryDecimate geometryDecimate;
+    bool                   forceSubGofRestToIntra = false;
+    GeometryDecimate       geometryDecimate;
     TextureParametrization textureParametrization;
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      auto& frame = gof.frame(frameIndex);
-      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-        + std::to_string(_gofInfo.index_) + "_fr_"
-        + std::to_string(frameIndex);
+      auto& frame  = gof.frame(frameIndex);
+      auto  prefix = params.intermediateFilesPathPrefix + "GOF_"
+                    + std::to_string(_gofInfo.index_) + "_fr_"
+                    + std::to_string(frameIndex);
 
       // Simplify
       std::cout << "Simplify \n";
       // Save intermediate files
       if (params.keepIntermediateFiles) {
-        auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_" + std::to_string(frameIndex);
-        frame.input.saveToOBJ<int64_t>(prefix  + "_simp_input.obj");
+        auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
+                      + std::to_string(frameIndex);
+        frame.input.saveToOBJ<int64_t>(prefix + "_simp_input.obj");
       }
       if (vmesh::GeometryDecimate::decimate(
             frame, params)) {  // Create mapped, reference and decimate
@@ -1149,11 +1105,11 @@ VMCEncoder::compress(
       // Texture parametrization
       std::cout << "Texture parametrization \n";
       vmesh::TextureParametrization::generate(frame, params);
-      
+
       // Force truncation of mesh coordinates to get the same results as P11
       if (params.forceCoordTruncation) {
-        forceCoordinateTruncation(
-          frame.decimateTexture, prefix + "_decimateTexture.obj");
+        forceCoordinateTruncation(frame.decimateTexture,
+                                  prefix + "_decimateTexture.obj");
       }
 
       // Save intermediate files
@@ -1164,108 +1120,111 @@ VMCEncoder::compress(
       // Intra geometry parametrization
       std::cout << "Intra geometry parametrization\n";
       GeometryParametrization fitsubdivIntra;
-      TriangleMesh<double> mtargetIntra;
-      TriangleMesh<double> subdiv0Intra;
-      fitsubdivIntra.generate(
-        frame.reference,        // target
-        frame.decimateTexture,  // source
-        frame.mapped,           // mapped
-        mtargetIntra,           // mtarget
-        subdiv0Intra,           // subdiv0
-        params.intraGeoParams,  // params
-        frame.baseIntra,        // base
-        frame.subdivIntra,      // deformed
-        frame.nsubdivIntra);    // ndeformed
-      
+      TriangleMesh<double>    mtargetIntra;
+      TriangleMesh<double>    subdiv0Intra;
+      fitsubdivIntra.generate(frame.reference,        // target
+                              frame.decimateTexture,  // source
+                              frame.mapped,           // mapped
+                              mtargetIntra,           // mtarget
+                              subdiv0Intra,           // subdiv0
+                              params.intraGeoParams,  // params
+                              frame.baseIntra,        // base
+                              frame.subdivIntra,      // deformed
+                              frame.nsubdivIntra);    // ndeformed
+
       // Force truncation of mesh coordinates to get the same results as P11
       if (params.forceCoordTruncation) {
         forceCoordinateTruncation(frame.baseIntra, prefix + "_intra_base.obj");
-        forceCoordinateTruncation(frame.subdivIntra, prefix + "_intra_subdiv.obj");
-        forceCoordinateTruncation(frame.nsubdivIntra, prefix + "_intra_nsubdiv.obj");
+        forceCoordinateTruncation(frame.subdivIntra,
+                                  prefix + "_intra_subdiv.obj");
+        forceCoordinateTruncation(frame.nsubdivIntra,
+                                  prefix + "_intra_nsubdiv.obj");
       }
 
       // Save intermediate files
       if (params.keepIntermediateFiles) {
-        frame.decimateTexture.saveToOBJ(
-          prefix + "_reparamDecimateTexture.obj");
+        frame.decimateTexture.saveToOBJ(prefix
+                                        + "_reparamDecimateTexture.obj");
         frame.baseIntra.saveToOBJ(prefix + "_intra_base.obj");
         frame.subdivIntra.saveToOBJ(prefix + "_intra_subdiv.obj");
         frame.nsubdivIntra.saveToOBJ(prefix + "_intra_nsubdiv.obj");
       }
-      bool chooseIntra = true;
-      auto& frameInfo = _gofInfo.frameInfo(frameIndex);
+      bool  chooseIntra = true;
+      auto& frameInfo   = _gofInfo.frameInfo(frameIndex);
 
       if (frameInfo.type == FrameType::INTRA) {
         forceSubGofRestToIntra = false;
       }
-      if (
-        params.subdivInter && frameIndex > 0
-        && ((!params.subdivInterWithMapping) || frameInfo.referenceFrameIndex != -1)
-        && (!forceSubGofRestToIntra)) {
-        // Fitsubdiv Inter
-        std::cout << "Fitsubdiv Inter: withMapping = "
+      if (params.subdivInter && frameIndex > 0
+          && ((!params.subdivInterWithMapping)
+              || frameInfo.referenceFrameIndex != -1)
+          && (!forceSubGofRestToIntra)) {
+        // Inter geometry parametrization
+        std::cout << "Inter geometry parametrization: withMapping = "
                   << params.subdivInterWithMapping << "\n";
         GeometryParametrization fitsubdivInter;
-        if( params.subdivInterWithMapping ){
+        if (params.subdivInterWithMapping) {
           // With mapping
           // mtarget :    FNUM input
           // target  : ai RNUM reference
           // source  : ai RNUM decimate tex
           // mapped  : ai RNUM mapped
-          printf("frameInfo.referenceFrameIndex = %d \n",frameInfo.referenceFrameIndex);
+          printf("frameInfo.referenceFrameIndex = %d \n",
+                 frameInfo.referenceFrameIndex);
           fflush(stdout);
-          auto& ref = gof.frame( frameInfo.referenceFrameIndex );
+          auto&                ref = gof.frame(frameInfo.referenceFrameIndex);
           TriangleMesh<double> mappedInter;
           TriangleMesh<double> subdiv0Inter;
-          fitsubdivInter.generate(
-            ref.reference,          // target
-            ref.decimateTexture,    // source
-            ref.mapped,             // mapped
-            frame.input,            // mtarget
-            subdiv0Inter,           // subdiv0
-            params.interGeoParams,  // params
-            frame.baseInter,        // base
-            frame.subdivInter,      // deformed
-            frame.nsubdivInter);    // ndeformed
+          fitsubdivInter.generate(ref.reference,          // target
+                                  ref.decimateTexture,    // source
+                                  ref.mapped,             // mapped
+                                  frame.input,            // mtarget
+                                  subdiv0Inter,           // subdiv0
+                                  params.interGeoParams,  // params
+                                  frame.baseInter,        // base
+                                  frame.subdivInter,      // deformed
+                                  frame.nsubdivInter);    // ndeformed
         } else {
-          // Without mapping 
+          // Without mapping
           // subdiv0 : ld frame - 1 subdiv
-          // souce   : ld frame - 1 base 
+          // souce   : ld frame - 1 base
           // target  : ld frame - 1 reference
-          auto& ref = gof.frame(frameIndex - 1);
+          auto&                ref = gof.frame(frameIndex - 1);
           TriangleMesh<double> mappedInter;
           TriangleMesh<double> mtargetInter;
-          fitsubdivInter.generate(
-            frame.reference,        // target
-            ref.base,               // source
-            mappedInter,            // mapped
-            mtargetInter,           // mtarget
-            ref.subdiv,             // subdiv0
-            params.interGeoParams,  // params
-            frame.baseInter,        // base
-            frame.subdivInter,      // deformed
-            frame.nsubdivInter);    // ndeformed
+          fitsubdivInter.generate(frame.reference,        // target
+                                  ref.base,               // source
+                                  mappedInter,            // mapped
+                                  mtargetInter,           // mtarget
+                                  ref.subdiv,             // subdiv0
+                                  params.interGeoParams,  // params
+                                  frame.baseInter,        // base
+                                  frame.subdivInter,      // deformed
+                                  frame.nsubdivInter);    // ndeformed
         }
-        
+
         // Force truncation of mesh coordinates to get the same results as P11
         if (params.forceCoordTruncation) {
-          forceCoordinateTruncation(frame.baseInter, prefix + "_inter_base.obj");
-          forceCoordinateTruncation(frame.subdivInter, prefix + "_inter_subdiv.obj");
-          forceCoordinateTruncation(frame.nsubdivInter, prefix + "_inter_nsubdiv.obj");
+          forceCoordinateTruncation(frame.baseInter,
+                                    prefix + "_inter_base.obj");
+          forceCoordinateTruncation(frame.subdivInter,
+                                    prefix + "_inter_subdiv.obj");
+          forceCoordinateTruncation(frame.nsubdivInter,
+                                    prefix + "_inter_nsubdiv.obj");
         }
-        
+
         // Save intermediate files
         if (params.keepIntermediateFiles) {
-          frame.decimateTexture.saveToOBJ(
-            prefix + "_reparamDecimateTexture.obj");
+          frame.decimateTexture.saveToOBJ(prefix
+                                          + "_reparamDecimateTexture.obj");
           frame.baseInter.saveToOBJ(prefix + "_inter_base.obj");
           frame.subdivInter.saveToOBJ(prefix + "_inter_subdiv.obj");
           frame.nsubdivInter.saveToOBJ(prefix + "_inter_nsubdiv.obj");
         }
 
         // ComputeMetric/Decision
-        VMCMetrics metricsIntra;
-        VMCMetrics metricsInter;
+        VMCMetrics           metricsIntra;
+        VMCMetrics           metricsInter;
         VMCMetricsParameters metricParams;
         metricParams.computePcc = true;
         metricParams.qp         = params.bitDepthPosition;
@@ -1297,9 +1256,7 @@ VMCEncoder::compress(
             metIntra[pos] - metInter[pos],
             params.maxAllowedD2PSNRLoss);
           chooseIntra = true;
-          if (params.subdivInterWithMapping) {
-            forceSubGofRestToIntra = true;
-          }
+          if (params.subdivInterWithMapping) { forceSubGofRestToIntra = true; }
         } else {
           // Choose Inter
           printf(
@@ -1313,20 +1270,20 @@ VMCEncoder::compress(
         }
       }
       if (chooseIntra) {
-        frame.base = frame.baseIntra;
-        frame.subdiv = frame.subdivIntra;
-        frame.nsubdiv = frame.nsubdivIntra;
-        frameInfo.type = FrameType::INTRA;   
+        frame.base                    = frame.baseIntra;
+        frame.subdiv                  = frame.subdivIntra;
+        frame.nsubdiv                 = frame.nsubdivIntra;
+        frameInfo.type                = FrameType::INTRA;
         frameInfo.referenceFrameIndex = -1;
       } else {
-        auto& frameInfo = _gofInfo.frameInfo( frameIndex );
-        frameInfo.type = FrameType::SKIP;        
+        auto& frameInfo               = _gofInfo.frameInfo(frameIndex);
+        frameInfo.type                = FrameType::SKIP;
         frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
         printf("update referenceFrameIndex = %d = %d - 1 \n",
                frameInfo.referenceFrameIndex,
                frameInfo.frameIndex);
         frame.base    = frame.baseInter;
-        frame.subdiv = frame.subdivInter;
+        frame.subdiv  = frame.subdivInter;
         frame.nsubdiv = frame.nsubdivInter;
       }
     }
@@ -1336,7 +1293,7 @@ VMCEncoder::compress(
   std::cout << "Compress \n";
   if (params.subdivIsBase) {
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      auto& frame = gof.frame(frameIndex);
+      auto& frame  = gof.frame(frameIndex);
       frame.subdiv = frame.base;
     }
   }
@@ -1345,10 +1302,10 @@ VMCEncoder::compress(
   if (params.keepIntermediateFiles) {
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
-      auto& frame = gof.frame(frameIndex);
-      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-        + std::to_string(_gofInfo.index_) + "_fr_"
-        + std::to_string(frameIndex);
+      auto&       frame     = gof.frame(frameIndex);
+      auto        prefix    = params.intermediateFilesPathPrefix + "GOF_"
+                    + std::to_string(_gofInfo.index_) + "_fr_"
+                    + std::to_string(frameIndex);
       frame.base.saveToOBJ(prefix + "_base_org.obj");
       frame.subdiv.saveToOBJ(prefix + "_subdiv_org.obj");
     }
@@ -1358,13 +1315,13 @@ VMCEncoder::compress(
   Bitstream bitstreamCompressedMeshes;
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
-    auto& frame = gof.frame(frameIndex);
+    auto&       frame     = gof.frame(frameIndex);
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-        + std::to_string(_gofInfo.index_) + "_fr_"
-        + std::to_string(frameIndex);
+                    + std::to_string(_gofInfo.index_) + "_fr_"
+                    + std::to_string(frameIndex);
       frame.base.saveToOBJ(prefix + "_base_uni.obj");
       frame.subdiv.saveToOBJ(prefix + "_subdiv_uni.obj");
     }
@@ -1381,16 +1338,18 @@ VMCEncoder::compress(
       const auto geometryVideoHeightInBlocks =
         (blockCount + params.geometryVideoWidthInBlocks - 1)
         / params.geometryVideoWidthInBlocks;
-      heightDispVideo = std::max(
-        heightDispVideo,
-        geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
+      heightDispVideo =
+        std::max(heightDispVideo,
+                 geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
       dispVideoFrame.resize(
         widthDispVideo, heightDispVideo, ColourSpace::YUV444p);
       computeDisplacements(frame, params);
-      computeForwardLinearLifting(
-        frame.disp, frame.subdivInfoLevelOfDetails, frame.subdivEdges,
-        params.liftingPredictionWeight, params.liftingUpdateWeight,
-        params.liftingSkipUpdate);
+      computeForwardLinearLifting(frame.disp,
+                                  frame.subdivInfoLevelOfDetails,
+                                  frame.subdivEdges,
+                                  params.liftingPredictionWeight,
+                                  params.liftingUpdateWeight,
+                                  params.liftingSkipUpdate);
       quantizeDisplacements(frame, params);
       computeDisplacementVideoFrame(frame, dispVideoFrame, params);
     }
@@ -1404,17 +1363,14 @@ VMCEncoder::compress(
   }
 
   // write sequence header
-  if (encodeSequenceHeader(gof, bitstream, params) != 0) {
-    return -1;
-  }
+  if (encodeSequenceHeader(gof, bitstream, params) != 0) { return -1; }
   bitstream.append(bitstreamCompressedMeshes.buffer);
 
   // Encode displacements video
-  stats.frameCount = frameCount;
+  stats.frameCount             = frameCount;
   stats.displacementsByteCount = bitstream.size();
-  if (
-    params.encodeDisplacementsVideo
-    && (compressDisplacementsVideo(bitstream, params) != 0)) {
+  if (params.encodeDisplacementsVideo
+      && (compressDisplacementsVideo(bitstream, params) != 0)) {
     return -1;
   }
   stats.displacementsByteCount =
@@ -1426,39 +1382,38 @@ VMCEncoder::compress(
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       auto& frame = gof.frame(frameIndex);
       if (params.encodeDisplacementsVideo) {
-        reconstructDisplacementFromVideoFrame(
-          _dispVideo.frame(frameIndex), frame, params.geometryVideoBlockSize,
-          params.geometryVideoBitDepth);
-        inverseQuantizeDisplacements(
-          frame, params.bitDepthPosition,
-          params.liftingLevelOfDetailInverseScale,
-          params.liftingQuantizationParameters);
-        computeInverseLinearLifting(
-          frame.disp, frame.subdivInfoLevelOfDetails, frame.subdivEdges,
-          params.liftingPredictionWeight, params.liftingUpdateWeight,
-          params.liftingSkipUpdate);
+        reconstructDisplacementFromVideoFrame(_dispVideo.frame(frameIndex),
+                                              frame,
+                                              params.geometryVideoBlockSize,
+                                              params.geometryVideoBitDepth);
+        inverseQuantizeDisplacements(frame,
+                                     params.bitDepthPosition,
+                                     params.liftingLevelOfDetailInverseScale,
+                                     params.liftingQuantizationParameters);
+        computeInverseLinearLifting(frame.disp,
+                                    frame.subdivInfoLevelOfDetails,
+                                    frame.subdivEdges,
+                                    params.liftingPredictionWeight,
+                                    params.liftingUpdateWeight,
+                                    params.liftingSkipUpdate);
         applyDisplacements(frame, params.displacementCoordinateSystem);
       }
-      if (transferTexture(frame, params) != 0) {
-        return -1;
-      }
+      if (transferTexture(frame, params) != 0) { return -1; }
       std::cout << '.';
     }
     std::cout << '\n';
     // compress texture
     stats.textureByteCount = bitstream.size();
-    if (compressTextureVideo(gof, bitstream, params) != 0) {
-      return -1;
-    }
+    if (compressTextureVideo(gof, bitstream, params) != 0) { return -1; }
   }
   stats.textureByteCount = bitstream.size() - stats.textureByteCount;
-  stats.totalByteCount = bitstream.size() - stats.totalByteCount;
+  stats.totalByteCount   = bitstream.size() - stats.totalByteCount;
 
   // Normalize UV coordinate
   if (!params.normalizeUV) {
     const auto scale = (1 << params.bitDepthTexCoord) - 1.0;
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      auto& rec = gof.frame(frameIndex).rec;
+      auto&      rec           = gof.frame(frameIndex).rec;
       const auto texCoordCount = rec.texCoordCount();
       for (int32_t i = 0; i < texCoordCount; ++i) {
         rec.setTexCoord(i, rec.texCoord(i) * scale);
@@ -1473,30 +1428,31 @@ VMCEncoder::compress(
 
 int32_t
 VMCEncoder::computeDisplacementVideoFrame(
-  const VMCFrame& frame,
-  Frame<uint16_t>& dispVideoFrame,  // , ColourSpace::YUV444p
-  const VMCEncoderParameters& params)
-{
+  const VMCFrame&             frame,
+  Frame<uint16_t>&            dispVideoFrame,  // , ColourSpace::YUV444p
+  const VMCEncoderParameters& params) {
   const auto pixelsPerBlock =
     params.geometryVideoBlockSize * params.geometryVideoBlockSize;
-  const auto shift = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
-  const auto& disp = frame.disp;
-  auto& Y = dispVideoFrame.plane(0);
-  auto& U = dispVideoFrame.plane(1);
-  auto& V = dispVideoFrame.plane(2);
+  const auto  shift = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
+  const auto& disp  = frame.disp;
+  auto&       Y     = dispVideoFrame.plane(0);
+  auto&       U     = dispVideoFrame.plane(1);
+  auto&       V     = dispVideoFrame.plane(2);
   Y.fill(shift);
   U.fill(shift);
   V.fill(shift);
   for (int32_t v = 0, vcounter = 0, vcount = int32_t(disp.size()); v < vcount;
        ++v) {
     const auto& d = disp[v];
-    const auto blockIndex =
+    const auto  blockIndex =
       vcounter / pixelsPerBlock;  // to do: optimize power of 2
     const auto indexWithinBlock =
       vcounter % pixelsPerBlock;  // to do: optimize power of 2
-    const auto x0 = (blockIndex % params.geometryVideoWidthInBlocks)
+    const auto x0 =
+      (blockIndex % params.geometryVideoWidthInBlocks)
       * params.geometryVideoBlockSize;  // to do: optimize power of 2
-    const auto y0 = (blockIndex / params.geometryVideoWidthInBlocks)
+    const auto y0 =
+      (blockIndex / params.geometryVideoWidthInBlocks)
       * params.geometryVideoBlockSize;  // to do: optimize power of 2
     int32_t x = 0;
     int32_t y = 0;
@@ -1524,35 +1480,32 @@ VMCEncoder::computeDisplacementVideoFrame(
 //----------------------------------------------------------------------------
 
 int32_t
-VMCEncoder::encodeSequenceHeader(
-  const VMCGroupOfFrames& gof,
-  Bitstream& bitstream,
-  const VMCEncoderParameters& params) const
-{
-  if (
-    _dispVideo.width() < 0 || _dispVideo.width() > 16384
-    || _dispVideo.height() < 0 || _dispVideo.height() > 16384
-    || (_dispVideo.frameCount() != 0 && gof.frameCount() != gof.frameCount())
-    || gof.frameCount() < 0 || gof.frameCount() > 65535
-    || params.textureWidth < 0 || params.textureWidth > 16384
-    || params.textureHeight < 0 || params.textureHeight > 16384
-    || params.bitDepthPosition < 0 || params.bitDepthPosition > 16
-    || params.bitDepthTexCoord < 0 || params.bitDepthTexCoord > 16) {
+VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
+                                 Bitstream&                  bitstream,
+                                 const VMCEncoderParameters& params) const {
+  if (_dispVideo.width() < 0 || _dispVideo.width() > 16384
+      || _dispVideo.height() < 0 || _dispVideo.height() > 16384
+      || (_dispVideo.frameCount() != 0 && gof.frameCount() != gof.frameCount())
+      || gof.frameCount() < 0 || gof.frameCount() > 65535
+      || params.textureWidth < 0 || params.textureWidth > 16384
+      || params.textureHeight < 0 || params.textureHeight > 16384
+      || params.bitDepthPosition < 0 || params.bitDepthPosition > 16
+      || params.bitDepthTexCoord < 0 || params.bitDepthTexCoord > 16) {
     return -1;
   }
-  const auto frameCount = uint16_t(gof.frameCount());
-  const uint16_t widthDispVideo = uint32_t(_dispVideo.width());
-  const uint16_t heightDispVideo = uint32_t(_dispVideo.height());
-  const uint16_t widthTexVideo = uint32_t(params.textureWidth);
-  const uint16_t heightTexVideo = uint32_t(params.textureHeight);
-  const uint8_t geometryVideoBlockSize = params.geometryVideoBlockSize;
-  const auto bitDepth = uint8_t(
-    (params.bitDepthPosition - 1) + ((params.bitDepthTexCoord - 1) << 4));
+  const auto     frameCount             = uint16_t(gof.frameCount());
+  const uint16_t widthDispVideo         = uint32_t(_dispVideo.width());
+  const uint16_t heightDispVideo        = uint32_t(_dispVideo.height());
+  const uint16_t widthTexVideo          = uint32_t(params.textureWidth);
+  const uint16_t heightTexVideo         = uint32_t(params.textureHeight);
+  const uint8_t  geometryVideoBlockSize = params.geometryVideoBlockSize;
+  const auto     bitDepth               = uint8_t((params.bitDepthPosition - 1)
+                                + ((params.bitDepthTexCoord - 1) << 4));
 
-  printf(
-    "sps: liftingSubdivisionIterationCount = %d \n",
-    params.liftingSubdivisionIterationCount);
-  const uint8_t subdivInfo = uint8_t(params.intraGeoParams.subdivisionMethod)
+  printf("sps: liftingSubdivisionIterationCount = %d \n",
+         params.liftingSubdivisionIterationCount);
+  const uint8_t subdivInfo =
+    uint8_t(params.intraGeoParams.subdivisionMethod)
     + ((params.liftingSubdivisionIterationCount) << 4);
   const auto qpBaseMesh =
     uint8_t((params.qpPosition - 1) + ((params.qpTexCoord - 1) << 4));
@@ -1560,7 +1513,8 @@ VMCEncoder::encodeSequenceHeader(
     uint8_t(params.liftingQuantizationParameters[0]),
     uint8_t(params.liftingQuantizationParameters[1]),
     uint8_t(params.liftingQuantizationParameters[2])};
-  const uint8_t bitField = static_cast<int>(params.encodeDisplacementsVideo)
+  const uint8_t bitField =
+    static_cast<int>(params.encodeDisplacementsVideo)
     | (static_cast<int>(params.encodeTextureVideo) << 1);
   bitstream.write(frameCount);
   bitstream.write(bitField);
@@ -1583,9 +1537,8 @@ VMCEncoder::encodeSequenceHeader(
 }
 
 int32_t
-VMCEncoder::encodeFrameHeader(
-  const VMCFrameInfo& frameInfo, Bitstream& bitstream)
-{
+VMCEncoder::encodeFrameHeader(const VMCFrameInfo& frameInfo,
+                              Bitstream&          bitstream) {
   const auto frameType = uint8_t(frameInfo.type);
   assert(frameInfo.patchCount >= 0 && frameInfo.patchCount <= 256);
   const auto patchCountMinusOne = uint8_t(frameInfo.patchCount - 1);
@@ -1604,4 +1557,3 @@ VMCEncoder::encodeFrameHeader(
 //============================================================================
 
 }  // namespace vmesh
- 

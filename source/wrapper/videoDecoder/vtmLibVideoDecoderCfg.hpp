@@ -34,10 +34,10 @@
 /** \file     DecAppCfg.h
     \brief    Handle encoder configuration parameters (header)
 */
-#if defined(USE_VTM_VIDEO_CODEC )
+#if defined(USE_VTM_VIDEO_CODEC)
 
-#include "CommonLib/CommonDef.h"
-#include <vector>
+#  include "CommonLib/CommonDef.h"
+#  include <vector>
 
 namespace vmesh {
 
@@ -47,50 +47,65 @@ namespace vmesh {
 
 /// Decoder configuration class
 class vtmLibVideoDecoderCfg {
- protected:
+protected:
   std::string m_bitstreamFileName;  ///< input bitstream file name
   std::string m_reconFileName;      ///< output reconstruction file name
 
   std::string m_oplFilename;  ///< filename to output conformance log.
 
-  int                        m_iSkipFrame;  ///< counter for frames prior to the random access point to skip
-  int                        m_outputBitDepth[MAX_NUM_CHANNEL_TYPE];  ///< bit depth used for writing output
+  int
+    m_iSkipFrame;  ///< counter for frames prior to the random access point to skip
+  int m_outputBitDepth
+    [MAX_NUM_CHANNEL_TYPE];  ///< bit depth used for writing output
   InputColourSpaceConversion m_outputColourSpaceConvert;
-  int                        m_targetOlsIdx;            ///< target output layer set
-  std::vector<int>           m_targetOutputLayerIdSet;  ///< set of LayerIds to be outputted
-  int                        m_iMaxTemporalLayer;       ///< maximum temporal layer to be decoded
-  bool                       m_mTidExternalSet;         ///< maximum temporal layer set externally
-  bool                       m_tOlsIdxTidExternalSet;   ///< target output layer set index externally set
-  int m_decodedPictureHashSEIEnabled;  ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI
-                                       ///< message
-  bool m_decodedNoDisplaySEIEnabled;  ///< Enable(true)/disable(false) writing only pictures that get displayed based on
-                                      ///< the no display SEI message
-  std::string      m_colourRemapSEIFileName;       ///< output Colour Remapping file name
-  std::string      m_annotatedRegionsSEIFileName;  ///< annotated regions file name
-  std::vector<int> m_targetDecLayerIdSet;  ///< set of LayerIds to be included in the sub-bitstream extraction process.
-  std::string m_outputDecodedSEIMessagesFilename;  ///< filename to output decoded SEI messages to. If '-', then use
-                                                   ///< stdout. If empty, do not output details.
-#if JVET_S0257_DUMP_360SEI_MESSAGE
-  std::string m_outputDecoded360SEIMessagesFilename;  ///< filename to output decoded 360 SEI messages to.
-#endif
+  int                        m_targetOlsIdx;  ///< target output layer set
+  std::vector<int>
+       m_targetOutputLayerIdSet;  ///< set of LayerIds to be outputted
+  int  m_iMaxTemporalLayer;       ///< maximum temporal layer to be decoded
+  bool m_mTidExternalSet;         ///< maximum temporal layer set externally
+  bool
+    m_tOlsIdxTidExternalSet;  ///< target output layer set index externally set
+  int
+    m_decodedPictureHashSEIEnabled;  ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI
+  ///< message
+  bool
+    m_decodedNoDisplaySEIEnabled;  ///< Enable(true)/disable(false) writing only pictures that get displayed based on
+                                   ///< the no display SEI message
+  std::string m_colourRemapSEIFileName;  ///< output Colour Remapping file name
+  std::string m_annotatedRegionsSEIFileName;  ///< annotated regions file name
+  std::vector<int>
+    m_targetDecLayerIdSet;  ///< set of LayerIds to be included in the sub-bitstream extraction process.
+  std::string
+    m_outputDecodedSEIMessagesFilename;  ///< filename to output decoded SEI messages to. If '-', then use
+    ///< stdout. If empty, do not output details.
+#  if JVET_S0257_DUMP_360SEI_MESSAGE
+  std::string
+    m_outputDecoded360SEIMessagesFilename;  ///< filename to output decoded 360 SEI messages to.
+#  endif
 
-  bool m_bClipOutputVideoToRec709Range;  ///< If true, clip the output video to the Rec 709 range on saving.
-  bool m_packedYUVMode;  ///< If true, output 10-bit and 12-bit YUV data as 5-byte and 3-byte (respectively) packed YUV
-                         ///< data
+  bool
+    m_bClipOutputVideoToRec709Range;  ///< If true, clip the output video to the Rec 709 range on saving.
+  bool
+    m_packedYUVMode;  ///< If true, output 10-bit and 12-bit YUV data as 5-byte and 3-byte (respectively) packed YUV
+                      ///< data
   std::string m_cacheCfgFile;  ///< Config file of cache model
-  int         m_statMode;      ///< Config statistic mode (0 - bit stat, 1 - tool stat, 3 - both)
-  bool        m_mctsCheck;
+  int
+    m_statMode;  ///< Config statistic mode (0 - bit stat, 1 - tool stat, 3 - both)
+  bool m_mctsCheck;
 
-  int m_upscaledOutput;   ////< Output upscaled (2), decoded but in full resolution buffer (1) or decoded cropped (0,
-                          /// default) picture for RPR.
-  int m_targetSubPicIdx;  ///< Specify which subpicture shall be write to output, using subpicture index
- public:
+  int
+    m_upscaledOutput;  ////< Output upscaled (2), decoded but in full resolution buffer (1) or decoded cropped (0,
+                       /// default) picture for RPR.
+  int
+    m_targetSubPicIdx;  ///< Specify which subpicture shall be write to output, using subpicture index
+public:
   vtmLibVideoDecoderCfg();
   virtual ~vtmLibVideoDecoderCfg();
 
-  bool parseCfg( int argc, char* argv[] );  ///< initialize option class from configuration
+  bool parseCfg(int   argc,
+                char* argv[]);  ///< initialize option class from configuration
 };
 
-} // namespace vmesh
+}  // namespace vmesh
 
 #endif

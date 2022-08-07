@@ -37,7 +37,7 @@
 
 #include <cstdlib>
 #include <chrono>
-#include<iostream>
+#include <iostream>
 
 namespace vmesh {
 
@@ -46,8 +46,7 @@ namespace vmesh {
 struct VMCStats {
   void reset() { *this = VMCStats(); }
 
-  VMCStats& operator+=(const VMCStats& rhs)
-  {
+  VMCStats& operator+=(const VMCStats& rhs) {
     baseMeshByteCount += rhs.baseMeshByteCount;
     motionByteCount += rhs.motionByteCount;
     displacementsByteCount += rhs.displacementsByteCount;
@@ -61,25 +60,27 @@ struct VMCStats {
     return *this;
   }
 
-  void dump(const std::string& header, const int framerate) const
-  {
-    const auto byteCountToBitrate = 
+  void dump(const std::string& header, const int framerate) const {
+    const auto byteCountToBitrate =
       (8.0 * framerate) / ((double)frameCount * 1000000.0);
-    const auto baseMeshBitrate = (double)baseMeshByteCount * byteCountToBitrate;
+    const auto baseMeshBitrate =
+      (double)baseMeshByteCount * byteCountToBitrate;
     const auto motionBitrate = (double)motionByteCount * byteCountToBitrate;
     const auto displacementBitrate =
       (double)displacementsByteCount * byteCountToBitrate;
     const auto textureBitrate = (double)textureByteCount * byteCountToBitrate;
-    const auto totalBitrate = (double)totalByteCount * byteCountToBitrate;
+    const auto totalBitrate   = (double)totalByteCount * byteCountToBitrate;
 
     const auto baseMeshBitsPerVertex =
       (double)baseMeshByteCount * 8.0 / (double)baseMeshVertexCount;
     const auto motionBitsPerVertex =
       (double)motionByteCount * 8.0 / (double)baseMeshVertexCount;
-    const auto textureBitsPerVertex = (double)textureByteCount * 8.0 / (double)vertexCount;
+    const auto textureBitsPerVertex =
+      (double)textureByteCount * 8.0 / (double)vertexCount;
     const auto displacementBitsPerVertex =
       (double)displacementsByteCount * 8.0 / (double)vertexCount;
-    const auto totalBitsPerVertex = (double)totalByteCount * 8.0 / (double)vertexCount;
+    const auto totalBitsPerVertex =
+      (double)totalByteCount * 8.0 / (double)vertexCount;
 
     std::cout << header << " frame count " << frameCount << '\n';
     std::cout << header << " face count " << faceCount << '\n';
@@ -101,17 +102,16 @@ struct VMCStats {
               << totalByteCount << " B " << totalBitsPerVertex << " bpv\n";
   }
 
-  size_t baseMeshByteCount = 0;
-  size_t displacementsByteCount = 0;
-  size_t textureByteCount = 0;
-  size_t totalByteCount = 0;
-  size_t motionByteCount = 0;
-  size_t frameCount = 0;
-  size_t vertexCount = 0;
-  size_t faceCount = 0;
-  size_t baseMeshVertexCount = 0;  
+  size_t                              baseMeshByteCount      = 0;
+  size_t                              displacementsByteCount = 0;
+  size_t                              textureByteCount       = 0;
+  size_t                              totalByteCount         = 0;
+  size_t                              motionByteCount        = 0;
+  size_t                              frameCount             = 0;
+  size_t                              vertexCount            = 0;
+  size_t                              faceCount              = 0;
+  size_t                              baseMeshVertexCount    = 0;
   std::chrono::steady_clock::duration processingTime{};
-
 };
 
 //============================================================================

@@ -30,41 +30,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once 
+#pragma once
 
 #include "util/mesh.hpp"
 
 namespace vmesh {
 
 struct GeometryEncoderParameters {
-  std::string encoderPath_ = {};
-  std::string srcFileName_ = {};
-  std::string binFileName_ = {};
-  std::string recFileName_ = {};
+  std::string encoderPath_   = {};
+  std::string srcFileName_   = {};
+  std::string binFileName_   = {};
+  std::string recFileName_   = {};
   std::string encoderConfig_ = {};
-  int32_t qp_ = 11;   // quantization bits for the position attribute, default=11.
-  int32_t qt_ = 10;   // quantization bits for the texture coordinate attribute, default=10.
-  int32_t qn_ = -1;   // quantization bits for the normal vector attribute, default=8.
-  int32_t qg_ = -1;   // quantization bits for any generic attribute, default=8.
-  int32_t cl_ = 10;   // compression level [0-10], most=10, least=0, default=7.
+  int32_t     qp_ =
+    11;  // quantization bits for the position attribute, default=11.
+  int32_t qt_ =
+    10;  // quantization bits for the texture coordinate attribute, default=10.
+  int32_t qn_ =
+    -1;  // quantization bits for the normal vector attribute, default=8.
+  int32_t qg_ = -1;  // quantization bits for any generic attribute, default=8.
+  int32_t cl_ = 10;  // compression level [0-10], most=10, least=0, default=7.
 };
 
-template <class T>
+template<class T>
 class VirtualGeometryEncoder {
- public:
-   VirtualGeometryEncoder() = default;
-   ~VirtualGeometryEncoder() = default;
+public:
+  VirtualGeometryEncoder()  = default;
+  ~VirtualGeometryEncoder() = default;
 
-   static std::shared_ptr<VirtualGeometryEncoder<T>>
-   create(GeometryCodecId codecId);
-   static GeometryCodecId getDefaultCodecId();
-   static bool checkCodecId(GeometryCodecId codecId);
+  static std::shared_ptr<VirtualGeometryEncoder<T>>
+                         create(GeometryCodecId codecId);
+  static GeometryCodecId getDefaultCodecId();
+  static bool            checkCodecId(GeometryCodecId codecId);
 
-   virtual void encode(
-     TriangleMesh<T>& src,
-     GeometryEncoderParameters& params,
-     std::vector<uint8_t>& bitstream,
-     TriangleMesh<T>& rec) = 0;
+  virtual void encode(TriangleMesh<T>&           src,
+                      GeometryEncoderParameters& params,
+                      std::vector<uint8_t>&      bitstream,
+                      TriangleMesh<T>&           rec) = 0;
 };
 
 }  // namespace vmesh

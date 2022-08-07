@@ -45,29 +45,28 @@ namespace vmesh {
 
 //============================================================================
 
-enum class VertexPlacement
-{
-  END_POINTS = 0,
+enum class VertexPlacement {
+  END_POINTS              = 0,
   END_POINTS_OR_MID_POINT = 1,
-  OPTIMAL = 2
+  OPTIMAL                 = 2
 };
 
 //============================================================================
 
 struct TriangleMeshDecimatorParameters {
-  double triangleFlipPenalty = 1e+7;
-  double triangleFlipThreshold = 0.5;
-  double boundaryWeight = 1e+7;
-  double angleQualityThreshold = 1.0;
-  double maxError = 1.0;
-  bool areaWeightedQuadratics = true;
-  int triangleCount = 1;
-  int vertexCount = 1;
-  VertexPlacement vertexPlacement = VertexPlacement::OPTIMAL;
+  double          triangleFlipPenalty    = 1e+7;
+  double          triangleFlipThreshold  = 0.5;
+  double          boundaryWeight         = 1e+7;
+  double          angleQualityThreshold  = 1.0;
+  double          maxError               = 1.0;
+  bool            areaWeightedQuadratics = true;
+  int             triangleCount          = 1;
+  int             vertexCount            = 1;
+  VertexPlacement vertexPlacement        = VertexPlacement::OPTIMAL;
 #if SIMPLIFY_MESH_TRACK_POINTS
-  double trackedTriangleFlipThreshold = 0.0;
-  double trackedPointNormalFlipThreshold = 0.0;
-  bool preserveTrackedTriangleNormalsOrientation = true;
+  double trackedTriangleFlipThreshold              = 0.0;
+  double trackedPointNormalFlipThreshold           = 0.0;
+  bool   preserveTrackedTriangleNormalsOrientation = true;
 #endif  //SIMPLIFY_MESH_TRACK_POINTS
 };
 
@@ -77,27 +76,25 @@ class TriangleMeshDecimatorImpl;
 class TriangleMeshDecimator {
 public:
   TriangleMeshDecimator();
-  TriangleMeshDecimator(const TriangleMeshDecimator&) = delete;
+  TriangleMeshDecimator(const TriangleMeshDecimator&)            = delete;
   TriangleMeshDecimator& operator=(const TriangleMeshDecimator&) = delete;
   ~TriangleMeshDecimator();
 
-  Error decimate(
-    const double* points,
-    int pointCount,
-    const int* triangles,
-    int triangleCount,
-    const TriangleMeshDecimatorParameters& params);
+  Error decimate(const double*                          points,
+                 int                                    pointCount,
+                 const int*                             triangles,
+                 int                                    triangleCount,
+                 const TriangleMeshDecimatorParameters& params);
 
-  int decimatedTriangleCount() const;
-  int decimatedPointCount() const;
-  Error decimatedMesh(
-    double* dpoints,
-    int dpointCount,
-    int* dtriangles,
-    int dtriangleCount) const;
+  int   decimatedTriangleCount() const;
+  int   decimatedPointCount() const;
+  Error decimatedMesh(double* dpoints,
+                      int     dpointCount,
+                      int*    dtriangles,
+                      int     dtriangleCount) const;
 
 #if SIMPLIFY_MESH_TRACK_POINTS
-  int trackedPointCount() const;
+  int   trackedPointCount() const;
   Error trackedPoints(double* tpoints, int* tindexes, int pointCount) const;
 #endif  // SIMPLIFY_MESH_TRACK_POINTS
 

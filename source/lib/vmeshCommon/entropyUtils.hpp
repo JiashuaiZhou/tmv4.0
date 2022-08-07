@@ -68,11 +68,10 @@ public:
   void encodeExpGolomb(unsigned int symbol, int k, AdaptiveBitModel& bModel1);
 
   template<size_t NumPrefixCtx, size_t NumSuffixCtx>
-  void encodeExpGolomb(
-    unsigned int symbol,
-    int k,
-    AdaptiveBitModel (&ctxPrefix)[NumPrefixCtx],
-    AdaptiveBitModel (&ctxSuffix)[NumSuffixCtx]);
+  void encodeExpGolomb(unsigned int symbol,
+                       int          k,
+                       AdaptiveBitModel (&ctxPrefix)[NumPrefixCtx],
+                       AdaptiveBitModel (&ctxSuffix)[NumSuffixCtx]);
 };
 
 //============================================================================
@@ -103,10 +102,9 @@ public:
   unsigned int decodeExpGolomb(int k, AdaptiveBitModel& bModel1);
 
   template<size_t NumPrefixCtx, size_t NumSuffixCtx>
-  unsigned int decodeExpGolomb(
-    int k,
-    AdaptiveBitModel (&ctxPrefix)[NumPrefixCtx],
-    AdaptiveBitModel (&ctxSuffix)[NumSuffixCtx]);
+  unsigned int decodeExpGolomb(int k,
+                               AdaptiveBitModel (&ctxPrefix)[NumPrefixCtx],
+                               AdaptiveBitModel (&ctxSuffix)[NumSuffixCtx]);
 };
 
 //============================================================================
@@ -114,9 +112,9 @@ public:
 
 template<class Base>
 inline void
-EntropyEncoderWrapper<Base>::encodeExpGolomb(
-  unsigned int symbol, int k, AdaptiveBitModel& ctxPrefix)
-{
+EntropyEncoderWrapper<Base>::encodeExpGolomb(unsigned int      symbol,
+                                             int               k,
+                                             AdaptiveBitModel& ctxPrefix) {
   while (1) {
     if (symbol >= (1U << k)) {
       encode(1, ctxPrefix);
@@ -124,9 +122,7 @@ EntropyEncoderWrapper<Base>::encodeExpGolomb(
       k++;
     } else {
       encode(0, ctxPrefix);
-      while ((k--) != 0) {
-        encode((symbol >> k) & 1);
-      }
+      while ((k--) != 0) { encode((symbol >> k) & 1); }
       break;
     }
   }
@@ -139,13 +135,12 @@ template<size_t NumPrefixCtx, size_t NumSuffixCtx>
 inline void
 EntropyEncoderWrapper<Base>::encodeExpGolomb(
   unsigned int symbol,
-  int k,
+  int          k,
   AdaptiveBitModel (&ctxPrefix)[NumPrefixCtx],
-  AdaptiveBitModel (&ctxSuffix)[NumSuffixCtx])
-{
+  AdaptiveBitModel (&ctxSuffix)[NumSuffixCtx]) {
   constexpr int maxPrefixIdx = NumPrefixCtx - 1;
   constexpr int maxSuffixIdx = NumSuffixCtx - 1;
-  const int k0 = k;
+  const int     k0           = k;
 
   while (symbol >= (1U << k)) {
     encode(1, ctxPrefix[std::min(maxPrefixIdx, k - k0)]);
@@ -163,12 +158,11 @@ EntropyEncoderWrapper<Base>::encodeExpGolomb(
 
 template<class Base>
 inline unsigned int
-EntropyDecoderWrapper<Base>::decodeExpGolomb(
-  int k, AdaptiveBitModel& ctxPrefix)
-{
-  unsigned int l = 0;
-  int symbol = 0;
-  int binary_symbol = 0;
+EntropyDecoderWrapper<Base>::decodeExpGolomb(int               k,
+                                             AdaptiveBitModel& ctxPrefix) {
+  unsigned int l             = 0;
+  int          symbol        = 0;
+  int          binary_symbol = 0;
   do {
     l = decode(ctxPrefix);
     if (l == 1) {
@@ -177,9 +171,7 @@ EntropyDecoderWrapper<Base>::decodeExpGolomb(
     }
   } while (l != 0);
   while ((k--) != 0) {  //next binary part
-    if (decode() == 1) {
-      binary_symbol |= (1 << k);
-    }
+    if (decode() == 1) { binary_symbol |= (1 << k); }
   }
   return static_cast<unsigned int>(symbol + binary_symbol);
 }
@@ -192,14 +184,13 @@ inline unsigned int
 EntropyDecoderWrapper<Base>::decodeExpGolomb(
   int k,
   AdaptiveBitModel (&ctxPrefix)[NumPrefixCtx],
-  AdaptiveBitModel (&ctxSuffix)[NumSuffixCtx])
-{
-  constexpr int maxPrefixIdx = NumPrefixCtx - 1;
-  constexpr int maxSuffixIdx = NumSuffixCtx - 1;
-  const int k0 = k;
-  unsigned int l = 0;
-  int symbol = 0;
-  int binary_symbol = 0;
+  AdaptiveBitModel (&ctxSuffix)[NumSuffixCtx]) {
+  constexpr int maxPrefixIdx  = NumPrefixCtx - 1;
+  constexpr int maxSuffixIdx  = NumSuffixCtx - 1;
+  const int     k0            = k;
+  unsigned int  l             = 0;
+  int           symbol        = 0;
+  int           binary_symbol = 0;
 
   do {
     l = decode(ctxPrefix[std::min(maxPrefixIdx, k - k0)]);

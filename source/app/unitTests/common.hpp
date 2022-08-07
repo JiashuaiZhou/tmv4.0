@@ -38,35 +38,34 @@
 #include "util/image.hpp"
 
 struct TestParameters {
-  bool verbose;
+  bool        verbose;
   std::string meshPath;
 };
 
 struct DisableSubProcessLog {
 private:
-  bool disableLog_ = true;
-  bool isDisable_ = false;
+  bool              disableLog_ = true;
+  bool              isDisable_  = false;
   std::stringstream binCoutStream_;
   std::stringstream binCerrStream_;
-  std::streambuf* oldCoutRdBuf_{};
-  std::streambuf* oldCerrRdBuf_{};
-  char binStdoutBuffer_[4096]{};
-  char binStderrBuffer_[4096]{};
-  FILE* binStdout_{};
-  FILE* binStderr_{};
-  FILE* oldStdout_{};
-  FILE* oldStderr_{};
+  std::streambuf*   oldCoutRdBuf_{};
+  std::streambuf*   oldCerrRdBuf_{};
+  char              binStdoutBuffer_[4096]{};
+  char              binStderrBuffer_[4096]{};
+  FILE*             binStdout_{};
+  FILE*             binStderr_{};
+  FILE*             oldStdout_{};
+  FILE*             oldStderr_{};
 
 public:
   void switchOnLog() { disableLog_ = false; }
   bool disableLog() const { return disableLog_; }
 
 #if defined(WIN32)
-  void disable(){}
-  void enable(){}
+  void disable() {}
+  void enable() {}
 #else
-  void disable()
-  {
+  void disable() {
     if (disableLog_ && !isDisable_) {
       // Redirect std::cout and std::cerr
       oldCoutRdBuf_ = std::cout.rdbuf(binCoutStream_.rdbuf());
@@ -75,28 +74,23 @@ public:
       // redirect printf
       binStdout_ = fmemopen(binStdoutBuffer_, 4096, "w");
       binStderr_ = fmemopen(binStderrBuffer_, 4096, "w");
-      if (binStdout_ == nullptr) {
-        return;
-      }
-      if (binStderr_ == nullptr) {
-        return;
-      }
+      if (binStdout_ == nullptr) { return; }
+      if (binStderr_ == nullptr) { return; }
       oldStdout_ = stdout;
       oldStderr_ = stderr;
-      stdout = binStdout_;
-      stderr = binStderr_;
+      stdout     = binStdout_;
+      stderr     = binStderr_;
       isDisable_ = true;
     }
   }
-  void enable()
-  {
+  void enable() {
     if (isDisable_) {
       std::cout.rdbuf(oldCoutRdBuf_);
       std::cerr.rdbuf(oldCerrRdBuf_);
       std::fclose(binStdout_);
       std::fclose(binStderr_);
-      stdout = oldStdout_;
-      stderr = oldStderr_;
+      stdout     = oldStdout_;
+      stderr     = oldStderr_;
       isDisable_ = false;
     }
   }
@@ -104,8 +98,7 @@ public:
 };
 
 static std::string
-grep(const std::string& filename, const std::string& keyword)
-{
+grep(const std::string& filename, const std::string& keyword) {
   std::ifstream in(filename.c_str());
   if (in.is_open()) {
     std::string line;
@@ -122,20 +115,17 @@ grep(const std::string& filename, const std::string& keyword)
 }
 
 static inline bool
-exists(const std::string& name)
-{
+exists(const std::string& name) {
   std::ifstream file(name.c_str());
   return file.good();
 }
 
 static inline size_t
-hash(const std::string& name)
-{
+hash(const std::string& name) {
   std::ifstream file(name);
   if (file.is_open()) {
-    std::string str(
-      (std::istreambuf_iterator<char>(file)),
-      std::istreambuf_iterator<char>());
+    std::string str((std::istreambuf_iterator<char>(file)),
+                    std::istreambuf_iterator<char>());
     file.close();
     return std::hash<std::string>{}(str);
   }
@@ -145,9 +135,11 @@ hash(const std::string& name)
 
 #if defined(WIN32)
 const std::string g_hmEncoderPath =
-  "externaltools\\hm-16.21+scm-8.8\\bin\\vs17\\msvc-19.32\\x86_64\\release\\TAppEncoder.exe";
+  "externaltools\\hm-16.21+scm-8.8\\bin\\vs17\\msvc-19.32\\x86_"
+  "64\\release\\TAppEncoder.exe";
 const std::string g_hmDecoderPath =
-  "externaltools\\hm-16.21+scm-8.8\\bin\\vs17\\msvc-19.32\\x86_64\\release\\TAppDecoder.exe";
+  "externaltools\\hm-16.21+scm-8.8\\bin\\vs17\\msvc-19.32\\x86_"
+  "64\\release\\TAppDecoder.exe";
 const std::string g_hdrConvertPath =
   "externaltools\\hdrtools\\build\\bin\\Release\\HDRConvert.exe";
 const std::string g_dracoEncoderPath =
@@ -155,8 +147,10 @@ const std::string g_dracoEncoderPath =
 const std::string g_dracoDecoderPath =
   "build\\Release\\bin\\Release\\draco_decoder.exe";
 const std::string g_mmMetricsPath = "build\\Release\\bin\\Release\\mm.exe";
-const std::string g_vmeshEncodePath = "build\\Release\\bin\\Release\\encode.exe";
-const std::string g_vmeshDecodePath = "build\\Release\\bin\\Release\\decode.exe";
+const std::string g_vmeshEncodePath =
+  "build\\Release\\bin\\Release\\encode.exe";
+const std::string g_vmeshDecodePath =
+  "build\\Release\\bin\\Release\\decode.exe";
 #else
 const std::string g_hmEncoderPath =
   "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderStatic";
@@ -166,18 +160,22 @@ const std::string g_hdrConvertPath =
   "externaltools/hdrtools/build/bin/HDRConvert";
 const std::string g_dracoEncoderPath = "build/Release/bin/draco_encoder";
 const std::string g_dracoDecoderPath = "build/Release/bin/draco_decoder";
-const std::string g_mmMetricsPath    = "build/Release/bin/mm";
+const std::string g_mmMetricsPath = "build/Release/bin/mm";
 const std::string g_vmeshEncodePath = "build/Release/bin/encode";
 const std::string g_vmeshDecodePath = "build/Release/bin/decode";
-#endif 
+#endif
 
 static bool
-checkSoftwarePath()
-{
-  bool ret = true;
-  auto externalPath = {
-    g_hmEncoderPath,    g_hmDecoderPath, g_hdrConvertPath,  g_dracoEncoderPath,
-    g_dracoDecoderPath, g_mmMetricsPath, g_vmeshEncodePath, g_vmeshDecodePath};
+checkSoftwarePath() {
+  bool ret          = true;
+  auto externalPath = {g_hmEncoderPath,
+                       g_hmDecoderPath,
+                       g_hdrConvertPath,
+                       g_dracoEncoderPath,
+                       g_dracoDecoderPath,
+                       g_mmMetricsPath,
+                       g_vmeshEncodePath,
+                       g_vmeshDecodePath};
   for (const auto& path : externalPath) {
     if (!exists(path)) {
       printf("Software path not exists: %s \n", path.c_str());
@@ -186,11 +184,12 @@ checkSoftwarePath()
   }
   if (!ret) {
     printf("External softwares not installed: \n\n");
-    printf("  Please run \"./scripts/get_external_tools.sh --all\" script. \n\n");
+    printf(
+      "  Please run \"./scripts/get_external_tools.sh --all\" script. \n\n");
     exit(-1);
   }
   return ret;
 }
 
 extern DisableSubProcessLog disableSubProcessLog;
-extern TestParameters testParams;
+extern TestParameters       testParams;

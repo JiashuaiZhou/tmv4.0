@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once 
+#pragma once
 
 #include "entropy.hpp"
 #include "util/misc.hpp"
@@ -51,22 +51,17 @@ struct VMCMotionACContext {
   AdaptiveBitModel ctxCoeffRemPrefix[3][7];
   AdaptiveBitModel ctxCoeffRemSuffix[3][7];
 
-  int32_t
-  estimateBits(const Vec3<int32_t>& residual, const int32_t predIndex) const
-  {
+  int32_t estimateBits(const Vec3<int32_t>& residual,
+                       const int32_t        predIndex) const {
     int32_t bits = ctxPred.estimateBits(predIndex != 0);
     for (int32_t k = 0; k < 3; ++k) {
       auto value = residual[k];
       bits += ctxCoeffGtN[0][k].estimateBits(value != 0);
-      if (value == 0) {
-        continue;
-      }
+      if (value == 0) { continue; }
       bits += ctxSign[k].estimateBits(value < 0);
       value = std::abs(value) - 1;
       bits += ctxCoeffGtN[1][k].estimateBits(value != 0);
-      if (value == 0) {
-        continue;
-      }
+      if (value == 0) { continue; }
       const auto log2Delta = 1 + ilog2(uint32_t(value));
       bits += ((log2Delta << 1) + 1) << 10;
     }

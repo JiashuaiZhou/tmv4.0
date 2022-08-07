@@ -46,17 +46,15 @@ namespace vmesh {
 
 //============================================================================
 
-enum class Endianness
-{
-  BIG = 0,
+enum class Endianness {
+  BIG    = 0,
   LITTLE = 1
 };
 
 //----------------------------------------------------------------------------
 
 inline Endianness
-systemEndianness()
-{
+systemEndianness() {
   uint32_t num = 1;
   return (*(reinterpret_cast<char*>(&num)) == 1) ? Endianness::LITTLE
                                                  : Endianness::BIG;
@@ -67,15 +65,14 @@ systemEndianness()
 struct Bitstream {
   Bitstream() : endianness(systemEndianness()) {}
 
-  size_t size() const { return buffer.size(); }
-  void resize(const size_t sz) { return buffer.resize(sz); }
-  std::vector<uint8_t>& vector() {return buffer; }
-  
+  size_t                size() const { return buffer.size(); }
+  void                  resize(const size_t sz) { return buffer.resize(sz); }
+  std::vector<uint8_t>& vector() { return buffer; }
+
   template<typename T>
-  void write(const T u)
-  {
+  void write(const T u) {
     union {
-      T u;
+      T       u;
       uint8_t u8[sizeof(T)];
     } source{};
     source.u = u;
@@ -91,16 +88,13 @@ struct Bitstream {
   }
 
   template<typename T>
-  bool read(T& u, size_t& counter) const
-  {
+  bool read(T& u, size_t& counter) const {
     union {
-      T u;
+      T       u;
       uint8_t u8[sizeof(T)];
     } dest;
 
-    if (counter + sizeof(T) > size()) {
-      return true;
-    }
+    if (counter + sizeof(T) > size()) { return true; }
 
     if (systemEndianness() == Endianness::LITTLE) {
       for (size_t k = 0; k < sizeof(T); k++) {
@@ -115,77 +109,61 @@ struct Bitstream {
     return false;
   }
 
-  void append(const uint8_t* data, const uint32_t byteCount)
-  {
+  void append(const uint8_t* data, const uint32_t byteCount) {
     write(byteCount);
     const auto offset = buffer.size();
     buffer.resize(offset + byteCount);
     std::copy(data, data + byteCount, buffer.begin() + offset);
   }
 
-  bool append(const std::string& fileName, bool writeByteCountHeader)
-  {
+  bool append(const std::string& fileName, bool writeByteCountHeader) {
     std::ifstream file(fileName, std::ios::binary);
     return append(file, writeByteCountHeader);
   }
 
-  bool append(std::ifstream& file, bool writeByteCountHeader)
-  {
-    if (!file.is_open()) {
-      return true;
-    }
+  bool append(std::ifstream& file, bool writeByteCountHeader) {
+    if (!file.is_open()) { return true; }
     file.ignore(std::numeric_limits<std::streamsize>::max());
     std::streamsize length = file.gcount();
     file.clear();
     file.seekg(0, std::ios_base::beg);
     assert(length <= std::numeric_limits<uint32_t>::max());
     const auto byteCount = uint32_t(length);
-    if (writeByteCountHeader) {
-      write(byteCount);
-    }
+    if (writeByteCountHeader) { write(byteCount); }
     const auto offset = buffer.size();
     buffer.resize(offset + byteCount);
     file.read(reinterpret_cast<char*>(buffer.data() + offset), byteCount);
     return false;
   }
 
-  void append(const std::vector<uint8_t>& buff)
-  {
+  void append(const std::vector<uint8_t>& buff) {
     buffer.insert(buffer.end(), buff.begin(), buff.end());
   }
 
-  bool save(std::ofstream& file) const
-  {
-    if (!file.is_open()) {
-      return true;
-    }
+  bool save(std::ofstream& file) const {
+    if (!file.is_open()) { return true; }
     file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
     return false;
   }
 
-  bool save(const std::string& fileName) const
-  {
+  bool save(const std::string& fileName) const {
     std::ofstream file(fileName, std::ios::binary);
     return save(file);
   }
 
-  bool load(std::ifstream& file)
-  {
-    if (!file.is_open()) {
-      return true;
-    }
+  bool load(std::ifstream& file) {
+    if (!file.is_open()) { return true; }
     buffer.resize(0);
     append(file, false);
     return false;
   }
 
-  bool load(const std::string& fileName)
-  {
+  bool load(const std::string& fileName) {
     std::ifstream file(fileName, std::ios::binary);
     return load(file);
   }
 
-  const Endianness endianness;
+  const Endianness     endianness;
   std::vector<uint8_t> buffer;
 };
 

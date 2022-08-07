@@ -41,19 +41,18 @@ namespace vmesh {
 
 #ifndef STB_IMAGE_IMPLEMENTATION
 // #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#  include <stb_image.h>
 #endif
 
 #ifndef STB_IMAGE_WRITE_IMPLEMENTATION
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
+#  include <stb_image_write.h>
 #endif
 
 //============================================================================
 
 bool
-LoadImage(const std::string& fileName, const int f, Frame<uint8_t>& image)
-{
+LoadImage(const std::string& fileName, const int f, Frame<uint8_t>& image) {
   std::string name = expandNum(fileName, f);
   return LoadImage(name, image);
 }
@@ -61,12 +60,10 @@ LoadImage(const std::string& fileName, const int f, Frame<uint8_t>& image)
 //============================================================================
 
 bool
-LoadImage(
-  const std::string& fileName, Frame<uint8_t>& image)
-{
-  int32_t width = 0;
-  int32_t height = 0;
-  int32_t channelCount = 0;
+LoadImage(const std::string& fileName, Frame<uint8_t>& image) {
+  int32_t                    width        = 0;
+  int32_t                    height       = 0;
+  int32_t                    channelCount = 0;
   std::unique_ptr<uint8_t[]> buffer(
     stbi_load(fileName.c_str(), &width, &height, &channelCount, 0));
   if (buffer == nullptr || channelCount != 3) {
@@ -94,19 +91,17 @@ LoadImage(
 //============================================================================
 
 bool
-SaveImage(
-  const std::string& fileName,
-  const Frame<uint8_t>& image,
-  const ImageFormat format,
-  const int32_t quality)
-{
-  if( image.colourSpace() != ColourSpace::BGR444p) {
+SaveImage(const std::string&    fileName,
+          const Frame<uint8_t>& image,
+          const ImageFormat     format,
+          const int32_t         quality) {
+  if (image.colourSpace() != ColourSpace::BGR444p) {
     printf("Save frame must be ColourSpace::BGR444p \n");
     exit(-1);
   }
-  const auto width = int32_t(image.width());
-  const auto height = int32_t(image.height());
-  const auto channelCount = int32_t(image.planeCount());
+  const auto                 width        = int32_t(image.width());
+  const auto                 height       = int32_t(image.height());
+  const auto                 channelCount = int32_t(image.planeCount());
   std::unique_ptr<uint8_t[]> buffer(
     new uint8_t[channelCount * width * height]);
   const auto& B = image.plane(0);
@@ -114,7 +109,7 @@ SaveImage(
   const auto& R = image.plane(2);
   for (int32_t y = 0, i = 0; y < height; y++) {
     for (int32_t x = 0; x < width; x++) {
-      buffer[i] = R.get(y, x);
+      buffer[i]     = R.get(y, x);
       buffer[i + 1] = G.get(y, x);
       buffer[i + 2] = B.get(y, x);
       i += 3;
@@ -129,24 +124,24 @@ SaveImage(
        != 0);
     break;
   case ImageFormat::TGA:
-    ret =
-      (stbi_write_tga(
-         fileName.c_str(), width, height, channelCount, buffer.get())
-       != 0);
+    ret = (stbi_write_tga(
+             fileName.c_str(), width, height, channelCount, buffer.get())
+           != 0);
     break;
   case ImageFormat::BMP:
-    ret =
-      (stbi_write_bmp(
-         fileName.c_str(), width, height, channelCount, buffer.get())
-       != 0);
+    ret = (stbi_write_bmp(
+             fileName.c_str(), width, height, channelCount, buffer.get())
+           != 0);
     break;
   case ImageFormat::PNG:
   default:
-    ret =
-      (stbi_write_png(
-         fileName.c_str(), width, height, channelCount, buffer.get(),
-         width * channelCount)
-       != 0);
+    ret = (stbi_write_png(fileName.c_str(),
+                          width,
+                          height,
+                          channelCount,
+                          buffer.get(),
+                          width * channelCount)
+           != 0);
     break;
   }
   return ret;

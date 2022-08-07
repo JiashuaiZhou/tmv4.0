@@ -37,16 +37,20 @@
 
 namespace vmesh {
 
-template <typename T>
-std::shared_ptr<VirtualGeometryDecoder<T>> VirtualGeometryDecoder<T>::create( GeometryCodecId codecId ) {
-  switch ( codecId ) {
+template<typename T>
+std::shared_ptr<VirtualGeometryDecoder<T>>
+VirtualGeometryDecoder<T>::create(GeometryCodecId codecId) {
+  switch (codecId) {
 #ifdef USE_DRACO_GEOMETRY_CODEC
-    case GeometryCodecId::DRACO: return std::make_shared<DracoLibGeometryDecoder<T>>(); break;
+  case GeometryCodecId::DRACO:
+    return std::make_shared<DracoLibGeometryDecoder<T>>();
+    break;
 #endif
-    default:
-      printf( "Error virtualGeometryDecoder: codec id not supported ( %d ) \n", (int)codecId );
-      exit( -1 );
-      break;
+  default:
+    printf("Error virtualGeometryDecoder: codec id not supported ( %d ) \n",
+           (int)codecId);
+    exit(-1);
+    break;
   }
   return nullptr;
 }
@@ -54,4 +58,4 @@ std::shared_ptr<VirtualGeometryDecoder<T>> VirtualGeometryDecoder<T>::create( Ge
 template class VirtualGeometryDecoder<float>;
 template class VirtualGeometryDecoder<double>;
 
-} // namespace vmesh 
+}  // namespace vmesh

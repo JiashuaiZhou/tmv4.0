@@ -47,36 +47,31 @@ namespace vmesh {
 #  include <windows.h>
 #  include <psapi.h>
 static int
-getUsedMemory()
-{
+getUsedMemory() {
   PROCESS_MEMORY_COUNTERS pmc;
   GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
   return pmc.WorkingSetSize / 1024;
 }
 static uint64_t
-getPeakMemory()
-{
+getPeakMemory() {
   PROCESS_MEMORY_COUNTERS pmc;
   GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
   return (uint64_t)pmc.PeakWorkingSetSize / 1024;
 }
 #elif defined(__APPLE__) && defined(__MACH__)
 static inline int
-getUsedMemory()
-{
+getUsedMemory() {
   struct mach_task_basic_info info;
-  mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
-  if (
-    task_info(
-      mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount)
-    != KERN_SUCCESS) {
+  mach_msg_type_number_t      infoCount = MACH_TASK_BASIC_INFO_COUNT;
+  if (task_info(
+        mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount)
+      != KERN_SUCCESS) {
     return 0;
   }
   return (size_t)info.resident_size;
 }
 static uint64_t
-getPeakMemory()
-{
+getPeakMemory() {
   struct rusage rusage;
   getrusage(RUSAGE_SELF, &rusage);
   return (size_t)rusage.ru_maxrss / 1024;
@@ -84,8 +79,7 @@ getPeakMemory()
 #else
 
 static int
-getUsedMemory()
-{
+getUsedMemory() {
   std::ifstream file("/proc/self/status");
   if (!file) {
     for (std::string line; std::getline(file, line);) {
@@ -102,8 +96,7 @@ getUsedMemory()
 }
 
 static int
-getPeakMemory()
-{
+getPeakMemory() {
   std::ifstream file("/proc/self/status");
   if (!file) {
     for (std::string line; std::getline(file, line);) {

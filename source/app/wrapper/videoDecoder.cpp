@@ -45,17 +45,16 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose{};
-  std::string bitstreamPath;
-  std::string outputPath;  
-  vmesh::VideoCodecId  codecId;
+  bool                verbose{};
+  std::string         bitstreamPath;
+  std::string         outputPath;
+  vmesh::VideoCodecId codecId;
 };
 
 //============================================================================
 
 static bool
-parseParameters(int argc, char* argv[], Parameters& params)
-try {
+parseParameters(int argc, char* argv[], Parameters& params) try {
   namespace po = df::program_options_lite;
 
   bool print_help = false;
@@ -72,11 +71,11 @@ try {
   ("decPath",       params.outputPath,    {}, "Decoded mesh path")  
   ("codecId",       params.codecId,       {}, "Video codec Id: HM, VTM, FFMPEG")  
   ;
-  
+
   /* clang-format on */
 
   po::setDefaults(opts);
-  po::ErrorReporter err;
+  po::ErrorReporter             err;
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
@@ -93,17 +92,14 @@ try {
   if (params.bitstreamPath.empty()) {
     err.error() << "Output bitstream path not specified\n";
   }
-  if (err.is_errored) {
-    return false;
-  }
+  if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
   po::dumpCfg(std::cout, opts, "Input/Output", 4);
   std::cout << '\n';
   return true;
-}
-catch (df::program_options_lite::ParseFailure& e) {
+} catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
             << e.val << "\".\n";
   return false;
@@ -112,27 +108,22 @@ catch (df::program_options_lite::ParseFailure& e) {
 //============================================================================
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params)) {
-    return 1;
-  }
+  if (!parseParameters(argc, argv, params)) { return 1; }
 
-  if (params.verbose) {
-    vmesh::vout.rdbuf(std::cout.rdbuf());
-  }
+  if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
-  // Load bitstream 
+  // Load bitstream
   vmesh::Bitstream bitstream;
-  bitstream.load( params.bitstreamPath );
-  
+  bitstream.load(params.bitstreamPath);
+
   // decode
   vmesh::FrameSequence<uint16_t> dec;
   auto encoder = vmesh::VirtualVideoDecoder<uint16_t>::create(params.codecId);
-  encoder->decode(bitstream.vector(), dec, 10 );
+  encoder->decode(bitstream.vector(), dec, 10);
 
   // Save reconstructed video
   dec.save(params.outputPath);

@@ -31,21 +31,21 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef USE_VTM_VIDEO_CODEC
-#include "util/image.hpp"
-#include "virtualVideoEncoder.hpp"
+#  include "util/image.hpp"
+#  include "virtualVideoEncoder.hpp"
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class vtmLibVideoEncoder : public VirtualVideoEncoder<T> {
- public:
+public:
   vtmLibVideoEncoder();
   ~vtmLibVideoEncoder();
 
-  void encode( FrameSequence<T>&            videoSrc,
-               VideoEncoderParameters& params,
-               std::vector<uint8_t>&         bitstream,
-               FrameSequence<T>&            videoRec );
+  void encode(FrameSequence<T>&       videoSrc,
+              VideoEncoderParameters& params,
+              std::vector<uint8_t>&   bitstream,
+              FrameSequence<T>&       videoRec);
 };
 
 }  // namespace vmesh

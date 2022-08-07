@@ -56,12 +56,11 @@ struct metric_L2_double {
   };
 };
 
-using KdTree = KDTreeVectorOfVectorsAdaptor<
-  std::vector<Vec3<double>>,
-  double,
-  3,
-  metric_L2_double,
-  int32_t>;
+using KdTree = KDTreeVectorOfVectorsAdaptor<std::vector<Vec3<double>>,
+                                            double,
+                                            3,
+                                            metric_L2_double,
+                                            int32_t>;
 
 //============================================================================
 

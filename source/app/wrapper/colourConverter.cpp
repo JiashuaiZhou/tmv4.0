@@ -46,16 +46,16 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose{};
-  std::string inputPath;  
-  std::string outputPath;
-  std::string configPath;
-  int width{};
-  int height{};
-  int frameCount{};
-  int inputBitDepth{};
-  int outputBitDepth{};
-  int mode{};
+  bool               verbose{};
+  std::string        inputPath;
+  std::string        outputPath;
+  std::string        configPath;
+  int                width{};
+  int                height{};
+  int                frameCount{};
+  int                inputBitDepth{};
+  int                outputBitDepth{};
+  int                mode{};
   vmesh::ColourSpace inputColorSpace;
   vmesh::ColourSpace outputColorSpace;
 };
@@ -63,8 +63,7 @@ struct Parameters {
 //============================================================================
 
 static bool
-parseParameters(int argc, char* argv[], Parameters& params)
-try {
+parseParameters(int argc, char* argv[], Parameters& params) try {
   namespace po = df::program_options_lite;
 
   bool print_help = false;
@@ -93,11 +92,11 @@ try {
     "Input video color space: YUV420p, YUV444p, RGB444p, BGR444p ")
   ("outputBitDepth",   params.outputBitDepth,   10, "Output bit depth ")  
   ;
-  
+
   /* clang-format on */
 
   po::setDefaults(opts);
-  po::ErrorReporter err;
+  po::ErrorReporter             err;
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
@@ -117,18 +116,15 @@ try {
   if (params.outputPath.empty()) {
     err.error() << "Output video path not specified\n";
   }
-  if (err.is_errored) {
-    return false;
-  }
+  if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
   po::dumpCfg(std::cout, opts, "Input/Output", 4);
-  po::dumpCfg(std::cout, opts, "Convertion", 4);  
+  po::dumpCfg(std::cout, opts, "Convertion", 4);
   std::cout << '\n';
   return true;
-}
-catch (df::program_options_lite::ParseFailure& e) {
+} catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
             << e.val << "\".\n";
   return false;
@@ -137,18 +133,13 @@ catch (df::program_options_lite::ParseFailure& e) {
 //============================================================================
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params)) {
-    return 1;
-  }
+  if (!parseParameters(argc, argv, params)) { return 1; }
 
-  if (params.verbose) {
-    vmesh::vout.rdbuf(std::cout.rdbuf());
-  }
+  if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
   // Load input mesh
   vmesh::FrameSequence<uint16_t> src(
@@ -156,21 +147,20 @@ main(int argc, char* argv[])
   vmesh::FrameSequence<uint16_t> dst;
   src.load(params.inputPath);
   if (src.frameCount() == 0) {
-    printf( "Src frame count = %d not correct \n", src.frameCount());
+    printf("Src frame count = %d not correct \n", src.frameCount());
     exit(-1);
   }
 
-    printf( "Src frame count = %d \n", src.frameCount());
+  printf("Src frame count = %d \n", src.frameCount());
 
   // convert
-    auto encoder =
-      vmesh::VirtualColourConverter<uint16_t>::create(params.mode);
-    if (params.mode == 0) {
-      std::string format = "RGB444ToYUV420_8_10_6";
-      encoder->convert(format, src, dst);
-    } else {
-      encoder->convert(params.configPath, src, dst);
-    }
+  auto encoder = vmesh::VirtualColourConverter<uint16_t>::create(params.mode);
+  if (params.mode == 0) {
+    std::string format = "RGB444ToYUV420_8_10_6";
+    encoder->convert(format, src, dst);
+  } else {
+    encoder->convert(params.configPath, src, dst);
+  }
 
   // Save reconstructed mesh
   dst.save(params.outputPath);

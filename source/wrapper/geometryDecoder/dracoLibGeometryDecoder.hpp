@@ -30,21 +30,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined( USE_DRACO_GEOMETRY_CODEC )
-#include "util/mesh.hpp"
-#include "virtualGeometryDecoder.hpp"
+#if defined(USE_DRACO_GEOMETRY_CODEC)
+#  include "util/mesh.hpp"
+#  include "virtualGeometryDecoder.hpp"
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class DracoLibGeometryDecoder : public VirtualGeometryDecoder<T> {
- public:
+public:
   DracoLibGeometryDecoder();
   ~DracoLibGeometryDecoder();
 
-  void decode(
-    std::vector<uint8_t>& bitstream,
-    TriangleMesh<T>& dec);
+  void decode(std::vector<uint8_t>& bitstream, TriangleMesh<T>& dec);
 };
 
 }  // namespace vmesh

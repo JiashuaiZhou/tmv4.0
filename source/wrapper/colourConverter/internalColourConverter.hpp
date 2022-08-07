@@ -38,8 +38,8 @@ namespace vmesh {
 
 struct Filter {
   std::vector<float> data_;
-  double offset_;
-  double shift_;
+  double             offset_;
+  double             shift_;
 };
 struct Filter444to420 {
   Filter horizontal_;
@@ -58,282 +58,253 @@ public:
   InternalColourConverter();
   ~InternalColourConverter();
 
-  void convert(
-    std::string configuration,
-    FrameSequence<T>& videoSrc,
-    FrameSequence<T>& videoDst);
-  void upsample(
-    FrameSequence<T>& video,
-    size_t rate,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
+  void convert(std::string       configuration,
+               FrameSequence<T>& videoSrc,
+               FrameSequence<T>& videoDst);
+  void upsample(FrameSequence<T>& video,
+                size_t            rate,
+                size_t            srcNumByte,
+                size_t            dstNumByte,
+                size_t            filter);
 
-  void upsample(
-    Frame<T>& image,
-    size_t rate,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
+  void upsample(Frame<T>& image,
+                size_t    rate,
+                size_t    srcNumByte,
+                size_t    dstNumByte,
+                size_t    filter);
 
 private:
-  void extractParameters(
-    std::string& configuration,
-    std::string& config,
-    int32_t& srcBitdepth,
-    int32_t& dstBitdepth,
-    int32_t& filter);
-  void convertRGB44ToYUV420(
-    FrameSequence<T>& videoSrc,
-    FrameSequence<T>& videoDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
-  void convertRGB44ToYUV420(
-    Frame<T>& imageSrc,
-    Frame<T>& imageDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
+  void extractParameters(std::string& configuration,
+                         std::string& config,
+                         int32_t&     srcBitdepth,
+                         int32_t&     dstBitdepth,
+                         int32_t&     filter);
+  void convertRGB44ToYUV420(FrameSequence<T>& videoSrc,
+                            FrameSequence<T>& videoDst,
+                            size_t            srcNumByte,
+                            size_t            dstNumByte,
+                            size_t            filter);
+  void convertRGB44ToYUV420(Frame<T>& imageSrc,
+                            Frame<T>& imageDst,
+                            size_t    srcNumByte,
+                            size_t    dstNumByte,
+                            size_t    filter);
 
-  void convertRGB44ToYUV444(
-    FrameSequence<T>& videoSrc,
-    FrameSequence<T>& videoDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
-  void convertRGB44ToYUV444(
-    Frame<T>& imageSrc,
-    Frame<T>& imageDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
+  void convertRGB44ToYUV444(FrameSequence<T>& videoSrc,
+                            FrameSequence<T>& videoDst,
+                            size_t            srcNumByte,
+                            size_t            dstNumByte,
+                            size_t            filter);
+  void convertRGB44ToYUV444(Frame<T>& imageSrc,
+                            Frame<T>& imageDst,
+                            size_t    srcNumByte,
+                            size_t    dstNumByte,
+                            size_t    filter);
 
-  void convertYUV420ToYUV444(
-    FrameSequence<T>& videoSrc,
-    FrameSequence<T>& videoDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
-  void convertYUV420ToYUV444(
-    Frame<T>& imageSrc,
-    Frame<T>& imageDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
+  void convertYUV420ToYUV444(FrameSequence<T>& videoSrc,
+                             FrameSequence<T>& videoDst,
+                             size_t            srcNumByte,
+                             size_t            dstNumByte,
+                             size_t            filter);
+  void convertYUV420ToYUV444(Frame<T>& imageSrc,
+                             Frame<T>& imageDst,
+                             size_t    srcNumByte,
+                             size_t    dstNumByte,
+                             size_t    filter);
 
-  void convertYUV420ToRGB444(
-    FrameSequence<T>& videoSrc,
-    FrameSequence<T>& videoDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter,
-    bool BGR);
-  void convertYUV420ToRGB444(
-    Frame<T>& imageSrc,
-    Frame<T>& imageDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter,
-    bool BGR);
+  void convertYUV420ToRGB444(FrameSequence<T>& videoSrc,
+                             FrameSequence<T>& videoDst,
+                             size_t            srcNumByte,
+                             size_t            dstNumByte,
+                             size_t            filter,
+                             bool              BGR);
+  void convertYUV420ToRGB444(Frame<T>& imageSrc,
+                             Frame<T>& imageDst,
+                             size_t    srcNumByte,
+                             size_t    dstNumByte,
+                             size_t    filter,
+                             bool      BGR);
 
-  void convertYUV444ToRGB444(
-    FrameSequence<T>& videoSrc,
-    FrameSequence<T>& videoDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
-  void convertYUV444ToRGB444(
-    Frame<T>& imageSrc,
-    Frame<T>& imageDst,
-    size_t srcNumByte,
-    size_t dstNumByte,
-    size_t filter);
+  void convertYUV444ToRGB444(FrameSequence<T>& videoSrc,
+                             FrameSequence<T>& videoDst,
+                             size_t            srcNumByte,
+                             size_t            dstNumByte,
+                             size_t            filter);
+  void convertYUV444ToRGB444(Frame<T>& imageSrc,
+                             Frame<T>& imageDst,
+                             size_t    srcNumByte,
+                             size_t    dstNumByte,
+                             size_t    filter);
 
   void
   RGBtoFloatRGB(const Plane<T>& src, Plane<float>& dst, size_t nbyte) const;
 
-  void convertRGBToYUV(
-    const Plane<float>& R,
-    const Plane<float>& G,
-    const Plane<float>& B,
-    Plane<float>& Y,
-    Plane<float>& U,
-    Plane<float>& V) const;
+  void convertRGBToYUV(const Plane<float>& R,
+                       const Plane<float>& G,
+                       const Plane<float>& B,
+                       Plane<float>&       Y,
+                       Plane<float>&       U,
+                       Plane<float>&       V) const;
 
-  T clamp(T v, T a, T b) const { return ((v < a) ? a : ((v > b) ? b : v)); }
-  int clamp(int v, int a, int b) const
-  {
+  T   clamp(T v, T a, T b) const { return ((v < a) ? a : ((v > b) ? b : v)); }
+  int clamp(int v, int a, int b) const {
     return ((v < a) ? a : ((v > b) ? b : v));
   }
-  float clamp(float v, float a, float b) const
-  {
+  float clamp(float v, float a, float b) const {
     return ((v < a) ? a : ((v > b) ? b : v));
   }
-  double clamp(double v, double a, double b) const
-  {
+  double clamp(double v, double a, double b) const {
     return ((v < a) ? a : ((v > b) ? b : v));
   }
-  static inline T tMin(T a, T b) { return ((a) < (b)) ? (a) : (b); }
-  static inline float fMin(float a, float b)
-  {
+  static inline T     tMin(T a, T b) { return ((a) < (b)) ? (a) : (b); }
+  static inline float fMin(float a, float b) {
     return ((a) < (b)) ? (a) : (b);
   }
-  static inline float fMax(float a, float b)
-  {
+  static inline float fMax(float a, float b) {
     return ((a) > (b)) ? (a) : (b);
   }
-  static inline float fClip(float x, float low, float high)
-  {
+  static inline float fClip(float x, float low, float high) {
     return fMin(fMax(x, low), high);
   }
 
   // TODO: This currently can't handle 10-bit. A new parameter is needed.
-  void floatYUVToYUV(
-    const Plane<float>& src, Plane<T>& dst, bool chroma, size_t nbyte) const;
+  void floatYUVToYUV(const Plane<float>& src,
+                     Plane<T>&           dst,
+                     bool                chroma,
+                     size_t              nbyte) const;
 
-  void YUVtoFloatYUV(
-    const Plane<T>& src, Plane<float>& dst, bool chroma, size_t nbBytes) const;
+  void YUVtoFloatYUV(const Plane<T>& src,
+                     Plane<float>&   dst,
+                     bool            chroma,
+                     size_t          nbBytes) const;
 
-  void convertYUVToRGB(
-    const Plane<float>& Y,
-    const Plane<float>& U,
-    const Plane<float>& V,
-    Plane<float>& R,
-    Plane<float>& G,
-    Plane<float>& B) const;
+  void convertYUVToRGB(const Plane<float>& Y,
+                       const Plane<float>& U,
+                       const Plane<float>& V,
+                       Plane<float>&       R,
+                       Plane<float>&       G,
+                       Plane<float>&       B) const;
 
   void
   floatRGBToRGB(const Plane<float>& src, Plane<T>& dst, size_t nbyte) const;
 
-  void downsampling(
-    const Plane<float>& src,
-    Plane<float>& dst,
-    int maxValue,
-    size_t filter) const;
+  void downsampling(const Plane<float>& src,
+                    Plane<float>&       dst,
+                    int                 maxValue,
+                    size_t              filter) const;
 
-  void upsampling(
-    const Plane<float>& src,
-    Plane<float>& dst,
-    int maxValue,
-    size_t filter) const;
+  void upsampling(const Plane<float>& src,
+                  Plane<float>&       dst,
+                  int                 maxValue,
+                  size_t              filter) const;
 
-  inline void copy(const Plane<float>& src, Plane<float>& dst) const
-  {
+  inline void copy(const Plane<float>& src, Plane<float>& dst) const {
     dst.resize(src.width(), src.height());
     for (int j = 0; j < src.height(); j++) {
-      for (int i = 0; i < src.width(); i++) {
-        dst(j, i) = src(j, i);
-      }
+      for (int i = 0; i < src.width(); i++) { dst(j, i) = src(j, i); }
     }
   }
 
-  inline float downsamplingHorizontal(
-    const Filter444to420& filter,
-    const Plane<float>& plane,
-    const int i0,
-    const int j0) const
-  {
-    const auto width = plane.width();
+  inline float downsamplingHorizontal(const Filter444to420& filter,
+                                      const Plane<float>&   plane,
+                                      const int             i0,
+                                      const int             j0) const {
+    const auto  width = plane.width();
     const float scale =
       1.0F / ((float)(1 << ((int)filter.horizontal_.shift_)));
-    const float offset = 0.00000000;
-    const int position = int(filter.horizontal_.data_.size() - 1) >> 1;
-    double value = 0;
+    const float offset   = 0.00000000;
+    const int   position = int(filter.horizontal_.data_.size() - 1) >> 1;
+    double      value    = 0;
     for (int j = 0; j < (int)filter.horizontal_.data_.size(); j++) {
-      value += (double)filter.horizontal_.data_[j]
+      value +=
+        (double)filter.horizontal_.data_[j]
         * (double)(plane.get(i0, clamp(j0 + j - position, 0, width - 1)));
     }
     return (float)((value + (double)offset) * (double)scale);
   }
 
-  inline float downsamplingVertical(
-    const Filter444to420& filter,
-    const Plane<float>& plane,
-    const int i0,
-    const int j0) const
-  {
-    const auto height = plane.height();
+  inline float downsamplingVertical(const Filter444to420& filter,
+                                    const Plane<float>&   plane,
+                                    const int             i0,
+                                    const int             j0) const {
+    const auto  height = plane.height();
     const float offset = 0;
-    const float scale = 1.0F / ((float)(1 << ((int)filter.vertical_.shift_)));
-    const int position = int(filter.vertical_.data_.size() - 1) >> 1;
-    double value = 0;
+    const float scale  = 1.0F / ((float)(1 << ((int)filter.vertical_.shift_)));
+    const int   position = int(filter.vertical_.data_.size() - 1) >> 1;
+    double      value    = 0;
     for (int i = 0; i < (int)filter.vertical_.data_.size(); i++) {
-      value += (double)filter.vertical_.data_[i]
+      value +=
+        (double)filter.vertical_.data_[i]
         * (double)(plane.get(clamp(i0 + i - position, 0, height - 1), j0));
     }
     return (float)((value + (double)offset) * (double)scale);
   }
 
-  inline float upsamplingVertical0(
-    const Filter420to444& filter,
-    const Plane<float>& plane,
-    const int i0,
-    const int j0) const
-  {
-    const auto height = plane.height();
+  inline float upsamplingVertical0(const Filter420to444& filter,
+                                   const Plane<float>&   plane,
+                                   const int             i0,
+                                   const int             j0) const {
+    const auto  height = plane.height();
     const float scale = 1.0F / ((float)(1 << ((int)filter.vertical0_.shift_)));
-    const float offset = 0.00000000;
-    const int position = int(filter.vertical0_.data_.size() + 1) >> 1;
-    float value = 0;
+    const float offset   = 0.00000000;
+    const int   position = int(filter.vertical0_.data_.size() + 1) >> 1;
+    float       value    = 0;
     for (int i = 0; i < (int)filter.vertical0_.data_.size(); i++) {
-      value += filter.vertical0_.data_[i]
+      value +=
+        filter.vertical0_.data_[i]
         * (float)(plane.get(clamp(i0 + i - position, 0, height - 1), j0));
     }
     return (float)((value + (float)offset) * (float)scale);
   }
 
-  inline float upsamplingVertical1(
-    const Filter420to444& filter,
-    const Plane<float>& plane,
-    int i0,
-    int j0) const
-  {
-    const auto height = plane.height();
+  inline float upsamplingVertical1(const Filter420to444& filter,
+                                   const Plane<float>&   plane,
+                                   int                   i0,
+                                   int                   j0) const {
+    const auto  height = plane.height();
     const float scale = 1.0F / ((float)(1 << ((int)filter.vertical1_.shift_)));
-    const float offset = 0.00000000;
-    const int position = int(filter.vertical1_.data_.size() + 1) >> 1;
-    float value = 0;
+    const float offset   = 0.00000000;
+    const int   position = int(filter.vertical1_.data_.size() + 1) >> 1;
+    float       value    = 0;
     for (int i = 0; i < (int)filter.vertical1_.data_.size(); i++) {
-      value += filter.vertical1_.data_[i]
+      value +=
+        filter.vertical1_.data_[i]
         * (float)(plane.get(clamp(i0 + i - position, 0, height - 1), j0));
     }
     return (float)((value + (float)offset) * (float)scale);
   }
 
-  inline float upsamplingHorizontal0(
-    const Filter420to444& filter,
-    const Plane<float>& plane,
-    int i0,
-    int j0) const
-  {
-    const auto width = plane.width();
+  inline float upsamplingHorizontal0(const Filter420to444& filter,
+                                     const Plane<float>&   plane,
+                                     int                   i0,
+                                     int                   j0) const {
+    const auto  width = plane.width();
     const float scale =
       1.0F / ((float)(1 << ((int)filter.horizontal0_.shift_)));
-    const float offset = 0.00000000;
-    const int position = int(filter.horizontal0_.data_.size() + 1) >> 1;
-    float value = 0;
+    const float offset   = 0.00000000;
+    const int   position = int(filter.horizontal0_.data_.size() + 1) >> 1;
+    float       value    = 0;
     for (int j = 0; j < (int)filter.horizontal0_.data_.size(); j++) {
-      value += filter.horizontal0_.data_[j]
+      value +=
+        filter.horizontal0_.data_[j]
         * (float)(plane.get(i0, clamp(j0 + j - position, 0, width - 1)));
     }
     return (float)((value + (float)offset) * (float)scale);
   }
 
-  inline float upsamplingHorizontal1(
-    const Filter420to444& filter,
-    const Plane<float>& plane,
-    int i0,
-    int j0) const
-  {
-    const auto width = plane.width();
+  inline float upsamplingHorizontal1(const Filter420to444& filter,
+                                     const Plane<float>&   plane,
+                                     int                   i0,
+                                     int                   j0) const {
+    const auto  width = plane.width();
     const float scale =
       1.0F / ((float)(1 << ((int)filter.horizontal1_.shift_)));
-    const float offset = 0.00000000;
-    const int position = int(filter.horizontal1_.data_.size() + 1) >> 1;
-    float value = 0;
+    const float offset   = 0.00000000;
+    const int   position = int(filter.horizontal1_.data_.size() + 1) >> 1;
+    float       value    = 0;
     for (int j = 0; j < (int)filter.horizontal1_.data_.size(); j++) {
-      value += filter.horizontal1_.data_[j]
+      value +=
+        filter.horizontal1_.data_[j]
         * (float)(plane.get(i0, clamp(j0 + j - position, 0, width - 1)));
     }
     return (float)((value + (float)offset) * (float)scale);

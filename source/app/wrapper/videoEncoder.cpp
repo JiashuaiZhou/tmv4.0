@@ -46,23 +46,22 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose{};
-  std::string inputPath;  
-  std::string bitstreamPath;
-  std::string outputPath;
-  int width{};
-  int height{};
-  int frameCount{};
-  vmesh::ColourSpace colorSpace;
-  vmesh::VideoCodecId codecId;
+  bool                          verbose{};
+  std::string                   inputPath;
+  std::string                   bitstreamPath;
+  std::string                   outputPath;
+  int                           width{};
+  int                           height{};
+  int                           frameCount{};
+  vmesh::ColourSpace            colorSpace;
+  vmesh::VideoCodecId           codecId;
   vmesh::VideoEncoderParameters params;
 };
 
 //============================================================================
 
 static bool
-parseParameters(int argc, char* argv[], Parameters& params)
-try {
+parseParameters(int argc, char* argv[], Parameters& params) try {
   namespace po = df::program_options_lite;
 
   bool print_help = false;
@@ -94,11 +93,11 @@ try {
   ("internalBitDepth", params.params.internalBitDepth_, 10, "Internal bit depth")
   ("outputBitDepth",   params.params.outputBitDepth_,   10, "Output bit depth ")  
   ;
-  
+
   /* clang-format on */
 
   po::setDefaults(opts);
-  po::ErrorReporter err;
+  po::ErrorReporter             err;
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
@@ -112,15 +111,11 @@ try {
     return false;
   }
 
-  if (params.inputPath.empty()) {
-    err.error() << "Src video not specified\n";
-  }
+  if (params.inputPath.empty()) { err.error() << "Src video not specified\n"; }
   if (params.bitstreamPath.empty()) {
     err.error() << "Output bitstream path not specified\n";
   }
-  if (err.is_errored) {
-    return false;
-  }
+  if (err.is_errored) { return false; }
   if (params.params.encoderConfig_.empty()) {
     err.error() << "Encoder configuration path ot specified\n";
   }
@@ -128,11 +123,10 @@ try {
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
   po::dumpCfg(std::cout, opts, "Input/Output", 4);
-  po::dumpCfg(std::cout, opts, "Encoder configurations", 4);  
+  po::dumpCfg(std::cout, opts, "Encoder configurations", 4);
   std::cout << '\n';
   return true;
-}
-catch (df::program_options_lite::ParseFailure& e) {
+} catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
             << e.val << "\".\n";
   return false;
@@ -141,39 +135,34 @@ catch (df::program_options_lite::ParseFailure& e) {
 //============================================================================
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params)) {
-    return 1;
-  }
+  if (!parseParameters(argc, argv, params)) { return 1; }
 
-  if (params.verbose) {
-    vmesh::vout.rdbuf(std::cout.rdbuf());
-  }
+  if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
   // Load input mesh
   vmesh::FrameSequence<uint16_t> src(
     params.width, params.height, params.colorSpace, params.frameCount);
   src.load(params.inputPath);
   if (src.frameCount() == 0) {
-    printf( "Src frame count = %d \n", src.frameCount());
+    printf("Src frame count = %d \n", src.frameCount());
     exit(-1);
   }
 
   // Encode
   vmesh::FrameSequence<uint16_t> rec;
-  vmesh::Bitstream bitstream;
+  vmesh::Bitstream               bitstream;
   auto encoder = vmesh::VirtualVideoEncoder<uint16_t>::create(params.codecId);
   encoder->encode(src, params.params, bitstream.vector(), rec);
 
   // Save reconstructed mesh
   rec.save(params.outputPath);
 
-  // Save bitstream 
-  bitstream.save( params.bitstreamPath );
+  // Save bitstream
+  bitstream.save(params.bitstreamPath);
 
   return 0;
 }

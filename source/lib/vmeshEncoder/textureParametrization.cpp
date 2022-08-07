@@ -55,10 +55,9 @@ namespace vmesh {
 
 //============================================================================
 
-HRESULT __cdecl UVAtlasCallback(float fPercentDone)
-{
+HRESULT __cdecl UVAtlasCallback(float fPercentDone) {
   static auto prev = std::chrono::steady_clock::now();
-  const auto tick = std::chrono::steady_clock::now();
+  const auto  tick = std::chrono::steady_clock::now();
 
   if (tick - prev > std::chrono::seconds(1)) {
     std::cout << fPercentDone * 100. << "%   \r" << std::flush;
@@ -67,13 +66,13 @@ HRESULT __cdecl UVAtlasCallback(float fPercentDone)
   return S_OK;
 }
 
-
 //============================================================================
 
-bool 
-TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& params ) {
+bool
+TextureParametrization::generate(VMCFrame&                   frame,
+                                 const VMCEncoderParameters& params) {
   TriangleMesh<float> mesh;
-  mesh.convert( frame.decimate );  
+  mesh.convert(frame.decimate);
 
   // Remove unwanted mesh components
   mesh.displacements().clear();
@@ -92,12 +91,16 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
   }
 
   // Prepare mesh for processing
-  const float epsilon = 0.F;
+  const float           epsilon = 0.F;
   std::vector<uint32_t> adjacency(3 * mesh.triangleCount());
-  auto hr = DirectX::GenerateAdjacencyAndPointReps(
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), mesh.triangleCount(),
-    reinterpret_cast<DirectX::XMFLOAT3*>(mesh.points().data()), mesh.pointCount(),
-    epsilon, nullptr, adjacency.data());
+  auto                  hr = DirectX::GenerateAdjacencyAndPointReps(
+    reinterpret_cast<uint32_t*>(mesh.triangles().data()),
+    mesh.triangleCount(),
+    reinterpret_cast<DirectX::XMFLOAT3*>(mesh.points().data()),
+    mesh.pointCount(),
+    epsilon,
+    nullptr,
+    adjacency.data());
   if (FAILED(hr)) {
     std::cerr << "ERROR: Failed generating adjacency (" << hr << ")\n";
     return 1;
@@ -105,10 +108,12 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
 
   // Validation
   std::wstring msgs;
-  DirectX::Validate(
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), mesh.triangleCount(),
-    mesh.pointCount(), adjacency.data(),
-    DirectX::VALIDATE_BACKFACING | DirectX::VALIDATE_BOWTIES, &msgs);
+  DirectX::Validate(reinterpret_cast<uint32_t*>(mesh.triangles().data()),
+                    mesh.triangleCount(),
+                    mesh.pointCount(),
+                    adjacency.data(),
+                    DirectX::VALIDATE_BACKFACING | DirectX::VALIDATE_BOWTIES,
+                    &msgs);
   if (!msgs.empty()) {
     std::cerr << "WARNING: \n";
     std::wcerr << msgs;
@@ -116,10 +121,14 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
 
   // Clean
   std::vector<uint32_t> dups;
-  bool breakBowties = true;
-  hr = DirectX::Clean(
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), mesh.triangleCount(),
-    mesh.pointCount(), adjacency.data(), nullptr, dups, breakBowties);
+  bool                  breakBowties = true;
+  hr = DirectX::Clean(reinterpret_cast<uint32_t*>(mesh.triangles().data()),
+                      mesh.triangleCount(),
+                      mesh.pointCount(),
+                      adjacency.data(),
+                      nullptr,
+                      dups,
+                      breakBowties);
   if (FAILED(hr)) {
     std::cerr << "ERROR: Failed mesh clean " << hr << '\n';
     return 1;
@@ -129,36 +138,50 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
     std::cout << " [" << dups.size() << " vertex dups]\n";
 
     mesh.reservePoints(mesh.pointCount() + dups.size());
-    for (auto dupIdx : dups) {
-      mesh.addPoint(mesh.point(dupIdx));
-    }
+    for (auto dupIdx : dups) { mesh.addPoint(mesh.point(dupIdx)); }
   }
 
   // Perform UVAtlas isocharting
   std::cout << "Computing isochart atlas on mesh...\n";
 
   std::vector<DirectX::UVAtlasVertex> vb;
-  std::vector<uint8_t> ib;
-  float outStretch = 0.F;
-  size_t outCharts = 0;
-  std::vector<uint32_t> facePartitioning;
-  std::vector<uint32_t> vertexRemapArray;
-  const auto start = std::chrono::steady_clock::now();
-  hr = UVAtlasCreate(
-    reinterpret_cast<DirectX::XMFLOAT3*>(mesh.points().data()), mesh.pointCount(),
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), DXGI_FORMAT_R32_UINT,
-    mesh.triangleCount(), params.maxCharts, params.maxStretch, params.width,
-    params.height, params.gutter, adjacency.data(), nullptr, nullptr,
-    UVAtlasCallback, DirectX::UVATLAS_DEFAULT_CALLBACK_FREQUENCY, params.uvOptions, vb,
-    ib, &facePartitioning, &vertexRemapArray, &outStretch, &outCharts);
+  std::vector<uint8_t>                ib;
+  float                               outStretch = 0.F;
+  size_t                              outCharts  = 0;
+  std::vector<uint32_t>               facePartitioning;
+  std::vector<uint32_t>               vertexRemapArray;
+  const auto                          start = std::chrono::steady_clock::now();
+  hr =
+    UVAtlasCreate(reinterpret_cast<DirectX::XMFLOAT3*>(mesh.points().data()),
+                  mesh.pointCount(),
+                  reinterpret_cast<uint32_t*>(mesh.triangles().data()),
+                  DXGI_FORMAT_R32_UINT,
+                  mesh.triangleCount(),
+                  params.maxCharts,
+                  params.maxStretch,
+                  params.width,
+                  params.height,
+                  params.gutter,
+                  adjacency.data(),
+                  nullptr,
+                  nullptr,
+                  UVAtlasCallback,
+                  DirectX::UVATLAS_DEFAULT_CALLBACK_FREQUENCY,
+                  params.uvOptions,
+                  vb,
+                  ib,
+                  &facePartitioning,
+                  &vertexRemapArray,
+                  &outStretch,
+                  &outCharts);
   if (FAILED(hr)) {
     std::cerr << "ERROR: Failed creating isocharts " << hr << '\n';
     return 1;
   }
 
   namespace chrono = std::chrono;
-  auto end = chrono::steady_clock::now();
-  auto deltams = chrono::duration_cast<chrono::milliseconds>(end - start);
+  auto end         = chrono::steady_clock::now();
+  auto deltams     = chrono::duration_cast<chrono::milliseconds>(end - start);
   std::cout << "Processing time: " << deltams.count() << " ms\n";
   std::cout << "Output # of charts: " << outCharts << ", resulting stretching "
             << outStretch << ", " << vb.size() << " verts\n";
@@ -169,8 +192,11 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
   assert(vertexRemapArray.size() == vb.size());
   std::vector<Vec3<float>> pos(vertexRemapArray.size());
   hr = DirectX::UVAtlasApplyRemap(
-    reinterpret_cast<DirectX::XMFLOAT3*>(mesh.points().data()), sizeof(DirectX::XMFLOAT3),
-    mesh.pointCount(), vertexRemapArray.size(), vertexRemapArray.data(),
+    reinterpret_cast<DirectX::XMFLOAT3*>(mesh.points().data()),
+    sizeof(DirectX::XMFLOAT3),
+    mesh.pointCount(),
+    vertexRemapArray.size(),
+    vertexRemapArray.data(),
     reinterpret_cast<DirectX::XMFLOAT3*>(pos.data()));
   if (FAILED(hr)) {
     std::cerr << "ERROR: Failed applying atlas vertex remap (" << hr << ")\n";
@@ -178,15 +204,16 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
   }
   //  std::swap(mesh.points(), pos); // float to double conversion issues
   mesh.points().clear();
-  mesh.points().resize( pos.size() );
-  for (size_t i = 0; i < pos.size(); i++) {
-    mesh.point(i) = pos[i];
-  }
+  mesh.points().resize(pos.size());
+  for (size_t i = 0; i < pos.size(); i++) { mesh.point(i) = pos[i]; }
 
   msgs.clear();
-  DirectX::Validate(
-    reinterpret_cast<uint32_t*>(mesh.triangles().data()), mesh.triangleCount(),
-    mesh.pointCount(), adjacency.data(), DirectX::VALIDATE_DEFAULT, &msgs);
+  DirectX::Validate(reinterpret_cast<uint32_t*>(mesh.triangles().data()),
+                    mesh.triangleCount(),
+                    mesh.pointCount(),
+                    adjacency.data(),
+                    DirectX::VALIDATE_DEFAULT,
+                    &msgs);
   if (!msgs.empty()) {
     std::cerr << "WARNING: \n";
     std::wcerr << msgs;
@@ -194,15 +221,16 @@ TextureParametrization::generate( VMCFrame& frame, const VMCEncoderParameters& p
 
   // Copy isochart UVs into mesh
   mesh.reserveTexCoords(vb.size());
-  std::transform(
-    vb.begin(), vb.end(), std::back_inserter(mesh.texCoords()),
-    [](DirectX::UVAtlasVertex& vtx) {
-      return Vec2<float>{vtx.uv.x, vtx.uv.y};
-    });
+  std::transform(vb.begin(),
+                 vb.end(),
+                 std::back_inserter(mesh.texCoords()),
+                 [](DirectX::UVAtlasVertex& vtx) {
+                   return Vec2<float>{vtx.uv.x, vtx.uv.y};
+                 });
 
   mesh.texCoordTriangles() = mesh.triangles();
-  
-  frame.decimateTexture.convert( mesh );
+
+  frame.decimateTexture.convert(mesh);
 
   return 0;
 }

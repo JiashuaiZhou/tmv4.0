@@ -50,7 +50,7 @@ struct VMCEncoderParameters;
 
 class TextureParametrization {
 public:
-  TextureParametrization() = default;
+  TextureParametrization()  = default;
   ~TextureParametrization() = default;
 
   static bool generate(VMCFrame& frame, const VMCEncoderParameters& params);

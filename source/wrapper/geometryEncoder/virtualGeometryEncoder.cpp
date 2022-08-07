@@ -33,44 +33,49 @@
 
 #include "virtualGeometryEncoder.hpp"
 
-
 #include "dracoLibGeometryEncoder.hpp"
 
 namespace vmesh {
 
-template <typename T>
-GeometryCodecId VirtualGeometryEncoder<T>::getDefaultCodecId() {
+template<typename T>
+GeometryCodecId
+VirtualGeometryEncoder<T>::getDefaultCodecId() {
 #ifdef USE_DRACO_GEOMETRY_CODEC
   return GeometryCodecId::DRACO;
 #endif
-  printf( "Error: geometry codec not set \n" );
+  printf("Error: geometry codec not set \n");
   return GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
 }
 
-template <typename T>
-bool VirtualGeometryEncoder<T>::checkCodecId( GeometryCodecId codecId ) {
-  switch ( codecId ) {
+template<typename T>
+bool
+VirtualGeometryEncoder<T>::checkCodecId(GeometryCodecId codecId) {
+  switch (codecId) {
 #ifdef USE_DRACO_GEOMETRY_CODEC
-    case GeometryCodecId::DRACO: break;
+  case GeometryCodecId::DRACO: break;
 #endif
-    default:
-      printf( "Error: codec id %d not supported \n", (int)codecId );
-      return false;
-      break;
+  default:
+    printf("Error: codec id %d not supported \n", (int)codecId);
+    return false;
+    break;
   }
   return true;
 }
 
-template <typename T>
-std::shared_ptr<VirtualGeometryEncoder<T>> VirtualGeometryEncoder<T>::create( GeometryCodecId codecId ) {
-  switch ( codecId ) {
+template<typename T>
+std::shared_ptr<VirtualGeometryEncoder<T>>
+VirtualGeometryEncoder<T>::create(GeometryCodecId codecId) {
+  switch (codecId) {
 #ifdef USE_DRACO_GEOMETRY_CODEC
-    case GeometryCodecId::DRACO: return std::make_shared<DracoLibGeometryEncoder<T>>(); break;
+  case GeometryCodecId::DRACO:
+    return std::make_shared<DracoLibGeometryEncoder<T>>();
+    break;
 #endif
-    default:
-      printf( "Error virtualGeometryEncoder: codec id not supported ( %d ) \n", (int)codecId );
-      exit( -1 );
-      break;
+  default:
+    printf("Error virtualGeometryEncoder: codec id not supported ( %d ) \n",
+           (int)codecId);
+    exit(-1);
+    break;
   }
   return nullptr;
 }
@@ -78,4 +83,4 @@ std::shared_ptr<VirtualGeometryEncoder<T>> VirtualGeometryEncoder<T>::create( Ge
 template class VirtualGeometryEncoder<float>;
 template class VirtualGeometryEncoder<double>;
 
-} // namespace vmesh 
+}  // namespace vmesh

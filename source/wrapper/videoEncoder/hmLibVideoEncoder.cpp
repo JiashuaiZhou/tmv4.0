@@ -30,10 +30,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined( USE_HM_VIDEO_CODEC )
-#include "util/image.hpp"
-#include "hmLibVideoEncoder.hpp"
-#include "hmLibVideoEncoderImpl.hpp"
+#if defined(USE_HM_VIDEO_CODEC)
+#  include "util/image.hpp"
+#  include "hmLibVideoEncoder.hpp"
+#  include "hmLibVideoEncoderImpl.hpp"
 
 namespace vmesh {
 
@@ -44,15 +44,13 @@ hmLibVideoEncoder<T>::~hmLibVideoEncoder() = default;
 
 template<typename T>
 void
-hmLibVideoEncoder<T>::encode(
-  FrameSequence<T>& videoSrc,
-  VideoEncoderParameters& params,
-  std::vector<uint8_t>& bitstream,
-  FrameSequence<T>& videoRec)
-{
-  const size_t width = videoSrc.width();
-  const size_t height = videoSrc.height();
-  const size_t frameCount = videoSrc.frameCount();
+hmLibVideoEncoder<T>::encode(FrameSequence<T>&       videoSrc,
+                             VideoEncoderParameters& params,
+                             std::vector<uint8_t>&   bitstream,
+                             FrameSequence<T>&       videoRec) {
+  const size_t      width      = videoSrc.width();
+  const size_t      height     = videoSrc.height();
+  const size_t      frameCount = videoSrc.frameCount();
   std::stringstream cmd;
   cmd << "HMEncoder";
   cmd << " -c " << params.encoderConfig_;
@@ -65,48 +63,45 @@ hmLibVideoEncoder<T>::encode(
   // cmd << " --InputFile=" << params.srcYuvFileName_;
   // cmd << " --BitstreamFile=" << params.binFileName_;
   // cmd << " --ReconFile=" << params.recYuvFileName_;
-  if (
-    videoSrc.colourSpace() == ColourSpace::YUV444p
-    || videoSrc.colourSpace() == ColourSpace::RGB444p
-    || videoSrc.colourSpace() == ColourSpace::BGR444p
-    || videoSrc.colourSpace() == ColourSpace::GBR444p) {
+  if (videoSrc.colourSpace() == ColourSpace::YUV444p
+      || videoSrc.colourSpace() == ColourSpace::RGB444p
+      || videoSrc.colourSpace() == ColourSpace::BGR444p
+      || videoSrc.colourSpace() == ColourSpace::GBR444p) {
     cmd << " --InputChromaFormat=444";
   } else {
     cmd << " --InputChromaFormat=420";
   }
 
-  if (params.qp_ != -8) {
-    cmd << " --QP=" << params.qp_;
-  }
+  if (params.qp_ != -8) { cmd << " --QP=" << params.qp_; }
   cmd << " --InputBitDepth=" << params.inputBitDepth_;
   cmd << " --OutputBitDepth=" << params.outputBitDepth_;
   cmd << " --OutputBitDepthC=" << params.outputBitDepth_;
-  if ( params.internalBitDepth_ != 0 ) {
+  if (params.internalBitDepth_ != 0) {
     cmd << " --InternalBitDepth=" << params.internalBitDepth_;
     cmd << " --InternalBitDepthC=" << params.internalBitDepth_;
   }
-#if defined( PCC_ME_EXT ) && PCC_ME_EXT
-  if ( params.usePccMotionEstimation_ ) {
+#  if defined(PCC_ME_EXT) && PCC_ME_EXT
+  if (params.usePccMotionEstimation_) {
     cmd << " --UsePccMotionEstimation=1";
     cmd << " --BlockToPatchFile=" << params.blockToPatchFile_;
     cmd << " --OccupancyMapFile=" << params.occupancyMapFile_;
     cmd << " --PatchInfoFile=" << params.patchInfoFile_;
   }
-#endif
-#if defined( PCC_RDO_EXT ) && PCC_RDO_EXT
-  if ( params.usePccRDO_ && !params.inputColourSpaceConvert_ ) {
+#  endif
+#  if defined(PCC_RDO_EXT) && PCC_RDO_EXT
+  if (params.usePccRDO_ && !params.inputColourSpaceConvert_) {
     cmd << " --UsePccRDO=1";
     cmd << " --OccupancyMapFile=" << params.occupancyMapFile_;
   }
-#endif
+#  endif
   std::cout << cmd.str() << std::endl;
   hmLibVideoEncoderImpl<T> encoder;
-  encoder.encode( videoSrc, cmd.str(), bitstream, videoRec );
+  encoder.encode(videoSrc, cmd.str(), bitstream, videoRec);
 }
 
 template class hmLibVideoEncoder<uint8_t>;
 template class hmLibVideoEncoder<uint16_t>;
 
-} // namespace vmesh 
+}  // namespace vmesh
 
 #endif

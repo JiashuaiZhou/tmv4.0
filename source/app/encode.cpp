@@ -49,32 +49,31 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose = true;
-  std::string inputMeshPath = {};
-  std::string inputTexturePath = {};
-  std::string baseMeshPath = {};
-  std::string subdivMeshPath = {};
-  std::string groupOfFramesStructurePath = {};
-  std::string compressedStreamPath = {};
-  std::string reconstructedMeshPath = {};
-  std::string reconstructedTexturePath = {};
-  std::string reconstructedMaterialLibPath = {};
-  int32_t startFrame = 0;
-  int32_t frameCount = 1;
-  double framerate = 30.;
+  bool                        verbose                      = true;
+  std::string                 inputMeshPath                = {};
+  std::string                 inputTexturePath             = {};
+  std::string                 baseMeshPath                 = {};
+  std::string                 subdivMeshPath               = {};
+  std::string                 groupOfFramesStructurePath   = {};
+  std::string                 compressedStreamPath         = {};
+  std::string                 reconstructedMeshPath        = {};
+  std::string                 reconstructedTexturePath     = {};
+  std::string                 reconstructedMaterialLibPath = {};
+  int32_t                     startFrame                   = 0;
+  int32_t                     frameCount                   = 1;
+  double                      framerate                    = 30.;
   vmesh::VMCEncoderParameters encParams;
 };
 
 //============================================================================
 
 static bool
-parseParameters(int argc, char* argv[], Parameters& params)
-try {
+parseParameters(int argc, char* argv[], Parameters& params) try {
   namespace po = df::program_options_lite;
 
   bool print_help = false;
 
-  auto& encParams = params.encParams;
+  auto& encParams      = params.encParams;
   auto& intraGeoParams = params.encParams.intraGeoParams;
   auto& interGeoParams = params.encParams.interGeoParams;
   /* clang-format off */
@@ -468,7 +467,7 @@ try {
   /* clang-format on */
 
   po::setDefaults(opts);
-  po::ErrorReporter err;
+  po::ErrorReporter             err;
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
@@ -510,9 +509,7 @@ try {
     err.error() << "hdrtools decoder config not specified\n";
   }
 
-  if (err.is_errored) {
-    return false;
-  }
+  if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
@@ -522,7 +519,7 @@ try {
   po::dumpCfg(std::cout, opts, "General", 4);
   po::dumpCfg(std::cout, opts, "Geometry decimate", 4);
   po::dumpCfg(std::cout, opts, "Texture parametrization", 4);
-  po::dumpCfg(std::cout, opts, "Geometry parametrization", 4);  
+  po::dumpCfg(std::cout, opts, "Geometry parametrization", 4);
   po::dumpCfg(std::cout, opts, "Intra geometry parametrization", 4);
   if (encParams.subdivInter) {
     po::dumpCfg(std::cout, opts, "Inter geometry parametrization", 4);
@@ -535,8 +532,7 @@ try {
   po::dumpCfg(std::cout, opts, "Bug fix", 4);
   std::cout << '\n';
   return true;
-}
-catch (df::program_options_lite::ParseFailure& e) {
+} catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
             << e.val << "\".\n";
   return false;
@@ -544,64 +540,52 @@ catch (df::program_options_lite::ParseFailure& e) {
 //----------------------------------------------------------------------------
 
 int32_t
-loadGroupOfFrames(
-  const vmesh::VMCGroupOfFramesInfo& gofInfo,
-  vmesh::VMCGroupOfFrames& gof,
-  const Parameters& params)
-{
+loadGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
+                  vmesh::VMCGroupOfFrames&           gof,
+                  const Parameters&                  params) {
   const auto startFrame = gofInfo.startFrameIndex_;
   const auto frameCount = gofInfo.frameCount_;
-  const auto lastFrame = startFrame + frameCount - 1;
+  const auto lastFrame  = startFrame + frameCount - 1;
   std::cout << "Loading group of frames (" << startFrame << '-' << lastFrame
-       << ") ";
+            << ") ";
   gof.resize(frameCount);
   for (int f = startFrame; f <= lastFrame; ++f) {
     const auto nameInputTexture = vmesh::expandNum(params.inputTexturePath, f);
-    const auto findex = f - startFrame;
-    auto& frame = gof.frames[findex];
+    const auto findex           = f - startFrame;
+    auto&      frame            = gof.frames[findex];
     std::cout << '.' << std::flush;
-    if (
-      !frame.input.loadFromOBJ(params.inputMeshPath, f)
-      || !LoadImage(nameInputTexture, frame.inputTexture)) {
+    if (!frame.input.loadFromOBJ(params.inputMeshPath, f)
+        || !LoadImage(nameInputTexture, frame.inputTexture)) {
       printf("Error loading frame %d / %d \n", f, frameCount);
       return -1;
     }
   }
   std::cout << "\n" << std::flush;
   return 0;
-} 
+}
 
 //============================================================================
 
 int32_t
-saveGroupOfFrames(
-  const vmesh::VMCGroupOfFramesInfo& gofInfo,
-  vmesh::VMCGroupOfFrames& gof,
-  const Parameters& params)
-{
+saveGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
+                  vmesh::VMCGroupOfFrames&           gof,
+                  const Parameters&                  params) {
   int ret = 0;
-  if (
-    !params.reconstructedMeshPath.empty()
-    && !params.reconstructedTexturePath.empty()
-    && !params.reconstructedMaterialLibPath.empty()) {
+  if (!params.reconstructedMeshPath.empty()
+      && !params.reconstructedTexturePath.empty()
+      && !params.reconstructedMaterialLibPath.empty()) {
     for (int f = 0; f < gofInfo.frameCount_; ++f) {
-      const auto n = gofInfo.startFrameIndex_ + f;
-      auto strObj = vmesh::expandNum(params.reconstructedMeshPath, n);
-      auto strTex = vmesh::expandNum(params.reconstructedTexturePath, n);
+      const auto n      = gofInfo.startFrameIndex_ + f;
+      auto       strObj = vmesh::expandNum(params.reconstructedMeshPath, n);
+      auto       strTex = vmesh::expandNum(params.reconstructedTexturePath, n);
       auto strMat = vmesh::expandNum(params.reconstructedMaterialLibPath, n);
-      if (!SaveImage(strTex, gof[f].outputTexture)) {
-        ret = -1;
-      }
+      if (!SaveImage(strTex, gof[f].outputTexture)) { ret = -1; }
       vmesh::Material<double> material;
       material.texture = vmesh::basename(strTex);
-      if (!material.save(strMat)) {
-        ret = -1;
-      }
+      if (!material.save(strMat)) { ret = -1; }
       gof[f].rec.setMaterialLibrary(vmesh::basename(strMat));
-      if (!gof[f].rec.saveToOBJ(strObj)) {
-        ret = -1;
-      }
-    }    
+      if (!gof[f].rec.saveToOBJ(strObj)) { ret = -1; }
+    }
   }
   return ret;
 }
@@ -609,27 +593,27 @@ saveGroupOfFrames(
 //============================================================================
 
 int32_t
-compress(const Parameters& params)
-{
+compress(const Parameters& params) {
   // Generate gof structure
   vmesh::SequenceInfo sequenceInfo;
-  sequenceInfo.generate(
-    params.frameCount, params.startFrame,
-    params.encParams.groupOfFramesMaxSize, params.encParams.analyzeGof,
-    params.inputMeshPath);
+  sequenceInfo.generate(params.frameCount,
+                        params.startFrame,
+                        params.encParams.groupOfFramesMaxSize,
+                        params.encParams.analyzeGof,
+                        params.inputMeshPath);
   if (params.encParams.keepIntermediateFiles) {
     auto file = params.encParams.intermediateFilesPathPrefix + "gof.txt";
-    sequenceInfo.save(file );
+    sequenceInfo.save(file);
   }
 
   vmesh::VMCEncoder encoder;
-  vmesh::Bitstream bitstream;
-  vmesh::VMCStats totalStats;
+  vmesh::Bitstream  bitstream;
+  vmesh::VMCStats   totalStats;
   for (int g = 0; g < sequenceInfo.gofCount(); ++g) {
     vmesh::VMCGroupOfFrames gof;
-    const auto& gofInfo = sequenceInfo[g];
+    const auto&             gofInfo = sequenceInfo[g];
     printf("loadGroupOfFrames GOF = %d / %zu \n", g, sequenceInfo.gofCount());
-    
+
     // Load group of frame
     if (loadGroupOfFrames(gofInfo, gof, params) != 0) {
       std::cerr << "Error: can't load group of frames!\n";
@@ -642,7 +626,7 @@ compress(const Parameters& params)
       std::cerr << "Error: can't compress group of frames!\n";
       return -1;
     }
-    auto end = std::chrono::steady_clock::now();
+    auto end                 = std::chrono::steady_clock::now();
     gof.stats.processingTime = end - start;
 
     // Save reconsctructed models
@@ -676,18 +660,13 @@ compress(const Parameters& params)
 //============================================================================
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params)) {
-    return 1;
-  }
+  if (!parseParameters(argc, argv, params)) { return 1; }
 
-  if (params.verbose) {
-    vmesh::vout.rdbuf(std::cout.rdbuf());
-  }
+  if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
   if (compress(params) != 0) {
     std::cerr << "Error: can't compress animation!\n";

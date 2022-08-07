@@ -30,43 +30,47 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if defined(USE_HM_VIDEO_CODEC )
+#if defined(USE_HM_VIDEO_CODEC)
 
-#include <TLibCommon/TComList.h>
-#include <TLibCommon/TComPicYuv.h>
-#include <TLibDecoder/AnnexBread.h>
-#include <TLibDecoder/NALread.h>
-#include <TLibDecoder/TDecTop.h>
+#  include <TLibCommon/TComList.h>
+#  include <TLibCommon/TComPicYuv.h>
+#  include <TLibDecoder/AnnexBread.h>
+#  include <TLibDecoder/NALread.h>
+#  include <TLibDecoder/TDecTop.h>
 
-#include "util/image.hpp"
-#include <array>
+#  include "util/image.hpp"
+#  include <array>
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class hmLibVideoDecoderImpl {
- public:
+public:
   hmLibVideoDecoderImpl();
 
   ~hmLibVideoDecoderImpl();
-  void decode( std::vector<uint8_t>& bitstream, size_t outputBitDepth, FrameSequence<T>& video );
+  void decode(std::vector<uint8_t>& bitstream,
+              size_t                outputBitDepth,
+              FrameSequence<T>&     video);
 
- private:
-  void               setVideoSize( const pcc_hm::TComSPS* sps );
-  void               xWriteOutput( pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic, uint32_t tId, FrameSequence<T>& video );
-  void               xFlushOutput( pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic, FrameSequence<T>& video );
-  void               xWritePicture( const pcc_hm::TComPicYuv* pic, FrameSequence<T>& video );
+private:
+  void setVideoSize(const pcc_hm::TComSPS* sps);
+  void xWriteOutput(pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic,
+                    uint32_t                            tId,
+                    FrameSequence<T>&                   video);
+  void xFlushOutput(pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic,
+                    FrameSequence<T>&                   video);
+  void xWritePicture(const pcc_hm::TComPicYuv* pic, FrameSequence<T>& video);
   pcc_hm::TDecTop*   m_pTDecTop;
   int                m_iPOCLastDisplay;
   int                m_iSkipFrame{};
   std::array<int, 2> m_outputBitDepth{};
-  int m_internalBitDepths{};
-  int m_outputWidth{};
-  int m_outputHeight{};
-  bool m_bRGB2GBR{};
+  int                m_internalBitDepths{};
+  int                m_outputWidth{};
+  int                m_outputHeight{};
+  bool               m_bRGB2GBR{};
 };
 
 }  // namespace vmesh
 
 #endif
-

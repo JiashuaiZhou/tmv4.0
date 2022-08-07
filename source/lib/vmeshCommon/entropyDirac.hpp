@@ -53,19 +53,32 @@ namespace dirac {
     uint16_t probability = 0x8000;  // p=0.5
 
     template<class... Args>
-    void reset(Args...)
-    {
+    void reset(Args...) {
       probability = 0x8000;
     }
-    int32_t estimateBits(const bool bit) const
-    {  // returns 1024 * number of bits
+    int32_t
+    estimateBits(const bool bit) const {  // returns 1024 * number of bits
       // 1024 * -log2(x/64)
-      const int32_t LUT[17] = {6144, 4096, 3072, 2473, 2048, 1718,
-                               1449, 1221, 1024, 850,  694,  554,
-                               425,  307,  197,  95,   0};
-      return LUT
-        [((bit ? (1 << 16) - int32_t(probability) : probability) + 2048)
-         >> 12];
+      const int32_t LUT[17] = {6144,
+                               4096,
+                               3072,
+                               2473,
+                               2048,
+                               1718,
+                               1449,
+                               1221,
+                               1024,
+                               850,
+                               694,
+                               554,
+                               425,
+                               307,
+                               197,
+                               95,
+                               0};
+      return LUT[((bit ? (1 << 16) - int32_t(probability) : probability)
+                  + 2048)
+                 >> 12];
     }
   };
 
@@ -73,8 +86,7 @@ namespace dirac {
   // The approximate (7 bit) probability of a symbol being 1 or 0 according
   // to a context model.
 
-  inline int approxSymbolProbability(int bit, SchroContext& model)
-  {
+  inline int approxSymbolProbability(int bit, SchroContext& model) {
     int p = std::max(1, model.probability >> 9);
     return bit != 0 ? 128 - p : p;
   }
@@ -92,15 +104,13 @@ namespace dirac {
     using AdaptiveBitModel = SchroContext;
 
     ArithmeticEncoder() = default;
-    ArithmeticEncoder(size_t bufferSize, std::nullptr_t)
-    {
+    ArithmeticEncoder(size_t bufferSize, std::nullptr_t) {
       setBuffer(bufferSize, nullptr);
     }
 
     //------------------------------------------------------------------------
 
-    void setBuffer(size_t size, uint8_t* buffer)
-    {
+    void setBuffer(size_t size, uint8_t* buffer) {
       _bufSize = size;
       if (buffer != nullptr) {
         _buf = _bufWr = buffer;
@@ -116,8 +126,7 @@ namespace dirac {
 
     //------------------------------------------------------------------------
 
-    size_t stop()
-    {
+    size_t stop() {
       schro_arith_flush(&impl);
       return _bufWr - _buf;
     }
@@ -132,23 +141,20 @@ namespace dirac {
 
     //------------------------------------------------------------------------
 
-    void encode(int bit)
-    {
+    void encode(int bit) {
       uint16_t probability = 0x8000;  // p=0.5
       schro_arith_encode_bit(&impl, &probability, bit);
     }
 
     //------------------------------------------------------------------------
 
-    void encode(int bit, SchroContext& model)
-    {
+    void encode(int bit, SchroContext& model) {
       schro_arith_encode_bit(&impl, &model.probability, bit);
     }
 
     //------------------------------------------------------------------------
   private:
-    static void writeByteCallback(uint8_t byte, void* thisptr)
-    {
+    static void writeByteCallback(uint8_t byte, void* thisptr) {
       auto* _this = reinterpret_cast<ArithmeticEncoder*>(thisptr);
       if (_this->_bufSize == 0) {
         throw std::runtime_error("Aec stream overflow");
@@ -159,10 +165,10 @@ namespace dirac {
 
     //------------------------------------------------------------------------
 
-    ::SchroArith impl{};
-    uint8_t* _buf{};
-    uint8_t* _bufWr{};
-    size_t _bufSize{};
+    ::SchroArith               impl{};
+    uint8_t*                   _buf{};
+    uint8_t*                   _bufWr{};
+    size_t                     _bufSize{};
     std::unique_ptr<uint8_t[]> allocatedBuffer;
   };
 
@@ -172,9 +178,8 @@ namespace dirac {
   public:
     using AdaptiveBitModel = SchroContext;
 
-    void setBuffer(size_t size, const char* buffer)
-    {
-      _buffer = reinterpret_cast<const uint8_t*>(buffer);
+    void setBuffer(size_t size, const char* buffer) {
+      _buffer    = reinterpret_cast<const uint8_t*>(buffer);
       _bufferLen = size;
     }
 
@@ -192,27 +197,22 @@ namespace dirac {
 
     //------------------------------------------------------------------------
 
-    int decode()
-    {
+    int decode() {
       uint16_t probability = 0x8000;  // p=0.5
       return schro_arith_decode_bit(&impl, &probability);
     }
 
     //------------------------------------------------------------------------
 
-    int decode(SchroContext& model)
-    {
+    int decode(SchroContext& model) {
       return schro_arith_decode_bit(&impl, &model.probability);
     }
 
     //------------------------------------------------------------------------
   private:
-    static uint8_t readByteCallback(void* thisptr)
-    {
+    static uint8_t readByteCallback(void* thisptr) {
       auto* _this = reinterpret_cast<ArithmeticDecoder*>(thisptr);
-      if (_this->_bufferLen == 0U) {
-        return 0xff;
-      }
+      if (_this->_bufferLen == 0U) { return 0xff; }
       _this->_bufferLen--;
       return *_this->_buffer++;
     }

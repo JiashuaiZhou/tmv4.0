@@ -39,7 +39,7 @@
 #include <iterator>
 #include <vector>
 
-#include <fstream> // looks like we need this too (edit by π)
+#include <fstream>  // looks like we need this too (edit by π)
 #include <program-options-lite/program_options_lite.h>
 
 #include "util/misc.hpp"
@@ -52,20 +52,19 @@
 //============================================================================
 
 struct Parameters {
-  bool verbose{};
-  std::string inputPath;  
-  std::string bitstreamPath;
-  std::string outputPath;
+  bool                   verbose{};
+  std::string            inputPath;
+  std::string            bitstreamPath;
+  std::string            outputPath;
   vmesh::GeometryCodecId codecId;
-  
+
   vmesh::GeometryEncoderParameters params;
 };
 
 //============================================================================
 
 static bool
-parseParameters(int argc, char* argv[], Parameters& params)
-try {
+parseParameters(int argc, char* argv[], Parameters& params) try {
   namespace po = df::program_options_lite;
 
   bool print_help = false;
@@ -91,11 +90,11 @@ try {
   ("qg",  params.params.qg_, -1, "qg")
   ("cl",  params.params.cl_, 10, "cl")
   ;
-  
+
   /* clang-format on */
 
   po::setDefaults(opts);
-  po::ErrorReporter err;
+  po::ErrorReporter             err;
   const std::list<const char*>& argv_unhandled =
     po::scanArgv(opts, argc, (const char**)argv, err);
 
@@ -109,24 +108,19 @@ try {
     return false;
   }
 
-  if (params.inputPath.empty()) {
-    err.error() << "Src mesh not specified\n";
-  }
+  if (params.inputPath.empty()) { err.error() << "Src mesh not specified\n"; }
   if (params.bitstreamPath.empty()) {
     err.error() << "Output bitstream path not specified\n";
   }
-  if (err.is_errored) {
-    return false;
-  }
+  if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
   po::dumpCfg(std::cout, opts, "Input/Output", 4);
-  po::dumpCfg(std::cout, opts, "Draco", 4);  
+  po::dumpCfg(std::cout, opts, "Draco", 4);
   std::cout << '\n';
   return true;
-}
-catch (df::program_options_lite::ParseFailure& e) {
+} catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
             << e.val << "\".\n";
   return false;
@@ -135,18 +129,13 @@ catch (df::program_options_lite::ParseFailure& e) {
 //============================================================================
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
   Parameters params;
-  if (!parseParameters(argc, argv, params)) {
-    return 1;
-  }
+  if (!parseParameters(argc, argv, params)) { return 1; }
 
-  if (params.verbose) {
-    vmesh::vout.rdbuf(std::cout.rdbuf());
-  }
+  if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
   // Load input mesh
   vmesh::TriangleMesh<double> mesh;
@@ -154,15 +143,15 @@ main(int argc, char* argv[])
 
   // Encode
   vmesh::TriangleMesh<double> rec;
-  vmesh::Bitstream bitstream;
+  vmesh::Bitstream            bitstream;
   auto encoder = vmesh::VirtualGeometryEncoder<double>::create(params.codecId);
   encoder->encode(mesh, params.params, bitstream.vector(), rec);
 
   // Save reconstructed mesh
   rec.saveToOBJ(params.outputPath);
 
-  // Save bitstream 
-  bitstream.save( params.bitstreamPath );
+  // Save bitstream
+  bitstream.save(params.bitstreamPath);
 
   return 0;
 }

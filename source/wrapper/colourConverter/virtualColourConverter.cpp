@@ -34,23 +34,25 @@
 #include "virtualColourConverter.hpp"
 
 #include "internalColourConverter.hpp"
-#if defined( USE_HDRTOOLS )
-#include "hdrToolsLibColourConverter.hpp"
+#if defined(USE_HDRTOOLS)
+#  include "hdrToolsLibColourConverter.hpp"
 #endif
 
 namespace vmesh {
 
-template <typename T>
-std::shared_ptr<VirtualColourConverter<T>> VirtualColourConverter<T>::create( uint8_t codecId ) {
-  switch ( codecId ) {
-    case 0: return std::make_shared<InternalColourConverter<T>>(); break;
+template<typename T>
+std::shared_ptr<VirtualColourConverter<T>>
+VirtualColourConverter<T>::create(uint8_t codecId) {
+  switch (codecId) {
+  case 0: return std::make_shared<InternalColourConverter<T>>(); break;
 #ifdef USE_HDRTOOLS
-    case 1: return std::make_shared<HdrToolsLibColourConverter<T>>(); break;
+  case 1: return std::make_shared<HdrToolsLibColourConverter<T>>(); break;
 #endif
-    default:
-      printf( "Error virtualColourConverter: codec id not supported ( %d ) \n", (int)codecId );
-      exit( -1 );
-      break;
+  default:
+    printf("Error virtualColourConverter: codec id not supported ( %d ) \n",
+           (int)codecId);
+    exit(-1);
+    break;
   }
   return nullptr;
 }
@@ -58,4 +60,4 @@ std::shared_ptr<VirtualColourConverter<T>> VirtualColourConverter<T>::create( ui
 template class VirtualColourConverter<uint8_t>;
 template class VirtualColourConverter<uint16_t>;
 
-} // namespace vmesh 
+}  // namespace vmesh

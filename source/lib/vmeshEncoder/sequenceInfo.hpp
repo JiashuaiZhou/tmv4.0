@@ -42,37 +42,37 @@ namespace vmesh {
 struct VMCGroupOfFramesInfo;
 
 class SequenceInfo {
-
 public:
-  SequenceInfo() = default;
+  SequenceInfo()  = default;
   ~SequenceInfo() = default;
 
-  VMCGroupOfFramesInfo& gof(int index) { return sequenceInfo_[index]; }
-  const VMCGroupOfFramesInfo& gof(int index) const { return sequenceInfo_[index]; }
-  VMCGroupOfFramesInfo& operator[]( int index ) { return sequenceInfo_[index]; }
+  VMCGroupOfFramesInfo&       gof(int index) { return sequenceInfo_[index]; }
+  const VMCGroupOfFramesInfo& gof(int index) const {
+    return sequenceInfo_[index];
+  }
+  VMCGroupOfFramesInfo& operator[](int index) { return sequenceInfo_[index]; }
 
-  int generate(
-    int frameCount,
-    int startFrame,
-    int maxGOFSize,
-    bool analyzeGof,
-    const std::string& inputPath);
+  int generate(int                frameCount,
+               int                startFrame,
+               int                maxGOFSize,
+               bool               analyzeGof,
+               const std::string& inputPath);
 
   int save(std::string& outputPath);
 
-  int load(
-    int frameCount,
-    int startFrame,
-    int maxGOFSize,
-    std::string& groupOfFramesStructurePath);
+  int load(int          frameCount,
+           int          startFrame,
+           int          maxGOFSize,
+           std::string& groupOfFramesStructurePath);
 
   int gofCount() const { return (int)sequenceInfo_.size(); }
 
   void trace();
+
 private:
-  int frameCount_ = 0;
-  int startFrame_ = 0;
-  int groupOfFramesMaxSize_ = 0;
+  int                               frameCount_           = 0;
+  int                               startFrame_           = 0;
+  int                               groupOfFramesMaxSize_ = 0;
   std::vector<VMCGroupOfFramesInfo> sequenceInfo_;
 };
 

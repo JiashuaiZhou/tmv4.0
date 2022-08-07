@@ -343,7 +343,7 @@ vtmLibVideoEncoderImpl<T>::xInitLibCfg() {
       if (vps.getEachLayerIsAnOlsFlag() == 0) {
         vps.setOlsModeIdc(
           2);  // When vps_all_independent_layers_flag is equal to 1 and vps_each_layer_is_an_ols_flag
-          // is equal to 0, the value of vps_ols_mode_idc is inferred to be equal to 2
+        // is equal to 0, the value of vps_ols_mode_idc is inferred to be equal to 2
       }
     }
     if (!vps.getEachLayerIsAnOlsFlag()) {

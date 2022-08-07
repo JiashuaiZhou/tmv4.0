@@ -77,7 +77,7 @@ protected:
     m_targetDecLayerIdSet;  ///< set of LayerIds to be included in the sub-bitstream extraction process.
   std::string
     m_outputDecodedSEIMessagesFilename;  ///< filename to output decoded SEI messages to. If '-', then use
-    ///< stdout. If empty, do not output details.
+  ///< stdout. If empty, do not output details.
 #  if JVET_S0257_DUMP_360SEI_MESSAGE
   std::string
     m_outputDecoded360SEIMessagesFilename;  ///< filename to output decoded 360 SEI messages to.

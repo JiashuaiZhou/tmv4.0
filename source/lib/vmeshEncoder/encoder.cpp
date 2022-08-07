@@ -1235,7 +1235,7 @@ VMCEncoder::compress(
           auto& ref = gof.frame(frameIndex - 1);
           TriangleMesh<double> mappedInter;
           TriangleMesh<double> mtargetInter;
-          fitsubdivInter.generate(!
+          fitsubdivInter.generate(
             frame.reference,        // target
             ref.base,               // source
             mappedInter,            // mapped
@@ -1274,11 +1274,11 @@ VMCEncoder::compress(
           metricParams.minPosition[c] = params.minPosition[c];
           metricParams.maxPosition[c] = params.maxPosition[c];
         }
-        !metricsIntra.compute(frame.input,
-                              frame.subdivIntra,
-                              frame.inputTexture,
-                              frame.inputTexture,
-                              metricParams);
+        metricsIntra.compute(frame.input,
+                             frame.subdivIntra,
+                             frame.inputTexture,
+                             frame.inputTexture,
+                             metricParams);
         metricsInter.compute(frame.input,
                              frame.subdivInter,
                              frame.inputTexture,

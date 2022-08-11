@@ -80,36 +80,46 @@ getPeakMemory() {
 
 static int
 getUsedMemory() {
-  std::ifstream file("/proc/self/status");
-  if (!file) {
-    for (std::string line; std::getline(file, line);) {
-      if (line.rfind("VmSize:", 0) == 0) {
-        line.erase(0, 7);
-        line.erase(line.find("kB"), 3);
-        return std::atoi(line.c_str());
+ 
+  FILE* pFile   = fopen( "/proc/self/status", "r" );
+  int   iResult = 0;
+  if ( pFile != NULL ) {
+    char pLine[128];
+    while ( fgets( pLine, 128, pFile ) != NULL ) {
+      if ( strncmp( pLine, "VmSize:", 7 ) == 0 ) {
+        iResult          = (int)strlen( pLine );
+        const char* pTmp = pLine;
+        while ( *pTmp < '0' || *pTmp > '9' ) { pTmp++; }
+        pLine[iResult - 3] = '\0';
+        iResult            = atoi( pTmp );
         break;
       }
     }
-    file.close();
+    fclose( pFile );
   }
-  return 0;
+  return iResult;
 }
 
 static int
 getPeakMemory() {
-  std::ifstream file("/proc/self/status");
-  if (!file) {
-    for (std::string line; std::getline(file, line);) {
-      if (line.rfind("VmPeak:", 0) == 0) {
-        line.erase(0, 7);
-        line.erase(line.find("kB"), 3);
-        return std::atoi(line.c_str());
+ 
+  FILE*    pFile   = fopen( "/proc/self/status", "r" );
+  uint64_t iResult = 0;
+  if ( pFile != NULL ) {
+    char pLine[128];
+    while ( fgets( pLine, 128, pFile ) != NULL ) {
+      if ( strncmp( pLine, "VmPeak:", 7 ) == 0 ) {
+        const char* pTmp = pLine;
+        while ( *pTmp < '0' || *pTmp > '9' ) { pTmp++; }
+        pLine[(int)strlen( pLine ) - 3] = '\0';
+        iResult                         = atoi( pTmp );
         break;
       }
     }
-    file.close();
+    fclose( pFile );
   }
-  return 0;
+  return iResult;
+
 }
 #endif
 

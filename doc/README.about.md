@@ -1,5 +1,6 @@
-General Information
-===================
+
+<!--- General Information  --->
+# General Information
 
 Reference software is being made available to provide a reference
 implementation of the video-based dynamic mesh coding standard being
@@ -21,5 +22,6 @@ sent to the general MPEG 3DG email reflector at
 
 Bug reporting
 -------------
-Bugs should be reported on the issue tracker at
-<http://mpegx.int-evry.fr/software/MPEG/vmesh/TM/mpeg-vmesh-tmc/issues>.
+
+Bugs should be reported on the issue tracker at <http://mpegx.int-evry.fr/software/MPEG/vmesh/TM/mpeg-vmesh-tmc/issues>.
+

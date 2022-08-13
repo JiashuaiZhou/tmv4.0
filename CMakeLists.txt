@@ -1,22 +1,44 @@
-cmake_minimum_required(VERSION 3.15)
-project(vmesh)
+cmake_minimum_required(VERSION 3.17)
+project(vmesh CXX C )
 
-set(CMAKE_CXX_STANDARD 11)
+# Options:
+set(VDMC_VERSION_MAJOR 1 )
+set(VDMC_VERSION_MINOR 0 )
 
-# fix policies in dependent projects by injecting code
-# notably, set CMP0077 so that setting variables is honoured by subprojects
-SET(CMAKE_PROJECT_INCLUDE_BEFORE ${CMAKE_SOURCE_DIR}/scripts/fix-policy.cmake)
+# Video encoder and decoder:
+OPTION( USE_HM_VIDEO_CODEC       "Use HM video encoder and decoder"       TRUE  )  # 0
+OPTION( USE_VTM_VIDEO_CODEC      "Use VTM video encoder and decoder"      FALSE )  # 1
+OPTION( USE_FFMPEG_VIDEO_CODEC   "Use FFMPEG video encoder and decoder"   FALSE )  # 2
 
-# Some dependencies include find_library commands, which wont work in the
-# in-tree build (because they've not been built yet).  Whereas actually
-# there is no need to find anything.  The following fake package definitions
-# will satisfy find_library without modifying the submodule
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/scripts/fakepkg)
+# Geometry encoder and decoder:
+OPTION( USE_DRACO_GEOMETRY_CODEC "Use draco geometry encoder and decoder" TRUE )  # 0
 
-# Code in directx dependencies may use SAL annotations.
-# On non-win32 platforms, these are not defined.  Instead provide a SAL2 stub
-if (NOT WIN32)
-    include_directories(dependencies/sal)
+# Color conversion library:
+OPTION( USE_HDRTOOLS             "Use HDRTools for color conversions"     TRUE )
+
+# Use HM optimized RDO
+OPTION( USE_HM_PCC_RDO           "Use HM optimized RDO "                  FALSE )
+
+# Test applications
+OPTION( BUILD_WRAPPER_APPS       "Build wrapper applications"             TRUE )
+OPTION( BUILD_UNIT_TEST_APPS     "Build unit test applications"           FALSE )
+
+# Building options
+set(CMAKE_CXX_STANDARD             14)
+set(CMAKE_CXX_STANDARD_REQUIRED    ON)
+set(CMAKE_CXX_EXTENSIONS           OFF)
+set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+enable_language(C)
+if (MSVC)
+  add_compile_options(/W4)
+else ()
+  add_compile_options( -Wshadow -Wall -Wextra -pedantic -Wno-conversion -Wno-unused-parameter
+                        -Wno-sign-conversion -Wno-long-long -Wno-unused-function )
+endif()
+if (UNIX)
+  add_definitions(-D_POSIX_C_SOURCE=200809L)
+elseif (WIN32)
+  add_definitions(-D_USE_MATH_DEFINES)
 endif()
 
 # directx-mesh unconditionally includes install targets that need dxheaders'
@@ -26,13 +48,53 @@ set(DXHEADERS_INSTALL TRUE)
 # other dependencies that use the same variable.  The tools aren't required.
 set (BUILD_TOOLS FALSE)
 
-# using openmp in uvatlas would result in non-determinism
-set(UVATLAS_USE_OPENMP FALSE)
+set (UVATLAS_USE_OPENMP FALSE)
 
-add_subdirectory(dependencies/draco)
-add_subdirectory(dependencies/directx-headers)
-add_subdirectory(dependencies/directx-math)
-add_subdirectory(dependencies/directx-mesh)
-add_subdirectory(dependencies/uvatlas)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_XM_NO_INTRINSICS_")
+# compile flags still to be harmonized to guarantee strict same compilation results on float operations
+if (NOT WIN32)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -m64 -DNDEBUG -mfpmath=sse -ffp-contract=off -ffp-model=strict")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -m64 -DNDEBUG -mfpmath=sse -ffp-contract=off -ffloat-store")
+    endif()
+endif()
 
-add_subdirectory(vmesh)
+# Tools
+include( dependencies/cmake/tools/CPM.cmake )
+include( dependencies/cmake/tools/tools.cmake )
+include( dependencies/cmake/tools/clang-format.cmake )
+include( dependencies/cmake/tools/cppcheck.cmake )
+
+# Dependencies
+include( dependencies/cmake/geometry/directx.cmake )
+include( dependencies/cmake/geometry/uvatlas.cmake )
+include( dependencies/cmake/geometry/mmetric.cmake )
+if ( USE_HDRTOOLS )
+  add_compile_definitions(USE_HDRTOOLS)
+  include( dependencies/cmake/video/hdrtools.cmake )
+endif()
+if ( USE_HM_VIDEO_CODEC )
+  add_compile_definitions(USE_HM_VIDEO_CODEC)
+  include( dependencies/cmake/video/hm.cmake )
+endif()
+if ( USE_VTM_VIDEO_CODEC )
+  add_compile_definitions(USE_VTM_VIDEO_CODEC)
+  include( dependencies/cmake/video/vtm.cmake )
+endif()
+if ( USE_FFMPEG_VIDEO_CODEC )
+  add_compile_definitions(USE_FFMPEG_VIDEO_CODEC)
+  include( dependencies/cmake/video/ffmpeg.cmake )
+endif()
+if ( USE_DRACO_GEOMETRY_CODEC ) 
+  add_compile_definitions(USE_DRACO_GEOMETRY_CODEC)
+  add_compile_definitions(USE_DRACO_GEOMETRY_CODEC) 
+  include( dependencies/cmake/geometry/draco.cmake )
+endif()
+
+# V-mesh codec
+add_all_subdirectory(source/wrapper)
+add_all_subdirectory(source/lib)
+add_subdirectory(source/app)
+
+

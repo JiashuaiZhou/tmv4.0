@@ -1,7 +1,7 @@
 .DS_Store
 
 # Suggested "out-of-tree" build directory
-build/
+/build/
 
 # Some tools expect this build generated file to be in
 # the root of the source tree.
@@ -11,7 +11,6 @@ compile_commands.json
 CMakeFiles
 CMakeScripts
 CMakeCache.txt
-*.cmake
 
 # Projects / metadata from various IDEs
 .idea
@@ -22,6 +21,37 @@ CMakeCache.txt
 xcuserdata
 DerivedData
 
-# A directory for developers to put anything
-data/
+# configure files
+source/lib/vdmcUtil/config.h
+
+# doc
+doc/mpeg-vmesh-sw-manual.aux
+
+# Dependencies
+dependencies/directx-headers
+dependencies/directx-math
+dependencies/directx-mesh
+dependencies/draco
+dependencies/uvatlas
+dependencies/mmetric
+dependencies/hdrtools
+dependencies/hm
+dependencies/vtm
+dependencies/ffmpeg
+
+# External tools
+/externaltools/
+
+# pipeline configuration files
+/generatedConfigFiles/
+
+# Temp files
+/*.yuv
+/*.bgr
+/*.h254
+
+# HDRTools 
+/test_1920x1080_24p_420.yuv
+/log.txt
+
 

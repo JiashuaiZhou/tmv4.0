@@ -2,7 +2,7 @@
 # clang-format-6.0 format rules
 #  -- commented out options are supported in 7.0
 #
-BasedOnStyle:  LLVM
+BasedOnStyle: LLVM
 IndentWidth: 2
 # While a wider limit would be nice, 79 works with diffs in a terminal
 ColumnLimit: 79
@@ -23,32 +23,34 @@ UseTab: Never
 ##
 # Breaking lines
 #
-AlignAfterOpenBracket: AlwaysBreak
-AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: false
+AlignAfterOpenBracket: Align
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: Always
 AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: InlineOnly
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
 AlwaysBreakAfterReturnType: TopLevelDefinitions
-AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakBeforeMultilineStrings: false
+
 
 # NB: change to MultiLine in 7.0
 AlwaysBreakTemplateDeclarations: true
 
-BinPackArguments: true
+BinPackArguments: false
 BinPackParameters: false
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterClass: false
   AfterControlStatement: false
-  AfterEnum: true
-  AfterFunction: true
+  AfterEnum: false
+  AfterFunction: false
   AfterNamespace: false
   AfterStruct: false
   AfterUnion: false
   AfterExternBlock: false
-  BeforeCatch: true
+  BeforeCatch: false
   BeforeElse: false
   SplitEmptyFunction: false
   SplitEmptyRecord: false
@@ -61,7 +63,7 @@ BreakBeforeInheritanceComma: true
 BreakStringLiterals: true
 
 CompactNamespaces: false
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
+PackConstructorInitializers: NextLine 
 
 #ExperimentalAutoDetectBinPacking: true
 
@@ -70,10 +72,10 @@ ConstructorInitializerAllOnOneLineOrOnePerLine: true
 #
 # Don't align assignments, it can create lots of noise in diffs.
 #  -- but do align comments for readability
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
 AlignEscapedNewlines: DontAlign
-AlignOperands: false
+AlignOperands: true
 AlignTrailingComments: true
 
 Cpp11BracedListStyle: true

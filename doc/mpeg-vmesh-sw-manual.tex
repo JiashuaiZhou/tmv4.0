@@ -74,13 +74,16 @@
 \newcommand\ie{\emph{i.e\@ifnextchar.{}{.\@}}}
 \makeatother
 
-\title{Video-based dynamic mesh coding test model v0 user manual}
-\author{%
-	David Flynn
-	\email{davidflynn@apple.com}
-}
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 
-\mpegmeeting{Online -- April 2022}
+\title{Video-based dynamic mesh coding test model v1.0 user manual}
+\mpegdocpurpose{User manual}
+\author{%
+	Julien Ricard
+	\email{julien.ricard@interdital.com}
+}
+\mpegmeeting{Online -- July 2022}
 \mpegdocnum{nXXXXX}
 \mpegdocstatus{Draft}
 \mpegdocsource{WG7}
@@ -89,24 +92,19 @@
 \maketitle
 \begin{abstract}
 This document is a user manual describing usage of reference software
-for the V-DMC project. It applies to version 0.0 of the software.
+for the V-DMC project. It applies to version 1.0 of the software.
 \end{abstract}
 
 \tableofcontents
 %\listoftables
 
 \input{README.about.tex}
+\input{README.clone.tex}
 \input{README.build.tex}
+\input{README.architecture.tex}
+\input{README.enc_params.tex}
+\input{README.dec_params.tex}
 \input{README.usage.tex}
-
-% provide some separation between option name (subsubsection title)
-% and the body text.
-\titlespacing{\subsubsection}{2em}{*0}{*0}
-\input{README.options.gengof.tex}
-\input{README.options.simplify.tex}
-\input{README.options.uvatlas.tex}
-\input{README.options.fitsubdiv.tex}
-\input{README.options.vmc.tex}
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

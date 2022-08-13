@@ -1,97 +1,65 @@
-Obtaining the software
-======================
 
-The authoritative location of the software is the following git
-repository:
-   <http://mpegx.int-evry.fr/software/MPEG/dmc/TM/mpeg-vmesh-tm>
+<!--- Building  --->
+# Building 
 
-Each released version may be identified by a version control system tag in
-the form `release-v${version}`.
+## Building script
 
-An example:
+A bash script is provided to facilitate the building operations. 
+
+To build V-DMC test model softwares with this script please use the following command line:
 
 ```console
-$ git clone http://mpegx.int-evry.fr/software/MPEG/dmc/TM/mpeg-vmesh-tm.git
-$ cd mpeg-vmesh-tm
-$ git checkout release-v0.0
-```
+$ ./build.sh
+```` 
 
-> It is strongly advised to obtain the software using the version control
-> system rather than to download a zip (or other archive) of a particular
-> release.  The build system uses the version control system to accurately
-> identify the version being built.
-
-
-Bootstrapping
--------------
-
-Prior to configuring and building, the software repository must be
-bootstrapped to:
-
-* Fetch submodules for external dependencies
-* Apply patches to the external dependencies
-
-
-Submodules
-----------
-
-Submodules can be downloaded using `git submodule init`.  This must be
-performed before patching and building.
-
-
-Patching
---------
-
-The `patches/` directory contains a number of patches that must be applied
-to fix issues with the external dependencies.
-
-This only needs to be performed once, prior to building.
+Another script could be used to clean the current solutions with the following command lines:
 
 ```console
-$ cd dependencies/draco
-$ git am < draco-0001-io-obj-parse-and-store-coordinates-normals-uv-as-int.patch
-
-$ cd dependencies/directx-mesh
-$ git am < dxmesh-0001-build-remove-include-of-non-standard-malloc.h.patch
-$ git am < dxmesh-0002-build-workaround-libstdc-issue-with-noexcept-callabl.patch
-
-$ cd dependencies/uvatlas
-$ git am < uvatlas-0001-uvatlas-eliminate-non-determinism-by-using-default-p.patch
+$ ./clear.sh      # Remove ./build/ sub-folder.
+$ ./clear.sh all  # Remove all cloned dependencies.
 ```
 
+## Build manually
 
-Building
---------
-
-The codec is supported on Linux, OSX and Windows platforms.  The build
-configuration is managed using CMake.
-
-> It is strongly advised to build the software in a separate build directory.
-
-### Linux
-```console
-$ mkdir build
-$ cmake -DCMAKE_BUILD_TYPE=Release -S. -Bbuild -G Ninja
-$ ninja -C build
-$ build/vmesh/vmc --help
-```
-
+Standard CMake build commands can be used to build the 
+software depending on the system you used.
 
 ### OSX
 ```console
 $ mkdir build
 $ cmake -S. -Bbuild -G Xcode
 $ xcodebuild -project build/vmesh.xcodeproj -configuration Debug
-$ build/vmesh/Debug/vmc --help
 ```
 
-As an alternative, the generated Xcode project may be opened and built from
-Xcode itself.
+### Linux
+```console
+$ mkdir build
+$ cmake -DCMAKE_BUILD_TYPE=Release -S. -Bbuild/Release
+$ cmake --build ./build/Release --config Release --parallel 12
+```
 
 ### Windows
 ```console
-> md build
-> cmake -S. -Bbuild -G "Visual Studio 15 2017 Win64"
+$ md build
+$ cmake -DCMAKE_BUILD_TYPE=Release -S. -Bbuild/Release
+$ cmake --build ./build/Release --config Release --parallel 12
 ```
 
-Open the generated Visual Studio solution to build it.
+## Dependencies
+
+The V-DMC test model software uses several dependencies that are cloned and patched by the CMake building process. 
+
+These dependencies are: 
+
+| **URL** | **Commit/tag** | 
+|---|---| 
+| [Directx-headers](https:/github.com/microsoft/DirectX-Headers.git) | `1b79ddaeabc4b16c772ca63adc5bdf7d5f741460` |
+| [Directx-math](https:/github.com/microsoft/DirectXMath.git) | `b404898c9dcaff7b686bbaf6d2fba8ff0184a17e` |
+| [Directx-mesh](https:/github.com/microsoft/DirectXMesh.git) | `2c0ed18e271afa99a70948f784dfe082127fa0de` |
+| [UVAatlas](https:/github.com/microsoft/UVAtlas.git) | `5af1b5d2a0fd9e0e5d17aa0971ab17c890e318e0` |
+| [Draco](https:/github.com/google/draco.git) | `266f47ce58b0568ff9328e12174b25cb0fbd3b2e` |
+| [HDRTools](http:/gitlab.com/standards/HDRTools.git) | `v0.23` |
+| [HM](https:/vcgit.hhi.fraunhofer.de/jvet/HM.git) | `HM-16.21+SCM-8.8` |
+| [VTM](https:/vcgit.hhi.fraunhofer.de/jvet/VVCSoftware_VTM.git) | `VTM-13.0` |
+| [mpeg-pcc-mmetric](http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git) | `1_0_1_lib_beta_v2` |
+ 

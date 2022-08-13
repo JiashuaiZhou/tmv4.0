@@ -1,165 +1,8 @@
 ---
 tools:
-    # export some parameters to make scripting easier
-    seqcfg:
-      - firstframe: ${first-frame}
-      - lastframe: $eval{ ${first-frame} + ${num-frames} - 1 }
-      - numframes: ${num-frames}
-      - srcmesh: ${seq-prefix}${src-dir}/${src-mesh}
-      - srctex: ${seq-prefix}${src-dir}/${src-tex}
-
-
-    # step 1, generate the group of frame structure
-    gengof:
-      - input: ${seq-prefix}${src-dir}/${src-mesh}
-      - output: ${src-dir}.gof
-      - startFrame: ${first-frame}
-      - frameCount: ${num-frames}
-
-
-    # step 2, simplify each frame in the input
-    simplify:
-      # only export configuration if there is any decimation
-      - !conditional 'defined ${pp} and ${pp} < 1.0'
-
-      - input: ${seq-prefix}${src-dir}/${src-mesh}
-      - qt: ${src-texcoord-bits}
-
-      # output
-      - decimated: ${src-dir}_r${pp}/${src-mesh}_decimated.obj
-      - reference: ${src-dir}_r${pp}/${src-mesh}_reference.obj
-      - mapped:    ${src-dir}_r${pp}/${src-mesh}_mapped.obj
-
-      # decimation ratio
-      - target: ${pp}
-      - cctcount: 8
-
-
-    # step 2, generate isochart for each frame of each simplified mesh
-    uvatlas:
-      # only export configuration if there is any decimation
-      - !conditional 'defined ${pp} and ${pp} < 1.0'
-
-      - input:  ${src-dir}_r${pp}/${src-mesh}_decimated.obj
-      - output: ${src-dir}_r${pp}/${src-mesh}_decimated_tex.obj
-      - width:  $eval{ 1 << ${src-texcoord-bits} - 1 }
-      - height: $eval{ 1 << ${src-texcoord-bits} - 1 }
-
-      - quality: QUALITY
-      - gutter: $eval{ 1 << (${src-texcoord-bits} - 8) }
-
-
-    # step 4a, subdivision and fitting (intra frames)
-    fitsubdiv_intra:
-      # only export configuration if there is any decimation
-      - !conditional 'defined ${pp} and ${pp} < 1.0'
-
-      # input
-      - target: ${src-dir}_r${pp}/${src-mesh}_reference.obj
-      - source: ${src-dir}_r${pp}/${src-mesh}_decimated_tex.obj
-      - mapped: ${src-dir}_r${pp}/${src-mesh}_mapped.obj
-
-      # output
-      - base:    ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
-      - subdiv:  ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
-      - nsubdiv: ${src-dir}_r${pp}_ai/${src-mesh}_nsubdiv.obj
-
-      # iteration count depends upon decimation level:
-      - it: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
-
-      - sdeform: 1
-      - forceNormalDisp: 0
-      - unifyVertices: 1
-      - deformNormalThres: -2.0
-      - deformNNCount: 1
-      - deformFlipThres: -2.0
-      - useInitialGeom: 1
-      - smoothMotion: 0
-      - smoothMethod: 1
-
-      # For inter conditions w/o mapping, use fitsubdiv_inter threshold.
-      # NB: does not apply when mapping is performed.
-      # NB: the fitsubdiv_intra results are not always the same for ai and ld
-      #     conditions due to the following (for soldier)
-      - - !conditional 'defined ${fitsubdiv_with_mapping} and !${fitsubdiv_with_mapping}'
-        - deformNormalThres: 0.8660254
-
-    # step 4a, subdivision and fitting (for inter frames)
-    fitsubdiv_inter:
-      # only export configuration if there is any decimation
-      - !conditional 'defined ${pp} and ${pp} < 1.0 and !${no_fitsubdiv_inter}'
-
-      # outputs
-      - base:    ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
-      - subdiv:  ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
-      - nsubdiv: ${src-dir}_r${pp}_ld/${src-mesh}_nsubdiv.obj
-
-      # inputs (without mapping)
-      - - !conditional '!${fitsubdiv_with_mapping}'
-        # current frame
-        - target: ${src-dir}_r${pp}/${src-mesh}_reference.obj
-
-        # these are for the previous frame
-        - source:  ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
-        - subdiv0: ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
-
-      # inputs (with mapping)
-      - - !conditional '${fitsubdiv_with_mapping}'
-        # current frame index
-        - mtarget: ${seq-prefix}${src-dir}/${src-mesh}
-
-        # these use the reference frame index
-        - target: ${src-dir}_r${pp}/${src-mesh}_reference.obj
-        - source: ${src-dir}_r${pp}/${src-mesh}_decimated_tex.obj
-        - mapped: ${src-dir}_r${pp}/${src-mesh}_mapped.obj
-
-      # iteration count depends upon decimation level:
-      - it: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
-
-      - sdeform: 1
-      - forceNormalDisp: 0
-      - deformFlipThres: -0.5
-      - useInitialGeom: 1
-      - smoothMotion: 0
-      - smoothMethod: 1
-
-      - - !conditional '!${fitsubdiv_with_mapping}'
-        - unifyVertices: 0
-        - deformNNCount: 512
-        - deformNormalThres: 0.8660254
-
-      - - !conditional '${fitsubdiv_with_mapping}'
-        - unifyVertices: 1
-        - deformNNCount: 1
-        - deformNormalThres: -2.0
-
-
-    # step 4c, mode decision, choose between intra and inter frame
-    fitsubdiv_choose:
-      # only export configuration if there is any decimation
-      # NB: when pp=1.0, encoder uses the sequence gof file
-      - !conditional 'defined ${pp} and ${pp} < 1.0 and !${no_fitsubdiv_inter}'
-
-      - maxAllowedD2PSNRLoss: 1.0
-
-      - ai-base:    ${src-dir}_r${pp}_ai/${src-mesh}_base.obj
-      - ai-subdiv:  ${src-dir}_r${pp}_ai/${src-mesh}_subdiv.obj
-      - ai-nsubdiv: ${src-dir}_r${pp}_ai/${src-mesh}_nsubdiv.obj
-
-      # if the ld result is worse by epsilon than ai, replace
-      # the ld files with the ai files
-      - ld-base:    ${src-dir}_r${pp}_ld/${src-mesh}_base.obj
-      - ld-subdiv:  ${src-dir}_r${pp}_ld/${src-mesh}_subdiv.obj
-      - ld-nsubdiv: ${src-dir}_r${pp}_ld/${src-mesh}_nsubdiv.obj
-
-      # the GoF to generate from the mode decisions
-      - ld-gof: ${src-dir}_r${pp}_ld/${src-dir}.gof
-
-
-    # step 5, encode
+  
+    # Encode
     encoder:
-      - mode: 0
-
       # input / sequence configuration
       - imesh: ${seq-prefix}${src-dir}/${src-mesh}
       - itex:  ${seq-prefix}${src-dir}/${src-tex}
@@ -168,10 +11,55 @@ tools:
       - gdepth: ${src-geom-bits}
       - tdepth: ${src-texcoord-bits}
 
-      # output
-      - compressed: ${src-dir}.vmesh
+      # Geometry decimate
+      - qt: ${src-texcoord-bits}      
+      - target: ${pp}
+      - cctcount: 8
+      - minPosition: ${src-min-pos}
+      - maxPosition: ${src-max-pos}
 
-      # common options
+      # Texture parametrization
+      - width:  $eval{ 1 << ${src-texcoord-bits} - 1 }
+      - height: $eval{ 1 << ${src-texcoord-bits} - 1 }
+      - quality: QUALITY
+      - gutter: $eval{ 1 << (${src-texcoord-bits} - 8) }
+
+      # Intra geometry parametrization
+      - ai_subdivIt: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
+      - ai_sdeform: 1
+      - ai_forceNormalDisp: 0
+      - ai_unifyVertices: 1
+      - ai_deformNormalThres: -2.0
+      - ai_deformNNCount: 1
+      - ai_deformFlipThres: -2.0
+      - ai_useInitialGeom: 1
+      - ai_smoothMotion: 0
+      - ai_smoothMethod: 1
+      - - !conditional 'defined ${fitsubdiv_with_mapping} and !${fitsubdiv_with_mapping}'
+        - ai_deformNormalThres: 0.8660254
+
+      # Inter geometry parametrization
+      - - !conditional 'defined ${pp} and ${pp} < 1.0 and ( defined ${fitsubdiv_inter} and ${fitsubdiv_inter})'
+        - ld_subdivIt: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
+        - ld_sdeform: 1
+        - ld_forceNormalDisp: 0
+        - ld_deformFlipThres: -0.5
+        - ld_useInitialGeom: 1
+        - ld_smoothMotion: 0
+        - ld_smoothMethod: 1
+        - - !conditional '!${fitsubdiv_with_mapping}'
+          - ld_unifyVertices: 0
+          - ld_deformNNCount: 512
+          - ld_deformNormalThres: 0.8660254
+        - - !conditional '${fitsubdiv_with_mapping}'
+          - subdivInterWithMapping: 1
+          - ld_unifyVertices: 1
+          - ld_deformNNCount: 1
+          - ld_deformNormalThres: -2.0
+        # Choose geometry parametrization
+        - maxAllowedD2PSNRLoss: 1.0 
+  
+      # Common options
       - invorient: 0
       - tqp: 10
       - gofmax: 32
@@ -190,27 +78,24 @@ tools:
       - cscencconfig: ${cfg-prefix}/hdrconvert/bgr444toyuv420.cfg
       - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
 
-
-    # step 6, decode
+    # Decode
     decoder:
-      - mode: 1
-      - compressed: ${src-dir}.vmesh
-      # Specifying the first output frame number helps align src/dec filenames
-      - fstart: ${first-frame}
-      - cscdecconfig: ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
-
+      - fstart:          ${first-frame}
+      # Specifying the first output frame number helps align src/dec filenames      
+      - cscdecconfig:    ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
       # don't normalize uv coordinates in decoded output
-      - normuv: 0
+      - normuv:          0            
 
-
+    # Metric
     mmetric:
-      - firstframe: ${first-frame}
-      - lastframe: $eval{ ${first-frame} + ${num-frames} - 1 }
-      - srcmesh: ${seq-prefix}${src-dir}/${src-mesh}
-      - srctex: ${seq-prefix}${src-dir}/${src-tex}
-      - srcgeombits: ${src-geom-bits}
-      - srcminpos: ${src-min-pos}
-      - srcmaxpos: ${src-max-pos}
-      - srctexcoordbits: ${src-texcoord-bits}
-      - srcmaxbblen: ${src-max-bb-len}
-      - gridsize: 1024
+      - fstart:          ${first-frame}
+      - fcount:          ${num-frames}
+      - srcMesh:         ${seq-prefix}${src-dir}/${src-mesh}
+      - srcTex:          ${seq-prefix}${src-dir}/${src-tex}
+      - qp:              ${src-geom-bits}
+      - qt:              ${src-texcoord-bits}
+      - minPosition:     ${src-min-pos}
+      - maxPosition:     ${src-max-pos}
+      - pcc:             1
+      - ibsm:            1
+      - gridSize:        1024

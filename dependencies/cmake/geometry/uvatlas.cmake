@@ -1,3 +1,5 @@
+set (UVATLAS_USE_OPENMP FALSE)
+
 set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/uvatlas )
 if( NOT EXISTS ${DIR} )
   CPMAddPackage( NAME             uvatlas

@@ -87,7 +87,7 @@ then
     git clone https://gitlab.com/standards/HDRTools.git -b master ${HDRTOOLSDIR}; 
   fi
 
-  if [ "${MACHINE}" != "Linux" ] 
+  if [ "${MACHINE}" != "Linux" ] && [ "${MACHINE}" != "Mac" ]
   then 
     # clone and build zlib
     ZLIBDIR=${DEPDIR}/zlib

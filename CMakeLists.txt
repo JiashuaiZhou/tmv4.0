@@ -35,20 +35,13 @@ else ()
   add_compile_options( -Wshadow -Wall -Wextra -pedantic -Wno-conversion -Wno-unused-parameter
                         -Wno-sign-conversion -Wno-long-long -Wno-unused-function )
 endif()
-if (UNIX)
-  add_definitions(-D_POSIX_C_SOURCE=200809L)
+if (UNIX)  
+  if(NOT APPLE)
+    add_definitions(-D_POSIX_C_SOURCE=200809L)
+  endif()  
 elseif (WIN32)
   add_definitions(-D_USE_MATH_DEFINES)
 endif()
-
-# directx-mesh unconditionally includes install targets that need dxheaders'
-set(DXHEADERS_INSTALL TRUE)
-
-# directx-mesh unconditionally sets BUILD_TOOLS to TRUE, which then affects
-# other dependencies that use the same variable.  The tools aren't required.
-set (BUILD_TOOLS FALSE)
-
-set (UVATLAS_USE_OPENMP FALSE)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_XM_NO_INTRINSICS_")
 # compile flags still to be harmonized to guarantee strict same compilation results on float operations
@@ -70,6 +63,8 @@ include( dependencies/cmake/tools/cppcheck.cmake )
 include( dependencies/cmake/geometry/directx.cmake )
 include( dependencies/cmake/geometry/uvatlas.cmake )
 include( dependencies/cmake/geometry/mmetric.cmake )
+
+# Wrapper libraries
 if ( USE_HDRTOOLS )
   add_compile_definitions(USE_HDRTOOLS)
   include( dependencies/cmake/video/hdrtools.cmake )
@@ -91,10 +86,12 @@ if ( USE_DRACO_GEOMETRY_CODEC )
   add_compile_definitions(USE_DRACO_GEOMETRY_CODEC) 
   include( dependencies/cmake/geometry/draco.cmake )
 endif()
-
-# V-mesh codec
 add_all_subdirectory(source/wrapper)
+
+# V-mesh core codec
 add_all_subdirectory(source/lib)
+
+# Applications
 add_subdirectory(source/app)
 
 

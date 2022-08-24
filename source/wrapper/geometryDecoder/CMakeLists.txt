@@ -15,7 +15,7 @@ set( LIBS vmeshCommon )
 if( USE_DRACO_GEOMETRY_CODEC )
   include_directories( ${CMAKE_SOURCE_DIR}/dependencies/draco/src/ 
                        ${CMAKE_CURRENT_BINARY_DIR}/../../../ )
-  set( LIBS ${LIBS} ${DRACO_LIB} )
+  set( LIBS ${LIBS} draco::draco )
 endif()
                      
 add_library( ${MYNAME} ${SRC} )

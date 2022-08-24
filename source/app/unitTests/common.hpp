@@ -151,6 +151,18 @@ const std::string g_vmeshEncodePath =
   "build\\Release\\bin\\Release\\encode.exe";
 const std::string g_vmeshDecodePath =
   "build\\Release\\bin\\Release\\decode.exe";
+#elif defined(__APPLE__)
+const std::string g_hmEncoderPath = "externaltools/hm-16.21+scm-8.8/bin/umake/"
+                                    "clang-13.1/x86_64/release/TAppEncoder";
+const std::string g_hmDecoderPath = "externaltools/hm-16.21+scm-8.8/bin/umake/"
+                                    "clang-13.1/x86_64/release/TAppDecoder";
+const std::string g_hdrConvertPath =
+  "externaltools/hdrtools/build/bin/HDRConvert";
+const std::string g_dracoEncoderPath = "build/Release/bin/draco_encoder";
+const std::string g_dracoDecoderPath = "build/Release/bin/draco_decoder";
+const std::string g_mmMetricsPath = "build/Release/bin/mm";
+const std::string g_vmeshEncodePath = "build/Release/bin/encode";
+const std::string g_vmeshDecodePath = "build/Release/bin/decode";
 #else
 const std::string g_hmEncoderPath =
   "externaltools/hm-16.21+scm-8.8/bin/TAppEncoderStatic";

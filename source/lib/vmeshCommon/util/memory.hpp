@@ -59,6 +59,9 @@ getPeakMemory() {
   return (uint64_t)pmc.PeakWorkingSetSize / 1024;
 }
 #elif defined(__APPLE__) && defined(__MACH__)
+#  include <unistd.h>
+#  include <sys/resource.h>
+#  include <mach/mach.h>
 static inline int
 getUsedMemory() {
   struct mach_task_basic_info info;
@@ -77,10 +80,8 @@ getPeakMemory() {
   return (size_t)rusage.ru_maxrss / 1024;
 }
 #else
-
 static int
 getUsedMemory() {
- 
   FILE* pFile   = fopen( "/proc/self/status", "r" );
   int   iResult = 0;
   if ( pFile != NULL ) {
@@ -102,7 +103,6 @@ getUsedMemory() {
 
 static int
 getPeakMemory() {
- 
   FILE*    pFile   = fopen( "/proc/self/status", "r" );
   uint64_t iResult = 0;
   if ( pFile != NULL ) {
@@ -119,7 +119,6 @@ getPeakMemory() {
     fclose( pFile );
   }
   return iResult;
-
 }
 #endif
 

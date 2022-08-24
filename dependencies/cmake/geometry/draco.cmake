@@ -25,8 +25,4 @@ endif()
 
 add_subdirectory(dependencies/draco)
 
-IF (MSVC)
-  SET( DRACO_LIB draco )
-ELSE()
-  SET( DRACO_LIB ${CMAKE_BINARY_DIR}/lib/libdraco.a )
-ENDIF()
+SET( DRACO_LIB draco::draco )

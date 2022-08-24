@@ -1,4 +1,3 @@
-
 # fix policies in dependent projects by injecting code
 # notably, set CMP0077 so that setting variables is honoured by subprojects
 set(CMAKE_PROJECT_INCLUDE_BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/scripts/fix-policy.cmake)

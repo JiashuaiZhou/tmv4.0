@@ -140,17 +140,22 @@ struct VMCEncoderParameters {
   bool    analyzeGof           = false;
 
   // geometry video
-  int32_t     geometryVideoBlockSize     = 16;
-  int32_t     geometryVideoWidthInBlocks = 16;
-  int32_t     geometryVideoBitDepth      = 10;
-  std::string geometryVideoEncoderConfig = {};
+  int32_t      geometryVideoBlockSize     = 16;
+  int32_t      geometryVideoWidthInBlocks = 16;
+  int32_t      geometryVideoBitDepth      = 10;
+  std::string  geometryVideoEncoderConfig = {};
+  VideoCodecId geometryVideoCodecId       = VideoCodecId::UNKNOWN_VIDEO_CODEC;
 
   // texture video
-  int32_t     textureVideoBitDepth         = 10;
-  int32_t     textureVideoQP               = 8;
-  std::string textureVideoEncoderConfig    = {};
-  std::string textureVideoHDRToolEncConfig = {};
-  std::string textureVideoHDRToolDecConfig = {};
+  int32_t      textureVideoBitDepth         = 10;
+  int32_t      textureVideoQP               = 8;
+  std::string  textureVideoEncoderConfig    = {};
+  std::string  textureVideoHDRToolEncConfig = {};
+  std::string  textureVideoHDRToolDecConfig = {};
+  VideoCodecId textureVideoCodecId = VideoCodecId::UNKNOWN_VIDEO_CODEC;
+
+  // Mesh 
+  GeometryCodecId meshCodecId = GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
 
   // displacements
   DisplacementCoordinateSystem displacementCoordinateSystem =
@@ -209,7 +214,7 @@ struct VMCEncoderParameters {
   float                             maxAllowedD2PSNRLoss   = 1.F;
   GeometryParametrizationParameters intraGeoParams;
   GeometryParametrizationParameters interGeoParams;
-
+  
   // Bug fix
   bool forceCoordTruncation = false;
 };

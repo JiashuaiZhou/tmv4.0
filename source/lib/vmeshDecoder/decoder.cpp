@@ -376,15 +376,21 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   uint8_t  qpBaseMesh             = 0;
   uint8_t  subdivInfo             = 0;
   uint8_t  liftingQPs[3]          = {};
+  uint8_t  meshCodecId = uint8_t(GeometryCodecId::UNKNOWN_GEOMETRY_CODEC);
+  uint8_t  geometryVideoCodecId = uint8_t(VideoCodecId::UNKNOWN_VIDEO_CODEC);
+  uint8_t  textureVideoCodecId  = uint8_t(VideoCodecId::UNKNOWN_VIDEO_CODEC);
+
   bitstream.read(frameCount, _byteCounter);
   bitstream.read(bitField, _byteCounter);
   bitstream.read(bitDepth, _byteCounter);
   bitstream.read(subdivInfo, _byteCounter);
+  bitstream.read(meshCodecId, _byteCounter);
   bitstream.read(qpBaseMesh, _byteCounter);
   _sps.frameCount               = frameCount;
   _sps.encodeDisplacementsVideo = ((bitField & 1) != 0);
   _sps.encodeTextureVideo       = (((bitField >> 1) & 1) != 0);
   if (_sps.encodeDisplacementsVideo) {
+    bitstream.read(geometryVideoCodecId, _byteCounter);
     bitstream.read(widthDispVideo, _byteCounter);
     bitstream.read(heightDispVideo, _byteCounter);
     bitstream.read(geometryVideoBlockSize, _byteCounter);
@@ -392,10 +398,13 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
     bitstream.read(liftingQPs[1], _byteCounter);
     bitstream.read(liftingQPs[2], _byteCounter);
   }
-  if (_sps.encodeTextureVideo) {
+  if (_sps.encodeTextureVideo) {    
+    bitstream.read(textureVideoCodecId, _byteCounter);
     bitstream.read(widthTexVideo, _byteCounter);
     bitstream.read(heightTexVideo, _byteCounter);
   }
+
+  // Update SPS
   _sps.widthDispVideo                   = widthDispVideo;
   _sps.heightDispVideo                  = heightDispVideo;
   _sps.widthTexVideo                    = widthTexVideo;
@@ -410,6 +419,9 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   _sps.liftingQuantizationParameters[0] = liftingQPs[0];
   _sps.liftingQuantizationParameters[1] = liftingQPs[1];
   _sps.liftingQuantizationParameters[2] = liftingQPs[2];
+  _sps.meshCodecId                      = GeometryCodecId( meshCodecId ); 
+  _sps.geometryVideoCodecId             = VideoCodecId( geometryVideoCodecId );
+  _sps.textureVideoCodecId              = VideoCodecId( textureVideoCodecId );
   return 0;
 }
 

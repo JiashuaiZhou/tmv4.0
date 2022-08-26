@@ -405,14 +405,26 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.normalizeUV, 
       encParams.normalizeUV, 
       "Normalize uv texture coordinates")    
+    ("meshCodecId", 
+      encParams.meshCodecId, 
+      encParams.meshCodecId, 
+      "Mesh codec id")    
 
   (po::Section("Geometry video"))
+    ("geometryVideoCodecId",
+      encParams.geometryVideoCodecId,
+      encParams.geometryVideoCodecId,
+      "Geometry video codec id")
     ("gvencconfig", 
       encParams.geometryVideoEncoderConfig, 
       encParams.geometryVideoEncoderConfig, 
       "Geometry video cfg")    
         
   (po::Section("Texture video"))
+    ("textureVideoCodecId",
+      encParams.textureVideoCodecId,
+      encParams.textureVideoCodecId,
+      "Texture video codec id")
     ("tvencconfig", 
       encParams.textureVideoEncoderConfig, 
       encParams.textureVideoEncoderConfig, 

@@ -372,7 +372,7 @@ VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
       const auto&                 point1        = fsubdiv1.point(indexPos);
       const auto&                 texCoord1 = fsubdiv1.texCoord(indexTexCoord);
       const std::array<double, 5> vertex1   = {
-        point1[0], point1[1], point1[2], texCoord1[0], texCoord1[1]};
+          point1[0], point1[1], point1[2], texCoord1[0], texCoord1[1]};
       const auto it = map0.find(vertex1);
       if (it != map0.end()) {
         mapping[indexPos] = map0[vertex1];
@@ -1520,8 +1520,10 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
   bitstream.write(bitField);
   bitstream.write(bitDepth);
   bitstream.write(subdivInfo);
+  bitstream.write(uint8_t(params.meshCodecId));
   bitstream.write(qpBaseMesh);
   if (params.encodeDisplacementsVideo) {
+    bitstream.write(uint8_t(params.geometryVideoCodecId));
     bitstream.write(widthDispVideo);
     bitstream.write(heightDispVideo);
     bitstream.write(geometryVideoBlockSize);
@@ -1530,6 +1532,7 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
     bitstream.write(liftingQPs[2]);
   }
   if (params.encodeTextureVideo) {
+    bitstream.write(uint8_t(params.textureVideoCodecId));
     bitstream.write(widthTexVideo);
     bitstream.write(heightTexVideo);
   }

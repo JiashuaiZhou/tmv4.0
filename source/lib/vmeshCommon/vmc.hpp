@@ -97,9 +97,14 @@ struct VMCSequenceParameterSet {
   bool              liftingSkipUpdate                   = false;
   bool              encodeDisplacementsVideo            = true;
   bool              encodeTextureVideo                  = true;
+
   SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
   DisplacementCoordinateSystem displacementCoordinateSystem =
     DisplacementCoordinateSystem::LOCAL;
+
+  GeometryCodecId meshCodecId = GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
+  VideoCodecId    geometryVideoCodecId = VideoCodecId::UNKNOWN_VIDEO_CODEC;
+  VideoCodecId    textureVideoCodecId  = VideoCodecId::UNKNOWN_VIDEO_CODEC;
 };
 
 //============================================================================

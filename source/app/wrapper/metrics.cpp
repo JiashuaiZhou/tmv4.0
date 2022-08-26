@@ -44,13 +44,13 @@
 //============================================================================
 
 struct Parameters {
-  bool                        verbose{};
-  std::string                 srcMeshPath;
-  std::string                 srcTexturePath;
-  std::string                 decMeshPath;
-  std::string                 decTexturePath;
-  int32_t                     startFrame{};
-  int32_t                     frameCount{};
+  bool                        verbose        = true;
+  std::string                 srcMeshPath    = {};
+  std::string                 srcTexturePath = {};
+  std::string                 decMeshPath    = {};
+  std::string                 decTexturePath = {};
+  int32_t                     startFrame     = 1;
+  int32_t                     frameCount     = 1;
   vmesh::VMCMetricsParameters metParams;
 };
 
@@ -58,9 +58,9 @@ struct Parameters {
 
 static bool
 parseParameters(int argc, char* argv[], Parameters& params) try {
-  namespace po = df::program_options_lite;
-
-  bool print_help = false;
+  namespace po                  = df::program_options_lite;
+  bool        print_help        = false;
+  auto&       metParams         = params.metParams;
 
   /* clang-format off */
   po::Options opts;
@@ -70,29 +70,77 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("Input/Output"))
-  ("srcMesh",     params.srcMeshPath,           {},      "Source mesh")
-  ("srcTex",      params.srcTexturePath,        {},      "Source texture")
-  ("decMesh",     params.decMeshPath,           {},      "Reconsctructed/decoded mesh")
-  ("decTex",      params.decTexturePath,        {},      "Reconsctructed/decoded texture")
-  ("fstart",      params.startFrame,             1,      "First frame number")
-  ("fcount",      params.frameCount,             1,      "Number of frames")
-  
+    ("srcMesh",
+      params.srcMeshPath,
+      params.srcMeshPath,
+      "Source mesh")
+    ("srcTex",
+      params.srcTexturePath,
+      params.srcTexturePath,
+      "Source texture")
+    ("decMesh", 
+      params.decMeshPath,
+      params.decMeshPath,
+      "Reconsctructed/decoded mesh")
+    ("decTex",
+      params.decTexturePath,
+      params.decTexturePath,
+      "Reconsctructed/decoded texture")
+    ("fstart",
+      params.startFrame,
+      params.startFrame,
+      "First frame number")
+    ("fcount",
+      params.frameCount,
+      params.frameCount,
+      "Number of frames")
+    
   (po::Section("Metrics"))
-  ("pcc",         params.metParams.computePcc,  true,    "Compute pcc metrics")
-  ("ibsm",        params.metParams.computeIbsm, false,   "Compute ibsm metrics")
-  ("pcqm",        params.metParams.computePcqm, false,   "Compute pcqm metrics")
-  ("gridSize",    params.metParams.gridSize,    1024,    "Grid size")
-  ("minPosition", params.metParams.minPosition, {0,0,0}, "Min position")
-  ("maxPosition", params.metParams.maxPosition, {0,0,0}, "Max position")
-  ("qp",          params.metParams.qp,          12,      "qt")
-  ("qt",          params.metParams.qt,          13,      "qp")
-
-  ("pcqmRadiusCurvature", params.metParams.pcqmRadiusCurvature,  0.001, 
-    "PCQM radius curvature")
-  ("pcqmThresholdKnnSearch", params.metParams.pcqmThresholdKnnSearch, 20, 
-    "PCQM threshold Knn search")
-  ("pcqmRadiusFactor", params.metParams.pcqmRadiusFactor,   2.0, 
-    "PCQM radius factor");
+    ("pcc",
+      metParams.computePcc,
+      metParams.computePcc,
+      "Compute pcc metrics")
+    ("ibsm",
+      metParams.computeIbsm,
+      metParams.computeIbsm,
+      "Compute ibsm metrics")
+    ("pcqm",
+      metParams.computePcqm,
+      metParams.computePcqm,
+      "Compute pcqm metrics")
+    ("gridSize",
+      metParams.gridSize,
+      metParams.gridSize,
+      "Grid size")
+    ("minPosition",
+      metParams.minPosition,
+      {0, 0, 0},
+      "Min position")
+    ("maxPosition",
+      metParams.maxPosition,
+      {0, 0, 0},
+      "Max position")
+    ("qp",
+      metParams.qp,
+      metParams.qp,
+      "qp")
+    ("qt",
+      metParams.qt,
+      metParams.qt,
+      "qt")
+    ("pcqmRadiusCurvature",
+      metParams.pcqmRadiusCurvature,
+      metParams.pcqmRadiusCurvature,
+      "PCQM radius curvature")
+    ("pcqmThresholdKnnSearch",
+      metParams.pcqmThresholdKnnSearch,
+      metParams.pcqmThresholdKnnSearch,
+      "PCQM threshold Knn search")
+    ("pcqmRadiusFactor",
+      metParams.pcqmRadiusFactor,
+      metParams.pcqmRadiusFactor,
+      "PCQM radius factor")
+  ;
   /* clang-format on */
 
   po::setDefaults(opts);

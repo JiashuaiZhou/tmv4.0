@@ -67,6 +67,12 @@ struct VMCMetricsParameters {
   double pcqmRadiusCurvature    = 0.001;
   int    pcqmThresholdKnnSearch = 20;
   double pcqmRadiusFactor       = 2.0;
+
+  // Optionals
+  std::string srcMeshPath   = {};
+  std::string srcTexturePath = {};
+  int         frameCount    = 0;
+  int         frameStart    = 0;
 };
 
 //============================================================================

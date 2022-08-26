@@ -44,6 +44,7 @@
 #include "version.hpp"
 #include "vmc.hpp"
 #include "checksum.hpp"
+#include "metrics.hpp"
 #include "vmcStats.hpp"
 #include "sequenceInfo.hpp"
 
@@ -65,17 +66,17 @@ struct Parameters {
   bool                        verbose                      = false;
   bool                        checksum                     = true;
   vmesh::VMCEncoderParameters encParams;
+  vmesh::VMCMetricsParameters metParams;
 };
 
 //============================================================================
 
 static bool
 parseParameters(int argc, char* argv[], Parameters& params) try {
-  namespace po = df::program_options_lite;
-
-  bool print_help = false;
-
+  namespace po         = df::program_options_lite;
+  bool  print_help     = false;
   auto& encParams      = params.encParams;
+  auto& metParams      = params.metParams;
   auto& intraGeoParams = params.encParams.intraGeoParams;
   auto& interGeoParams = params.encParams.interGeoParams;
   /* clang-format off */
@@ -476,6 +477,68 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureHeight, 
       "Output texture height")
   
+  (po::Section("Metrics"))
+    ("pcc",
+      metParams.computePcc,
+      metParams.computePcc,
+      "Compute pcc metrics")
+    ("ibsm",
+      metParams.computeIbsm,
+      metParams.computeIbsm,
+      "Compute ibsm metrics")
+    ("pcqm",
+      metParams.computePcqm,
+      metParams.computePcqm,
+      "Compute pcqm metrics")
+    ("gridSize",
+      metParams.gridSize,
+      metParams.gridSize,
+      "Grid size")
+    ("minPosition",
+      metParams.minPosition,
+      {0, 0, 0},
+      "Min position")
+    ("maxPosition",
+      metParams.maxPosition,
+      {0, 0, 0},
+      "Max position")
+    ("qp",
+      metParams.qp,
+      metParams.qp,
+      "qp")
+    ("qt",
+      metParams.qt,
+      metParams.qt,
+      "qt")
+    ("pcqmRadiusCurvature",
+      metParams.pcqmRadiusCurvature,
+      metParams.pcqmRadiusCurvature,
+      "PCQM radius curvature")
+    ("pcqmThresholdKnnSearch",
+      metParams.pcqmThresholdKnnSearch,
+      metParams.pcqmThresholdKnnSearch,
+      "PCQM threshold Knn search")
+    ("pcqmRadiusFactor",
+      metParams.pcqmRadiusFactor,
+      metParams.pcqmRadiusFactor,
+      "PCQM radius factor")
+    ("fstart",
+      metParams.frameStart, 
+      metParams.frameStart, 
+      "Metric frame start")
+    ("fcount",
+      metParams.frameCount, 
+      metParams.frameCount, 
+      "Metric frame count")
+    ("srcMesh",
+      metParams.srcMeshPath,
+      metParams.srcMeshPath,
+      "Metric Source mesh path")
+    ("srcTex", 
+      metParams.srcTexturePath, 
+      metParams.srcTexturePath,
+      "Source texture path")
+
   (po::Section("Bug fix"))    
     ("forceCoordTruncation", 
       encParams.forceCoordTruncation, 
@@ -547,6 +610,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   po::dumpCfg(std::cout, opts, "Texture video", 4);
   po::dumpCfg(std::cout, opts, "Displacements", 4);
   po::dumpCfg(std::cout, opts, "Lifting", 4);
+  po::dumpCfg(std::cout, opts, "Metrics", 4);
   po::dumpCfg(std::cout, opts, "Bug fix", 4);
   std::cout << '\n';
   return true;
@@ -628,6 +692,8 @@ compress(const Parameters& params) {
   vmesh::Bitstream  bitstream;
   vmesh::VMCStats   totalStats;
   vmesh::Checksum   checksum;
+  vmesh::VMCMetrics metrics;
+  auto&             metParams = params.metParams;
   for (int g = 0; g < sequenceInfo.gofCount(); ++g) {
     vmesh::VMCGroupOfFrames gof;
     const auto&             gofInfo = sequenceInfo[g];
@@ -655,7 +721,11 @@ compress(const Parameters& params) {
     }
     if (params.checksum) 
       for (auto& frame : gof) checksum.add(frame.rec, frame.outputTexture);
-  
+
+    if (metParams.computePcc || metParams.computeIbsm
+        || metParams.computePcqm)
+      metrics.compute(gof, metParams);
+
     totalStats += gof.stats;
     if (vmesh::vout) {
       vmesh::vout << "\n------- Group of frames " << gofInfo.index_
@@ -690,6 +760,9 @@ int
 main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
 
+  // this is mandatory to print floats with full precision
+  std::cout.precision(std::numeric_limits<float>::max_digits10);
+  
   Parameters params;
   if (!parseParameters(argc, argv, params)) { return 1; }
 

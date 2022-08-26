@@ -43,39 +43,34 @@
 #include "decoder.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
-#include "vmcStats.hpp"
 #include "checksum.hpp"
+#include "metrics.hpp"
+#include "vmcStats.hpp"
 #include "sequenceInfo.hpp"
 
 //============================================================================
 
 struct Parameters {
-  std::string                 inputMeshPath                = {};
-  std::string                 inputTexturePath             = {};
-  std::string                 baseMeshPath                 = {};
-  std::string                 subdivMeshPath               = {};
-  std::string                 groupOfFramesStructurePath   = {};
-  std::string                 compressedStreamPath         = {};
-  std::string                 reconstructedMeshPath        = {};
-  std::string                 reconstructedTexturePath     = {};
-  std::string                 reconstructedMaterialLibPath = {};
-  std::string                 decodedMeshPath              = {};
-  std::string                 decodedTexturePath           = {};
-  std::string                 decodedMaterialLibPath       = {};
-  int32_t                     startFrame                   = 0;
-  double                      framerate                    = 30.;
-  bool                        verbose                      = false;
-  bool                        checksum                     = true;
+  std::string                 compressedStreamPath   = {};
+  std::string                 decodedMeshPath        = {};
+  std::string                 decodedTexturePath     = {};
+  std::string                 decodedMaterialLibPath = {};
+  int32_t                     startFrame             = 0;
+  double                      framerate              = 30.;
+  bool                        verbose                = false;
+  bool                        checksum               = true;
   vmesh::VMCDecoderParameters decParams;
+  vmesh::VMCMetricsParameters metParams;
 };
 
 //============================================================================
 
 static bool
 parseParameters(int argc, char* argv[], Parameters& params) try {
-  namespace po = df::program_options_lite;
-
-  bool print_help = false;
+  namespace po                  = df::program_options_lite;
+  bool        print_help        = false;
+  auto&       decParams         = params.decParams;
+  auto&       metParams         = params.metParams;
 
   /* clang-format off */
   po::Options opts;
@@ -103,12 +98,12 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.framerate, 
       "Frame rate")
     ("keep",    
-      params.decParams.keepIntermediateFiles, 
-      params.decParams.keepIntermediateFiles, 
+      decParams.keepIntermediateFiles, 
+      decParams.keepIntermediateFiles, 
       "Keep intermediate files")
     ("interFilesPathPrefix", 
-      params.decParams.intermediateFilesPathPrefix, 
-      params.decParams.intermediateFilesPathPrefix,
+      decParams.intermediateFilesPathPrefix, 
+      decParams.intermediateFilesPathPrefix,
       "Intermediate files path prefix")
     ("checksum", 
       params.checksum, 
@@ -117,13 +112,75 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
 
   (po::Section("Decoder"))
     ("normuv",
-      params.decParams.normalizeUV, 
-      params.decParams.normalizeUV,
+      decParams.normalizeUV, 
+      decParams.normalizeUV,
       "Normalize uv texture coordinates")
     ("cscdecconfig", 
-      params.decParams.textureVideoHDRToolDecConfig, 
-      params.decParams.textureVideoHDRToolDecConfig,
+      decParams.textureVideoHDRToolDecConfig, 
+      decParams.textureVideoHDRToolDecConfig,
       "HDRTools decode cfg")
+
+  (po::Section("Metrics"))
+    ("pcc",
+      metParams.computePcc,
+      metParams.computePcc,
+      "Compute pcc metrics")
+    ("ibsm",
+      metParams.computeIbsm,
+      metParams.computeIbsm,
+      "Compute ibsm metrics")
+    ("pcqm",
+      metParams.computePcqm,
+      metParams.computePcqm,
+      "Compute pcqm metrics")
+    ("gridSize",
+      metParams.gridSize,
+      metParams.gridSize,
+      "Grid size")
+    ("minPosition",
+      metParams.minPosition,
+      {0, 0, 0},
+      "Min position")
+    ("maxPosition",
+      metParams.maxPosition,
+      {0, 0, 0},
+      "Max position")
+    ("qp",
+      metParams.qp,
+      metParams.qp,
+      "qp")
+    ("qt",
+      metParams.qt,
+      metParams.qt,
+      "qt")
+    ("pcqmRadiusCurvature",
+      metParams.pcqmRadiusCurvature,
+      metParams.pcqmRadiusCurvature,
+      "PCQM radius curvature")
+    ("pcqmThresholdKnnSearch",
+      metParams.pcqmThresholdKnnSearch,
+      metParams.pcqmThresholdKnnSearch,
+      "PCQM threshold Knn search")
+    ("pcqmRadiusFactor",
+      metParams.pcqmRadiusFactor,
+      metParams.pcqmRadiusFactor,
+      "PCQM radius factor")      
+    ("fstart",
+      metParams.frameStart, 
+      metParams.frameStart, 
+      "Metric frame start")
+    ("fcount",
+      metParams.frameCount, 
+      metParams.frameCount, 
+      "Metric frame count")
+    ("srcMesh",
+      metParams.srcMeshPath,
+      metParams.srcMeshPath,
+      "Metric Source mesh path")
+    ("srcTex", 
+      metParams.srcTexturePath, 
+      metParams.srcTexturePath,
+      "Source texture path")
   ;
   /* clang-format on */
 
@@ -167,16 +224,44 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   // Dump the complete derived configuration
   std::cout << "+ Configuration parameters\n";
   po::dumpCfg(std::cout, opts, "Common", 4);
-  po::dumpCfg(std::cout, opts, "General", 4);
+  po::dumpCfg(std::cout, opts, "Input", 4);
   po::dumpCfg(std::cout, opts, "Output", 4);
   po::dumpCfg(std::cout, opts, "General", 4);
   po::dumpCfg(std::cout, opts, "Decoder", 4);
+  po::dumpCfg(std::cout, opts, "Metrics", 4);
   std::cout << '\n';
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
             << e.val << "\".\n";
   return false;
+}
+
+//----------------------------------------------------------------------------
+
+int32_t
+loadGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
+                  vmesh::VMCGroupOfFrames&           gof,
+                  const vmesh::VMCMetricsParameters& metParams) {
+  const auto startFrame = gofInfo.startFrameIndex_;
+  const auto frameCount = gofInfo.frameCount_;
+  const auto lastFrame  = startFrame + frameCount - 1;
+  std::cout << "Loading group of frames (" << startFrame << '-' << lastFrame
+            << ") ";
+  gof.resize(frameCount);
+  for (int f = startFrame; f <= lastFrame; ++f) {
+    const auto nameInputTexture = vmesh::expandNum(metParams.srcTexturePath, f);
+    const auto findex           = f - startFrame;
+    auto&      frame            = gof.frames[findex];
+    std::cout << '.' << std::flush;
+    if (!frame.input.loadFromOBJ(metParams.srcMeshPath, f)
+        || !LoadImage(nameInputTexture, frame.inputTexture)) {
+      printf("Error loading frame %d / %d \n", f, frameCount);
+      return -1;
+    }
+  }
+  std::cout << "\n" << std::flush;
+  return 0;
 }
 
 //============================================================================
@@ -219,6 +304,8 @@ decompress(const Parameters& params) {
   vmesh::VMCGroupOfFramesInfo gofInfo;
   vmesh::VMCStats             totalStats;
   vmesh::Checksum             checksum;
+  vmesh::VMCMetrics           metrics;
+  auto&                       metParams   = params.metParams;
   size_t                      byteCounter = 0;
   gofInfo.index_                          = 0;
   gofInfo.startFrameIndex_                = params.startFrame;
@@ -240,10 +327,15 @@ decompress(const Parameters& params) {
     if (saveGroupOfFrames(gofInfo, gof, params) != 0) {
       std::cerr << "Error: can't save dec group of frames!\n";
       return -1;
-    }
+    }   
     if (params.checksum) 
       for (auto& frame : gof) checksum.add(frame.rec, frame.outputTexture);
 
+    if (metParams.computePcc || metParams.computeIbsm
+        || metParams.computePcqm) {
+      loadGroupOfFrames(gofInfo, gof, metParams);
+      metrics.compute(gof, metParams);
+    }
     totalStats += gof.stats;
     gofInfo.startFrameIndex_ += gof.stats.frameCount;
     ++gofInfo.index_;
@@ -278,7 +370,10 @@ decompress(const Parameters& params) {
 int
 main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
-
+  
+  // this is mandatory to print floats with full precision
+  std::cout.precision(std::numeric_limits<float>::max_digits10);
+  
   Parameters params;
   if (!parseParameters(argc, argv, params)) { return 1; }
 

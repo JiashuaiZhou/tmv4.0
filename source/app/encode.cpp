@@ -43,13 +43,13 @@
 #include "encoder.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
+#include "checksum.hpp"
 #include "vmcStats.hpp"
 #include "sequenceInfo.hpp"
 
 //============================================================================
 
 struct Parameters {
-  bool                        verbose                      = true;
   std::string                 inputMeshPath                = {};
   std::string                 inputTexturePath             = {};
   std::string                 baseMeshPath                 = {};
@@ -62,6 +62,8 @@ struct Parameters {
   int32_t                     startFrame                   = 0;
   int32_t                     frameCount                   = 1;
   double                      framerate                    = 30.;
+  bool                        verbose                      = false;
+  bool                        checksum                     = true;
   vmesh::VMCEncoderParameters encParams;
 };
 
@@ -132,7 +134,11 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("intermediateFilesPathPrefix", 
       encParams.intermediateFilesPathPrefix, 
       encParams.intermediateFilesPathPrefix, 
-      "Intermediate files path prefix")
+      "Intermediate files path prefix")      
+    ("checksum", 
+      params.checksum, 
+      params.checksum, 
+      "Compute checksum")
 
   (po::Section("Gof analysis"))
     ("gofmax", 
@@ -609,6 +615,7 @@ compress(const Parameters& params) {
   vmesh::VMCEncoder encoder;
   vmesh::Bitstream  bitstream;
   vmesh::VMCStats   totalStats;
+  vmesh::Checksum   checksum;
   for (int g = 0; g < sequenceInfo.gofCount(); ++g) {
     vmesh::VMCGroupOfFrames gof;
     const auto&             gofInfo = sequenceInfo[g];
@@ -634,7 +641,9 @@ compress(const Parameters& params) {
       std::cerr << "Error: can't save rec group of frames!\n";
       return -1;
     }
-
+    if (params.checksum) 
+      for (auto& frame : gof) checksum.add(frame.rec, frame.outputTexture);
+  
     totalStats += gof.stats;
     if (vmesh::vout) {
       vmesh::vout << "\n------- Group of frames " << gofInfo.index_
@@ -643,6 +652,12 @@ compress(const Parameters& params) {
       vmesh::vout << "---------------------------------------\n";
     }
   }
+
+  if (params.checksum) {
+    checksum.write( vmesh::removeFileExtension( params.compressedStreamPath ) + ".checksum" );
+    checksum.print();
+  }
+
   std::cout << "\n------- All frames -----------\n";
   totalStats.dump("Sequence", params.framerate);
   std::cout << "Sequence peak memory " << vmesh::getPeakMemory() << " KB\n";

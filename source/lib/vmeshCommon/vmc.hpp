@@ -195,6 +195,9 @@ struct VMCGroupOfFrames {
 
   VMCFrame& operator[](int index) { return frames[index]; }
 
+  typename std::vector<VMCFrame>::iterator begin() { return frames.begin(); }
+  typename std::vector<VMCFrame>::iterator end() { return frames.end(); }
+
   VMCStats              stats;
   std::vector<VMCFrame> frames;
 };
@@ -319,6 +322,12 @@ inverseQuantizeDisplacements(
 }
 
 //============================================================================
+
+static inline std::string
+removeFileExtension(const std::string string) {
+  size_t pos = string.find_last_of(".");
+  return pos != std::string::npos ? string.substr(0, pos) : string;
+}
 
 //============================================================================
 

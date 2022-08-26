@@ -31,6 +31,7 @@ include_directories( ${CMAKE_SOURCE_DIR}/dependencies
                      ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/
                      ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/glad/include
                      ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/glfw/include
+                     ${CMAKE_SOURCE_DIR}/dependencies/libmd5/
                      . )
 
 add_library( ${MYNAME} ${SRC} ${VERSION_FILE} )

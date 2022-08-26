@@ -10,6 +10,7 @@ create_executable( NAME      encode
                    SOURCES   encode.cpp 
                    LIBRARIES po vmeshCommon vmeshEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon/util
                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshEncoder )  
 
 # Decode
@@ -17,6 +18,7 @@ create_executable( NAME      decode
                    SOURCES   decode.cpp 
                    LIBRARIES po vmeshCommon vmeshDecoder 
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon/util
                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshDecoder )
 
 ########################### Unit tests ###########################

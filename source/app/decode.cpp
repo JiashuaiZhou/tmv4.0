@@ -44,29 +44,28 @@
 #include "version.hpp"
 #include "vmc.hpp"
 #include "vmcStats.hpp"
+#include "checksum.hpp"
 #include "sequenceInfo.hpp"
 
 //============================================================================
 
 struct Parameters {
-  bool verbose{};
-
-  std::string inputMeshPath;
-  std::string inputTexturePath;
-  std::string baseMeshPath;
-  std::string subdivMeshPath;
-  std::string groupOfFramesStructurePath;
-  std::string compressedStreamPath;
-  std::string reconstructedMeshPath;
-  std::string reconstructedTexturePath;
-  std::string reconstructedMaterialLibPath;
-  std::string decodedMeshPath;
-  std::string decodedTexturePath;
-  std::string decodedMaterialLibPath;
-
-  int32_t startFrame = 0;
-  double  framerate  = 30.;
-
+  std::string                 inputMeshPath                = {};
+  std::string                 inputTexturePath             = {};
+  std::string                 baseMeshPath                 = {};
+  std::string                 subdivMeshPath               = {};
+  std::string                 groupOfFramesStructurePath   = {};
+  std::string                 compressedStreamPath         = {};
+  std::string                 reconstructedMeshPath        = {};
+  std::string                 reconstructedTexturePath     = {};
+  std::string                 reconstructedMaterialLibPath = {};
+  std::string                 decodedMeshPath              = {};
+  std::string                 decodedTexturePath           = {};
+  std::string                 decodedMaterialLibPath       = {};
+  int32_t                     startFrame                   = 0;
+  double                      framerate                    = 30.;
+  bool                        verbose                      = false;
+  bool                        checksum                     = true;
   vmesh::VMCDecoderParameters decParams;
 };
 
@@ -111,6 +110,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.decParams.intermediateFilesPathPrefix, 
       params.decParams.intermediateFilesPathPrefix,
       "Intermediate files path prefix")
+    ("checksum", 
+      params.checksum, 
+      params.checksum, 
+      "Compute checksum")
 
   (po::Section("Decoder"))
     ("normuv",
@@ -215,6 +218,7 @@ decompress(const Parameters& params) {
   vmesh::VMCDecoder           decoder;
   vmesh::VMCGroupOfFramesInfo gofInfo;
   vmesh::VMCStats             totalStats;
+  vmesh::Checksum             checksum;
   size_t                      byteCounter = 0;
   gofInfo.index_                          = 0;
   gofInfo.startFrameIndex_                = params.startFrame;
@@ -237,6 +241,8 @@ decompress(const Parameters& params) {
       std::cerr << "Error: can't save dec group of frames!\n";
       return -1;
     }
+    if (params.checksum) 
+      for (auto& frame : gof) checksum.add(frame.rec, frame.outputTexture);
 
     totalStats += gof.stats;
     gofInfo.startFrameIndex_ += gof.stats.frameCount;
@@ -248,6 +254,14 @@ decompress(const Parameters& params) {
       gof.stats.dump("GOF", params.framerate);
       vmesh::vout << "---------------------------------------\n";
     }
+  }
+  if (params.checksum) {
+    vmesh::Checksum checksumEnc;
+    checksumEnc.read(vmesh::removeFileExtension(params.compressedStreamPath)
+                     + ".checksum");
+    if (checksum != checksumEnc)
+      totalStats.processingTime =
+        std::chrono::steady_clock::duration((int)-1E9);
   }
 
   std::cout << "\n------- All frames -----------\n";

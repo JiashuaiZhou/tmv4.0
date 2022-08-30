@@ -161,7 +161,7 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_base";
-      base.saveToOBJ<int64_t>(prefix + "_dec.obj");
+      base.saveToOBJ(prefix + "_dec.obj");
       save(prefix + ".drc", geometryBitstream);
     }
 

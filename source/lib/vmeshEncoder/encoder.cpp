@@ -283,7 +283,7 @@ VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
   if (params.keepIntermediateFiles) {
     auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex) + "_mapping_src.obj";
-    base.saveToOBJ<int64_t>(prefix);
+    base.saveToOBJ(prefix);
   }
   // Scale
   const auto scalePosition = 1 << (18 - params.bitDepthPosition);
@@ -298,7 +298,7 @@ VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
   if (params.keepIntermediateFiles) {
     auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex) + "_mapping_scale.obj";
-    base.saveToOBJ<int64_t>(prefix);
+    base.saveToOBJ(prefix);
   }
 
   // Encode
@@ -316,8 +316,8 @@ VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
     auto prefix = params.intermediateFilesPathPrefix + "GOF_"
                   + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex) + "_mapping";
-    base.saveToOBJ<int64_t>(prefix + "_enc.obj");
-    rec.saveToOBJ<int64_t>(prefix + "_rec.obj");
+    base.saveToOBJ(prefix + "_enc.obj");
+    rec.saveToOBJ(prefix + "_rec.obj");
     save(prefix + ".drc", geometryBitstream);
   }
 
@@ -493,8 +493,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
   if (params.keepIntermediateFiles) {
     auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex);
-    base.saveToOBJ<int64_t>(prefix + "_base_compress.obj");
-    subdiv.saveToOBJ<int64_t>(prefix + "_subdiv_compress.obj");
+    base.saveToOBJ(prefix + "_base_compress.obj");
+    subdiv.saveToOBJ(prefix + "_subdiv_compress.obj");
   }
   printf("Frame %4d: type = %s \n",
          frameIndex,
@@ -569,8 +569,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_base";
-      base.saveToOBJ<int64_t>(prefix + "_enc.obj");
-      rec.saveToOBJ<int64_t>(prefix + "_rec.obj");
+      base.saveToOBJ(prefix + "_enc.obj");
+      rec.saveToOBJ(prefix + "_rec.obj");
       save(prefix + ".drc", geometryBitstream);
     }
 
@@ -1080,7 +1080,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
       if (params.keepIntermediateFiles) {
         auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
                       + std::to_string(frameIndex);
-        frame.input.saveToOBJ<int64_t>(prefix + "_simp_input.obj");
+        frame.input.saveToOBJ(prefix + "_simp_input.obj");
       }
       if (vmesh::GeometryDecimate::decimate(
             frame, params)) {  // Create mapped, reference and decimate

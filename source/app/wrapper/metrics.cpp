@@ -58,9 +58,9 @@ struct Parameters {
 
 static bool
 parseParameters(int argc, char* argv[], Parameters& params) try {
-  namespace po                  = df::program_options_lite;
-  bool        print_help        = false;
-  auto&       metParams         = params.metParams;
+  namespace po     = df::program_options_lite;
+  bool  print_help = false;
+  auto& metParams  = params.metParams;
 
   /* clang-format off */
   po::Options opts;

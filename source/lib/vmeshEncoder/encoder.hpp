@@ -154,7 +154,7 @@ struct VMCEncoderParameters {
   std::string  textureVideoHDRToolDecConfig = {};
   VideoCodecId textureVideoCodecId = VideoCodecId::UNKNOWN_VIDEO_CODEC;
 
-  // Mesh 
+  // Mesh
   GeometryCodecId meshCodecId = GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
 
   // displacements
@@ -214,7 +214,7 @@ struct VMCEncoderParameters {
   float                             maxAllowedD2PSNRLoss   = 1.F;
   GeometryParametrizationParameters intraGeoParams;
   GeometryParametrizationParameters interGeoParams;
-  
+
   // Bug fix
   bool forceCoordTruncation = false;
 };

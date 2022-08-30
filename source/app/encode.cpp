@@ -719,11 +719,10 @@ compress(const Parameters& params) {
       std::cerr << "Error: can't save rec group of frames!\n";
       return -1;
     }
-    if (params.checksum) 
+    if (params.checksum)
       for (auto& frame : gof) checksum.add(frame.rec, frame.outputTexture);
 
-    if (metParams.computePcc || metParams.computeIbsm
-        || metParams.computePcqm)
+    if (metParams.computePcc || metParams.computeIbsm || metParams.computePcqm)
       metrics.compute(gof, metParams);
 
     totalStats += gof.stats;
@@ -736,7 +735,8 @@ compress(const Parameters& params) {
   }
 
   if (params.checksum) {
-    checksum.write( vmesh::removeFileExtension( params.compressedStreamPath ) + ".checksum" );
+    checksum.write(vmesh::removeFileExtension(params.compressedStreamPath)
+                   + ".checksum");
     checksum.print();
   }
 
@@ -762,7 +762,7 @@ main(int argc, char* argv[]) {
 
   // this is mandatory to print floats with full precision
   std::cout.precision(std::numeric_limits<float>::max_digits10);
-  
+
   Parameters params;
   if (!parseParameters(argc, argv, params)) { return 1; }
 

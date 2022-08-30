@@ -172,9 +172,9 @@ const std::string g_hdrConvertPath =
   "externaltools/hdrtools/build/bin/HDRConvert";
 const std::string g_dracoEncoderPath = "build/Release/bin/draco_encoder";
 const std::string g_dracoDecoderPath = "build/Release/bin/draco_decoder";
-const std::string g_mmMetricsPath = "build/Release/bin/mm";
-const std::string g_vmeshEncodePath = "build/Release/bin/encode";
-const std::string g_vmeshDecodePath = "build/Release/bin/decode";
+const std::string g_mmMetricsPath    = "build/Release/bin/mm";
+const std::string g_vmeshEncodePath  = "build/Release/bin/encode";
+const std::string g_vmeshDecodePath  = "build/Release/bin/decode";
 #endif
 
 static bool

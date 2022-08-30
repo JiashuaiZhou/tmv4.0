@@ -157,15 +157,15 @@ main(int argc, char* argv[]) {
   // Save PLY
   srcMesh.materialLibrary() = params.dstTexturePath;
   printf("Save PLY: %s \n", params.dstMeshPath.c_str());
-  srcMesh.saveToPLY(params.dstMeshPath, params.binary );
+  srcMesh.saveToPLY(params.dstMeshPath, params.binary);
   printf("Save PNG: %s \n", srcMesh.materialLibrary().c_str());
   if (!SaveImage(srcMesh.materialLibrary(), srcTex)) { return -1; }
 
   // Crosscheck: reload ply and compute checksum
   vmesh::TriangleMesh<double> recMesh;
-  vmesh::Checksum checksum;
+  vmesh::Checksum             checksum;
   printf("Load PLY: %s \n", params.dstMeshPath.c_str());
-  recMesh.loadFromPLY(params.dstMeshPath);  
+  recMesh.loadFromPLY(params.dstMeshPath);
   printf("Compute checksum:\n");
   checksum.print(srcMesh, "srcMesh");
   checksum.print(recMesh, "recMesh");

@@ -67,10 +67,10 @@ struct Parameters {
 
 static bool
 parseParameters(int argc, char* argv[], Parameters& params) try {
-  namespace po                  = df::program_options_lite;
-  bool        print_help        = false;
-  auto&       decParams         = params.decParams;
-  auto&       metParams         = params.metParams;
+  namespace po     = df::program_options_lite;
+  bool  print_help = false;
+  auto& decParams  = params.decParams;
+  auto& metParams  = params.metParams;
 
   /* clang-format off */
   po::Options opts;
@@ -250,9 +250,10 @@ loadGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
             << ") ";
   gof.resize(frameCount);
   for (int f = startFrame; f <= lastFrame; ++f) {
-    const auto nameInputTexture = vmesh::expandNum(metParams.srcTexturePath, f);
-    const auto findex           = f - startFrame;
-    auto&      frame            = gof.frames[findex];
+    const auto nameInputTexture =
+      vmesh::expandNum(metParams.srcTexturePath, f);
+    const auto findex = f - startFrame;
+    auto&      frame  = gof.frames[findex];
     std::cout << '.' << std::flush;
     if (!frame.input.loadFromOBJ(metParams.srcMeshPath, f)
         || !LoadImage(nameInputTexture, frame.inputTexture)) {
@@ -327,8 +328,8 @@ decompress(const Parameters& params) {
     if (saveGroupOfFrames(gofInfo, gof, params) != 0) {
       std::cerr << "Error: can't save dec group of frames!\n";
       return -1;
-    }   
-    if (params.checksum) 
+    }
+    if (params.checksum)
       for (auto& frame : gof) checksum.add(frame.rec, frame.outputTexture);
 
     if (metParams.computePcc || metParams.computeIbsm
@@ -370,10 +371,10 @@ decompress(const Parameters& params) {
 int
 main(int argc, char* argv[]) {
   std::cout << "MPEG VMESH version " << ::vmesh::version << '\n';
-  
+
   // this is mandatory to print floats with full precision
   std::cout.precision(std::numeric_limits<float>::max_digits10);
-  
+
   Parameters params;
   if (!parseParameters(argc, argv, params)) { return 1; }
 

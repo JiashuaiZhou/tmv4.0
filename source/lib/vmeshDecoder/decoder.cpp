@@ -398,7 +398,7 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
     bitstream.read(liftingQPs[1], _byteCounter);
     bitstream.read(liftingQPs[2], _byteCounter);
   }
-  if (_sps.encodeTextureVideo) {    
+  if (_sps.encodeTextureVideo) {
     bitstream.read(textureVideoCodecId, _byteCounter);
     bitstream.read(widthTexVideo, _byteCounter);
     bitstream.read(heightTexVideo, _byteCounter);
@@ -419,9 +419,9 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   _sps.liftingQuantizationParameters[0] = liftingQPs[0];
   _sps.liftingQuantizationParameters[1] = liftingQPs[1];
   _sps.liftingQuantizationParameters[2] = liftingQPs[2];
-  _sps.meshCodecId                      = GeometryCodecId( meshCodecId ); 
-  _sps.geometryVideoCodecId             = VideoCodecId( geometryVideoCodecId );
-  _sps.textureVideoCodecId              = VideoCodecId( textureVideoCodecId );
+  _sps.meshCodecId                      = GeometryCodecId(meshCodecId);
+  _sps.geometryVideoCodecId             = VideoCodecId(geometryVideoCodecId);
+  _sps.textureVideoCodecId              = VideoCodecId(textureVideoCodecId);
   return 0;
 }
 

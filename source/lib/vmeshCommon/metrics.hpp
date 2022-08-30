@@ -69,10 +69,10 @@ struct VMCMetricsParameters {
   double pcqmRadiusFactor       = 2.0;
 
   // Optionals
-  std::string srcMeshPath   = {};
+  std::string srcMeshPath    = {};
   std::string srcTexturePath = {};
-  int         frameCount    = 0;
-  int         frameStart    = 0;
+  int         frameCount     = 0;
+  int         frameStart     = 0;
 };
 
 //============================================================================

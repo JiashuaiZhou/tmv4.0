@@ -41,7 +41,7 @@ class Checksum {
 public:
   Checksum()  = default;
   ~Checksum() = default;
-  
+
   void add(vmesh::TriangleMesh<double>& mesh, vmesh::Frame<uint8_t>& texture);
 
   void print();
@@ -77,8 +77,8 @@ public:
   }
 
 private:
-  void add(vmesh::TriangleMesh<double>& mesh);
-  void add(vmesh::Frame<uint8_t>& texture);
+  void                 add(vmesh::TriangleMesh<double>& mesh);
+  void                 add(vmesh::Frame<uint8_t>& texture);
   std::vector<uint8_t> compute(vmesh::TriangleMesh<double>& mesh);
   std::vector<uint8_t> compute(vmesh::Frame<uint8_t>& texture);
 

@@ -77,26 +77,26 @@ enum class SmoothingMethod {
 //============================================================================
 
 struct VMCSequenceParameterSet {
-  int32_t           widthDispVideo                      = 0;
-  int32_t           heightDispVideo                     = 0;
-  int32_t           widthTexVideo                       = 0;
-  int32_t           heightTexVideo                      = 0;
-  int32_t           frameCount                          = 0;
-  int32_t           geometryVideoBlockSize              = 0;
-  int32_t           geometryVideoBitDepth               = 10;
-  int32_t           textureVideoBitDepth                = 10;
-  int32_t           bitDepthPosition                    = 0;
-  int32_t           bitDepthTexCoord                    = 0;
-  int32_t           qpPosition                          = 0;
-  int32_t           qpTexCoord                          = 0;
-  int32_t           subdivisionIterationCount           = 0;
-  int32_t           liftingQuantizationParameters[3]    = {0, 0, 0};
-  double            liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
-  double            liftingUpdateWeight                 = 0.125;
-  double            liftingPredictionWeight             = 0.5;
-  bool              liftingSkipUpdate                   = false;
-  bool              encodeDisplacementsVideo            = true;
-  bool              encodeTextureVideo                  = true;
+  int32_t widthDispVideo                      = 0;
+  int32_t heightDispVideo                     = 0;
+  int32_t widthTexVideo                       = 0;
+  int32_t heightTexVideo                      = 0;
+  int32_t frameCount                          = 0;
+  int32_t geometryVideoBlockSize              = 0;
+  int32_t geometryVideoBitDepth               = 10;
+  int32_t textureVideoBitDepth                = 10;
+  int32_t bitDepthPosition                    = 0;
+  int32_t bitDepthTexCoord                    = 0;
+  int32_t qpPosition                          = 0;
+  int32_t qpTexCoord                          = 0;
+  int32_t subdivisionIterationCount           = 0;
+  int32_t liftingQuantizationParameters[3]    = {0, 0, 0};
+  double  liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
+  double  liftingUpdateWeight                 = 0.125;
+  double  liftingPredictionWeight             = 0.5;
+  bool    liftingSkipUpdate                   = false;
+  bool    encodeDisplacementsVideo            = true;
+  bool    encodeTextureVideo                  = true;
 
   SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
   DisplacementCoordinateSystem displacementCoordinateSystem =

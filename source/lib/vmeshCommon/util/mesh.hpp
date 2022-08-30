@@ -56,7 +56,6 @@ namespace vmesh {
 
 //============================================================================
 
-
 //============================================================================
 
 template<typename T>
@@ -123,9 +122,9 @@ public:
 
   int32_t size() const { return int32_t(_neighbourCount.size()); }
   void    reserve(const int32_t sz) {
-       _shift.reserve(sz + 1);
-       _neighbourCount.reserve(sz);
-       _neighbours.reserve(6 * sz);
+    _shift.reserve(sz + 1);
+    _neighbourCount.reserve(sz);
+    _neighbours.reserve(6 * sz);
   }
 
   void resize(const int32_t sz) {
@@ -535,20 +534,20 @@ struct Material {
   double       transparency     = 1.0;
   int32_t      illumination     = 2;
   bool         save(const std::string& fileName) {
-            std::ofstream fout(fileName);
-            if (fout.is_open()) {
-              fout << "newmtl " << name << '\n';
-              fout << "Ka " << ambiant << '\n';
-              fout << "Kd " << diffuse << '\n';
-              fout << "Ks " << specular << '\n';
-              fout << "Tr " << transparency << '\n';
-              fout << "illum " << illumination << '\n';
-              fout << "Ns " << specularExponent << '\n';
-              fout << "map_Kd " << texture << '\n';
-              fout.close();
-              return true;
+    std::ofstream fout(fileName);
+    if (fout.is_open()) {
+      fout << "newmtl " << name << '\n';
+      fout << "Ka " << ambiant << '\n';
+      fout << "Kd " << diffuse << '\n';
+      fout << "Ks " << specular << '\n';
+      fout << "Tr " << transparency << '\n';
+      fout << "illum " << illumination << '\n';
+      fout << "Ns " << specularExponent << '\n';
+      fout << "map_Kd " << texture << '\n';
+      fout.close();
+      return true;
     }
-            return false;
+    return false;
   }
 };
 
@@ -859,7 +858,7 @@ public:
   }
 
   void loadFromPLY(const std::string& filepath,
-                   const bool         preload_into_memory = true) {    
+                   const bool         preload_into_memory = true) {
     try {
       std::unique_ptr<std::istream> file;
       file.reset(new std::ifstream(filepath, std::ios::binary));

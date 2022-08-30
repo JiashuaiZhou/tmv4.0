@@ -44,7 +44,7 @@ namespace vmesh {
 std::vector<uint8_t>
 Checksum::compute(vmesh::TriangleMesh<double>& mesh) {
   std::vector<uint8_t> digest;
-  MD5                  md5;
+  md5::MD5             md5;
   auto&                positions = mesh.points();
   auto&                triangles = mesh.triangles();
   auto&                coords    = mesh.texCoords();
@@ -71,7 +71,7 @@ Checksum::compute(vmesh::TriangleMesh<double>& mesh) {
 std::vector<uint8_t>
 Checksum::compute(vmesh::Frame<uint8_t>& texture) {
   std::vector<uint8_t> digest;
-  MD5                  md5;
+  md5::MD5             md5;
   auto texturesize0 = texture.plane(0).width() * texture.plane(0).height();
   auto texturesize1 = texture.plane(1).width() * texture.plane(1).height();
   auto texturesize2 = texture.plane(2).width() * texture.plane(2).height();

@@ -11,7 +11,8 @@ create_executable( NAME      encode
                    LIBRARIES po vmeshCommon vmeshEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon/util
-                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshEncoder )  
+                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshEncoder
+                             ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )  
 
 # Decode
 create_executable( NAME      decode 
@@ -19,49 +20,54 @@ create_executable( NAME      decode
                    LIBRARIES po vmeshCommon vmeshDecoder 
                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon/util
-                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshDecoder )
+                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshDecoder
+                             ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 
 ########################### Unit tests ###########################
 
 if ( BUILD_WRAPPER_APPS )
-  # Draco Encoder/decoder
-  create_executable( NAME      encodeDraco
-                    SOURCES   wrapper/dracoEncoder.cpp 
-                    LIBRARIES po geometryEncoder 
+  # ply
+  create_executable( NAME     objToPlyConvert
+                    SOURCES   wrapper/objToPlyConvert.cpp 
+                    LIBRARIES po vmeshCommon 
                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
-                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder )
+                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon/util
+                              ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 
-  create_executable( NAME      decodeDraco 
+  # Draco Encoder/decoder
+  create_executable( NAME     decodeDraco 
                     SOURCES   wrapper/dracoDecoder.cpp 
                     LIBRARIES po geometryDecoder
                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
-                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder )
+                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder
+                              ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 
   # Video Encoder/decoder
-  create_executable( NAME      encodeVideo 
+  create_executable( NAME     encodeVideo 
                     SOURCES   wrapper/videoEncoder.cpp 
                     LIBRARIES po videoEncoder
                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                               ${CMAKE_SOURCE_DIR}/source/wrapper/videoEncoder )
 
-  create_executable( NAME      decodeVideo 
+  create_executable( NAME     decodeVideo 
                     SOURCES   wrapper/videoDecoder.cpp 
                     LIBRARIES po videoDecoder
                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                               ${CMAKE_SOURCE_DIR}/source/wrapper/videoDecoder )
 
   # Colour Converter
-  create_executable( NAME      colourConverte
+  create_executable( NAME     colourConverte
                     SOURCES   wrapper/colourConverter.cpp 
                     LIBRARIES po colourConverter
                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                               ${CMAKE_SOURCE_DIR}/source/wrapper/colourConverter )
 
   # Metrics
-  create_executable( NAME      metrics 
+  create_executable( NAME     metrics 
                     SOURCES   wrapper/metrics.cpp 
                     LIBRARIES po vmeshCommon
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon )
+                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                              ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 endif()
                                                         
 ########################### Test applications ###########################
@@ -95,7 +101,8 @@ if( BUILD_UNIT_TEST_APPS )
                               ${CMAKE_SOURCE_DIR}/source/lib/vmeshEncoder 
                               ${CMAKE_SOURCE_DIR}/source/lib/vmeshDecoder 
                               ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder
-                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder  )
+                              ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder
+                              ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
   include(GoogleTest)
   gtest_discover_tests( unitTests )
 endif()

@@ -285,6 +285,11 @@ public:
   T*       end() { return &_vec[3]; }
   const T* end() const { return &_vec[3]; }
 
+  const uint8_t* ptr() {
+    return reinterpret_cast<const uint8_t*>(
+      reinterpret_cast<const void*>(_vec));
+  }
+
   T& operator[](const int32_t index) {
     assert(index < 3);
     return _vec[index];

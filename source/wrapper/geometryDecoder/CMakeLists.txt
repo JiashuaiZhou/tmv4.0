@@ -7,7 +7,8 @@ project(${MYNAME} C CXX)
 file(GLOB SRC *.h *.cpp )
 
 include_directories( ${CMAKE_SOURCE_DIR}/dependencies 
-                     ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon )
+                     ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                     ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 
 set( LIBS vmeshCommon )
 

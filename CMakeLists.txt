@@ -63,6 +63,7 @@ include( dependencies/cmake/tools/cppcheck.cmake )
 include( dependencies/cmake/geometry/directx.cmake )
 include( dependencies/cmake/geometry/uvatlas.cmake )
 include( dependencies/cmake/geometry/mmetric.cmake )
+include( dependencies/cmake/geometry/tinyply.cmake )
 
 # Wrapper libraries
 if ( USE_HDRTOOLS )

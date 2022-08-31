@@ -57,11 +57,45 @@ convertFromPlyData(std::shared_ptr<tinyply::PlyData>& src,
 
 //============================================================================
 
+// template<typename T>
+// bool
+// TriangleMesh<T>::load(const std::string& fileName, int f) {
+//   std::string name = expandNum(fileName, f);
+//   return load(name);
+// }
+
+inline bool
+isObj(std::string fileName) {
+  if (fileName.size() < 5) return false;
+  std::string ext = fileName.substr(fileName.size() - 3, 3);
+  std::for_each(ext.begin(), ext.end(), [](char& c) { c = ::tolower(c); });
+  return ext == "obj";
+}
+
+inline bool
+isPly(std::string fileName) {
+  if (fileName.size() < 5) return false;
+  std::string ext = fileName.substr(fileName.size() - 3, 3);
+  std::for_each(ext.begin(), ext.end(), [](char& c) { c = ::tolower(c); });
+  return ext == "ply";
+}
+
 template<typename T>
 bool
-TriangleMesh<T>::loadFromOBJ(const std::string& fileName, int f) {
-  std::string name = expandNum(fileName, f);
-  return loadFromOBJ(name);
+TriangleMesh<T>::load(const std::string& fileName) {
+  if (isObj(fileName)) return loadFromOBJ(fileName);
+  if (isPly(fileName)) return loadFromPLY(fileName);
+  printf("Can't read extension type: %s \n", fileName.c_str());
+  return false;
+}
+
+template<typename T>
+bool
+TriangleMesh<T>::save(const std::string& fileName, const T uvScale) {
+  if (isObj(fileName)) return saveToOBJ(fileName, uvScale);
+  if (isPly(fileName)) return saveToPLY(fileName, uvScale);
+  printf("Can't read extension type: %s \n", fileName.c_str());
+  return false;
 }
 
 //----------------------------------------------------------------------------
@@ -371,65 +405,64 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
 //----------------------------------------------------------------------------
 
 template<typename T>
-void
+bool
 TriangleMesh<T>::loadFromPLY(const std::string& filename) {
-  try {
-    std::unique_ptr<std::istream> file;
-    file.reset(new std::ifstream(filename, std::ios::binary));
-    if (!file || file->fail())
-      throw std::runtime_error("failed to open " + filename);
-    tinyply::PlyFile ply;
-    ply.parse_header(*file);
-    std::shared_ptr<tinyply::PlyData> coords, normals, colours, texcoords,
-      displacements, triangles, texTriangles, normalTriangles;
-    try {
-      coords = ply.request_properties_from_element("vertex", {"x", "y", "z"});
-    } catch (const std::exception& e) {}
-    try {
-      normals =
-        ply.request_properties_from_element("vertex", {"nx", "ny", "nz"});
-    } catch (const std::exception& e) {}
-    try {
-      colours = ply.request_properties_from_element("vertex",
-                                                    {"red", "green", "blue"});
-    } catch (const std::exception& e) {}
-    try {
-      colours = ply.request_properties_from_element("vertex", {"r", "g", "b"});
-    } catch (const std::exception& e) {}
-    try {
-      texcoords = ply.request_properties_from_element(
-        "vertex", {"texture_u", "texture_v"});
-    } catch (const std::exception& e) {}
-    try {
-      displacements =
-        ply.request_properties_from_element("vertex", {"dx", "dy", "dz"});
-    } catch (const std::exception& e) {}
-    try {
-      triangles =
-        ply.request_properties_from_element("face", {"vertex_indices"}, 3);
-    } catch (const std::exception& e) {}
-    try {
-      texTriangles =
-        ply.request_properties_from_element("face", {"texcoord"}, 3);
-    } catch (const std::exception& e) {}
-    try {
-      normalTriangles =
-        ply.request_properties_from_element("face", {"normals"}, 3);
-    } catch (const std::exception& e) {}
-
-    ply.read(*file);
-
-    convertFromPlyData(coords, _coord);
-    convertFromPlyData(normals, _normal);
-    convertFromPlyData(colours, _colour);
-    convertFromPlyData(texcoords, _texCoord);
-    convertFromPlyData(displacements, _disp);
-    convertFromPlyData(triangles, _coordIndex);
-    convertFromPlyData(texTriangles, _texCoordIndex);
-    convertFromPlyData(normalTriangles, _normalIndex);
-  } catch (const std::exception& e) {
-    std::cerr << "Caught tinyply exception: " << e.what() << std::endl;
+  std::unique_ptr<std::istream> file;
+  file.reset(new std::ifstream(filename, std::ios::binary));
+  if (!file || file->fail()) {
+    printf("failed to open: %s \n", filename);
+    return false;
   }
+  tinyply::PlyFile ply;
+  ply.parse_header(*file);
+  std::shared_ptr<tinyply::PlyData> coords, normals, colours, texcoords,
+    displacements, triangles, texTriangles, normalTriangles;
+  try {
+    coords = ply.request_properties_from_element("vertex", {"x", "y", "z"});
+  } catch (const std::exception& e) {}
+  try {
+    normals =
+      ply.request_properties_from_element("vertex", {"nx", "ny", "nz"});
+  } catch (const std::exception& e) {}
+  try {
+    colours =
+      ply.request_properties_from_element("vertex", {"red", "green", "blue"});
+  } catch (const std::exception& e) {}
+  try {
+    colours = ply.request_properties_from_element("vertex", {"r", "g", "b"});
+  } catch (const std::exception& e) {}
+  try {
+    texcoords = ply.request_properties_from_element(
+      "vertex", {"texture_u", "texture_v"});
+  } catch (const std::exception& e) {}
+  try {
+    displacements =
+      ply.request_properties_from_element("vertex", {"dx", "dy", "dz"});
+  } catch (const std::exception& e) {}
+  try {
+    triangles =
+      ply.request_properties_from_element("face", {"vertex_indices"}, 3);
+  } catch (const std::exception& e) {}
+  try {
+    texTriangles =
+      ply.request_properties_from_element("face", {"texcoord"}, 3);
+  } catch (const std::exception& e) {}
+  try {
+    normalTriangles =
+      ply.request_properties_from_element("face", {"normals"}, 3);
+  } catch (const std::exception& e) {}
+
+  ply.read(*file);
+
+  convertFromPlyData(coords, _coord);
+  convertFromPlyData(normals, _normal);
+  convertFromPlyData(colours, _colour);
+  convertFromPlyData(texcoords, _texCoord);
+  convertFromPlyData(displacements, _disp);
+  convertFromPlyData(triangles, _coordIndex);
+  convertFromPlyData(texTriangles, _texCoordIndex);
+  convertFromPlyData(normalTriangles, _normalIndex);
+  return true;
 }
 
 //----------------------------------------------------------------------------

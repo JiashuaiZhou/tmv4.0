@@ -93,7 +93,7 @@ SequenceInfo::generate(const int          frameCount,
     TriangleMesh<double> mesh1;
     auto                 frameIndex0 = startFrame;
     const auto&          name        = expandNum(inputPath, frameIndex0);
-    if (!mesh0.loadFromOBJ(name)) {
+    if (!mesh0.load(name)) {
       std::cerr << "Error: can't load frame" << frameIndex0 << ' ' << name
                 << '\n';
       return 1;
@@ -104,7 +104,7 @@ SequenceInfo::generate(const int          frameCount,
     for (int32_t f = 1; f < frameCount; ++f) {
       const auto  frameIndex1 = startFrame + f;
       const auto& name        = expandNum(inputPath, frameIndex1);
-      if (!mesh1.loadFromOBJ(name)) {
+      if (!mesh1.load(name)) {
         std::cerr << "Error: can't load frame" << frameIndex1 << ' ' << name
                   << '\n';
         return 1;

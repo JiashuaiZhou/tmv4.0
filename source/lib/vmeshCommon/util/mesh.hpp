@@ -106,9 +106,9 @@ public:
 
   int32_t size() const { return int32_t(_neighbourCount.size()); }
   void    reserve(const int32_t sz) {
-       _shift.reserve(sz + 1);
-       _neighbourCount.reserve(sz);
-       _neighbours.reserve(6 * sz);
+    _shift.reserve(sz + 1);
+    _neighbourCount.reserve(sz);
+    _neighbours.reserve(6 * sz);
   }
 
   void resize(const int32_t sz) {
@@ -194,20 +194,20 @@ struct Material {
   double       transparency     = 1.0;
   int32_t      illumination     = 2;
   bool         save(const std::string& fileName) {
-            std::ofstream fout(fileName);
-            if (fout.is_open()) {
-              fout << "newmtl " << name << '\n';
-              fout << "Ka " << ambiant << '\n';
-              fout << "Kd " << diffuse << '\n';
-              fout << "Ks " << specular << '\n';
-              fout << "Tr " << transparency << '\n';
-              fout << "illum " << illumination << '\n';
-              fout << "Ns " << specularExponent << '\n';
-              fout << "map_Kd " << texture << '\n';
-              fout.close();
-              return true;
+    std::ofstream fout(fileName);
+    if (fout.is_open()) {
+      fout << "newmtl " << name << '\n';
+      fout << "Ka " << ambiant << '\n';
+      fout << "Kd " << diffuse << '\n';
+      fout << "Ks " << specular << '\n';
+      fout << "Tr " << transparency << '\n';
+      fout << "illum " << illumination << '\n';
+      fout << "Ns " << specularExponent << '\n';
+      fout << "map_Kd " << texture << '\n';
+      fout.close();
+      return true;
     }
-            return false;
+    return false;
   }
 };
 
@@ -216,15 +216,8 @@ struct Material {
 template<typename T>
 class TriangleMesh {
 public:
-  bool loadFromOBJ(const std::string& fileName, int f);
-  bool loadFromOBJ(const std::string& fileName);
-
-  bool saveToOBJ(const std::string& fileName, const T uvScale = T(1)) const;
-
-  bool saveToPLY(const std::string& fileName,
-                 const bool         binary,
-                 const T            uvScale = T(1)) const;
-  void loadFromPLY(const std::string& fileName);
+  bool load(const std::string& fileName);
+  bool save(const std::string& fileName, const T uvScale = T(1));
 
   TriangleMesh<T>& operator=(const TriangleMesh<T>&) = default;
 
@@ -735,6 +728,13 @@ public:
   }
 
 private:
+  bool loadFromOBJ(const std::string& fileName);
+  bool loadFromPLY(const std::string& fileName);
+  bool saveToOBJ(const std::string& fileName, const T uvScale = T(1)) const;
+  bool saveToPLY(const std::string& fileName,
+                 const bool         binary,
+                 const T            uvScale = T(1)) const;
+
   std::vector<Vec3<T>>   _disp;
   std::vector<Vec3<T>>   _coord;
   std::vector<Vec3<T>>   _colour;
@@ -745,7 +745,6 @@ private:
   std::vector<Vec3<int>> _normalIndex;
   std::string            _mtllib;
 };
-
 
 //============================================================================
 

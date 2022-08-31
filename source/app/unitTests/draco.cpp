@@ -77,10 +77,9 @@ TEST(draco, encode) {
   vmesh::TriangleMesh<double> rec;
   vmesh::TriangleMesh<double> dec;
   vmesh::Bitstream            bitstream;
-  src.loadFromOBJ(inputMesh);
+  src.load(inputMesh);
   auto encoder = vmesh::VirtualGeometryEncoder<double>::create(codecId);
   encoder->encode(src, params, bitstream.vector(), rec);
-  // rec.saveToOBJ(recNew);
   bitstream.save(binNew);
 
   // Decode with VirtualGeometryDecoder
@@ -147,8 +146,8 @@ TEST(draco, decode) {
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
   vmesh::TriangleMesh<double> decApp;
-  decApp.loadFromOBJ(decAppPath);
-  decApp.saveToOBJ(decAppPath);
+  decApp.load(decAppPath);
+  decApp.save(decAppPath);
 
   // Decode with VirtualGeometryEncoder
   vmesh::Bitstream            bitstream;
@@ -156,7 +155,7 @@ TEST(draco, decode) {
   bitstream.load(binPath);
   auto decoder = vmesh::VirtualGeometryDecoder<double>::create(codecId);
   decoder->decode(bitstream.vector(), decLib);
-  decLib.saveToOBJ(decLibPath);
+  decLib.save(decLibPath);
 
   // Compare bitstreams
   auto hashDecApp = hash(decAppPath);

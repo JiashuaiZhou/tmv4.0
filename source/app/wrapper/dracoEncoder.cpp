@@ -139,7 +139,7 @@ main(int argc, char* argv[]) {
 
   // Load input mesh
   vmesh::TriangleMesh<double> mesh;
-  mesh.loadFromOBJ(params.inputPath);
+  mesh.load(params.inputPath);
 
   // Encode
   vmesh::TriangleMesh<double> rec;
@@ -148,7 +148,7 @@ main(int argc, char* argv[]) {
   encoder->encode(mesh, params.params, bitstream.vector(), rec);
 
   // Save reconstructed mesh
-  rec.saveToOBJ(params.outputPath);
+  rec.save(params.outputPath);
 
   // Save bitstream
   bitstream.save(params.bitstreamPath);

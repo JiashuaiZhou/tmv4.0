@@ -145,7 +145,7 @@ main(int argc, char* argv[]) {
   // Load source
   vmesh::TriangleMesh<double> srcMesh;
   vmesh::Frame<uint8_t>       srcTex;
-  if (!srcMesh.loadFromOBJ(params.srcMeshPath)) {
+  if (!srcMesh.load(params.srcMeshPath)) {
     printf("Error loading src mesh: %s \n", params.srcMeshPath.c_str());
     return -1;
   }
@@ -157,7 +157,7 @@ main(int argc, char* argv[]) {
   // Save PLY
   srcMesh.materialLibrary() = params.dstTexturePath;
   printf("Save PLY: %s \n", params.dstMeshPath.c_str());
-  srcMesh.saveToPLY(params.dstMeshPath, params.binary);
+  srcMesh.save(params.dstMeshPath, params.binary);
   printf("Save PNG: %s \n", srcMesh.materialLibrary().c_str());
   if (!SaveImage(srcMesh.materialLibrary(), srcTex)) { return -1; }
 
@@ -165,7 +165,7 @@ main(int argc, char* argv[]) {
   vmesh::TriangleMesh<double> recMesh;
   vmesh::Checksum             checksum;
   printf("Load PLY: %s \n", params.dstMeshPath.c_str());
-  recMesh.loadFromPLY(params.dstMeshPath);
+  recMesh.load(params.dstMeshPath);
   printf("Compute checksum:\n");
   checksum.print(srcMesh, "srcMesh");
   checksum.print(recMesh, "recMesh");

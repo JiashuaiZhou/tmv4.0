@@ -636,7 +636,7 @@ loadGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
     const auto findex           = f - startFrame;
     auto&      frame            = gof.frames[findex];
     std::cout << '.' << std::flush;
-    if (!frame.input.loadFromOBJ(params.inputMeshPath, f)
+    if (!frame.input.load(vmesh::expandNum(params.inputMeshPath, f))
         || !LoadImage(nameInputTexture, frame.inputTexture)) {
       printf("Error loading frame %d / %d \n", f, frameCount);
       return -1;
@@ -666,7 +666,7 @@ saveGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
       material.texture = vmesh::basename(strTex);
       if (!material.save(strMat)) { ret = -1; }
       gof[f].rec.setMaterialLibrary(vmesh::basename(strMat));
-      if (!gof[f].rec.saveToOBJ(strObj)) { ret = -1; }
+      if (!gof[f].rec.save(strObj)) { ret = -1; }
     }
   }
   return ret;

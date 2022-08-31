@@ -81,7 +81,7 @@ TEST(metrics, compare) {
     const auto decTexName = vmesh::expandNum(decTexPath, f);
 
     auto& frame = gof.frames[0];
-    if (!frame.input.loadFromOBJ(srcObjName)) {
+    if (!frame.input.load(srcObjName)) {
       disableSubProcessLog.enable();
       printf("Error loading src mesh %d / %d: %s \n",
              f,
@@ -99,7 +99,7 @@ TEST(metrics, compare) {
       fflush(stdout);
       return;
     }
-    if (!frame.rec.loadFromOBJ(decObjName)) {
+    if (!frame.rec.load(decObjName)) {
       disableSubProcessLog.enable();
       printf("Error loading rec mesh %d / %d: %s \n",
              f,

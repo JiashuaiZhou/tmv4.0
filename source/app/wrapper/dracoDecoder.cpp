@@ -127,7 +127,7 @@ main(int argc, char* argv[]) {
   encoder->decode(bitstream.vector(), dec);
 
   // Save reconstructed mesh
-  dec.saveToOBJ(params.outputPath);
+  dec.save(params.outputPath);
 
   return 0;
 }

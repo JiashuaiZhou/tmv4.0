@@ -198,7 +198,7 @@ metrics(const Parameters& params) {
     const auto nameRecMesh    = vmesh::expandNum(params.decMeshPath, f);
     const auto nameRecTexture = vmesh::expandNum(params.decTexturePath, f);
     auto&      frame          = gof.frames[0];
-    if (!frame.input.loadFromOBJ(nameSrcMesh)) {
+    if (!frame.input.load(nameSrcMesh)) {
       printf("Error loading src mesh %d / %d: %s \n",
              f,
              params.frameCount,
@@ -212,7 +212,7 @@ metrics(const Parameters& params) {
              nameSrcTexture.c_str());
       return -1;
     }
-    if (!frame.rec.loadFromOBJ(nameRecMesh)) {
+    if (!frame.rec.load(nameRecMesh)) {
       printf("Error loading rec mesh %d / %d: %s \n",
              f,
              params.frameCount,

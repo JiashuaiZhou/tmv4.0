@@ -44,8 +44,11 @@
 using namespace std;
 using namespace vmesh;
 
+//============================================================================
+
+template<typename T>
 void
-convert(const TriangleMesh<double>& src, mm::Model& dst) {
+convert(const TriangleMesh<T>& src, mm::Model& dst) {
   dst.reset();
   const auto& points = src.points();
   dst.vertices.resize(points.size() * 3);
@@ -103,6 +106,8 @@ convert(const Frame<uint8_t>& src, mm::Image& dst) {
   }
 }
 
+//============================================================================
+
 void
 VMCMetrics::compute(const VMCGroupOfFrames&     gof,
                     const VMCMetricsParameters& params) {
@@ -130,9 +135,13 @@ VMCMetrics::compute(const VMCGroupOfFrames&     gof,
   }
   // display();
 }
+
+//============================================================================
+
+template<typename T>
 void
-VMCMetrics::compute(const TriangleMesh<double>& srcMesh,
-                    const TriangleMesh<double>& recMesh,
+VMCMetrics::compute(const TriangleMesh<T>&      srcMesh,
+                    const TriangleMesh<T>&      recMesh,
                     const Frame<uint8_t>&       srcMap,
                     const Frame<uint8_t>&       recMap,
                     const VMCMetricsParameters& params) {
@@ -154,6 +163,8 @@ VMCMetrics::compute(const TriangleMesh<double>& srcMesh,
           "",        // Rec name
           params);   // params
 }
+
+//============================================================================
 
 void
 VMCMetrics::compute(const mm::Model&            srcModel,
@@ -255,15 +266,6 @@ VMCMetrics::compute(const mm::Model&            srcModel,
     }
   }
 
-  // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName+"_source.obj", srcModel  ); }
-  // if ( !recName.empty() ) { mm::IO::_saveObj( recName+"_source.obj", recModel ); }
-  // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName+"_dequant.obj", dequantize[0] ); }
-  // if ( !recName.empty() ) { mm::IO::_saveObj( recName+"_dequant.obj", dequantize[1] ); }
-  // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName+"_reindex.obj", reindex[0] ); }
-  // if ( !recName.empty() ) { mm::IO::_saveObj( recName+"_reindex.obj", reindex[1] ); }
-  // if ( !srcName.empty() ) { mm::IO::_saveObj( srcName+"_sample.obj", sampled[0] ); }
-  // if ( !recName.empty() ) { mm::IO::_saveObj( recName+"_sample.obj", sampled[1] ); }
-
   // PCC
   mm::Model               outPcc[2];
   pcc_quality::commandPar pccParams;
@@ -276,10 +278,6 @@ VMCMetrics::compute(const mm::Model&            srcModel,
   pccParams.neighborsProc   = 1;
   pccParams.dropDuplicates  = 2;
   pccParams.bAverageNormals = true;
-
-  // printf(
-  //   "Triangle numbers = %9zu / %9zu \n", sampled[0].getTriangleCount(),
-  //   sampled[1].getTriangleCount());
 
   if (params.computePcc) {
     std::cout << "Compare models using MPEG PCC distortion metric"
@@ -353,6 +351,8 @@ VMCMetrics::compute(const mm::Model&            srcModel,
   }
 }
 
+//============================================================================
+
 void
 VMCMetrics::display() {
   printf("Metrics results :\n");
@@ -364,17 +364,42 @@ VMCMetrics::display() {
   compare->ibsmFinalize();
 }
 
+//============================================================================
+
 std::vector<double>
 VMCMetrics::getPccResults() {
   return compare->getFinalPccResults();
 }
+
+//============================================================================
 
 std::vector<double>
 VMCMetrics::getPcqmResults() {
   return compare->getFinalPcqmResults();
 }
 
+//============================================================================
+
 std::vector<double>
 VMCMetrics::getIbsmResults() {
   return compare->getFinalIbsmResults();
 }
+
+//============================================================================
+
+template void convert<float>(const TriangleMesh<float>&, mm::Model&);
+template void convert<double>(const TriangleMesh<double>&, mm::Model&);
+
+template void VMCMetrics::compute<float>(const TriangleMesh<float>&,
+                                         const TriangleMesh<float>&,
+                                         const Frame<uint8_t>&,
+                                         const Frame<uint8_t>&,
+                                         const VMCMetricsParameters&);
+
+template void VMCMetrics::compute<double>(const TriangleMesh<double>&,
+                                         const TriangleMesh<double>&,
+                                         const Frame<uint8_t>&,
+                                         const Frame<uint8_t>&,
+                                         const VMCMetricsParameters&);
+                                         
+//============================================================================

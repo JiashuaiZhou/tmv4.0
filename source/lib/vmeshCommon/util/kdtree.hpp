@@ -49,17 +49,19 @@ namespace vmesh {
 // calculations to be performed using double precision floats.
 // NB: by default nanoflann::metric_L2 will be used with the metric
 //     type of T = num_t (the coordinate type).
-struct metric_L2_double {
+
+struct metric_L2_vmesh {
   template<class T, class DataSource>
   struct traits {
-    using distance_t = nanoflann::L2_Adaptor<T, DataSource, double>;
+    using distance_t = nanoflann::L2_Adaptor<T, DataSource, T>;
   };
 };
 
-using KdTree = KDTreeVectorOfVectorsAdaptor<std::vector<Vec3<double>>,
-                                            double,
+template<class T>
+using KdTree = KDTreeVectorOfVectorsAdaptor<std::vector<Vec3<T>>,
+                                            T,
                                             3,
-                                            metric_L2_double,
+                                            metric_L2_vmesh,
                                             int32_t>;
 
 //============================================================================

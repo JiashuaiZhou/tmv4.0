@@ -41,21 +41,22 @@ namespace vmesh {
 
 //============================================================================
 
+template<typename T>
 std::vector<uint8_t>
-Checksum::compute(vmesh::TriangleMesh<double>& mesh) {
+Checksum::compute(vmesh::TriangleMesh<T>& mesh) {
   std::vector<uint8_t> digest;
   md5::MD5             md5;
   auto&                positions = mesh.points();
   auto&                triangles = mesh.triangles();
   auto&                coords    = mesh.texCoords();
   md5.update(reinterpret_cast<uint8_t*>(positions.data()),
-             positions.size() * sizeof(vmesh::Vec3<double>));
+             positions.size() * sizeof(vmesh::Vec3<T>));
   if (triangles.size() != 0)
     md5.update(reinterpret_cast<uint8_t*>(triangles.data()),
                triangles.size() * sizeof(vmesh::Vec3<int>));
   if (coords.size() != 0)
     md5.update(reinterpret_cast<uint8_t*>(coords.data()),
-               coords.size() * sizeof(vmesh::Vec2<double>));
+               coords.size() * sizeof(vmesh::Vec2<T>));
   //  if ( withColors_ ) {
   //    md5.update( reinterpret_cast<uint8_t*>( colors_.data() ), colors_.size() * sizeof( PCCColor3B ) );
   //  }
@@ -88,8 +89,9 @@ Checksum::compute(vmesh::Frame<uint8_t>& texture) {
 
 //============================================================================
 
+template<typename T>
 void
-Checksum::add(vmesh::TriangleMesh<double>& mesh) {
+Checksum::add(vmesh::TriangleMesh<T>& mesh) {
   auto md5 = compute(mesh);
   mesh_.push_back(md5);
 }
@@ -104,9 +106,9 @@ Checksum::add(vmesh::Frame<uint8_t>& texture) {
 
 //============================================================================
 
+template<typename T>
 void
-Checksum::add(vmesh::TriangleMesh<double>& mesh,
-              vmesh::Frame<uint8_t>&       texture) {
+Checksum::add(vmesh::TriangleMesh<T>& mesh, vmesh::Frame<uint8_t>& texture) {
   add(mesh);
   add(texture);
 }
@@ -163,8 +165,9 @@ Checksum::write(const std::string& path) {
 
 //============================================================================
 
+template<typename T>
 void
-Checksum::print(TriangleMesh<double>& mesh, std::string eString) {
+Checksum::print(TriangleMesh<T>& mesh, std::string eString) {
   auto checksum = compute(mesh);
   printf("Checksum %s: ", eString.c_str());
   for (auto& c : checksum) { printf("%02x", c); }
@@ -193,5 +196,25 @@ Checksum::print() {
     printf("] \n");
   }
 }
+
+//============================================================================
+
+template void Checksum::print<float>(TriangleMesh<float>&, std::string);
+template void Checksum::print<double>(TriangleMesh<double>&, std::string);
+
+template std::vector<uint8_t>
+Checksum::compute<float>(vmesh::TriangleMesh<float>&);
+template std::vector<uint8_t>
+Checksum::compute<double>(vmesh::TriangleMesh<double>&);
+
+template void Checksum::add<float>(vmesh::TriangleMesh<float>&);
+template void Checksum::add<double>(vmesh::TriangleMesh<double>&);
+
+template void Checksum::add<float>(vmesh::TriangleMesh<float>&,
+                                   vmesh::Frame<uint8_t>& texture);
+template void Checksum::add<double>(vmesh::TriangleMesh<double>&,
+                                    vmesh::Frame<uint8_t>& texture);
+                                    
+//============================================================================
 
 }  // namespace vmesh

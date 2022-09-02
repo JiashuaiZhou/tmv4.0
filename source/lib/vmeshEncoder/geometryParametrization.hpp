@@ -55,68 +55,76 @@ public:
   GeometryParametrization()  = default;
   ~GeometryParametrization() = default;
 
-  bool generate(TriangleMesh<double>&                    target,
-                TriangleMesh<double>&                    source,
-                TriangleMesh<double>&                    mapped,
-                const TriangleMesh<double>&              mtarget,
-                const TriangleMesh<double>&              subdiv0,
+  template<typename T>
+  bool generate(TriangleMesh<T>&                         target,
+                TriangleMesh<T>&                         source,
+                TriangleMesh<T>&                         mapped,
+                const TriangleMesh<T>&                   mtarget,
+                const TriangleMesh<T>&                   subdiv0,
                 const GeometryParametrizationParameters& params,
-                TriangleMesh<double>&                    base,
-                TriangleMesh<double>&                    deformed,
-                TriangleMesh<double>&                    ndeformed);
+                TriangleMesh<T>&                         base,
+                TriangleMesh<T>&                         deformed,
+                TriangleMesh<T>&                         ndeformed);
 
 private:
+  template<typename T>
   static bool CheckTriangleNormalInversion(
     int32_t                                    vindex,
-    const TriangleMesh<double>&                output,
+    const TriangleMesh<T>&                     output,
     const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
-    const std::vector<Vec3<double>>&           initialTriangleNormals,
+    const std::vector<Vec3<T>>&                initialTriangleNormals,
     const GeometryParametrizationParameters&   params);
 
-  static void FitMesh(const TriangleMesh<double>& target,
-                      const KdTree&               kdtree,
-                      TriangleMesh<double>&       output);
+  template<typename T>
+  static void FitMesh(const TriangleMesh<T>& target,
+                      const KdTree<T>&       kdtree,
+                      TriangleMesh<T>&       output);
 
+  template<typename T>
   static void UpdateMissedVertices(
     const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
     const std::vector<int8_t>&                 isBoundaryVertex,
     const std::vector<int32_t>&                missedVertices,
-    TriangleMesh<double>&                      output,
+    TriangleMesh<T>&                           output,
     std::vector<int32_t>&                      vadj,
     std::vector<int8_t>&                       vtags,
     std::vector<int8_t>&                       ttags,
     const GeometryParametrizationParameters&   params);
 
-  static void InitialDeform(const TriangleMesh<double>&              target,
-                            const TriangleMesh<double>&              mapped,
-                            const TriangleMesh<double>&              motion,
-                            TriangleMesh<double>&                    output,
+  template<typename T>
+  static void InitialDeform(const TriangleMesh<T>&                   target,
+                            const TriangleMesh<T>&                   mapped,
+                            const TriangleMesh<T>&                   motion,
+                            TriangleMesh<T>&                         output,
                             const GeometryParametrizationParameters& params);
 
-  static void InitialDeform(const TriangleMesh<double>&              target,
-                            TriangleMesh<double>&                    output,
+  template<typename T>
+  static void InitialDeform(const TriangleMesh<T>&                   target,
+                            TriangleMesh<T>&                         output,
                             const GeometryParametrizationParameters& params);
 
-  static void Deform(const TriangleMesh<double>&      target,
-                     const std::vector<Vec3<double>>& initialPositions,
-                     const std::vector<Vec3<double>>& initialTriangleNormals,
-                     TriangleMesh<double>&            output,
+  template<typename T>
+  static void Deform(const TriangleMesh<T>&      target,
+                     const std::vector<Vec3<T>>& initialPositions,
+                     const std::vector<Vec3<T>>& initialTriangleNormals,
+                     TriangleMesh<T>&            output,
                      const GeometryParametrizationParameters& params);
 
-  static bool Subdivide(TriangleMesh<double>&                    mesh,
+  template<typename T>
+  static bool Subdivide(TriangleMesh<T>&                         mesh,
                         const GeometryParametrizationParameters& params);
 
-  static bool FitMesh(const TriangleMesh<double>&              target,
-                      TriangleMesh<double>&                    mapped,
-                      const TriangleMesh<double>&              motion,
-                      TriangleMesh<double>&                    deformed,
+  template<typename T>
+  static bool FitMesh(const TriangleMesh<T>&                   target,
+                      TriangleMesh<T>&                         mapped,
+                      const TriangleMesh<T>&                   motion,
+                      TriangleMesh<T>&                         deformed,
                       const GeometryParametrizationParameters& params);
 
-  bool RemoveDuplicatedTriangles(TriangleMesh<double>& mesh);
-
-  static bool ComputeMotion(const TriangleMesh<double>& reference,
-                            const TriangleMesh<double>& target,
-                            TriangleMesh<double>&       motion);
+  template<typename T>
+  static bool ComputeMotion(const TriangleMesh<T>& reference,
+                            const TriangleMesh<T>& target,
+                            TriangleMesh<T>&       motion);
 };
 
 }  // namespace vmesh

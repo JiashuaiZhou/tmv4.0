@@ -242,7 +242,7 @@ private:
   static void    unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
                                VMCGroupOfFrames&           gof,
                                const VMCEncoderParameters& params);
-  int32_t        computeDracoMapping(TriangleMesh<double>        base,
+  int32_t        computeDracoMapping(TriangleMesh<MeshType>        base,
                                      std::vector<int32_t>&       mapping,
                                      int32_t                     frameIndex,
                                      const VMCEncoderParameters& params) const;
@@ -284,11 +284,11 @@ private:
   static int32_t transferTexture(VMCFrame&                   frame,
                                  const VMCEncoderParameters& params);
 
-  static int32_t transferTexture(const TriangleMesh<double>& targetMesh,
-                                 const TriangleMesh<double>& sourceMesh,
-                                 const Frame<uint8_t>&       targetTexture,
-                                 Frame<uint8_t>&             outputTexture,
-                                 const VMCEncoderParameters& params);
+  static int32_t transferTexture(const TriangleMesh<MeshType>& targetMesh,
+                                 const TriangleMesh<MeshType>& sourceMesh,
+                                 const Frame<uint8_t>&         targetTexture,
+                                 Frame<uint8_t>&               outputTexture,
+                                 const VMCEncoderParameters&   params);
 
   VMCGroupOfFramesInfo    _gofInfo;
   FrameSequence<uint16_t> _dispVideo;

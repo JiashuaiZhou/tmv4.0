@@ -274,16 +274,20 @@ saveGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
   if (!params.decodedMeshPath.empty() && !params.decodedTexturePath.empty()
       && !params.decodedMaterialLibPath.empty()) {
     for (int f = 0; f < gofInfo.frameCount_; ++f) {
-      const auto n      = gofInfo.startFrameIndex_ + f;
-      auto       strObj = vmesh::expandNum(params.decodedMeshPath, n);
-      auto       strTex = vmesh::expandNum(params.decodedTexturePath, n);
-      auto       strMat = vmesh::expandNum(params.decodedMaterialLibPath, n);
+      const auto n = gofInfo.startFrameIndex_ + f;
+      auto strMesh = vmesh::expandNum(params.decodedMeshPath, n);
+      auto strTex  = vmesh::expandNum(params.decodedTexturePath, n);
       SaveImage(strTex, gof[f].outputTexture);
-      vmesh::Material<double> material;
-      material.texture = vmesh::basename(strTex);
-      material.save(strMat);
-      gof[f].rec.setMaterialLibrary(vmesh::basename(strMat));
-      gof[f].rec.save(strObj);
+      if (vmesh::extension(params.decodedMeshPath) == "obj") {
+        auto strMat  = vmesh::expandNum(params.decodedMaterialLibPath, n);
+        vmesh::Material<double> material;
+        material.texture = vmesh::basename(strTex);
+        material.save(strMat);
+        gof[f].rec.setMaterialLibrary(vmesh::basename(strMat));
+      } else {
+        gof[f].rec.setMaterialLibrary(vmesh::basename(strTex));
+      }
+      gof[f].rec.save(strMesh);
     }
     return 0;
   }

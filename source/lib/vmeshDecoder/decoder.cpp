@@ -139,7 +139,7 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
   auto&      base       = frame.base;
   auto&      qpositions = frame.qpositions;
   if (frameInfo.type == FrameType::INTRA) {
-    printf("Inter index = %d n", frameInfo.frameIndex);
+    printf("Intra index = %d n", frameInfo.frameIndex);
     auto     bitstreamByteCount0 = _byteCounter;
     uint32_t byteCountBaseMesh   = 0;
     bitstream.read(byteCountBaseMesh, _byteCounter);
@@ -153,7 +153,7 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
 
     // Decode base mesh
     auto decoder =
-      VirtualGeometryDecoder<double>::create(GeometryCodecId::DRACO);
+      VirtualGeometryDecoder<MeshType>::create(GeometryCodecId::DRACO);
     decoder->decode(geometryBitstream, base);
 
     // Save intermediate files
@@ -161,7 +161,7 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_base";
-      base.save(prefix + "_dec.obj");
+      base.save(prefix + "_dec.ply");
       save(prefix + ".drc", geometryBitstream);
     }
 

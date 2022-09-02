@@ -217,7 +217,9 @@ template<typename T>
 class TriangleMesh {
 public:
   bool load(const std::string& fileName);
-  bool save(const std::string& fileName, const T uvScale = T(1));
+  bool save(const std::string& fileName,
+            const T            uvScale = T(1),
+            const bool         binary  = true);
 
   TriangleMesh<T>& operator=(const TriangleMesh<T>&) = default;
 
@@ -659,8 +661,8 @@ public:
     _normal.clear();
     _normalIndex.clear();
   }
-
-  void append(const TriangleMesh<double>& mesh);
+  
+  void append(const TriangleMesh<T>& mesh);
 
   void subdivideMidPoint(
     int32_t                            iterationCount,
@@ -732,8 +734,8 @@ private:
   bool loadFromPLY(const std::string& fileName);
   bool saveToOBJ(const std::string& fileName, const T uvScale = T(1)) const;
   bool saveToPLY(const std::string& fileName,
-                 const bool         binary,
-                 const T            uvScale = T(1)) const;
+                 const T            uvScale = T(1),
+                 const bool         binary = true) const;
 
   std::vector<Vec3<T>>   _disp;
   std::vector<Vec3<T>>   _coord;
@@ -1370,8 +1372,8 @@ SmoothWithVertexConstraints(
   const std::vector<int8_t>&                 isBoundaryVertex,
   std::vector<int8_t>&                       vtags,
   std::vector<int8_t>&                       ttags,
-  const T                                    smoothingCoefficient,
-  const T                                    maxError          = 0.001,
+  const double                               smoothingCoefficient,
+  const double                               maxError          = 0.001,
   const int32_t                              maxIterationCount = -1) {
   const auto pointCount    = mesh.pointCount();
   const auto triangleCount = mesh.triangleCount();
@@ -1424,12 +1426,12 @@ SmoothWithVertexConstraints(
   const auto At = A.transpose();
   const auto itCount =
     maxIterationCount == -1 ? pointCount * 2 : maxIterationCount;
-  VecN<double> b(n);
-  VecN<double> x(pointCount);
-  VecN<double> y(n);
-  VecN<double> p(pointCount);
-  VecN<double> r(pointCount);
-  VecN<double> q(pointCount);
+  VecN<T> b(n);
+  VecN<T> x(pointCount);
+  VecN<T> y(n);
+  VecN<T> p(pointCount);
+  VecN<T> r(pointCount);
+  VecN<T> q(pointCount);
   b = T(0);
   for (int32_t dim = 0; dim < 3; ++dim) {
     x = T(0);
@@ -1473,8 +1475,8 @@ SmoothWithVertexConstraints(
 template<typename T>
 void
 SmoothWithVertexConstraints(TriangleMesh<T>& mesh,
-                            const T          smoothingCoefficient,
-                            const T          maxError          = 0.001,
+                            const double     smoothingCoefficient,
+                            const double     maxError          = 0.001,
                             const int32_t    maxIterationCount = -1) {
   const auto pointCount    = mesh.pointCount();
   const auto triangleCount = mesh.triangleCount();

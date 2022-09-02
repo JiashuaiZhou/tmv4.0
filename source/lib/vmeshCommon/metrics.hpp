@@ -87,8 +87,9 @@ public:
   void compute(const VMCGroupOfFrames&     gof,
                const VMCMetricsParameters& params);
 
-  void compute(const TriangleMesh<double>& srcModel,
-               const TriangleMesh<double>& recModel,
+  template<typename T>
+  void compute(const TriangleMesh<T>&      srcModel,
+               const TriangleMesh<T>&      recModel,
                const Frame<uint8_t>&       srcMap,
                const Frame<uint8_t>&       recMap,
                const VMCMetricsParameters& params);

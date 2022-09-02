@@ -82,15 +82,16 @@ GeometryDecimate::decimate(VMCFrame&                   frame,
 
 //============================================================================
 
+template<typename T>
 bool
-GeometryDecimate::removeSmallConnectedComponents(TriangleMesh<double>& mesh,
+GeometryDecimate::removeSmallConnectedComponents(TriangleMesh<T>& mesh,
                                                  int minCCTriangleCount) {
   std::cout << "Removing small connected components...\n";
 
   const auto           pointCount    = mesh.pointCount();
   const auto           triangleCount = mesh.triangleCount();
   std::vector<int32_t> partition;
-  std::vector<std::shared_ptr<TriangleMesh<double>>> connectedComponents;
+  std::vector<std::shared_ptr<TriangleMesh<T>>> connectedComponents;
   const auto ccCount0 = ExtractConnectedComponents(mesh.triangles(),
                                                    mesh.pointCount(),
                                                    mesh,
@@ -121,12 +122,13 @@ GeometryDecimate::removeSmallConnectedComponents(TriangleMesh<double>& mesh,
 
 //============================================================================
 
+template<typename T>
 bool
-GeometryDecimate::removeDuplicatedTriangles(TriangleMesh<double>& mesh) {
+GeometryDecimate::removeDuplicatedTriangles(TriangleMesh<T>& mesh) {
   std::cout << "Removing duplicated triangles... ";
 
-  const auto                triangleCount = mesh.triangleCount();
-  std::vector<Vec3<double>> triangleNormals;
+  const auto           triangleCount = mesh.triangleCount();
+  std::vector<Vec3<T>> triangleNormals;
   mesh.computeTriangleNormals(triangleNormals);
   StaticAdjacencyInformation<int32_t> vertexToTriangle;
   ComputeVertexToTriangle(
@@ -148,10 +150,10 @@ GeometryDecimate::removeDuplicatedTriangles(TriangleMesh<double>& mesh) {
 }
 
 //============================================================================
-
+template<typename T>
 bool
-GeometryDecimate::unifyVertices(const TriangleMesh<double>& mesh,
-                                TriangleMesh<double>&       umesh) {
+GeometryDecimate::unifyVertices(const TriangleMesh<T>& mesh,
+                                TriangleMesh<T>&       umesh) {
   std::cout << "Unifying vertices... ";
   const auto pointCount0    = mesh.pointCount();
   const auto triangleCount0 = mesh.triangleCount();
@@ -179,15 +181,16 @@ GeometryDecimate::unifyVertices(const TriangleMesh<double>& mesh,
 
 //============================================================================
 
+template<typename T>
 bool
-GeometryDecimate::unifyVertices(TriangleMesh<double>& mesh) {
+GeometryDecimate::unifyVertices(TriangleMesh<T>& mesh) {
   std::cout << "Unifying vertices... ";
   const auto pointCount0    = mesh.pointCount();
   const auto triangleCount0 = mesh.triangleCount();
 
-  std::vector<Vec3<double>> upoints;
-  std::vector<Triangle>     utriangles;
-  std::vector<int32_t>      mapping;
+  std::vector<Vec3<T>>  upoints;
+  std::vector<Triangle> utriangles;
+  std::vector<int32_t>  mapping;
   UnifyVertices(mesh.points(), mesh.triangles(), upoints, utriangles, mapping);
   std::swap(mesh.points(), upoints);
   std::swap(mesh.triangles(), utriangles);
@@ -203,12 +206,17 @@ GeometryDecimate::unifyVertices(TriangleMesh<double>& mesh) {
 
 //============================================================================
 
+
+template<typename T>
 bool
-GeometryDecimate::decimate(const TriangleMesh<double>& mesh,
-                           TriangleMesh<double>&       dmesh,
-                           TriangleMesh<double>&       mmesh,
+GeometryDecimate::decimate(const TriangleMesh<T>&      meshT,
+                           TriangleMesh<T>&            dmeshT,
+                           TriangleMesh<T>&            mmeshT,
                            const VMCEncoderParameters& params) {
   std::cout << "Simplifying Mesh... \n";
+
+  TriangleMesh<double> mesh, dmesh, mmesh;
+  mesh.convert(meshT);
 
   TriangleMeshDecimatorParameters dparams;
   dparams.triangleCount =
@@ -227,6 +235,8 @@ GeometryDecimate::decimate(const TriangleMesh<double>& mesh,
     std::cerr << "Error: can't decimate model\n";
     return false;
   }
+  printf("decimatedMesh \n");
+  fflush(stdout);
 
   dmesh.resizePoints(decimator.decimatedPointCount());
   dmesh.resizeTriangles(decimator.decimatedTriangleCount());
@@ -239,14 +249,35 @@ GeometryDecimate::decimate(const TriangleMesh<double>& mesh,
     return false;
   }
 
+  printf("copy \n");
+  fflush(stdout);
   mmesh.triangles() = mesh.triangles();
-  mmesh.resizePoints(mesh.pointCount());
+  printf("mesh.triangleCount()  = %zu \n",mesh.triangleCount());
+  printf("mesh.pointCount()     = %zu \n",mesh.pointCount());
+  printf("mmesh.triangleCount() = %zu \n",mmesh.triangleCount());
+  printf("mmesh.pointCount()    = %zu \n",mmesh.pointCount());
+  printf("resizePoints \n");
+  fflush(stdout);
+  mmesh.resizePoints(mesh.pointCount());  
+  printf("trackedPoints \n");
+  fflush(stdout);
   decimator.trackedPoints(
     (double*)(mmesh.points().data()), nullptr, mesh.pointCount());
 
   std::cout << "Decimated mesh: " << decimator.decimatedPointCount() << "V "
             << decimator.decimatedTriangleCount() << "T\n";
+            
+  dmeshT.convert(dmesh);
+  mmeshT.convert(mmesh);
   return true;
 }
+
+template bool GeometryDecimate::unifyVertices<float>(TriangleMesh<float>&);
+template bool GeometryDecimate::unifyVertices<double>(TriangleMesh<double>&);
+
+template bool GeometryDecimate::unifyVertices<float>(const TriangleMesh<float>&,
+                                              TriangleMesh<float>&);
+template bool GeometryDecimate::unifyVertices<double>(const TriangleMesh<double>&,
+                                              TriangleMesh<double>&);
 
 }  // namespace vmesh

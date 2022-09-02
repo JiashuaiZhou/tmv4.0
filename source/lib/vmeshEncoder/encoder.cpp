@@ -71,23 +71,23 @@ forceCoordinateTruncation(TriangleMesh<T>& obj, const std::string name) {
 
 //============================================================================
 
-static Vec3<double>
+static Vec3<MeshType>
 computeNearestPointColour(
-  const Vec3<double>&                        point0,
+  const Vec3<MeshType>&                      point0,
   const Frame<uint8_t>&                      targetTexture,
-  const TriangleMesh<double>&                targetMesh,
-  const KdTree&                              kdtree,
+  const TriangleMesh<MeshType>&              targetMesh,
+  const KdTree<MeshType>&                    kdtree,
   const StaticAdjacencyInformation<int32_t>& vertexToTriangleTarget,
   double&                                    minDist2) {
   const auto* const neighboursTarget = vertexToTriangleTarget.neighbours();
   const auto        nnCount          = 1;
   int32_t           index            = 0;
-  double            sqrDist          = NAN;
-  nanoflann::KNNResultSet<double, int32_t> resultSet(nnCount);
+  MeshType          sqrDist          = NAN;
+  nanoflann::KNNResultSet<MeshType, int32_t> resultSet(nnCount);
   resultSet.init(&index, &sqrDist);
   kdtree.query(point0.data(), resultSet);
   auto ruv         = targetMesh.texCoord(index);
-  minDist2         = std::numeric_limits<double>::max();
+  minDist2         = std::numeric_limits<MeshType>::max();
   const auto start = vertexToTriangleTarget.neighboursStartIndex(index);
   const auto end   = vertexToTriangleTarget.neighboursEndIndex(index);
   for (int j = start; j < end; ++j) {
@@ -97,7 +97,7 @@ computeNearestPointColour(
     const auto&  pt0 = targetMesh.point(tri[0]);
     const auto&  pt1 = targetMesh.point(tri[1]);
     const auto&  pt2 = targetMesh.point(tri[2]);
-    Vec3<double> bcoord{};
+    Vec3<MeshType> bcoord{};
     const auto cpoint = ClosestPointInTriangle(point0, pt0, pt1, pt2, &bcoord);
     //    assert(bcoord[0] >= 0.0 && bcoord[1] >= 0.0 && bcoord[2] >= 0.0);
     assert(fabs(1.0 - bcoord[0] - bcoord[1] - bcoord[2]) < 0.000001);
@@ -173,11 +173,11 @@ VMCEncoder::unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
       assert(base.triangleCount() == subdiv.triangleCount());
       assert(base.texCoordCount() == subdiv.texCoordCount());
       assert(base.texCoordTriangleCount() == subdiv.texCoordTriangleCount());
-      std::vector<Vec3<double>> upoints;
-      std::vector<Triangle>     utriangles;
-      const auto                pointCount0 = base.pointCount();
-      const auto&               frameInfo   = gofInfo.frameInfo(findex);
-      auto&                     umapping    = umappings[findex];
+      std::vector<Vec3<MeshType>> upoints;
+      std::vector<Triangle>       utriangles;
+      const auto                  pointCount0 = base.pointCount();
+      const auto&                 frameInfo   = gofInfo.frameInfo(findex);
+      auto&                       umapping    = umappings[findex];
       if (frameInfo.type == FrameType::INTRA) {
         printf("INTRA \n");
         UnifyVertices(
@@ -275,14 +275,14 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
 //----------------------------------------------------------------------------
 
 int32_t
-VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
+VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
                                 std::vector<int32_t>&       mapping,
                                 const int32_t               frameIndex,
                                 const VMCEncoderParameters& params) const {
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
-                  + std::to_string(frameIndex) + "_mapping_src.obj";
+                  + std::to_string(frameIndex) + "_mapping_src.ply";
     base.save(prefix);
   }
   // Scale
@@ -297,7 +297,7 @@ VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
-                  + std::to_string(frameIndex) + "_mapping_scale.obj";
+                  + std::to_string(frameIndex) + "_mapping_scale.ply";
     base.save(prefix);
   }
 
@@ -305,10 +305,10 @@ VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
   GeometryEncoderParameters dracoParams;
   dracoParams.cl_ = 10;
 
-  TriangleMesh<double> rec;
+  TriangleMesh<MeshType> rec;
   std::vector<uint8_t> geometryBitstream;
   auto                 encoder =
-    VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
+    VirtualGeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
   encoder->encode(base, dracoParams, geometryBitstream, rec);
 
   // Save intermediate files
@@ -316,8 +316,8 @@ VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
     auto prefix = params.intermediateFilesPathPrefix + "GOF_"
                   + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex) + "_mapping";
-    base.save(prefix + "_enc.obj");
-    rec.save(prefix + "_rec.obj");
+    base.save(prefix + "_enc.ply");
+    rec.save(prefix + "_rec.ply");
     save(prefix + ".drc", geometryBitstream);
   }
 
@@ -352,7 +352,7 @@ VMCEncoder::computeDracoMapping(TriangleMesh<double>        base,
   if (params.forceCoordTruncation) {
     auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
                   + std::to_string(frameIndex);
-    forceCoordinateTruncation(rec, prefix + "fsubdiv1.obj");
+    forceCoordinateTruncation(rec, prefix + "fsubdiv1.ply");
   }
   auto fsubdiv1 = rec;
   printf("subdivideMidPoint 2: liftingSubdivisionIterationCount = %d \n",
@@ -493,8 +493,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
   if (params.keepIntermediateFiles) {
     auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex);
-    base.save(prefix + "_base_compress.obj");
-    subdiv.save(prefix + "_subdiv_compress.obj");
+    base.save(prefix + "_base_compress.ply");
+    subdiv.save(prefix + "_subdiv_compress.ply");
   }
   printf("Frame %4d: type = %s \n",
          frameIndex,
@@ -517,7 +517,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_post_mapping";
-      base.save(prefix + "_base.obj");
+      base.save(prefix + "_base.ply");
     }
 
     // quantize base mesh
@@ -533,14 +533,14 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_post_mapping";
-      base.save(prefix + "_base_quant.obj");
+      base.save(prefix + "_base_quant.ply");
     }
 
     // Force truncation of mesh coordinates to get the same results as P11
     if (params.forceCoordTruncation) {
       auto prefix = params.intermediateFilesPathPrefix + "fr_"
                     + std::to_string(frameIndex);
-      forceCoordinateTruncation(base, prefix + "base_before_enc.obj");
+      forceCoordinateTruncation(base, prefix + "base_before_enc.ply");
     }
 
     // Encode
@@ -551,17 +551,17 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     printf("draco param: \n");
     printf(" - qp = %d \n", params.qpPosition);
     printf(" - qt = %d \n", params.qpTexCoord);
-    TriangleMesh<double> rec;
+    TriangleMesh<MeshType> rec;
     std::vector<uint8_t> geometryBitstream;
     auto                 encoder =
-      VirtualGeometryEncoder<double>::create(GeometryCodecId::DRACO);
+      VirtualGeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
     encoder->encode(base, dracoParams, geometryBitstream, rec);
 
     // Force truncation of mesh coordinates to get the same results as P11
     if (params.forceCoordTruncation) {
       auto prefix = params.intermediateFilesPathPrefix + "fr_"
                     + std::to_string(frameIndex);
-      forceCoordinateTruncation(rec, prefix + "new_base.obj");
+      forceCoordinateTruncation(rec, prefix + "new_base.ply");
     }
 
     // Save intermediate files
@@ -569,8 +569,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_base";
-      base.save(prefix + "_enc.obj");
-      rec.save(prefix + "_rec.obj");
+      base.save(prefix + "_enc.ply");
+      rec.save(prefix + "_rec.ply");
       save(prefix + ".drc", geometryBitstream);
     }
 
@@ -657,13 +657,13 @@ VMCEncoder::computeDisplacements(VMCFrame&                   frame,
     if (params.displacementCoordinateSystem
         == DisplacementCoordinateSystem::LOCAL) {
       const auto   n = rec.normal(v);
-      Vec3<double> t{};
-      Vec3<double> b{};
+      Vec3<MeshType> t{};
+      Vec3<MeshType> b{};
       computeLocalCoordinatesSystem(n, t, b);
       const auto& pt0   = rec.point(v);
       const auto& pt1   = subdiv.point(v);
       const auto  delta = pt1 - pt0;
-      disp[v]           = Vec3<double>(delta * n, delta * t, delta * b);
+      disp[v]           = Vec3<MeshType>(delta * n, delta * t, delta * b);
     } else {
       disp[v] = subdiv.point(v) - rec.point(v);
     }
@@ -731,8 +731,8 @@ VMCEncoder::transferTexture(VMCFrame&                   frame,
 
 int32_t
 VMCEncoder::transferTexture(
-  const TriangleMesh<double>& targetMesh,
-  const TriangleMesh<double>& sourceMesh,
+  const TriangleMesh<MeshType>& targetMesh,
+  const TriangleMesh<MeshType>& sourceMesh,
   const Frame<uint8_t>&       targetTexture,  // , ColourSpace::BGR444p
   Frame<uint8_t>&             outputTexture,  // , ColourSpace::BGR444p
   const VMCEncoderParameters& params) {
@@ -747,7 +747,7 @@ VMCEncoder::transferTexture(
   ComputeVertexToTriangle(
     targetMesh.triangles(), targetMesh.pointCount(), vertexToTriangleTarget);
 
-  KdTree kdtree(3, targetMesh.points(), 10);  // dim, cloud, max leaf
+  KdTree<MeshType> kdtree(3, targetMesh.points(), 10);  // dim, cloud, max leaf
 
   const auto     oWidth         = outputTexture.width();
   const auto     oHeight        = outputTexture.height();
@@ -1080,26 +1080,26 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
       if (params.keepIntermediateFiles) {
         auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
                       + std::to_string(frameIndex);
-        frame.input.save(prefix + "_simp_input.obj");
+        frame.input.save(prefix + "_simp_input.ply");
       }
-      if (vmesh::GeometryDecimate::decimate(
-            frame, params)) {  // Create mapped, reference and decimate
+      // Create mapped, reference and decimate
+      if (geometryDecimate.decimate(frame, params)) {
         std::cerr << "Error: can't simplify mesh !\n";
         return 1;
       }
 
       // Force truncation of mesh coordinates to get the same results as P11
       if (params.forceCoordTruncation) {
-        forceCoordinateTruncation(frame.mapped, prefix + "_mapped.obj");
-        forceCoordinateTruncation(frame.reference, prefix + "_reference.obj");
-        forceCoordinateTruncation(frame.decimate, prefix + "_decimate.obj");
+        forceCoordinateTruncation(frame.mapped, prefix + "_mapped.ply");
+        forceCoordinateTruncation(frame.reference, prefix + "_reference.ply");
+        forceCoordinateTruncation(frame.decimate, prefix + "_decimate.ply");
       }
 
       // Save intermediate files
       if (params.keepIntermediateFiles) {
-        frame.mapped.save(prefix + "_mapped.obj");
-        frame.reference.save(prefix + "_reference.obj");
-        frame.decimate.save(prefix + "_decimate.obj");
+        frame.mapped.save(prefix + "_mapped.ply");
+        frame.reference.save(prefix + "_reference.ply");
+        frame.decimate.save(prefix + "_decimate.ply");
       }
 
       // Texture parametrization
@@ -1109,19 +1109,19 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
       // Force truncation of mesh coordinates to get the same results as P11
       if (params.forceCoordTruncation) {
         forceCoordinateTruncation(frame.decimateTexture,
-                                  prefix + "_decimateTexture.obj");
+                                  prefix + "_decimateTexture.ply");
       }
 
       // Save intermediate files
       if (params.keepIntermediateFiles) {
-        frame.decimateTexture.save(prefix + "_decimateTexture.obj");
+        frame.decimateTexture.save(prefix + "_decimateTexture.ply");
       }
 
       // Intra geometry parametrization
       std::cout << "Intra geometry parametrization\n";
       GeometryParametrization fitsubdivIntra;
-      TriangleMesh<double>    mtargetIntra;
-      TriangleMesh<double>    subdiv0Intra;
+      TriangleMesh<MeshType>  mtargetIntra;
+      TriangleMesh<MeshType>  subdiv0Intra;
       fitsubdivIntra.generate(frame.reference,        // target
                               frame.decimateTexture,  // source
                               frame.mapped,           // mapped
@@ -1134,19 +1134,19 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
 
       // Force truncation of mesh coordinates to get the same results as P11
       if (params.forceCoordTruncation) {
-        forceCoordinateTruncation(frame.baseIntra, prefix + "_intra_base.obj");
+        forceCoordinateTruncation(frame.baseIntra, prefix + "_intra_base.ply");
         forceCoordinateTruncation(frame.subdivIntra,
-                                  prefix + "_intra_subdiv.obj");
+                                  prefix + "_intra_subdiv.ply");
         forceCoordinateTruncation(frame.nsubdivIntra,
-                                  prefix + "_intra_nsubdiv.obj");
+                                  prefix + "_intra_nsubdiv.ply");
       }
 
       // Save intermediate files
       if (params.keepIntermediateFiles) {
-        frame.decimateTexture.save(prefix + "_reparamDecimateTexture.obj");
-        frame.baseIntra.save(prefix + "_intra_base.obj");
-        frame.subdivIntra.save(prefix + "_intra_subdiv.obj");
-        frame.nsubdivIntra.save(prefix + "_intra_nsubdiv.obj");
+        frame.decimateTexture.save(prefix + "_reparamDecimateTexture.ply");
+        frame.baseIntra.save(prefix + "_intra_base.ply");
+        frame.subdivIntra.save(prefix + "_intra_subdiv.ply");
+        frame.nsubdivIntra.save(prefix + "_intra_nsubdiv.ply");
       }
       bool  chooseIntra = true;
       auto& frameInfo   = _gofInfo.frameInfo(frameIndex);
@@ -1172,8 +1172,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
                  frameInfo.referenceFrameIndex);
           fflush(stdout);
           auto&                ref = gof.frame(frameInfo.referenceFrameIndex);
-          TriangleMesh<double> mappedInter;
-          TriangleMesh<double> subdiv0Inter;
+          TriangleMesh<MeshType> mappedInter;
+          TriangleMesh<MeshType> subdiv0Inter;
           fitsubdivInter.generate(ref.reference,          // target
                                   ref.decimateTexture,    // source
                                   ref.mapped,             // mapped
@@ -1189,8 +1189,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
           // souce   : ld frame - 1 base
           // target  : ld frame - 1 reference
           auto&                ref = gof.frame(frameIndex - 1);
-          TriangleMesh<double> mappedInter;
-          TriangleMesh<double> mtargetInter;
+          TriangleMesh<MeshType> mappedInter;
+          TriangleMesh<MeshType> mtargetInter;
           fitsubdivInter.generate(frame.reference,        // target
                                   ref.base,               // source
                                   mappedInter,            // mapped
@@ -1205,19 +1205,19 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
         // Force truncation of mesh coordinates to get the same results as P11
         if (params.forceCoordTruncation) {
           forceCoordinateTruncation(frame.baseInter,
-                                    prefix + "_inter_base.obj");
+                                    prefix + "_inter_base.ply");
           forceCoordinateTruncation(frame.subdivInter,
-                                    prefix + "_inter_subdiv.obj");
+                                    prefix + "_inter_subdiv.ply");
           forceCoordinateTruncation(frame.nsubdivInter,
-                                    prefix + "_inter_nsubdiv.obj");
+                                    prefix + "_inter_nsubdiv.ply");
         }
 
         // Save intermediate files
         if (params.keepIntermediateFiles) {
-          frame.decimateTexture.save(prefix + "_reparamDecimateTexture.obj");
-          frame.baseInter.save(prefix + "_inter_base.obj");
-          frame.subdivInter.save(prefix + "_inter_subdiv.obj");
-          frame.nsubdivInter.save(prefix + "_inter_nsubdiv.obj");
+          frame.decimateTexture.save(prefix + "_reparamDecimateTexture.ply");
+          frame.baseInter.save(prefix + "_inter_base.ply");
+          frame.subdivInter.save(prefix + "_inter_subdiv.ply");
+          frame.nsubdivInter.save(prefix + "_inter_nsubdiv.ply");
         }
 
         // ComputeMetric/Decision
@@ -1304,8 +1304,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
       auto        prefix    = params.intermediateFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex);
-      frame.base.save(prefix + "_base_org.obj");
-      frame.subdiv.save(prefix + "_subdiv_org.obj");
+      frame.base.save(prefix + "_base_org.ply");
+      frame.subdiv.save(prefix + "_subdiv_org.ply");
     }
   }
   unifyVertices(gofInfo, gof, params);
@@ -1320,8 +1320,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
       auto prefix = params.intermediateFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex);
-      frame.base.save(prefix + "_base_uni.obj");
-      frame.subdiv.save(prefix + "_subdiv_uni.obj");
+      frame.base.save(prefix + "_base_uni.ply");
+      frame.subdiv.save(prefix + "_subdiv_uni.ply");
     }
     auto& dispVideoFrame = _dispVideo.frame(frameIndex);
     compressBaseMesh(

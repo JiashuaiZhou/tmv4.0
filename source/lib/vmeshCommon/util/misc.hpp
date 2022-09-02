@@ -53,14 +53,6 @@ std::string expandNum(const std::string& src, int num);
 
 //============================================================================
 
-static inline std::string
-removeExtension(const std::string& string) {
-  size_t pos = string.find_last_of('.');
-  return pos != std::string::npos ? string.substr(0, pos) : string;
-}
-
-//============================================================================
-
 #ifdef WIN32
 #  include <windows.h>
 static void
@@ -73,39 +65,64 @@ mkdir(const char* pDirectory, int) {
 
 //============================================================================
 
+static inline char
+separator() {
 #ifndef _WIN32
-static char
-getSeparator() {
   return '/';
-}
 #else
-static char
-getSeparator() {
   return '\\';
-}
 #endif
+}
 
 //============================================================================
 
 static char
-getSeparator(const std::string& eFilename) {
-  auto pos1 = eFilename.find_last_of('/');
-  auto pos2 = eFilename.find_last_of('\\');
+separator(const std::string& string) {
+  auto pos1 = string.find_last_of('/');
+  auto pos2 = string.find_last_of('\\');
   auto pos  = (std::max)(pos1 != std::string::npos ? pos1 : 0,
                         pos2 != std::string::npos ? pos2 : 0);
-  return (pos != 0 ? eFilename[pos] : getSeparator());
+  return (pos != 0 ? string[pos] : separator());
 }
 
 //============================================================================
 
 static std::string
-directoryName(const std::string& string) {
-  auto position = string.find_last_of(getSeparator(string));
+dirname(const std::string& string) {
+  auto position = string.find_last_of(separator(string));
   if (position != std::string::npos) { return string.substr(0, position); }
   return string;
 }
 
 //============================================================================
+
+static inline std::string
+basename(const std::string& string) {
+  auto position = string.find_last_of(separator(string));
+  if (position != std::string::npos) {
+    return string.substr(position + 1, string.length());
+  }
+  return string;
+}
+
+//----------------------------------------------------------------------------
+
+static inline std::string
+extension(const std::string& name) {
+  const auto pos = name.find_last_of('.');
+  return pos == std::string::npos ? std::string("") : name.substr(pos + 1);
+}
+
+//----------------------------------------------------------------------------
+
+static inline std::string
+removeExtension(const std::string& name) {
+  const auto pos = name.find_last_of('.');
+  return pos == std::string::npos ? name : name.substr(0, pos);
+}
+
+//============================================================================
+
 static int
 save(const std::string& filename, std::vector<uint8_t>& buffer) {
   std::ofstream file(filename, std::ios::binary);
@@ -118,16 +135,6 @@ save(const std::string& filename, std::vector<uint8_t>& buffer) {
   return 0;
 }
 
-//============================================================================
-
-static inline std::string
-basename(const std::string& string) {
-  auto position = string.find_last_of(getSeparator(string));
-  if (position != std::string::npos) {
-    return string.substr(position + 1, string.length());
-  }
-  return string;
-}
 
 //============================================================================
 

@@ -51,6 +51,7 @@ struct Parameters {
   std::string srcTexturePath = {};
   std::string dstMeshPath    = {};
   std::string dstTexturePath = {};
+  double      uvScale             = 1.0;
   bool        binary         = true;
 };
 
@@ -85,6 +86,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.dstTexturePath,
       params.dstTexturePath,
       "Output texture")
+    ("uvScale",
+      params.uvScale,
+      params.uvScale,
+      "Scale texture coordinates")
     ("binary",
       params.binary,
       params.binary,
@@ -143,8 +148,8 @@ main(int argc, char* argv[]) {
   if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
   // Load source
-  vmesh::TriangleMesh<double> srcMesh;
-  vmesh::Frame<uint8_t>       srcTex;
+  vmesh::TriangleMesh<float> srcMesh, recMesh;
+  vmesh::Frame<uint8_t>      srcTex;
   if (!srcMesh.load(params.srcMeshPath)) {
     printf("Error loading src mesh: %s \n", params.srcMeshPath.c_str());
     return -1;
@@ -157,18 +162,22 @@ main(int argc, char* argv[]) {
   // Save PLY
   srcMesh.materialLibrary() = params.dstTexturePath;
   printf("Save PLY: %s \n", params.dstMeshPath.c_str());
-  srcMesh.save(params.dstMeshPath, params.binary);
+  srcMesh.save(params.dstMeshPath, params.uvScale, params.binary);
   printf("Save PNG: %s \n", srcMesh.materialLibrary().c_str());
   if (!SaveImage(srcMesh.materialLibrary(), srcTex)) { return -1; }
 
   // Crosscheck: reload ply and compute checksum
-  vmesh::TriangleMesh<double> recMesh;
-  vmesh::Checksum             checksum;
+  vmesh::Checksum checksum;
   printf("Load PLY: %s \n", params.dstMeshPath.c_str());
   recMesh.load(params.dstMeshPath);
   printf("Compute checksum:\n");
   checksum.print(srcMesh, "srcMesh");
   checksum.print(recMesh, "recMesh");
+
+  // Resave obj for comparison
+  std::string str = vmesh::removeExtension(params.dstMeshPath) + "_resave.obj";
+  printf("Save OBJ: %s \n", str.c_str());
+  recMesh.save(str);
 
   return 0;
 }

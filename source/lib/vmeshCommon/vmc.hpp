@@ -46,6 +46,10 @@ namespace vmesh {
 
 //============================================================================
 
+#define MeshType double
+
+//============================================================================
+
 enum class FrameType {
   INTER = 0,
   INTRA = 1,
@@ -110,24 +114,24 @@ struct VMCSequenceParameterSet {
 //============================================================================
 
 struct VMCFrame {
-  TriangleMesh<double>              input;
-  TriangleMesh<double>              reference;
-  TriangleMesh<double>              mapped;
-  TriangleMesh<double>              decimate;
-  TriangleMesh<double>              decimateTexture;
-  TriangleMesh<double>              baseIntra;
-  TriangleMesh<double>              subdivIntra;
-  TriangleMesh<double>              nsubdivIntra;
-  TriangleMesh<double>              baseInter;
-  TriangleMesh<double>              subdivInter;
-  TriangleMesh<double>              nsubdivInter;
-  TriangleMesh<double>              base;
-  TriangleMesh<double>              subdiv;
-  TriangleMesh<double>              nsubdiv;
-  TriangleMesh<double>              rec;
+  TriangleMesh<MeshType>            input;
+  TriangleMesh<MeshType>            reference;
+  TriangleMesh<MeshType>            mapped;
+  TriangleMesh<MeshType>            decimate;
+  TriangleMesh<MeshType>            decimateTexture;
+  TriangleMesh<MeshType>            baseIntra;
+  TriangleMesh<MeshType>            subdivIntra;
+  TriangleMesh<MeshType>            nsubdivIntra;
+  TriangleMesh<MeshType>            baseInter;
+  TriangleMesh<MeshType>            subdivInter;
+  TriangleMesh<MeshType>            nsubdivInter;
+  TriangleMesh<MeshType>            base;
+  TriangleMesh<MeshType>            subdiv;
+  TriangleMesh<MeshType>            nsubdiv;
+  TriangleMesh<MeshType>            rec;
   std::vector<int32_t>              mapping;
   std::vector<Vec3<int32_t>>        qpositions;
-  std::vector<Vec3<double>>         disp;
+  std::vector<Vec3<MeshType>>       disp;
   std::vector<int64_t>              subdivEdges;
   std::vector<SubdivisionLevelInfo> subdivInfoLevelOfDetails;
   Frame<uint8_t>                    inputTexture;
@@ -283,8 +287,8 @@ applyDisplacements(
     const auto& d = disp[v];
     if (displacementCoordinateSystem == DisplacementCoordinateSystem::LOCAL) {
       const auto   n = rec.normal(v);
-      Vec3<double> t{};
-      Vec3<double> b{};
+      Vec3<MeshType> t{};
+      Vec3<MeshType> b{};
       computeLocalCoordinatesSystem(n, t, b);
       rec.point(v) += d[0] * n + d[1] * t + d[2] * b;
     } else {

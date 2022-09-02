@@ -51,20 +51,24 @@ public:
 
   static bool decimate(VMCFrame& frame, const VMCEncoderParameters& params);
 
-  static bool unifyVertices(const TriangleMesh<double>& mesh,
-                            TriangleMesh<double>&       umesh);
+  template<typename T>
+  bool unifyVertices(const TriangleMesh<T>& mesh, TriangleMesh<T>& umesh);
 
 private:
-  static bool removeSmallConnectedComponents(TriangleMesh<double>& mesh,
+  template<typename T>
+  static bool removeSmallConnectedComponents(TriangleMesh<T>& mesh,
                                              int minCCTriangleCount);
 
-  static bool removeDuplicatedTriangles(TriangleMesh<double>& mesh);
+  template<typename T>
+  static bool removeDuplicatedTriangles(TriangleMesh<T>& mesh);
 
-  static bool unifyVertices(TriangleMesh<double>& mesh);
+  template<typename T>
+  static bool unifyVertices(TriangleMesh<T>& mesh);
 
-  static bool decimate(const TriangleMesh<double>& mesh,
-                       TriangleMesh<double>&       dmesh,
-                       TriangleMesh<double>&       mmesh,
+  template<typename T>
+  static bool decimate(const TriangleMesh<T>&      mesh,
+                       TriangleMesh<T>&            dmesh,
+                       TriangleMesh<T>&            mmesh,
                        const VMCEncoderParameters& params);
 };
 

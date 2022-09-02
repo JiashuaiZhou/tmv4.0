@@ -58,7 +58,7 @@
 \renewcommand{\headrulewidth}{0pt}
 \fancyhead{}
 \cfoot{\thepage}
-\rfoot{\MPEG@yyyymmdddate\today}
+% \rfoot{\MPEG@yyyymmdddate\today}
 
 % macros for document metadata
 \RequirePackage[normalem]{ulem}
@@ -107,18 +107,24 @@
 	\IfFileExists{logos/iso}{\includegraphics[height=0.74cm]{logos/iso}}{}
 	\IfFileExists{logos/iec}{\includegraphics[height=0.74cm]{logos/iec}}{}
 	\\
-	\textbf{Moving Picture Experts Group (MPEG)}\\[0ex]
-	\textbf{of ITU-T SG16 WP3 and ISO/IEC JTC1/SC29/WG11}
-		\hfill Document: MPEG-\@mpegdocnum\\[0ex]
-	\@mpegmeeting
+	
+	{\center\Large\textbf{INTERNATIONAL ORGANIZATION FOR STANDARDIZATION}\\[0ex]}
+	{\center\Large\textbf{ORGANISATION INTERNATIONALE DE NORMALISATION}\\[0ex]}
+	{\center\Large\textbf{ISO/IEC JTC 1/SC 29/WG 7 MPEG 3D GRAPHICS CODING}\\[0ex]}
+
+	\vspace{0.5\baselineskip}
+
+	{\hfill\large\textbf{ISO/IEC JTC 1/SC 29/WG 7 \@mpegdocnum}}\\[0ex]
+	{\hfill\large\textbf{\@mpegmeeting}}\\[0ex]
 
 	\vspace{0.5\baselineskip}
 
 	\newcommand{\@strutb}{\rule{0pt}{2.5ex}}
 	\begin{tabular}{lp{0.78\textwidth}}
 	\@strutb \it Title: & \@title \\
-	\@strutb \it Status: & \@mpegdocstatus \\
+	\@strutb \it Source: & \@mpegdocsource \\
 	\@strutb \it Purpose: & \@mpegdocpurpose \\
+	\@strutb \it Status: & \@mpegdocstatus \\
 	\@strutb \it Author(s): & %
 		\setcounter{mpeg@author@column}{0}
 		\let\@and\\
@@ -127,17 +133,20 @@
 		\begin{tabular}[t]{@{}>{\@NLtoPAR}p{3in}|>{\@NLtoPAR}p{2in}@{}}%
 			\@author
 		\end{tabular}\\
-	\@strutb \it Source: & \@mpegdocsource \\
 	\end{tabular}
 	\end{raggedright}
 
 	% draw a short horizontal line to delimit the title from body
 	{\center\rule{0.35\textwidth}{1pt}\\}
+	
+	\vspace{0.5\baselineskip}
+	{\center\Large\textbf{\@title}\\[0ex]}
+	\vspace{0.5\baselineskip}
 }
 
 %
 \RequirePackage{parskip}
 \RequirePackage[compact]{titlesec}
-\titlespacing{\section}{0pt}{*0}{*0}
-\titlespacing{\subsection}{0pt}{*0}{*0}
-\titlespacing{\subsubsection}{0pt}{*0}{*0}
+\titlespacing{\section}{0pt}{10pt}{10pt}
+\titlespacing{\subsection}{0pt}{10pt}{10pt}
+\titlespacing{\subsubsection}{0pt}{10pt}{10pt}

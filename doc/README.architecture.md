@@ -4,7 +4,8 @@
 
 V-Mesh test model software is organized as shows on Figure 1. 
 
-![Scheme of acrhitecture of V-Mesh test model.](architecture.png)
+
+![Scheme of acrhitecture of V-Mesh test model.](architecture.png){width=520 height=400}.
 
 ## Core libraries
 

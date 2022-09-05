@@ -732,10 +732,12 @@ public:
 private:
   bool loadFromOBJ(const std::string& fileName);
   bool loadFromPLY(const std::string& fileName);
+  bool loadFromPLY2(const std::string& fileName);
   bool saveToOBJ(const std::string& fileName, const T uvScale = T(1)) const;
   bool saveToPLY(const std::string& fileName,
-                 const T            uvScale = T(1),
-                 const bool         binary = true) const;
+                 const T            uvScale              = T(1),
+                 const bool         binary               = true,
+                 const bool         meshlabCompatibility = true) const;
 
   std::vector<Vec3<T>>   _disp;
   std::vector<Vec3<T>>   _coord;

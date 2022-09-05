@@ -45,7 +45,11 @@ CMAKE_FLAGS+=( "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CURDIR}/build/${MODE}/lib" )
 # CMAKE_FLAGS+=( "-DCMAKE_CXX_FLAGS=-stdlib=libc++" )
 
 echo -e "\033[0;32mCmake: ${CURDIR}: CMAKE_FLAGS = ${CMAKE_FLAGS[@]}\033[0m";
-${CMAKE} -H${CURDIR} -B"${CURDIR}/build/${MODE}" "${CMAKE_FLAGS[@]}"
+if ! ${CMAKE} -H${CURDIR} -B"${CURDIR}/build/${MODE}" "${CMAKE_FLAGS[@]}";
+then
+  echo -e "\033[1;31mfailed \033[0m"
+  exit 1;
+fi 
 echo -e "\033[0;32mdone \033[0m";
 
 # Use custom targets

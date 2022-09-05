@@ -148,28 +148,35 @@ main(int argc, char* argv[]) {
   if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
   // Load source
-  vmesh::TriangleMesh<float> srcMesh, recMesh;
-  vmesh::Frame<uint8_t>      srcTex;
+  vmesh::TriangleMesh<double> srcMesh, recMesh;
+  vmesh::Frame<uint8_t>       srcTex;
+
+  // Load OBJ
   if (!srcMesh.load(params.srcMeshPath)) {
     printf("Error loading src mesh: %s \n", params.srcMeshPath.c_str());
     return -1;
   }
+  // Load PNG
   if (!vmesh::LoadImage(params.srcTexturePath, srcTex)) {
     printf("Error loading src texture: %s \n", params.srcTexturePath.c_str());
     return -1;
   }
 
-  // Save PLY
+  // Save PNG
   srcMesh.materialLibrary() = params.dstTexturePath;
-  printf("Save PLY: %s \n", params.dstMeshPath.c_str());
-  srcMesh.save(params.dstMeshPath, params.uvScale, params.binary);
   printf("Save PNG: %s \n", srcMesh.materialLibrary().c_str());
   if (!SaveImage(srcMesh.materialLibrary(), srcTex)) { return -1; }
 
-  // Crosscheck: reload ply and compute checksum
-  vmesh::Checksum checksum;
+  // Save PLY
+  printf("Save PLY: %s \n", params.dstMeshPath.c_str());
+  srcMesh.save(params.dstMeshPath, params.uvScale, params.binary);
+
+  // Load PLY
   printf("Load PLY: %s \n", params.dstMeshPath.c_str());
   recMesh.load(params.dstMeshPath);
+
+  // Crosscheck: reload ply and compute checksum
+  vmesh::Checksum checksum;
   printf("Compute checksum:\n");
   checksum.print(srcMesh, "srcMesh");
   checksum.print(recMesh, "recMesh");

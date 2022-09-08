@@ -83,6 +83,38 @@ namespace vmesh {
 //============================================================================
 
 static std::istream&
+operator>>(std::istream& in, CachingPoint& val) {
+  std::string str;
+  in >> str;
+  if (str == "simplify" || str == "1") {
+    val = CachingPoint::SIMPLIFY;
+  } else if (str == "uvaltas" || str == "2") {
+    val = CachingPoint::UVATLAS;
+  } else if (str == "subdiv" || str == "3") {
+    val = CachingPoint::SUBDIV;
+  } else {
+    val = CachingPoint::NONE;
+  }
+  return in;
+}
+
+//----------------------------------------------------------------------------
+
+static std::ostream&
+operator<<(std::ostream& out, CachingPoint val) {
+  switch (val) {
+  case CachingPoint::NONE: out << "none"; break;
+  case CachingPoint::SIMPLIFY: out << "simplify"; break;
+  case CachingPoint::UVATLAS: out << "uvaltas"; break;
+  case CachingPoint::SUBDIV: out << "subdiv"; break;
+  default: out << int(val) << " (unknown)";
+  }
+  return out;
+}
+
+//============================================================================
+
+static std::istream&
 operator>>(std::istream& in, SmoothingMethod& val) {
   unsigned int tmp = 0;
   in >> tmp;
@@ -214,6 +246,11 @@ struct VMCEncoderParameters {
   float                             maxAllowedD2PSNRLoss   = 1.F;
   GeometryParametrizationParameters intraGeoParams;
   GeometryParametrizationParameters interGeoParams;
+
+  // Caching
+  CachingPoint cachingPoint          = CachingPoint::NONE;
+  std::string  cachingDirectory      = {};
+  bool         ignoreTextureEncoding = false;
 
   // Bug fix
   bool forceCoordTruncation = false;

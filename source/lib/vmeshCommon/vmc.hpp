@@ -73,6 +73,15 @@ enum class PaddingMethod {
 
 //============================================================================
 
+enum class CachingPoint {
+  NONE     = 0,
+  SIMPLIFY = 1,
+  UVATLAS  = 2,
+  SUBDIV   = 3
+};
+
+//============================================================================
+
 enum class SmoothingMethod {
   NONE              = 0,
   VERTEX_CONSTRAINT = 1

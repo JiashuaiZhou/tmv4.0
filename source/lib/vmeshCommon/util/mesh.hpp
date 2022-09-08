@@ -45,7 +45,6 @@
 #include <memory>
 #include <map>
 #include <vector>
-#include <tinyply.h>
 
 #include "util/box.hpp"
 #include "util/misc.hpp"
@@ -216,11 +215,6 @@ struct Material {
 template<typename T>
 class TriangleMesh {
 public:
-  bool load(const std::string& fileName);
-  bool save(const std::string& fileName,
-            const T            uvScale = T(1),
-            const bool         binary  = true);
-
   TriangleMesh<T>& operator=(const TriangleMesh<T>&) = default;
 
   void scaleTextureCoordinates(int qt) {
@@ -729,15 +723,36 @@ public:
     }
   }
 
+  inline void print(std::string str) const {
+    printf("#####\n");
+    printf("## %s \n", str.c_str());
+    printf("## Coord:        %-6d \n", pointCount());
+    printf("## Colour:       %-6d \n", colourCount());
+    printf("## Normals:      %-6d \n", normalCount());
+    printf("## TexCoord:     %-6d \n", texCoordCount());
+    printf("## Disp:         %-6d \n", displacementCount());
+    printf("## Triangles:    %-6d \n", triangleCount());
+    printf("## TexTriangles: %-6d \n", texCoordTriangleCount());
+    printf("## NrmTriangles: %-6d \n", normalTriangleCount());
+    printf("## MTL:          %s \n", _mtllib.c_str());
+    printf("#####\n");
+  }
+
+  bool load(const std::string& fileName);
+  bool save(const std::string& fileName,
+            const uint32_t     bitDepthTexCoord = 0,
+            const bool         binary           = true) const;
+
 private:
   bool loadFromOBJ(const std::string& fileName);
   bool loadFromPLY(const std::string& fileName);
-  bool loadFromPLY2(const std::string& fileName);
-  bool saveToOBJ(const std::string& fileName, const T uvScale = T(1)) const;
+  bool loadFromVMB(const std::string& fileName);
+  bool saveToOBJ(const std::string& fileName,
+                 const int32_t      bitDepthTexCoord = 0) const;
   bool saveToPLY(const std::string& fileName,
-                 const T            uvScale              = T(1),
-                 const bool         binary               = true,
-                 const bool         meshlabCompatibility = true) const;
+                 const uint32_t     bitDepthTexCoord = 0,
+                 const bool         binary           = true) const;
+  bool saveToVMB(const std::string& fileName) const;
 
   std::vector<Vec3<T>>   _disp;
   std::vector<Vec3<T>>   _coord;

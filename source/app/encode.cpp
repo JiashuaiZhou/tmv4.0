@@ -539,6 +539,25 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       metParams.srcTexturePath,
       "Source texture path")
 
+  (po::Section("Caching"))    
+    ("ignoreTextureEncoding", 
+      encParams.ignoreTextureEncoding, 
+      encParams.ignoreTextureEncoding, 
+      "Ignore texture encoding")
+    ("cachingDirectory", 
+      encParams.cachingDirectory, 
+      encParams.cachingDirectory, 
+      "Caching directory")
+    ("cachingPoint", 
+      encParams.cachingPoint, 
+      encParams.cachingPoint, 
+      "Caching points: \n"
+      "  - 0/none    : off \n"
+      "  - 1/simplify: symplify\n"
+      "  - 1/uvatlas : symplify\n"
+      "  - 2/subdiv  : subdiv \n"
+      "  - 255/create: create caching files")
+
   (po::Section("Bug fix"))    
     ("forceCoordTruncation", 
       encParams.forceCoordTruncation, 
@@ -611,6 +630,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   po::dumpCfg(std::cout, opts, "Displacements", 4);
   po::dumpCfg(std::cout, opts, "Lifting", 4);
   po::dumpCfg(std::cout, opts, "Metrics", 4);
+  po::dumpCfg(std::cout, opts, "Caching", 4);
   po::dumpCfg(std::cout, opts, "Bug fix", 4);
   std::cout << '\n';
   return true;

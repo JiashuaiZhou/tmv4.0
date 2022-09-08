@@ -34,12 +34,13 @@
  */
 
 #include "util/mesh.hpp"
+#include "checksum.hpp"
+#include <tinyply.h>
 
 namespace vmesh {
 
 //============================================================================
 
-  
 //============================================================================
 
 template<typename T>
@@ -63,6 +64,7 @@ TriangleMesh<T>::load(const std::string& fileName) {
   auto ext = extension(fileName);
   if (ext == "obj") return loadFromOBJ(fileName);
   if (ext == "ply") return loadFromPLY(fileName);
+  if (ext == "vmb") return loadFromVMB(fileName);
   printf("Can't read extension type: %s \n", fileName.c_str());
   return false;
 }
@@ -72,12 +74,13 @@ TriangleMesh<T>::load(const std::string& fileName) {
 template<typename T>
 bool
 TriangleMesh<T>::save(const std::string& fileName,
-                      const T            uvScale,
-                      const bool         binary) {
-  printf("Save %s uvScale = %f \n", fileName.c_str(), uvScale);
+                      const uint32_t     bitDepthTexCoord,
+                      const bool         binary) const {
+  printf("Save %s qt = %u \n", fileName.c_str(), bitDepthTexCoord);
   auto ext = extension(fileName);
-  if (ext == "obj") return saveToOBJ(fileName, uvScale);
-  if (ext == "ply") return saveToPLY(fileName, uvScale, binary);
+  if (ext == "obj") return saveToOBJ(fileName, bitDepthTexCoord);
+  if (ext == "ply") return saveToPLY(fileName, bitDepthTexCoord, binary);
+  if (ext == "vmb") return saveToVMB(fileName);
   printf("Can't read extension type: %s \n", fileName.c_str());
   return false;
 }
@@ -137,6 +140,7 @@ TriangleMesh<T>::loadFromOBJ(const std::string& fileName) {
       }
     }
     fin.close();
+    print("Load: " + fileName);
     return true;
   }
   printf("Error loading file: %s \n", fileName.c_str());
@@ -148,29 +152,19 @@ TriangleMesh<T>::loadFromOBJ(const std::string& fileName) {
 
 template<typename T>
 bool
-TriangleMesh<T>::saveToOBJ(const std::string& fileName,
-                           const T            uvScale) const {
+TriangleMesh<T>::saveToOBJ(const std::string& fileName, const int32_t bitDepthTexCoord ) const {
   std::ofstream fout(fileName);
   if (fout.is_open()) {
     const int32_t ptCount    = pointCount();
     const int32_t tcCount    = texCoordCount();
     const int32_t nCount     = normalCount();
-    const int32_t cCount     = colourCount();
     const int32_t triCount   = triangleCount();
     const int32_t tcTriCount = texCoordTriangleCount();
     const int32_t nTriCount  = normalTriangleCount();
 
     assert(nTriCount == 0 || nTriCount == triCount);
     assert(tcTriCount == 0 || tcTriCount == triCount);
-    fout << "####\n";
-    fout << "# Coord:        " << ptCount << '\n';
-    fout << "# Colour:       " << cCount << '\n';
-    fout << "# Normals:      " << nCount << '\n';
-    fout << "# TexCoord:     " << tcCount << '\n';
-    fout << "# Triangles:    " << triCount << '\n';
-    fout << "# TexTriangles: " << tcTriCount << '\n';
-    fout << "# NrmTriangles: " << nTriCount << '\n';
-    fout << "####\n";
+    print("Save: " + fileName);
     if (!_mtllib.empty()) { fout << "mtllib " << _mtllib << '\n'; }
     const auto hasColours =
       !_colour.empty() && _colour.size() == _coord.size();
@@ -190,9 +184,17 @@ TriangleMesh<T>::saveToOBJ(const std::string& fileName,
       fout << '\n';
     }
 
-    for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
-      const auto& uv = texCoord(uvIndex) * uvScale;
-      fout << "vt " << T(uv.x()) << ' ' << T(uv.y()) << '\n';
+    if (bitDepthTexCoord == 0) {
+      for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
+        const auto& uv = texCoord(uvIndex);
+        fout << "vt " << T(uv.x()) << ' ' << T(uv.y()) << '\n';
+      }
+    } else {
+      const double uvScale = 1.0 / (double)((1u << bitDepthTexCoord) - 1);
+      for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
+        const auto& uv = texCoord(uvIndex) * uvScale;
+        fout << "vt " << T(uv.x()) << ' ' << T(uv.y()) << '\n';
+      }
     }
 
     for (int32_t nIndex = 0; nIndex < nCount; ++nIndex) {
@@ -283,11 +285,10 @@ TriangleMesh<T>::saveToOBJ(const std::string& fileName,
 template<typename T>
 bool
 TriangleMesh<T>::saveToPLY(const std::string& fileName,
-                           const T            uvScale,
-                           const bool         binary,
-                           const bool         meshlabCompatibility) const {
+                           const uint32_t     bitDepthTexCoord,
+                           const bool     binary ) const {
   std::filebuf fb;
-  fb.open(fileName, binary ? std::ios::out | std::ios::binary : std::ios::out);
+  fb.open(fileName, binary ? std::ios::out | std::ios::binary : std::ios::out  );
   std::ostream outstream(&fb);
   if (outstream.fail()) {
     throw std::runtime_error("failed to open " + fileName);
@@ -296,27 +297,17 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
   tinyply::Type type;
   if (std::is_same<T, double>::value) type = tinyply::Type::FLOAT64;
   else if (std::is_same<T, float>::value) type = tinyply::Type::FLOAT32;
-  else if (std::is_same<T, unsigned char>::value) tinyply::Type::UINT8;
+  else if (std::is_same<T, unsigned char>::value) type = tinyply::Type::UINT8;
   else {
     throw std::runtime_error("saveToPLY: type not supported");
     exit(-1);
   }
 
-  std::cout << "####\n";
-  std::cout << "# Coord:        " << pointCount() << "\n";
-  std::cout << "# Colour:       " << colourCount() << "\n";
-  std::cout << "# Normals:      " << normalCount() << "\n";
-  std::cout << "# TexCoord:     " << texCoordCount() << "\n";
-  std::cout << "# Triangles:    " << triangleCount() << "\n";
-  std::cout << "# TexTriangles: " << texCoordTriangleCount() << "\n";
-  std::cout << "# NrmTriangles: " << normalTriangleCount() << "\n";
-  std::cout << "####\n";
-
 #define CAST_UINT8(ptr) \
   reinterpret_cast<const uint8_t*>(reinterpret_cast<const void*>(ptr.data()))
   tinyply::PlyFile ply;
   auto&            str = ply.get_comments();
-  str.push_back("generated by mpeg-vmesh-tm");
+  str.push_back("generated by mpeg-vmesh-tm + tinyply");  
   str.push_back("TextureFile " + _mtllib);
   str.push_back("###");
   str.push_back("# Coord:        " + std::to_string(pointCount()));
@@ -325,7 +316,6 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
   str.push_back("# TexCoord:     " + std::to_string(texCoordCount()));
   str.push_back("# Triangles:    " + std::to_string(triangleCount()));
   str.push_back("# TexTriangles: " + std::to_string(texCoordTriangleCount()));
-  str.push_back("# NrmTriangles: " + std::to_string(normalTriangleCount()));
   str.push_back("###");
 
   // Vertices
@@ -336,7 +326,8 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
                                 CAST_UINT8(_coord),
                                 tinyply::Type::INVALID,
                                 0);
-  if (!_colour.empty() && _colour.size() == _coord.size())
+
+  if (!_colour.empty() && _colour.size() == _coord.size() )
     ply.add_properties_to_element("vertex",
                                   {"red", "green", "blue"},
                                   type,
@@ -344,7 +335,8 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
                                   CAST_UINT8(_colour),
                                   tinyply::Type::INVALID,
                                   0);
-  if (!_normal.empty() && _normal.size() == _coord.size())
+
+  if (!_normal.empty() && _normal.size() == _coord.size() )
     ply.add_properties_to_element("vertex",
                                   {"nx", "ny", "nz"},
                                   type,
@@ -352,104 +344,67 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
                                   CAST_UINT8(_normal),
                                   tinyply::Type::INVALID,
                                   0);
-  if (!_disp.empty() && _disp.size() == _coord.size())
-    ply.add_properties_to_element("vertex",
-                                  {"dx", "dy", "dz"},
-                                  type,
-                                  _disp.size(),
-                                  CAST_UINT8(_disp),
-                                  tinyply::Type::INVALID,
-                                  0);
-              
-  // Texture coordinates                    
-  if (!_texCoord.empty()) {
-    if (uvScale != T(1)) {
-      auto texCoord = _texCoord;
-      for (auto& value : texCoord) value *= uvScale;
-      ply.add_properties_to_element("texture",
-                                    {"u", "v"},
-                                    type,
-                                    texCoord.size(),
-                                    CAST_UINT8(texCoord),
-                                    tinyply::Type::INVALID,
-                                    0);
-    } else {
-      ply.add_properties_to_element("texture",
-                                    {"u", "v"},
-                                    type,
-                                    _texCoord.size(),
-                                    CAST_UINT8(_texCoord),
-                                    tinyply::Type::INVALID,
-                                    0);
-    }
-  }
 
-  // Faces
-  ply.add_properties_to_element("face",
-                                {"vertex_indices"},
-                                tinyply::Type::INT32,
-                                _coordIndex.size(),
-                                CAST_UINT8(_coordIndex),
-                                tinyply::Type::UINT8,
-                                3);
-  if (_texCoordIndex.size())
+    // Faces
     ply.add_properties_to_element("face",
-                                  {"texcoord_indices"},
+                                  {"vertex_indices"},
                                   tinyply::Type::INT32,
-                                  _texCoordIndex.size(),
-                                  CAST_UINT8(_texCoordIndex),
-                                  tinyply::Type::UINT8,
-                                  3);
-  if (_normalIndex.size())
-    ply.add_properties_to_element("face",
-                                  {"normal_indices"},
-                                  tinyply::Type::INT32,
-                                  _normalIndex.size(),
-                                  CAST_UINT8(_normalIndex),
+                                  _coordIndex.size(),
+                                  CAST_UINT8(_coordIndex),
                                   tinyply::Type::UINT8,
                                   3);
 
-  // Meshlab compatibility
-  if (_texCoordIndex.size() && meshlabCompatibility ) {
-    auto texCoord = _texCoord;
-    if (uvScale != T(1)) {
-      printf("uvScale = %f \n", uvScale);
-      fflush(stdout);
-      for (auto& value : texCoord) value *= uvScale;
-    }
-    const size_t               triCount = triangleCount();
+    // Face texture coordinate
     std::vector<Vec3<Vec2<float>>> uvCoords;
-    uvCoords.resize(triCount);
-    for (size_t i = 0; i < triCount; i++)
-      for (size_t j = 0; j < 3; j++)
-        uvCoords[i][j] = texCoord[_texCoordIndex[i][j]];
-    ply.add_properties_to_element("face",
-                                  {"texcoord"},
-                                  tinyply::Type::FLOAT32,
-                                  triCount,
-                                  CAST_UINT8(uvCoords),
-                                  tinyply::Type::UINT8,
-                                  6);
-  }
-  ply.write(outstream, binary);
-  return true;
+    if (_texCoordIndex.size()) {
+      const size_t triCount = triangleCount();
+      uvCoords.resize(triCount);
+      const double uvScale = bitDepthTexCoord == 0
+                               ? 1.0
+                               : 1.0 / (double)((1u << bitDepthTexCoord) - 1);
+      for (size_t i = 0; i < triCount; i++)
+        for (size_t j = 0; j < 3; j++)
+          uvCoords[i][j] = uvScale * _texCoord[_texCoordIndex[i][j]];
+      ply.add_properties_to_element("face",
+                                    {"texcoord"},
+                                    tinyply::Type::FLOAT32,
+                                    triCount,
+                                    CAST_UINT8(uvCoords),
+                                    tinyply::Type::UINT8,
+                                    6);
+    }
+    ply.write(outstream, binary);
+    return true;
 }
 
 //----------------------------------------------------------------------------
 
 template<typename T>
 bool
-TriangleMesh<T>::loadFromPLY(const std::string& filename) {
+TriangleMesh<T>::loadFromPLY(const std::string& fileName) {
   std::unique_ptr<std::istream> file;
-  file.reset(new std::ifstream(filename, std::ios::binary));
+  file.reset(new std::ifstream(fileName, std::ios::binary));
   if (!file || file->fail()) {
-    printf("failed to open: %s \n", filename.c_str());
+    printf("failed to open: %s \n", fileName.c_str());
     return false;
   }
+  printf("loadFromPLY: %s \n", fileName.c_str());
+  fflush(stdout);
   tinyply::PlyFile ply;
   ply.parse_header(*file);
+
+  // Read checksum
+  std::string readChecksum = "";
+  for (const auto& c : ply.get_comments()) {
+    if (c.rfind("# Checksum:", 0) == 0) {
+      auto str = c.substr(c.find_first_of(":") + 1);
+      str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
+      readChecksum = str;
+    }
+  }
+
   std::shared_ptr<tinyply::PlyData> coords, normals, colours, texcoords,
-    displacements, triangles, texTriangles, normalTriangles;
+     triangles, texTriangles ;
   try {
     coords = ply.request_properties_from_element("vertex", {"x", "y", "z"});
   } catch (const std::exception& e) {}
@@ -465,12 +420,7 @@ TriangleMesh<T>::loadFromPLY(const std::string& filename) {
     colours = ply.request_properties_from_element("vertex", {"r", "g", "b"});
   } catch (const std::exception& e) {}
   try {
-    texcoords = ply.request_properties_from_element(
-      "texture", {"u", "v"});
-  } catch (const std::exception& e) {}
-  try {
-    displacements =
-      ply.request_properties_from_element("vertex", {"dx", "dy", "dz"});
+    texcoords = ply.request_properties_from_element("vertex", {"texture_u", "texture_v"});
   } catch (const std::exception& e) {}
   try {
     triangles =
@@ -478,23 +428,231 @@ TriangleMesh<T>::loadFromPLY(const std::string& filename) {
   } catch (const std::exception& e) {}
   try {
     texTriangles =
-      ply.request_properties_from_element("face", {"texture_indices"}, 2);
-  } catch (const std::exception& e) {}
-  try {
-    normalTriangles =
-      ply.request_properties_from_element("face", {"normal_indices"}, 3);
+      ply.request_properties_from_element("face", {"texcoord"}, 6);
   } catch (const std::exception& e) {}
 
   ply.read(*file);
 
+  printf("convertFromPlyData \n");
+  fflush(stdout);
   convertFromPlyData(coords, _coord);
   convertFromPlyData(normals, _normal);
   convertFromPlyData(colours, _colour);
   convertFromPlyData(texcoords, _texCoord);
-  convertFromPlyData(displacements, _disp);
   convertFromPlyData(triangles, _coordIndex);
-  convertFromPlyData(normalTriangles, _normalIndex);
-  convertFromPlyData(texTriangles, _texCoordIndex);
+
+  if (texTriangles) {
+    const auto                 triCount = texTriangles->count;
+    std::vector<Vec3<Vec2<T>>> uvCoords;
+    uvCoords.resize(triCount);
+    _texCoordIndex.resize(triCount);
+    _texCoord.clear();
+
+    printf("texTriangles->count = %zu \n", texTriangles->count);
+    std::memcpy(
+      reinterpret_cast<uint8_t*>(reinterpret_cast<void*>(uvCoords.data())),
+      texTriangles->buffer.get(),
+      texTriangles->buffer.size_bytes());
+
+    for (size_t i = 0; i < triCount; i++) {
+      for (size_t j = 0; j < 3; j++) {
+        size_t index = 0;
+        auto   it =
+          std::find(_texCoord.begin(), _texCoord.end(), uvCoords[i][j]);
+        if (it == _texCoord.end()) {
+          index = _texCoord.size();
+          _texCoord.push_back(uvCoords[i][j]);
+        } else {
+          index = std::distance(_texCoord.begin(), it);
+        }
+        _texCoordIndex[i][j] = index;
+      }
+    }
+  }
+  print("Load: " + fileName);
+
+  return true;
+}
+
+//----------------------------------------------------------------------------
+
+template<typename T>
+bool
+TriangleMesh<T>::saveToVMB(const std::string& fileName) const {
+  // Compute checksum
+  Checksum checksum;
+  auto     strChecksum = checksum.getChecksum(*this);
+  print("Save: " + fileName);
+  std::cout << "# Checksum:     " << strChecksum << "\n";
+
+  // Get data type
+  std::string type = "float";
+  if (std::is_same<T, double>::value) type = "double";
+  else if (std::is_same<T, float>::value) type = "float";
+  else if (std::is_same<T, unsigned char>::value) type = "uint8";
+  else {
+    throw std::runtime_error("saveToPLY: type not supported");
+    exit(-1);
+  }
+
+  // Write header
+  std::ofstream fout(fileName, std::ofstream::out);
+  if (!fout.is_open()) { return false; }
+  fout << "#VMB" << std::endl;
+  fout << "Type:     " << type << "\n";
+  fout << "Coord:    " << pointCount() << "\n";
+  fout << "Colour:   " << colourCount() << "\n";
+  fout << "Normals:  " << normalCount() << "\n";
+  fout << "TexCoord: " << texCoordCount() << "\n";
+  fout << "Disp:     " << displacementCount() << "\n";
+  fout << "Faces:    " << triangleCount() << "\n";
+  fout << "TexFaces: " << texCoordTriangleCount() << "\n";
+  fout << "NrmFaces: " << normalTriangleCount() << "\n";
+  fout << "Mtllib:   " << _mtllib << "\n";
+  fout << "Checksum: " << strChecksum << "\n";
+  fout << "end_header \n";
+  fout.clear();
+  fout.close();
+
+  // Write
+  fout.open(fileName,
+            std::ofstream::binary | std::ofstream::out | std::ofstream::app);
+
+  // Vertex coordinates
+  if (!_coord.empty())
+    fout.write(reinterpret_cast<const char*>(_coord.data()),
+               _coord.size() * sizeof(T) * 3);
+  if (!_colour.empty())
+    fout.write(reinterpret_cast<const char*>(_colour.data()),
+               _colour.size() * sizeof(T) * 3);
+  if (!_normal.empty())
+    fout.write(reinterpret_cast<const char*>(_normal.data()),
+               _normal.size() * sizeof(T) * 3);
+  if (!_texCoord.empty())
+    fout.write(reinterpret_cast<const char*>(_texCoord.data()),
+               _texCoord.size() * sizeof(T) * 2);
+  if (!_disp.empty())
+    fout.write(reinterpret_cast<const char*>(_disp.data()),
+               _disp.size() * sizeof(T) * 3);
+
+  // Face indices
+  if (!_coordIndex.empty())
+    fout.write(reinterpret_cast<const char*>(_coordIndex.data()),
+               _coordIndex.size() * sizeof(int) * 3);
+  if (!_normalIndex.empty())
+    fout.write(reinterpret_cast<const char*>(_normalIndex.data()),
+               _normalIndex.size() * sizeof(int) * 3);
+  if (!_texCoordIndex.empty())
+    fout.write(reinterpret_cast<const char*>(_texCoordIndex.data()),
+               _texCoordIndex.size() * sizeof(int) * 3);
+
+  fout.close();
+  return true;
+}
+
+//----------------------------------------------------------------------------
+
+template<typename T>
+bool
+TriangleMesh<T>::loadFromVMB(const std::string& fileName) {
+  std::ifstream ifs(fileName, std::ifstream::in);
+  if (!ifs.is_open()) { return false; }
+  std::string line;
+  getline(ifs, line);
+  if (line.rfind("#VMB", 0) != 0) {
+    printf("ERROR: Read VMB %s can't read file format\n", fileName.c_str());
+    exit(-1);
+  }
+
+  // Get data type
+  std::string type = "float";
+  if (std::is_same<T, double>::value) type = "double";
+  else if (std::is_same<T, float>::value) type = "float";
+  else if (std::is_same<T, unsigned char>::value) type = "uint8";
+  else {
+    throw std::runtime_error("saveToPLY: type not supported");
+    exit(-1);
+  }
+
+  // Read header
+  std::string readChecksum;
+  for (; getline(ifs, line);) {
+    if (line.rfind("end_header", 0) == 0) break;
+    else if (line.rfind("#", 0) == 0) continue;
+    else {
+      std::stringstream ss(line);
+      std::string       name, value;
+      ss >> name >> value;
+      if (name == "Coord:") _coord.resize(std::stoi(value));
+      else if (name == "Colour:") _colour.resize(std::stoi(value));
+      else if (name == "Normals:") _normal.resize(std::stoi(value));
+      else if (name == "TexCoord:") _texCoord.resize(std::stoi(value));
+      else if (name == "Disp:") _disp.resize(std::stoi(value));
+      else if (name == "Faces:") _coordIndex.resize(std::stoi(value));
+      else if (name == "TexFaces:") _texCoordIndex.resize(std::stoi(value));
+      else if (name == "NrmTFaces:") _normalIndex.resize(std::stoi(value));
+      else if (name == "Checksum:") readChecksum = value;
+      else if (name == "type:") {
+        if (type != value) {
+          printf("ERROR: Read VMB %s data type not correct\n",
+                 fileName.c_str());
+          exit(-1);
+        }
+      }
+    }
+  }
+
+  // Read data
+  const auto headerCount = ifs.tellg();
+  ifs.close();
+  ifs.open(fileName, std::ifstream::binary | std::ifstream::in);
+  ifs.seekg(headerCount);
+
+  // Vertex coordinates
+  if (!_coord.empty())
+    ifs.read(reinterpret_cast<char*>(_coord.data()),
+             _coord.size() * sizeof(T) * 3);
+  if (!_colour.empty())
+    ifs.read(reinterpret_cast<char*>(_colour.data()),
+             _colour.size() * sizeof(T) * 3);
+  if (!_normal.empty())
+    ifs.read(reinterpret_cast<char*>(_normal.data()),
+             _normal.size() * sizeof(T) * 3);
+  if (!_texCoord.empty())
+    ifs.read(reinterpret_cast<char*>(_texCoord.data()),
+             _texCoord.size() * sizeof(T) * 2);
+  if (!_disp.empty())
+    ifs.read(reinterpret_cast<char*>(_disp.data()),
+             _disp.size() * sizeof(T) * 3);
+
+  // Face indices
+  if (!_coordIndex.empty())
+    ifs.read(reinterpret_cast<char*>(_coordIndex.data()),
+             _coordIndex.size() * sizeof(int) * 3);
+  if (!_normalIndex.empty())
+    ifs.read(reinterpret_cast<char*>(_normalIndex.data()),
+             _normalIndex.size() * sizeof(int) * 3);
+  if (!_texCoordIndex.empty())
+    ifs.read(reinterpret_cast<char*>(_texCoordIndex.data()),
+             _texCoordIndex.size() * sizeof(int) * 3);
+  ifs.close();
+
+  print("Load: " + fileName);
+
+  // Compare checksums
+  if (!readChecksum.empty()) {
+    Checksum checksum;
+    auto     computeChecksum = checksum.getChecksum(*this);
+    if (computeChecksum != readChecksum) {
+      printf("Error: Read/compute checksum are not the same: %s %s \n",
+             readChecksum.c_str(),
+             computeChecksum.c_str());
+      fflush(stdout);
+      exit(-1);
+    } else {
+      printf("Checksums match: %s \n", readChecksum.c_str());
+    }
+  }
   return true;
 }
 

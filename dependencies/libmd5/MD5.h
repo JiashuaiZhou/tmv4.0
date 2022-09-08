@@ -48,7 +48,7 @@ public:
 
   // compute digest over buf of length len. multiple calls may extend the
   // digest over more data.
-  void update(unsigned char* buf, unsigned len) {
+  void update(const unsigned char* buf, unsigned len) {
     MD5Update(&m_state, buf, len);
   }
 
@@ -95,7 +95,7 @@ private:
   }
   // Update context to reflect the concatenation of another buffer full of
   // bytes.
-  void MD5Update(context_md5_t* ctx, unsigned char* buf, unsigned len) {
+  void MD5Update(context_md5_t* ctx, const unsigned char* buf, unsigned len) {
     uint32_t t;
 
     // Update bitcount

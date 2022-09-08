@@ -70,6 +70,7 @@ public:
                      size_t&                     byteCounter,
                      const VMCDecoderParameters& params);
 
+  uint32_t getBitDepthTexCoord(){return _sps.bitDepthTexCoord; }
 private:
   int32_t decodeSequenceHeader(const Bitstream& bitstream);
   int32_t decodeFrameHeader(const Bitstream& bitstream,

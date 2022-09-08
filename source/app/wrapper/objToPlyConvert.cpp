@@ -51,7 +51,7 @@ struct Parameters {
   std::string srcTexturePath = {};
   std::string dstMeshPath    = {};
   std::string dstTexturePath = {};
-  double      uvScale             = 1.0;
+  uint32_t    qt             = 0;
   bool        binary         = true;
 };
 
@@ -86,10 +86,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.dstTexturePath,
       params.dstTexturePath,
       "Output texture")
-    ("uvScale",
-      params.uvScale,
-      params.uvScale,
-      "Scale texture coordinates")
+    ("qt",
+      params.qt,
+      params.qt,
+      "qt")
     ("binary",
       params.binary,
       params.binary,
@@ -169,7 +169,7 @@ main(int argc, char* argv[]) {
 
   // Save PLY
   printf("Save PLY: %s \n", params.dstMeshPath.c_str());
-  srcMesh.save(params.dstMeshPath, params.uvScale, params.binary);
+  srcMesh.save(params.dstMeshPath, params.qt, params.binary);
 
   // Load PLY
   printf("Load PLY: %s \n", params.dstMeshPath.c_str());
@@ -184,7 +184,7 @@ main(int argc, char* argv[]) {
   // Resave obj for comparison
   std::string str = vmesh::removeExtension(params.dstMeshPath) + "_resave.obj";
   printf("Save OBJ: %s \n", str.c_str());
-  recMesh.save(str);
+  recMesh.save(str, 1);
 
   return 0;
 }

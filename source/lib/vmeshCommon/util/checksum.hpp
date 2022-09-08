@@ -43,15 +43,20 @@ public:
   ~Checksum() = default;
 
   template<typename T>
-  void add(vmesh::TriangleMesh<T>& mesh, vmesh::Frame<uint8_t>& texture);
+  void add(const vmesh::TriangleMesh<T>& mesh,
+           const vmesh::Frame<uint8_t>&  texture);
 
   void print();
   template<typename T>
-  void print(vmesh::TriangleMesh<T>& mesh, std::string eString);
-  void print(vmesh::Frame<uint8_t>& texture, std::string eString);
+  void print(const vmesh::TriangleMesh<T>& mesh, std::string eString);
+  void print(const vmesh::Frame<uint8_t>& texture, std::string eString);
 
   bool read(const std::string& path);
   bool write(const std::string& path);
+
+  template<typename T>
+  std::string getChecksum(const vmesh::TriangleMesh<T>& mesh);
+  std::string getChecksum(const vmesh::Frame<uint8_t>& texture);
 
   bool operator!=(const Checksum& rhs) const { return !(*this == rhs); }
 
@@ -80,11 +85,11 @@ public:
 
 private:
   template<typename T>
-  void                 add(vmesh::TriangleMesh<T>& mesh);
-  void                 add(vmesh::Frame<uint8_t>& texture);
+  void add(const vmesh::TriangleMesh<T>& mesh);
+  void add(const vmesh::Frame<uint8_t>& texture);
   template<typename T>
-  std::vector<uint8_t> compute(vmesh::TriangleMesh<T>& mesh);
-  std::vector<uint8_t> compute(vmesh::Frame<uint8_t>& texture);
+  std::vector<uint8_t> compute(const vmesh::TriangleMesh<T>& mesh);
+  std::vector<uint8_t> compute(const vmesh::Frame<uint8_t>& texture);
 
   std::vector<std::vector<uint8_t>> mesh_;
   std::vector<std::vector<uint8_t>> texture_;

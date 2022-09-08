@@ -246,35 +246,45 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
   // get video bitstream
   uint32_t byteCountTexVideo = 0;
   bitstream.read(byteCountTexVideo, _byteCounter);
-  std::vector<uint8_t> videoBitstream(bitstream.buffer.begin() + _byteCounter,
-                                      bitstream.buffer.begin() + _byteCounter
-                                        + byteCountTexVideo);
-  _byteCounter += byteCountTexVideo;
+  printf("byteCountTexVideo = %u \n",byteCountTexVideo);
+  fflush(stdout);
+  if (byteCountTexVideo == 0) {
+    for (auto& frame : gof) {
+      frame.outputTexture.clear();
+      frame.outputTexture.resize(1, 1, ColourSpace::BGR444p);
+      frame.outputTexture.zero();
+    }
+  } else {
+    std::vector<uint8_t> videoBitstream(
+      bitstream.buffer.begin() + _byteCounter,
+      bitstream.buffer.begin() + _byteCounter + byteCountTexVideo);
+    _byteCounter += byteCountTexVideo;
 
-  // Decode video
-  FrameSequence<uint16_t> yuv;
-  FrameSequence<uint16_t> brg;
-  auto decoder = VirtualVideoDecoder<uint16_t>::create(VideoCodecId::HM);
-  decoder->decode(videoBitstream, yuv, 10);
+    // Decode video
+    FrameSequence<uint16_t> yuv;
+    FrameSequence<uint16_t> brg;
+    auto decoder = VirtualVideoDecoder<uint16_t>::create(VideoCodecId::HM);
+    decoder->decode(videoBitstream, yuv, 10);
 
-  // Convert video
-  auto convert = VirtualColourConverter<uint16_t>::create(1);
-  convert->convert(params.textureVideoHDRToolDecConfig, yuv, brg);
+    // Convert video
+    auto convert = VirtualColourConverter<uint16_t>::create(1);
+    convert->convert(params.textureVideoHDRToolDecConfig, yuv, brg);
 
-  // Store result in 8 bits frames
-  for (int32_t f = 0; f < brg.frameCount(); ++f) {
-    gof.frame(f).outputTexture = brg[f];
-  }
+    // Store result in 8 bits frames
+    for (int32_t f = 0; f < brg.frameCount(); ++f) {
+      gof.frame(f).outputTexture = brg[f];
+    }
 
-  // Save intermediate files
-  if (params.keepIntermediateFiles) {
-    FrameSequence<uint8_t> brg8(brg);
-    auto                   videoPath =
-      brg8.createName(params.intermediateFilesPathPrefix + "GOF_"
-                        + std::to_string(_gofInfo.index_) + "_texture_dec",
-                      8);
-    save(removeExtension(videoPath) + ".bin", videoBitstream);
-    brg8.save(videoPath);
+    // Save intermediate files
+    if (params.keepIntermediateFiles) {
+      FrameSequence<uint8_t> brg8(brg);
+      auto                   videoPath =
+        brg8.createName(params.intermediateFilesPathPrefix + "GOF_"
+                          + std::to_string(_gofInfo.index_) + "_texture_dec",
+                        8);
+      save(removeExtension(videoPath) + ".bin", videoBitstream);
+      brg8.save(videoPath);
+    }
   }
   return 0;
 }

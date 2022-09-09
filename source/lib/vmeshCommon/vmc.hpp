@@ -126,17 +126,9 @@ struct VMCFrame {
   TriangleMesh<MeshType>            input;
   TriangleMesh<MeshType>            reference;
   TriangleMesh<MeshType>            mapped;
-  TriangleMesh<MeshType>            decimate;
   TriangleMesh<MeshType>            decimateTexture;
-  TriangleMesh<MeshType>            baseIntra;
-  TriangleMesh<MeshType>            subdivIntra;
-  TriangleMesh<MeshType>            nsubdivIntra;
-  TriangleMesh<MeshType>            baseInter;
-  TriangleMesh<MeshType>            subdivInter;
-  TriangleMesh<MeshType>            nsubdivInter;
   TriangleMesh<MeshType>            base;
   TriangleMesh<MeshType>            subdiv;
-  TriangleMesh<MeshType>            nsubdiv;
   TriangleMesh<MeshType>            rec;
   std::vector<int32_t>              mapping;
   std::vector<Vec3<int32_t>>        qpositions;

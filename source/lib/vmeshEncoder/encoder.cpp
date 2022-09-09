@@ -233,16 +233,34 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
       frame.outputTexture.zero();
     }
   } else {
-    // convert BGR444 to YUV420
-    FrameSequence<uint8_t> bgrSrc(
-      width, height, ColourSpace::BGR444p, frameCount);
-    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      bgrSrc[frameIndex] = gof.frame(frameIndex).outputTexture;
+    // Save source video
+    std::string prefix;
+    if (params.keepIntermediateFiles) {
+      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+                    + std::to_string(_gofInfo.index_) + "_tex";
+      FrameSequence<uint8_t> bgrSrc(
+        width, height, ColourSpace::BGR444p, frameCount);
+      for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) 
+        bgrSrc[frameIndex] = gof.frame(frameIndex).outputTexture;      
+      bgrSrc.save(bgrSrc.createName(prefix + "_enc", 8));
     }
-    FrameSequence<uint16_t> bgrSrc10(bgrSrc);
+
+    // convert BGR444 8bits to BGR444 10bits
+    FrameSequence<uint16_t> bgrSrc10(width, height, ColourSpace::BGR444p, frameCount);
+    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+      bgrSrc10[frameIndex] = gof.frame(frameIndex).outputTexture;
+      gof.frame(frameIndex).outputTexture.clear();
+    }
+
+    // convert BGR444 to YUV420
     FrameSequence<uint16_t> yuvSrc;
     auto convert = VirtualColourConverter<uint16_t>::create(1);
     convert->convert(params.textureVideoHDRToolEncConfig, bgrSrc10, yuvSrc);
+    bgrSrc10.clear();
+
+    // Save intermediate files
+    if (params.keepIntermediateFiles)
+      yuvSrc.save(yuvSrc.createName(prefix + "_enc", 10));
 
     //Encode
     VideoEncoderParameters videoEncoderParams;
@@ -257,25 +275,31 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
     encoder->encode(yuvSrc, videoEncoderParams, videoBitstream, yuvRec);
     bitstream.write((uint32_t)videoBitstream.size());
     bitstream.append(videoBitstream);
+    yuvSrc.clear();
+    
+    // Save intermediate files
+    if (params.keepIntermediateFiles) {
+      yuvRec.save(yuvRec.createName(prefix + "_rec", 10));
+      save(prefix + ".h265", videoBitstream);
+    }
 
     // Convert Rec yuv to bgr
     FrameSequence<uint16_t> bgrRec;
     convert->convert(params.textureVideoHDRToolDecConfig, yuvRec, bgrRec);
-    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      gof.frame(frameIndex).outputTexture = bgrRec[frameIndex];
-    }
+    yuvRec.clear();
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       FrameSequence<uint8_t> bgrRec8(bgrRec);
       auto                   prefix = params.intermediateFilesPathPrefix + "GOF_"
-                    + std::to_string(_gofInfo.index_) + "_tex";
-      bgrSrc.save(bgrSrc.createName(prefix + "_enc", 8));
-      yuvSrc.save(yuvSrc.createName(prefix + "_enc", 10));
-      yuvRec.save(yuvRec.createName(prefix + "_rec", 10));
+                    + std::to_string(_gofInfo.index_) + "_tex";      
       bgrRec8.save(bgrRec8.createName(prefix + "_rec", 8));
-      save(prefix + ".h265", videoBitstream);
     }
+
+    // convert BGR444 10bits to BGR444 8bits
+    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) 
+      gof.frame(frameIndex).outputTexture = bgrRec[frameIndex];
+    bgrRec.clear();
   }
   return 0;
 }
@@ -499,8 +523,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
   auto& qpositions = frame.qpositions;
   frame.base.print("frame.base");
   frame.subdiv.print("frame.subdiv");
-  printf("frame.mapping size    = %zu \n", frame.mapping.size());
-  printf("frame.qpositions size = %zu \n", frame.qpositions.size());
+  printf("frame.mapping size    = %zu \n", mapping.size());
+  printf("frame.qpositions size = %zu \n", qpositions.size());
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
@@ -1138,7 +1162,9 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
       // Simplify
       /////////////////////////////////////////////////////////////////////////
       std::cout << "Simplify \n";
-      
+
+      TriangleMesh<MeshType> decimate;
+
       // Load cache files
       bool skipSimplify = false;
       if (params.cachingPoint >= CachingPoint::SIMPLIFY) {
@@ -1146,7 +1172,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
             && loadCache(
               params, frame.reference, "reference", gofIndex, frameIndex)
             && loadCache(
-              params, frame.decimate, "decimate", gofIndex, frameIndex)) {
+              params, decimate, "decimate", gofIndex, frameIndex)) {
           skipSimplify = true;
         }
       }
@@ -1160,7 +1186,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
           frame.input.save(prefix + "_simp_input.ply");
         }
         // Create mapped, reference and decimate
-        if (geometryDecimate.decimate(frame, params)) {
+        if (geometryDecimate.generate(
+              frame.input, frame.reference, decimate, frame.mapped, params)) {
           std::cerr << "Error: can't simplify mesh !\n";
           return 1;
         }
@@ -1169,14 +1196,14 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
         if (params.forceCoordTruncation) {
           forceCoordinateTruncation(frame.mapped, prefix + "_mapped.ply");
           forceCoordinateTruncation(frame.reference, prefix + "_reference.ply");
-          forceCoordinateTruncation(frame.decimate, prefix + "_decimate.ply");
+          forceCoordinateTruncation(decimate, prefix + "_decimate.ply");
         }
 
         // Save intermediate files
         if (params.keepIntermediateFiles) {
           frame.mapped.save(prefix + "_mapped.ply");
           frame.reference.save(prefix + "_reference.ply");
-          frame.decimate.save(prefix + "_decimate.ply");
+          decimate.save(prefix + "_decimate.ply");
         }
 
         // Save cache files
@@ -1184,7 +1211,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
           saveCache(params, frame.mapped, "mapped", gofIndex, frameIndex);
           saveCache(
             params, frame.reference, "reference", gofIndex, frameIndex);
-          saveCache(params, frame.decimate, "decimate", gofIndex, frameIndex);
+          saveCache(params, decimate, "decimate", gofIndex, frameIndex);
         }
       }
 
@@ -1208,7 +1235,9 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
       printf("skipUVAtlas = %d \n",skipUVAtlas);
       fflush(stdout);
       if (!skipUVAtlas) {
-        vmesh::TextureParametrization::generate(frame, params);
+        vmesh::TextureParametrization textureParametrization;
+        textureParametrization.generate(
+          decimate, frame.decimateTexture, params);
 
         // Force truncation of mesh coordinates to get the same results as P11
         if (params.forceCoordTruncation) {
@@ -1247,37 +1276,38 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
       printf("skipSubDiv = %d \n",skipSubDiv);
       fflush(stdout);
       if (!skipSubDiv) {
-          // Intra geometry parametrization
+        // Intra geometry parametrization
         std::cout << "Intra geometry parametrization\n";
         GeometryParametrization fitsubdivIntra;
-        TriangleMesh<MeshType>  mtargetIntra;
-        TriangleMesh<MeshType>  subdiv0Intra;
+        TriangleMesh<MeshType>  mtargetIntra, subdiv0Intra;
+        TriangleMesh<MeshType>  baseIntra, subdivIntra, nsubdivIntra;
+        TriangleMesh<MeshType>  baseInter, subdivInter, nsubdivInter;        
         fitsubdivIntra.generate(frame.reference,        // target
                                 frame.decimateTexture,  // source
                                 frame.mapped,           // mapped
                                 mtargetIntra,           // mtarget
                                 subdiv0Intra,           // subdiv0
                                 params.intraGeoParams,  // params
-                                frame.baseIntra,        // base
-                                frame.subdivIntra,      // deformed
-                                frame.nsubdivIntra);    // ndeformed
+                                baseIntra,              // base
+                                subdivIntra,            // deformed
+                                nsubdivIntra);          // ndeformed
 
         // Force truncation of mesh coordinates to get the same results as P11
         if (params.forceCoordTruncation) {
-          forceCoordinateTruncation(frame.baseIntra,
+          forceCoordinateTruncation(baseIntra,
                                     prefix + "_intra_base.ply");
-          forceCoordinateTruncation(frame.subdivIntra,
+          forceCoordinateTruncation(subdivIntra,
                                     prefix + "_intra_subdiv.ply");
-          forceCoordinateTruncation(frame.nsubdivIntra,
+          forceCoordinateTruncation(nsubdivIntra,
                                     prefix + "_intra_nsubdiv.ply");
         }
 
         // Save intermediate files
         if (params.keepIntermediateFiles) {
           frame.decimateTexture.save(prefix + "_reparamDecimateTexture.ply");
-          frame.baseIntra.save(prefix + "_intra_base.ply");
-          frame.subdivIntra.save(prefix + "_intra_subdiv.ply");
-          frame.nsubdivIntra.save(prefix + "_intra_nsubdiv.ply");
+          baseIntra.save(prefix + "_intra_base.ply");
+          subdivIntra.save(prefix + "_intra_subdiv.ply");
+          nsubdivIntra.save(prefix + "_intra_nsubdiv.ply");
         }
         bool  chooseIntra = true;
         auto& frameInfo   = _gofInfo.frameInfo(frameIndex);
@@ -1311,9 +1341,9 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
                                     frame.input,            // mtarget
                                     subdiv0Inter,           // subdiv0
                                     params.interGeoParams,  // params
-                                    frame.baseInter,        // base
-                                    frame.subdivInter,      // deformed
-                                    frame.nsubdivInter);    // ndeformed
+                                    baseInter,        // base
+                                    subdivInter,      // deformed
+                                    nsubdivInter);    // ndeformed
           } else {
             // Without mapping
             // subdiv0 : ld frame - 1 subdiv
@@ -1328,27 +1358,27 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
                                     mtargetInter,           // mtarget
                                     ref.subdiv,             // subdiv0
                                     params.interGeoParams,  // params
-                                    frame.baseInter,        // base
-                                    frame.subdivInter,      // deformed
-                                    frame.nsubdivInter);    // ndeformed
+                                    baseInter,        // base
+                                    subdivInter,      // deformed
+                                    nsubdivInter);    // ndeformed
           }
 
           // Force truncation of mesh coordinates to get the same results as P11
           if (params.forceCoordTruncation) {
-            forceCoordinateTruncation(frame.baseInter,
+            forceCoordinateTruncation(baseInter,
                                       prefix + "_inter_base.ply");
-            forceCoordinateTruncation(frame.subdivInter,
+            forceCoordinateTruncation(subdivInter,
                                       prefix + "_inter_subdiv.ply");
-            forceCoordinateTruncation(frame.nsubdivInter,
+            forceCoordinateTruncation(nsubdivInter,
                                       prefix + "_inter_nsubdiv.ply");
           }
 
           // Save intermediate files
           if (params.keepIntermediateFiles) {
             frame.decimateTexture.save(prefix + "_reparamDecimateTexture.ply");
-            frame.baseInter.save(prefix + "_inter_base.ply");
-            frame.subdivInter.save(prefix + "_inter_subdiv.ply");
-            frame.nsubdivInter.save(prefix + "_inter_nsubdiv.ply");
+            baseInter.save(prefix + "_inter_base.ply");
+            subdivInter.save(prefix + "_inter_subdiv.ply");
+            nsubdivInter.save(prefix + "_inter_nsubdiv.ply");
           }
 
           // ComputeMetric/Decision
@@ -1363,12 +1393,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
             metricParams.maxPosition[c] = params.maxPosition[c];
           }
           metricsIntra.compute(frame.input,
-                               frame.subdivIntra,
+                               subdivIntra,
                                frame.inputTexture,
                                frame.inputTexture,
                                metricParams);
           metricsInter.compute(frame.input,
-                               frame.subdivInter,
+                               subdivInter,
                                frame.inputTexture,
                                frame.inputTexture,
                                metricParams);
@@ -1401,9 +1431,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
           }
         }
         if (chooseIntra) {
-          frame.base                    = frame.baseIntra;
-          frame.subdiv                  = frame.subdivIntra;
-          frame.nsubdiv                 = frame.nsubdivIntra;
+          frame.base                    = baseIntra;
+          frame.subdiv                  = subdivIntra;          
           frameInfo.type                = FrameType::INTRA;
           frameInfo.referenceFrameIndex = -1;
         } else {
@@ -1413,9 +1442,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
           printf("update referenceFrameIndex = %d = %d - 1 \n",
                  frameInfo.referenceFrameIndex,
                  frameInfo.frameIndex);
-          frame.base    = frame.baseInter;
-          frame.subdiv  = frame.subdivInter;
-          frame.nsubdiv = frame.nsubdivInter;
+          frame.base    = baseInter;
+          frame.subdiv  = subdivInter;          
         }
 
         // Save cache files
@@ -1425,6 +1453,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
         }
       }
     }
+  }
+
+  for (auto& frame : gof) {
+    frame.reference.clear();
+    frame.decimateTexture.clear();
+    frame.mapped.clear();
   }
 
   // Compress

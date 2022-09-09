@@ -936,7 +936,7 @@ hmLibVideoEncoderImpl<T>::xReadPicture(TComPicYuv*       pic,
             pic->getHeight(COMPONENT_Cb),
             pic->getStride(COMPONENT_Cb),
             m_internalBitDepth[0] - m_outputBitDepth[0],
-            m_inputColourSpaceConvert == IPCOLOURSPACE_RGBtoGBR);
+            m_inputColourSpaceConvert == IPCOLOURSPACE_RGBtoGBR);  
 }
 
 template class hmLibVideoEncoderImpl<uint8_t>;

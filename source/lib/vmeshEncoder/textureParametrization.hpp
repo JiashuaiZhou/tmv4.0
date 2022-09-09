@@ -53,7 +53,10 @@ public:
   TextureParametrization()  = default;
   ~TextureParametrization() = default;
 
-  static bool generate(VMCFrame& frame, const VMCEncoderParameters& params);
+  template<typename T>
+  static bool generate(const TriangleMesh<T>&      decimate,
+                       TriangleMesh<T>&            decimateTexture,
+                       const VMCEncoderParameters& params);
 };
 
 }  // namespace vmesh

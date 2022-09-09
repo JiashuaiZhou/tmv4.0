@@ -51,32 +51,34 @@
 namespace vmesh {
 
 //============================================================================
-
+template<typename T>
 bool
-GeometryDecimate::decimate(VMCFrame&                   frame,
+GeometryDecimate::generate(const TriangleMesh<T>&      input,
+                           TriangleMesh<T>&            reference,
+                           TriangleMesh<T>&            decimate,
+                           TriangleMesh<T>&            mapped,
                            const VMCEncoderParameters& params) {
-  frame.reference = frame.input;
-  if (!unifyVertices(frame.reference)) {
+  reference = input;
+  if (!unifyVertices(reference)) {
     std::cerr << "Error: can't unify vertices!\n";
     return 1;
   }
 
-  if (!decimate(frame.reference, frame.decimate, frame.mapped, params)) {
+  if (!generate(reference, decimate, mapped, params)) {
     std::cerr << "Error: can't simplify mesh!\n";
     return 1;
   }
 
-  if (!removeDuplicatedTriangles(frame.decimate)) {
+  if (!removeDuplicatedTriangles(decimate)) {
     std::cerr << "Error: can't remove duplicated triangles!\n";
     return 1;
   }
 
-  if (!removeSmallConnectedComponents(frame.decimate,
-                                      params.minCCTriangleCount)) {
+  if (!removeSmallConnectedComponents(decimate, params.minCCTriangleCount)) {
     std::cerr << "Error: can't remove small connected components!\n";
     return 1;
   }
-  frame.reference.scaleTextureCoordinates(params.texCoordQuantizationBits);
+  reference.scaleTextureCoordinates(params.texCoordQuantizationBits);
   return 0;
 }
 
@@ -206,10 +208,9 @@ GeometryDecimate::unifyVertices(TriangleMesh<T>& mesh) {
 
 //============================================================================
 
-
 template<typename T>
 bool
-GeometryDecimate::decimate(const TriangleMesh<T>&      meshT,
+GeometryDecimate::generate(const TriangleMesh<T>&      meshT,
                            TriangleMesh<T>&            dmeshT,
                            TriangleMesh<T>&            mmeshT,
                            const VMCEncoderParameters& params) {
@@ -252,13 +253,13 @@ GeometryDecimate::decimate(const TriangleMesh<T>&      meshT,
   printf("copy \n");
   fflush(stdout);
   mmesh.triangles() = mesh.triangles();
-  printf("mesh.triangleCount()  = %zu \n",mesh.triangleCount());
-  printf("mesh.pointCount()     = %zu \n",mesh.pointCount());
-  printf("mmesh.triangleCount() = %zu \n",mmesh.triangleCount());
-  printf("mmesh.pointCount()    = %zu \n",mmesh.pointCount());
+  printf("mesh.triangleCount()  = %zu \n", mesh.triangleCount());
+  printf("mesh.pointCount()     = %zu \n", mesh.pointCount());
+  printf("mmesh.triangleCount() = %zu \n", mmesh.triangleCount());
+  printf("mmesh.pointCount()    = %zu \n", mmesh.pointCount());
   printf("resizePoints \n");
   fflush(stdout);
-  mmesh.resizePoints(mesh.pointCount());  
+  mmesh.resizePoints(mesh.pointCount());
   printf("trackedPoints \n");
   fflush(stdout);
   decimator.trackedPoints(
@@ -266,18 +267,35 @@ GeometryDecimate::decimate(const TriangleMesh<T>&      meshT,
 
   std::cout << "Decimated mesh: " << decimator.decimatedPointCount() << "V "
             << decimator.decimatedTriangleCount() << "T\n";
-            
+
   dmeshT.convert(dmesh);
   mmeshT.convert(mmesh);
   return true;
 }
 
+//============================================================================
+
+template bool GeometryDecimate::generate<float>(const TriangleMesh<float>&,
+                                                TriangleMesh<float>&,
+                                                TriangleMesh<float>&,
+                                                TriangleMesh<float>&,
+                                                const VMCEncoderParameters&);
+template bool GeometryDecimate::generate<double>(const TriangleMesh<double>&,
+                                                 TriangleMesh<double>&,
+                                                 TriangleMesh<double>&,
+                                                 TriangleMesh<double>&,
+                                                 const VMCEncoderParameters&);
+
 template bool GeometryDecimate::unifyVertices<float>(TriangleMesh<float>&);
 template bool GeometryDecimate::unifyVertices<double>(TriangleMesh<double>&);
 
-template bool GeometryDecimate::unifyVertices<float>(const TriangleMesh<float>&,
-                                              TriangleMesh<float>&);
-template bool GeometryDecimate::unifyVertices<double>(const TriangleMesh<double>&,
-                                              TriangleMesh<double>&);
+template bool
+GeometryDecimate::unifyVertices<float>(const TriangleMesh<float>&,
+                                       TriangleMesh<float>&);
+template bool
+GeometryDecimate::unifyVertices<double>(const TriangleMesh<double>&,
+                                        TriangleMesh<double>&);
+
+//============================================================================
 
 }  // namespace vmesh

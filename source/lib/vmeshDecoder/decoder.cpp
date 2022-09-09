@@ -262,18 +262,14 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
 
     // Decode video
     FrameSequence<uint16_t> yuv;
-    FrameSequence<uint16_t> brg;
     auto decoder = VirtualVideoDecoder<uint16_t>::create(VideoCodecId::HM);
     decoder->decode(videoBitstream, yuv, 10);
 
     // Convert video
+    FrameSequence<uint16_t> brg;
     auto convert = VirtualColourConverter<uint16_t>::create(1);
     convert->convert(params.textureVideoHDRToolDecConfig, yuv, brg);
-
-    // Store result in 8 bits frames
-    for (int32_t f = 0; f < brg.frameCount(); ++f) {
-      gof.frame(f).outputTexture = brg[f];
-    }
+    yuv.clear();
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -282,9 +278,14 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
         brg8.createName(params.intermediateFilesPathPrefix + "GOF_"
                           + std::to_string(_gofInfo.index_) + "_texture_dec",
                         8);
-      save(removeExtension(videoPath) + ".bin", videoBitstream);
       brg8.save(videoPath);
+      save(removeExtension(videoPath) + ".bin", videoBitstream);
     }
+
+    // Store result in 8 bits frames
+    for (int32_t f = 0; f < brg.frameCount(); ++f)
+      gof.frame(f).outputTexture = brg[f];
+    brg.clear();
   }
   return 0;
 }

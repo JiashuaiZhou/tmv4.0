@@ -68,11 +68,13 @@ HRESULT __cdecl UVAtlasCallback(float fPercentDone) {
 
 //============================================================================
 
+template<typename T>
 bool
-TextureParametrization::generate(VMCFrame&                   frame,
+TextureParametrization::generate(const TriangleMesh<T>&      decimate,
+                                 TriangleMesh<T>&            decimateTexture,
                                  const VMCEncoderParameters& params) {
   TriangleMesh<float> mesh;
-  mesh.convert(frame.decimate);
+  mesh.convert(decimate);
 
   // Remove unwanted mesh components
   mesh.displacements().clear();
@@ -230,9 +232,23 @@ TextureParametrization::generate(VMCFrame&                   frame,
 
   mesh.texCoordTriangles() = mesh.triangles();
 
-  frame.decimateTexture.convert(mesh);
+  decimateTexture.convert(mesh);
 
   return 0;
 }
+
+//============================================================================
+
+template bool
+TextureParametrization::generate<float>(const TriangleMesh<float>&,
+                                        TriangleMesh<float>&,
+                                        const VMCEncoderParameters&);
+
+template bool
+TextureParametrization::generate<double>(const TriangleMesh<double>&,
+                                         TriangleMesh<double>&,
+                                         const VMCEncoderParameters&);
+
+//============================================================================
 
 }  // namespace vmesh

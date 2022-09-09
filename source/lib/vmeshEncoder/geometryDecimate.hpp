@@ -49,10 +49,16 @@ public:
   GeometryDecimate()  = default;
   ~GeometryDecimate() = default;
 
-  static bool decimate(VMCFrame& frame, const VMCEncoderParameters& params);
+  template<typename T>
+  static bool generate(const TriangleMesh<T>&      input,
+                       TriangleMesh<T>&            reference,
+                       TriangleMesh<T>&            decimate,
+                       TriangleMesh<T>&            mapped,
+                       const VMCEncoderParameters& params);
 
   template<typename T>
-  bool unifyVertices(const TriangleMesh<T>& mesh, TriangleMesh<T>& umesh);
+  static bool unifyVertices(const TriangleMesh<T>& mesh,
+                            TriangleMesh<T>&       umesh);
 
 private:
   template<typename T>
@@ -66,7 +72,7 @@ private:
   static bool unifyVertices(TriangleMesh<T>& mesh);
 
   template<typename T>
-  static bool decimate(const TriangleMesh<T>&      mesh,
+  static bool generate(const TriangleMesh<T>&      mesh,
                        TriangleMesh<T>&            dmesh,
                        TriangleMesh<T>&            mmesh,
                        const VMCEncoderParameters& params);

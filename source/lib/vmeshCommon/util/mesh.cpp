@@ -327,7 +327,7 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
                                 tinyply::Type::INVALID,
                                 0);
 
-  if (!_colour.empty() && _colour.size() == _coord.size() )
+  if ((!_colour.empty()) && _colour.size() == _coord.size() )
     ply.add_properties_to_element("vertex",
                                   {"red", "green", "blue"},
                                   type,
@@ -336,7 +336,7 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
                                   tinyply::Type::INVALID,
                                   0);
 
-  if (!_normal.empty() && _normal.size() == _coord.size() )
+  if ((!_normal.empty()) && _normal.size() == _coord.size())
     ply.add_properties_to_element("vertex",
                                   {"nx", "ny", "nz"},
                                   type,
@@ -345,36 +345,36 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
                                   tinyply::Type::INVALID,
                                   0);
 
-    // Faces
-    ply.add_properties_to_element("face",
-                                  {"vertex_indices"},
-                                  tinyply::Type::INT32,
-                                  _coordIndex.size(),
-                                  CAST_UINT8(_coordIndex),
-                                  tinyply::Type::UINT8,
-                                  3);
+  // Faces
+  ply.add_properties_to_element("face",
+                                {"vertex_indices"},
+                                tinyply::Type::INT32,
+                                _coordIndex.size(),
+                                CAST_UINT8(_coordIndex),
+                                tinyply::Type::UINT8,
+                                3);
 
-    // Face texture coordinate
-    std::vector<Vec3<Vec2<float>>> uvCoords;
-    if (_texCoordIndex.size()) {
-      const size_t triCount = triangleCount();
-      uvCoords.resize(triCount);
-      const double uvScale = bitDepthTexCoord == 0
-                               ? 1.0
-                               : 1.0 / (double)((1u << bitDepthTexCoord) - 1);
-      for (size_t i = 0; i < triCount; i++)
-        for (size_t j = 0; j < 3; j++)
-          uvCoords[i][j] = uvScale * _texCoord[_texCoordIndex[i][j]];
-      ply.add_properties_to_element("face",
-                                    {"texcoord"},
-                                    tinyply::Type::FLOAT32,
-                                    triCount,
-                                    CAST_UINT8(uvCoords),
-                                    tinyply::Type::UINT8,
-                                    6);
-    }
-    ply.write(outstream, binary);
-    return true;
+  // Face texture coordinate
+  std::vector<Vec3<Vec2<float>>> uvCoords;
+  if (!_texCoordIndex.empty()) {
+    const size_t triCount = triangleCount();
+    uvCoords.resize(triCount);
+    const double uvScale = bitDepthTexCoord == 0
+                             ? 1.0
+                             : 1.0 / (double)((1u << bitDepthTexCoord) - 1);
+    for (size_t i = 0; i < triCount; i++)
+      for (size_t j = 0; j < 3; j++)
+        uvCoords[i][j] = uvScale * _texCoord[_texCoordIndex[i][j]];
+    ply.add_properties_to_element("face",
+                                  {"texcoord"},
+                                  tinyply::Type::FLOAT32,
+                                  triCount,
+                                  CAST_UINT8(uvCoords),
+                                  tinyply::Type::UINT8,
+                                  6);
+  }
+  ply.write(outstream, binary);
+  return true;
 }
 
 //----------------------------------------------------------------------------

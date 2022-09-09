@@ -229,10 +229,10 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
   const auto  pointCount     = frame.rec.pointCount();
   auto&       disp           = frame.disp;
   disp.resize(pointCount);
-  for (int32_t v = 0, vcounter = 0; v < pointCount; ++v) {
+  for (int32_t v = 0; v < pointCount; ++v) {
     // to do: optimize power of 2
-    const auto blockIndex       = vcounter / pixelsPerBlock;
-    const auto indexWithinBlock = vcounter % pixelsPerBlock;
+    const auto blockIndex       = v / pixelsPerBlock;
+    const auto indexWithinBlock = v % pixelsPerBlock;
     const auto x0 =
       (blockIndex % geometryVideoWidthInBlocks) * geometryVideoBlockSize;
     const auto y0 =
@@ -248,7 +248,6 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
     d[0]          = double(Y.get(y1, x1)) - shift;
     d[1]          = double(U.get(y1, x1)) - shift;
     d[2]          = double(V.get(y1, x1)) - shift;
-    ++vcounter;
   }
   return 0;
 }

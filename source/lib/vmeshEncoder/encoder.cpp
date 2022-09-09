@@ -1613,13 +1613,11 @@ VMCEncoder::computeDisplacementVideoFrame(
   Y.fill(shift);
   U.fill(shift);
   V.fill(shift);
-  for (int32_t v = 0, vcounter = 0, vcount = int32_t(disp.size()); v < vcount;
-       ++v) {
-    const auto& d = disp[v];
-    const auto  blockIndex =
-      vcounter / pixelsPerBlock;  // to do: optimize power of 2
-    const auto indexWithinBlock =
-      vcounter % pixelsPerBlock;  // to do: optimize power of 2
+  for (int32_t v = 0, vcount = int32_t(disp.size()); v < vcount; ++v) {
+    const auto& d          = disp[v];
+    const auto  blockIndex = v / pixelsPerBlock;  // to do: optimize power of 2
+    const auto  indexWithinBlock =
+      v % pixelsPerBlock;  // to do: optimize power of 2
     const auto x0 =
       (blockIndex % params.geometryVideoWidthInBlocks)
       * params.geometryVideoBlockSize;  // to do: optimize power of 2
@@ -1639,12 +1637,11 @@ VMCEncoder::computeDisplacementVideoFrame(
     const auto d2 = int32_t(shift + d[2]);
 
     assert(d0 >= 0 && d0 < (1 << params.geometryVideoBitDepth));
-    assert(d1 >= 0 && d0 < (1 << params.geometryVideoBitDepth));
-    assert(d2 >= 0 && d0 < (1 << params.geometryVideoBitDepth));
+    assert(d1 >= 0 && d1 < (1 << params.geometryVideoBitDepth));
+    assert(d2 >= 0 && d2 < (1 << params.geometryVideoBitDepth));
     Y.set(y1, x1, uint16_t(d0));
     U.set(y1, x1, uint16_t(d1));
     V.set(y1, x1, uint16_t(d2));
-    ++vcounter;
   }
   return 0;
 }
@@ -1657,7 +1654,8 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
                                  const VMCEncoderParameters& params) const {
   if (_dispVideo.width() < 0 || _dispVideo.width() > 16384
       || _dispVideo.height() < 0 || _dispVideo.height() > 16384
-      || (_dispVideo.frameCount() != 0 && gof.frameCount() != gof.frameCount())
+      || (_dispVideo.frameCount() != 0
+          && _dispVideo.frameCount() != gof.frameCount())
       || gof.frameCount() < 0 || gof.frameCount() > 65535
       || params.textureWidth < 0 || params.textureWidth > 16384
       || params.textureHeight < 0 || params.textureHeight > 16384

@@ -1690,10 +1690,14 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
   bitstream.write(bitField);
   bitstream.write(bitDepth);
   bitstream.write(subdivInfo);
+  #if defined( CODE_CODEC_ID )
   bitstream.write(uint8_t(params.meshCodecId));
+  #endif
   bitstream.write(qpBaseMesh);
   if (params.encodeDisplacementsVideo) {
+  #if defined( CODE_CODEC_ID )
     bitstream.write(uint8_t(params.geometryVideoCodecId));
+  #endif
     bitstream.write(widthDispVideo);
     bitstream.write(heightDispVideo);
     bitstream.write(geometryVideoBlockSize);
@@ -1702,7 +1706,9 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
     bitstream.write(liftingQPs[2]);
   }
   if (params.encodeTextureVideo) {
+  #if defined( CODE_CODEC_ID )
     bitstream.write(uint8_t(params.textureVideoCodecId));
+  #endif
     bitstream.write(widthTexVideo);
     bitstream.write(heightTexVideo);
   }

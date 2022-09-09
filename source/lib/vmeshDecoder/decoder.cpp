@@ -395,13 +395,21 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   bitstream.read(bitField, _byteCounter);
   bitstream.read(bitDepth, _byteCounter);
   bitstream.read(subdivInfo, _byteCounter);
+  #if defined( CODE_CODEC_ID )
   bitstream.read(meshCodecId, _byteCounter);
+#else
+    geometryVideoCodecId = uint8_t(GeometryCodecId::DRACO);
+#endif
   bitstream.read(qpBaseMesh, _byteCounter);
   _sps.frameCount               = frameCount;
   _sps.encodeDisplacementsVideo = ((bitField & 1) != 0);
   _sps.encodeTextureVideo       = (((bitField >> 1) & 1) != 0);
   if (_sps.encodeDisplacementsVideo) {
+  #if defined( CODE_CODEC_ID )
     bitstream.read(geometryVideoCodecId, _byteCounter);
+#else
+    geometryVideoCodecId = uint8_t(VideoCodecId::HM);
+#endif
     bitstream.read(widthDispVideo, _byteCounter);
     bitstream.read(heightDispVideo, _byteCounter);
     bitstream.read(geometryVideoBlockSize, _byteCounter);
@@ -410,7 +418,11 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
     bitstream.read(liftingQPs[2], _byteCounter);
   }
   if (_sps.encodeTextureVideo) {
+  #if defined( CODE_CODEC_ID )
     bitstream.read(textureVideoCodecId, _byteCounter);
+#else
+    textureVideoCodecId = uint8_t(VideoCodecId::HM);
+#endif
     bitstream.read(widthTexVideo, _byteCounter);
     bitstream.read(heightTexVideo, _byteCounter);
   }

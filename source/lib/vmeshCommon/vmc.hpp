@@ -46,6 +46,12 @@ namespace vmesh {
 
 //============================================================================
 
+// Set CODE_CODEC_ID to enable/disable codecIds saving in vmesh bitstream
+// Note: Disable to stay compliant with v1.0
+// #define CODE_CODEC_ID  
+
+//============================================================================
+
 #define MeshType double
 
 //============================================================================

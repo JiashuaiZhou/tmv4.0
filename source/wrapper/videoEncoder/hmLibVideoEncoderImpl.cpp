@@ -624,6 +624,7 @@ hmLibVideoEncoderImpl<T>::xInitLibCfg() {
     m_rwpSEIRwpGuardBandNotUsedForPredFlag);
   m_cTEncTop.setRwpSEIRwpGuardBandType(m_rwpSEIRwpGuardBandType);
 #  endif
+  m_cTEncTop.setGopBasedTemporalFilterEnabled(m_gopBasedTemporalFilterEnabled);
   m_cTEncTop.setColourRemapInfoSEIFileRoot(m_colourRemapSEIFileRoot);
   m_cTEncTop.setMasteringDisplaySEI(m_masteringDisplay);
   m_cTEncTop.setSEIAlternativeTransferCharacteristicsSEIEnable(

@@ -536,6 +536,9 @@ hmLibVideoEncoderImpl<T>::xInitLibCfg() {
   }
   m_cTEncTop.setKneeSEIEnabled(m_kneeSEIEnabled);
   m_cTEncTop.setKneeFunctionInformationSEI(m_kneeFunctionInformationSEI);
+#  if FVI_SEI_MESSAGE
+  if (!m_fisheyeVIdeoInfoSEIEnabled) m_cTEncTop.setFviSEIDisabled();
+#  endif
 #  if CCV_SEI_MESSAGE
   m_cTEncTop.setCcvSEIEnabled(m_ccvSEIEnabled);
   m_cTEncTop.setCcvSEICancelFlag(m_ccvSEICancelFlag);

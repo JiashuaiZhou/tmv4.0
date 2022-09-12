@@ -760,6 +760,12 @@ compress(const Parameters& params) {
     checksum.print();
   }
 
+  if (metParams.computePcc || metParams.computeIbsm || metParams.computePcqm) {
+    std::cout << "\n------- All frames metrics -----------\n";
+    metrics.display();
+    std::cout << "---------------------------------------\n";
+  }
+
   std::cout << "\n------- All frames -----------\n";
   totalStats.dump("Sequence", params.framerate);
   std::cout << "Sequence peak memory " << vmesh::getPeakMemory() << " KB\n";

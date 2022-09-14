@@ -184,6 +184,9 @@ struct VMCEncoderParameters {
   std::string  textureVideoEncoderConfig    = {};
   std::string  textureVideoHDRToolEncConfig = {};
   std::string  textureVideoHDRToolDecConfig = {};
+  int32_t      textureVideoDownsampleFilter = 4;
+  int32_t      textureVideoUpsampleFilter   = 0;
+  bool         textureVideoFullRange        = false;
   VideoCodecId textureVideoCodecId = VideoCodecId::UNKNOWN_VIDEO_CODEC;
 
   // Mesh
@@ -264,11 +267,6 @@ public:
   VMCEncoder(const VMCEncoder& rhs)            = delete;
   VMCEncoder& operator=(const VMCEncoder& rhs) = delete;
   ~VMCEncoder()                                = default;
-
-  int32_t compressOnly(const VMCGroupOfFramesInfo& gofInfo,
-                       VMCGroupOfFrames&           gof,
-                       Bitstream&                  bitstream,
-                       const VMCEncoderParameters& params);
 
   int32_t compress(const VMCGroupOfFramesInfo& gofInfo,
                    VMCGroupOfFrames&           gof,

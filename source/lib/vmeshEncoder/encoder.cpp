@@ -254,8 +254,16 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
 
     // convert BGR444 to YUV420
     FrameSequence<uint16_t> yuvSrc;
-    auto convert = VirtualColourConverter<uint16_t>::create(1);
+#if USE_HDRTOOLS
+    auto convert = VirtualColourConverter<uint16_t>::create(1);    
     convert->convert(params.textureVideoHDRToolEncConfig, bgrSrc10, yuvSrc);
+#else
+    auto convert = VirtualColourConverter<uint16_t>::create(0);
+    auto mode    = "BGR444ToYUV420_8_10_"
+                + std::to_string(params.textureVideoDownsampleFilter) + "_"
+                + std::to_string(params.textureVideoFullRange);
+    convert->convert(mode, bgrSrc10, yuvSrc);
+#endif
     bgrSrc10.clear();
 
     // Save intermediate files
@@ -285,8 +293,15 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
 
     // Convert Rec yuv to bgr
     FrameSequence<uint16_t> bgrRec;
+#if USE_HDRTOOLS
     convert->convert(params.textureVideoHDRToolDecConfig, yuvRec, bgrRec);
+#else
+    mode = "YUV420ToBGR444_10_8_"
+           + std::to_string(params.textureVideoUpsampleFilter) + "_"
+           + std::to_string(params.textureVideoFullRange);
+    convert->convert(mode, yuvRec, bgrRec);
     yuvRec.clear();
+#endif
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -945,128 +960,6 @@ VMCEncoder::transferTexture(
                         occupancy,
                         params.textureTransferPaddingSparseLinearThreshold);
   }
-  return 0;
-}
-
-//----------------------------------------------------------------------------
-
-// Note: deprecated function
-int32_t
-VMCEncoder::compressOnly(const VMCGroupOfFramesInfo& gofInfo,
-                         VMCGroupOfFrames&           gof,
-                         Bitstream&                  bitstream,
-                         const VMCEncoderParameters& params) {
-  _gofInfo                 = gofInfo;
-  const int32_t frameCount = _gofInfo.frameCount_;
-  const int32_t pixelsPerBlock =
-    params.geometryVideoBlockSize * params.geometryVideoBlockSize;
-  const auto widthDispVideo =
-    params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
-  auto heightDispVideo = 0;
-  _dispVideo.resize(
-    widthDispVideo, heightDispVideo, ColourSpace::YUV444p, frameCount);
-  auto& stats = gof.stats;
-  stats.reset();
-  stats.totalByteCount = bitstream.size();
-
-  unifyVertices(gofInfo, gof, params);
-
-  Bitstream bitstreamCompressedMeshes;
-  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-    const auto& frameInfo      = _gofInfo.frameInfo(frameIndex);
-    auto&       frame          = gof.frame(frameIndex);
-    auto&       dispVideoFrame = _dispVideo.frame(frameIndex);
-    compressBaseMesh(
-      gof, frameInfo, frame, bitstreamCompressedMeshes, stats, params);
-    const auto vertexCount = frame.subdiv.pointCount();
-    stats.baseMeshVertexCount += frame.base.pointCount();
-    stats.vertexCount += frame.rec.pointCount();
-    stats.faceCount += frame.rec.triangleCount();
-    if (params.encodeDisplacementsVideo) {
-      const auto blockCount =
-        (vertexCount + pixelsPerBlock - 1) / pixelsPerBlock;
-      const auto geometryVideoHeightInBlocks =
-        (blockCount + params.geometryVideoWidthInBlocks - 1)
-        / params.geometryVideoWidthInBlocks;
-      heightDispVideo =
-        std::max(heightDispVideo,
-                 geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
-      dispVideoFrame.resize(
-        widthDispVideo, heightDispVideo, ColourSpace::BGR444p);
-      computeDisplacements(frame, params);
-      computeForwardLinearLifting(frame.disp,
-                                  frame.subdivInfoLevelOfDetails,
-                                  frame.subdivEdges,
-                                  params.liftingPredictionWeight,
-                                  params.liftingUpdateWeight,
-                                  params.liftingSkipUpdate);
-      quantizeDisplacements(frame, params);
-      computeDisplacementVideoFrame(frame, dispVideoFrame, params);
-    }
-  }
-  if (params.encodeDisplacementsVideo) {
-    // resize all the frame to the same resolution
-    _dispVideo.resize(
-      widthDispVideo, heightDispVideo, ColourSpace::YUV444p, frameCount);
-  } else {
-    _dispVideo.resize(0, 0, ColourSpace::YUV444p, 0);
-  }
-
-  if (encodeSequenceHeader(gof, bitstream, params) != 0) { return -1; }
-  bitstream.append(bitstreamCompressedMeshes.buffer);
-
-  stats.frameCount             = frameCount;
-  stats.displacementsByteCount = bitstream.size();
-  if (params.encodeDisplacementsVideo
-      && (compressDisplacementsVideo(bitstream, params) != 0)) {
-    return -1;
-  }
-  stats.displacementsByteCount =
-    bitstream.size() - stats.displacementsByteCount;
-  if (params.encodeTextureVideo) {
-    std::cout << "Generating texture maps ";
-    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      auto& frame = gof.frame(frameIndex);
-      if (params.encodeDisplacementsVideo) {
-        reconstructDisplacementFromVideoFrame(_dispVideo.frame(frameIndex),
-                                              frame,
-                                              params.geometryVideoBlockSize,
-                                              params.geometryVideoBitDepth);
-        inverseQuantizeDisplacements(frame,
-                                     params.bitDepthPosition,
-                                     params.liftingLevelOfDetailInverseScale,
-                                     params.liftingQuantizationParameters);
-        computeInverseLinearLifting(frame.disp,
-                                    frame.subdivInfoLevelOfDetails,
-                                    frame.subdivEdges,
-                                    params.liftingPredictionWeight,
-                                    params.liftingUpdateWeight,
-                                    params.liftingSkipUpdate);
-        applyDisplacements(frame, params.displacementCoordinateSystem);
-      }
-      if (!params.ignoreTextureEncoding) {
-        if (transferTexture(frame, params) != 0) { return -1; }
-      }
-      std::cout << '.';
-    }
-    std::cout << '\n';
-    // compress texture
-    stats.textureByteCount = bitstream.size();
-    if (compressTextureVideo(gof, bitstream, params) != 0) { return -1; }
-  }
-  stats.textureByteCount = bitstream.size() - stats.textureByteCount;
-  stats.totalByteCount   = bitstream.size() - stats.totalByteCount;
-  if (!params.normalizeUV) {
-    const auto scale = (1 << params.bitDepthTexCoord) - 1.0;
-    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      auto&      rec           = gof.frame(frameIndex).rec;
-      const auto texCoordCount = rec.texCoordCount();
-      for (int32_t i = 0; i < texCoordCount; ++i) {
-        rec.setTexCoord(i, rec.texCoord(i) * scale);
-      }
-    }
-  }
-
   return 0;
 }
 

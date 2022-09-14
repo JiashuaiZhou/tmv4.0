@@ -749,6 +749,8 @@ TriangleMesh<T>::subdivideMidPoint(
   std::vector<int64_t>*              coordEdges,
   std::vector<int64_t>*              texCoordEdges,
   std::vector<int32_t>*              triangleToBaseMeshTriangle) {
+  printf("Subdivide Mid Point iterationCount = %d \n", iterationCount);
+  fflush(stdout);
   if (triangleToBaseMeshTriangle != nullptr) {
     auto&      triToBaseMeshTri = *triangleToBaseMeshTriangle;
     const auto tCount0          = this->triangleCount();

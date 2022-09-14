@@ -65,76 +65,91 @@ public:
                 size_t            rate,
                 size_t            srcNumByte,
                 size_t            dstNumByte,
-                size_t            filter);
+                size_t            filter,
+                bool              range);
 
   void upsample(Frame<T>& image,
                 size_t    rate,
                 size_t    srcNumByte,
                 size_t    dstNumByte,
-                size_t    filter);
+                size_t    filter,
+                bool      range);
 
 private:
   void extractParameters(std::string& configuration,
                          std::string& config,
                          int32_t&     srcBitdepth,
                          int32_t&     dstBitdepth,
-                         int32_t&     filter);
+                         int32_t&     filter,
+                         int32_t&     range);
   void convertRGB44ToYUV420(FrameSequence<T>& videoSrc,
                             FrameSequence<T>& videoDst,
                             size_t            srcNumByte,
                             size_t            dstNumByte,
-                            size_t            filter);
+                            size_t            filter,
+                            bool              BGR,
+                            bool              range);
   void convertRGB44ToYUV420(Frame<T>& imageSrc,
                             Frame<T>& imageDst,
                             size_t    srcNumByte,
                             size_t    dstNumByte,
-                            size_t    filter);
+                            size_t    filter,
+                            bool      BGR,
+                            bool      range);
 
   void convertRGB44ToYUV444(FrameSequence<T>& videoSrc,
                             FrameSequence<T>& videoDst,
                             size_t            srcNumByte,
                             size_t            dstNumByte,
-                            size_t            filter);
+                            size_t            filter,
+                            bool              range);
   void convertRGB44ToYUV444(Frame<T>& imageSrc,
                             Frame<T>& imageDst,
                             size_t    srcNumByte,
                             size_t    dstNumByte,
-                            size_t    filter);
+                            size_t    filter,
+                            bool      range);
 
   void convertYUV420ToYUV444(FrameSequence<T>& videoSrc,
                              FrameSequence<T>& videoDst,
                              size_t            srcNumByte,
                              size_t            dstNumByte,
-                             size_t            filter);
+                             size_t            filter,
+                             bool              range);
   void convertYUV420ToYUV444(Frame<T>& imageSrc,
                              Frame<T>& imageDst,
                              size_t    srcNumByte,
                              size_t    dstNumByte,
-                             size_t    filter);
+                             size_t    filter,
+                             bool      range);
 
   void convertYUV420ToRGB444(FrameSequence<T>& videoSrc,
                              FrameSequence<T>& videoDst,
                              size_t            srcNumByte,
                              size_t            dstNumByte,
                              size_t            filter,
-                             bool              BGR);
+                             bool              BGR,
+                             bool              range);
   void convertYUV420ToRGB444(Frame<T>& imageSrc,
                              Frame<T>& imageDst,
                              size_t    srcNumByte,
                              size_t    dstNumByte,
                              size_t    filter,
-                             bool      BGR);
+                             bool      BGR,
+                             bool      range);
 
   void convertYUV444ToRGB444(FrameSequence<T>& videoSrc,
                              FrameSequence<T>& videoDst,
                              size_t            srcNumByte,
                              size_t            dstNumByte,
-                             size_t            filter);
+                             size_t            filter,
+                             bool              range);
   void convertYUV444ToRGB444(Frame<T>& imageSrc,
                              Frame<T>& imageDst,
                              size_t    srcNumByte,
                              size_t    dstNumByte,
-                             size_t    filter);
+                             size_t    filte,
+                             bool      range);
 
   void
   RGBtoFloatRGB(const Plane<T>& src, Plane<float>& dst, size_t nbyte) const;
@@ -171,12 +186,14 @@ private:
   void floatYUVToYUV(const Plane<float>& src,
                      Plane<T>&           dst,
                      bool                chroma,
-                     size_t              nbyte) const;
+                     size_t              nbyte,
+                     bool                range) const;
 
   void YUVtoFloatYUV(const Plane<T>& src,
                      Plane<float>&   dst,
                      bool            chroma,
-                     size_t          nbBytes) const;
+                     size_t          nbBytes,
+                     bool            range) const;
 
   void convertYUVToRGB(const Plane<float>& Y,
                        const Plane<float>& U,

@@ -82,24 +82,36 @@ struct VMCStats {
     const auto totalBitsPerVertex =
       (double)totalByteCount * 8.0 / (double)vertexCount;
 
-    std::cout << header << " frame count " << frameCount << '\n';
-    std::cout << header << " face count " << faceCount << '\n';
-    std::cout << header << " vertex count " << vertexCount << '\n';
-    std::cout << header << " processing time "
+    std::cout << header << " frame count           " << std::setw(16)
+              << std::right << frameCount << '\n';
+    std::cout << header << " face count            " << std::setw(16)
+              << std::right << faceCount << '\n';
+    std::cout << header << " vertex count          " << std::setw(16)
+              << std::right << vertexCount << '\n';
+    std::cout << header << " processing time       " << std::setw(16)
+              << std::right
               << std::chrono::duration<double>(processingTime).count()
               << " s \n";
-    std::cout << header << " meshes bitrate " << baseMeshBitrate << " mbps "
-              << baseMeshByteCount << " B " << baseMeshBitsPerVertex
-              << " bpv\n";
-    std::cout << header << " motion bitrate " << motionBitrate << " mbps "
-              << motionByteCount << " B " << motionBitsPerVertex << " bpv\n";
-    std::cout << header << " displacements bitrate " << displacementBitrate
-              << " mbps " << displacementsByteCount << " B "
-              << displacementBitsPerVertex << " bpv\n";
-    std::cout << header << " texture bitrate " << textureBitrate << " mbps "
-              << textureByteCount << " B " << textureBitsPerVertex << " bpv\n";
-    std::cout << header << " total bitrate " << totalBitrate << " mbps "
-              << totalByteCount << " B " << totalBitsPerVertex << " bpv\n";
+    std::cout << header << " meshes bitrate        " << std::setw(16)
+              << std::right << baseMeshBitrate << " mbps " << std::setw(16)
+              << std::right << baseMeshByteCount << " B " << std::setw(16)
+              << std::right << baseMeshBitsPerVertex << " bpv\n";
+    std::cout << header << " motion bitrate        " << std::setw(16)
+              << std::right << motionBitrate << " mbps " << std::setw(16)
+              << std::right << motionByteCount << " B " << std::setw(16)
+              << std::right << motionBitsPerVertex << " bpv\n";
+    std::cout << header << " displacements bitrate " << std::setw(16)
+              << std::right << displacementBitrate << " mbps " << std::setw(16)
+              << std::right << displacementsByteCount << " B " << std::setw(16)
+              << std::right << displacementBitsPerVertex << " bpv\n";
+    std::cout << header << " texture bitrate       " << std::setw(16)
+              << std::right << textureBitrate << " mbps " << std::setw(16)
+              << std::right << textureByteCount << " B " << std::setw(16)
+              << std::right << textureBitsPerVertex << " bpv\n";
+    std::cout << header << " total bitrate         " << std::setw(16)
+              << std::right << totalBitrate << " mbps " << std::setw(16)
+              << std::right << totalByteCount << " B " << std::setw(16)
+              << std::right << totalBitsPerVertex << " bpv\n";
   }
 
   size_t                              baseMeshByteCount      = 0;

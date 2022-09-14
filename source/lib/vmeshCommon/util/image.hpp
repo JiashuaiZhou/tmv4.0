@@ -248,22 +248,22 @@ struct Plane {
   int                   height() const { return _height; }
   void                  clear() { _buffer.clear(); }
 
-  void log(const std::string& str) const {
+  void log(const std::string& str, int u0 = 0, int v0 = 0, int n = 6) const {
     printf("%s: ", str.c_str());
     fflush(stdout);
-    for (int v = 0; v < std::min(_height, 1); v++) {
-      for (int u = 0; u < std::min(_width, 16); u++) {
-        printf("%8u ", get(v, u));
+    for (int v = v0; v < std::min(_height, 1 + v0); v++) {
+      for (int u = u0; u < std::min(_width, u0 + n); u++) {
+        printf("%16u ", get(v, u));
       }
       printf("\n");
     }
   }
-  void logF(const std::string& str) const {
+  void logF(const std::string& str, int u0 = 0, int v0 = 0, int n = 6) const {
     printf("%s: ", str.c_str());
     fflush(stdout);
-    for (int v = 0; v < std::min(_height, 1); v++) {
-      for (int u = 0; u < std::min(_width, 16); u++) {
-        printf("%8.4f  ", get(v, u));
+    for (int v = v0; v < std::min(_height, 1 + v0); v++) {
+      for (int u = u0; u < std::min(_width, u0 + n); u++) {
+        printf("%24.16f ", get(v, u));
       }
       printf("\n");
     }

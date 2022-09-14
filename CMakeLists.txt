@@ -14,13 +14,13 @@ OPTION( USE_FFMPEG_VIDEO_CODEC   "Use FFMPEG video encoder and decoder"   FALSE 
 OPTION( USE_DRACO_GEOMETRY_CODEC "Use draco geometry encoder and decoder" TRUE )  # 0
 
 # Color conversion library:
-OPTION( USE_HDRTOOLS             "Use HDRTools for color conversions"     TRUE )
+OPTION( USE_HDRTOOLS             "Use HDRTools for color conversions"     FALSE )
 
 # Use HM optimized RDO
 OPTION( USE_HM_PCC_RDO           "Use HM optimized RDO "                  FALSE )
 
 # Test applications
-OPTION( BUILD_WRAPPER_APPS       "Build wrapper applications"             TRUE )
+OPTION( BUILD_WRAPPER_APPS       "Build wrapper applications"             TRUE  )
 OPTION( BUILD_UNIT_TEST_APPS     "Build unit test applications"           FALSE )
 
 # Building options

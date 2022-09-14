@@ -118,7 +118,15 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("cscdecconfig", 
       decParams.textureVideoHDRToolDecConfig, 
       decParams.textureVideoHDRToolDecConfig,
-      "HDRTools decode cfg")
+      "HDRTools decode cfg") 
+    ("textureVideoUpsampleFilter", 
+      decParams.textureVideoUpsampleFilter, 
+      decParams.textureVideoUpsampleFilter, 
+      "Chroma upsample filter in [0;7]")
+    ("textureVideoFullRange", 
+      decParams.textureVideoFullRange, 
+      decParams.textureVideoFullRange, 
+      "Texture video range")
 
   (po::Section("Metrics"))
     ("pcc",
@@ -203,21 +211,21 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     err.error() << "compressed input/output not specified\n";
   }
 
-  if (params.decodedMeshPath.empty()) {
-    err.error() << "decoded mesh not specified\n";
-  }
+  // if (params.decodedMeshPath.empty()) {
+  //   err.error() << "decoded mesh not specified\n";
+  // }
 
-  if (params.decodedTexturePath.empty()) {
-    err.error() << "decoded texture not specified\n";
-  }
+  // if (params.decodedTexturePath.empty()) {
+  //   err.error() << "decoded texture not specified\n";
+  // }
 
-  if (params.decodedMaterialLibPath.empty()) {
-    err.error() << "decoded materials not specified\n";
-  }
+  // if (params.decodedMaterialLibPath.empty()) {
+  //   err.error() << "decoded materials not specified\n";
+  // }
 
-  if (params.decParams.textureVideoHDRToolDecConfig.empty()) {
-    err.error() << "hdrtools decoder config not specified\n";
-  }
+  // if (params.decParams.textureVideoHDRToolDecConfig.empty()) {
+  //   err.error() << "hdrtools decoder config not specified\n";
+  // }
 
   if (err.is_errored) { return false; }
 
@@ -291,14 +299,12 @@ saveGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
       } else {
         gof[f].rec.setMaterialLibrary(vmesh::basename(strTex));
       }
-      gof[f].rec.save(strMesh);
-      
+      gof[f].rec.save(strMesh);      
       printf("saveGroupOfFrames f = %d done \n", f);
       fflush(stdout);
     }
-    return 0;
   }
-  return -1;
+  return 0;
 }
 
 //============================================================================
@@ -331,9 +337,12 @@ decompress(const Parameters& params) {
       std::cerr << "Error: can't decompress group of frames!\n";
       return -1;
     }
-    printf("gof.stats.frameCount = %d \n", gof.stats.frameCount);
     auto end                 = std::chrono::steady_clock::now();
     gof.stats.processingTime = end - start;
+    printf("gof decoded: frameCount = %d in %f sec. \n",
+           gof.stats.frameCount,
+           std::chrono::duration<double>(gof.stats.processingTime).count());
+    fflush(stdout);
 
     // Save reconsctructed models
     if (saveGroupOfFrames(gofInfo, gof, params) != 0) {

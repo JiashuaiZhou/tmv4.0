@@ -1840,6 +1840,8 @@ computeInverseLinearLifting(
   const T2                                        predWeight,
   const T2                                        updateWeight,
   const bool                                      skipUpdate) {
+  printf("Compute inverse linear lifting \n");
+  fflush(stdout);
   const auto lodCount = int32_t(infoLevelOfDetails.size());
   assert(lodCount > 0);
   const auto rfmtCount = lodCount - 1;

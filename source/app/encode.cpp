@@ -438,6 +438,18 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureVideoHDRToolDecConfig, 
       encParams.textureVideoHDRToolDecConfig, 
       "HDRTools decode cfg")    
+    ("textureVideoDownsampleFilter", 
+      encParams.textureVideoDownsampleFilter, 
+      encParams.textureVideoDownsampleFilter, 
+      "Chroma downsample filter in [0;22]")
+    ("textureVideoUpsampleFilter", 
+      encParams.textureVideoUpsampleFilter, 
+      encParams.textureVideoUpsampleFilter, 
+      "Chroma upsample filter in [0;7]")
+    ("textureVideoFullRange", 
+      encParams.textureVideoFullRange, 
+      encParams.textureVideoFullRange, 
+      "Texture video range")
     ("tvqp", 
       encParams.textureVideoQP, 
       encParams.textureVideoQP, 
@@ -599,14 +611,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
 
   if (encParams.textureVideoEncoderConfig.empty()) {
     err.error() << "texture video encoder config not specified\n";
-  }
-
-  if (encParams.textureVideoHDRToolEncConfig.empty()) {
-    err.error() << "hdrtools encoder config not specified\n";
-  }
-
-  if (encParams.textureVideoHDRToolDecConfig.empty()) {
-    err.error() << "hdrtools decoder config not specified\n";
   }
 
   if (err.is_errored) { return false; }

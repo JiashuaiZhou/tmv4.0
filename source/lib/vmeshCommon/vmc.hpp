@@ -225,6 +225,8 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
                                       VMCFrame&              frame,
                                       const int32_t geometryVideoBlockSize,
                                       const int32_t geometryVideoBitDepth) {
+  printf("Reconstruct displacements from video frame \n");
+  fflush(stdout);
   const auto geometryVideoWidthInBlocks =
     dispVideoFrame.width() / geometryVideoBlockSize;
   const auto  pixelsPerBlock = geometryVideoBlockSize * geometryVideoBlockSize;
@@ -264,18 +266,28 @@ static int32_t
 subdivideBaseMesh(VMCFrame&               frame,
                   const SubdivisionMethod subdivisionMethod,
                   const int32_t           subdivisionIterationCount) {
+                    
+  printf("Subdivide base mesh \n");
+  fflush(stdout);
   auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   auto& subdivEdges        = frame.subdivEdges;
   auto& rec                = frame.rec;
   rec                      = frame.base;
+  printf("Compute normals \n");
+  fflush(stdout);
   rec.computeNormals();
   if (subdivisionMethod == SubdivisionMethod::MID_POINT) {
+    printf("Compute normals \n");
+    fflush(stdout);
     rec.subdivideMidPoint(
       subdivisionIterationCount, &infoLevelOfDetails, &subdivEdges);
   } else {
     return -1;
   }
   rec.resizeNormals(rec.pointCount());
+    
+  printf("Interpolate subdivision: normals \n");
+  fflush(stdout);
   interpolateSubdivision(
     rec.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);
   return 0;
@@ -287,6 +299,8 @@ static int32_t
 applyDisplacements(
   VMCFrame&                           frame,
   const DisplacementCoordinateSystem& displacementCoordinateSystem) {
+  printf("apply displacements \n");
+  fflush(stdout);
   const auto& disp = frame.disp;
   auto&       rec  = frame.rec;
   for (int32_t v = 0, vcount = rec.pointCount(); v < vcount; ++v) {
@@ -312,6 +326,8 @@ inverseQuantizeDisplacements(
   const int32_t bitDepthPosition,
   const double (&liftingLevelOfDetailInverseScale)[3],
   const int32_t (&liftingQuantizationParameters)[3]) {
+  printf("Inverse quantize displacements \n");
+  fflush(stdout);
   const auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   const auto  lodCount           = int32_t(infoLevelOfDetails.size());
   assert(lodCount > 0);

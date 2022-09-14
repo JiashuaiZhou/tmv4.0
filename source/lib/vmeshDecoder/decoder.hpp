@@ -51,6 +51,8 @@ namespace vmesh {
 struct VMCDecoderParameters {
   std::string textureVideoHDRToolDecConfig = {};
   std::string intermediateFilesPathPrefix  = {};
+  int32_t     textureVideoUpsampleFilter   = 0;
+  bool        textureVideoFullRange        = false;
   bool        normalizeUV                  = false;
   bool        keepIntermediateFiles        = false;
 };

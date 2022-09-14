@@ -58,6 +58,8 @@ VMCDecoder::decompressMotion(const Bitstream&                  bitstream,
                              const std::vector<Vec3<int32_t>>& reference,
                              std::vector<Vec3<int32_t>>&       current,
                              const VMCDecoderParameters& /*params*/) {
+  printf("decompressMotion \n");
+  fflush(stdout);
   uint32_t byteCount = 0;
   bitstream.read(byteCount, _byteCounter);
   std::cout << "Motion byte count = " << byteCount << '\n';
@@ -134,12 +136,14 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
                                VMCFrame&                   frame,
                                VMCStats&                   stats,
                                const VMCDecoderParameters& params) {
+  printf("Decompress base mesh: Frame = %d \n", frameInfo.frameIndex);
+  fflush(stdout);
   if (decodeFrameHeader(bitstream, frameInfo) != 0) { return -1; }
   const auto frameIndex = frameInfo.frameIndex + _gofInfo.startFrameIndex_;
   auto&      base       = frame.base;
   auto&      qpositions = frame.qpositions;
   if (frameInfo.type == FrameType::INTRA) {
-    printf("Intra index = %d n", frameInfo.frameIndex);
+    printf("Intra index = %d \n", frameInfo.frameIndex);
     auto     bitstreamByteCount0 = _byteCounter;
     uint32_t byteCountBaseMesh   = 0;
     bitstream.read(byteCountBaseMesh, _byteCounter);
@@ -152,6 +156,7 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
     stats.baseMeshByteCount += _byteCounter - bitstreamByteCount0;
 
     // Decode base mesh
+    printf("Decode base mesh \n");
     auto decoder =
       VirtualGeometryDecoder<MeshType>::create(GeometryCodecId::DRACO);
     decoder->decode(geometryBitstream, base);
@@ -165,6 +170,8 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
       save(prefix + ".drc", geometryBitstream);
     }
 
+    printf("Round qposition \n");
+    fflush(stdout);
     qpositions.resize(base.pointCount());
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       auto&       qpos  = qpositions[v];
@@ -173,6 +180,8 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
         qpos[k] = int32_t(std::round(point[k]));
       }
     }
+    printf("Scale TexCoord \n");
+    fflush(stdout);
     const auto scaleTexCoord  = std::pow(2.0, _sps.qpTexCoord) - 1.0;
     const auto iscaleTexCoord = 1.0 / scaleTexCoord;
     for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
@@ -195,6 +204,8 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
     }
   }
 
+  printf("Scale position: Frame = %d \n", frameInfo.frameIndex);
+  fflush(stdout);
   const auto scalePosition =
     ((1 << _sps.qpPosition) - 1.0) / ((1 << _sps.bitDepthPosition) - 1.0);
   const auto iscalePosition = 1.0 / scalePosition;
@@ -213,6 +224,8 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
 int32_t
 VMCDecoder::decompressDisplacementsVideo(const Bitstream&            bitstream,
                                          const VMCDecoderParameters& params) {
+  printf("Decompress displacements video \n");
+  fflush(stdout);
   // Get video bitstream
   uint32_t byteCountDispVideo = 0;
   bitstream.read(byteCountDispVideo, _byteCounter);
@@ -243,6 +256,8 @@ int32_t
 VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
                                    VMCGroupOfFrames&           gof,
                                    const VMCDecoderParameters& params) {
+  printf("Decompress texture video\n");
+  fflush(stdout);
   // get video bitstream
   uint32_t byteCountTexVideo = 0;
   bitstream.read(byteCountTexVideo, _byteCounter);
@@ -260,15 +275,22 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
       bitstream.buffer.begin() + _byteCounter + byteCountTexVideo);
     _byteCounter += byteCountTexVideo;
 
-    // Decode video
+    // Decode video  
+    printf("Decode video \n");
+    fflush(stdout);
     FrameSequence<uint16_t> yuv;
     auto decoder = VirtualVideoDecoder<uint16_t>::create(VideoCodecId::HM);
     decoder->decode(videoBitstream, yuv, 10);
 
     // Convert video
+    printf("Convert video \n");
+    fflush(stdout);
     FrameSequence<uint16_t> brg;
-    auto convert = VirtualColourConverter<uint16_t>::create(1);
-    convert->convert(params.textureVideoHDRToolDecConfig, yuv, brg);
+    auto convert = VirtualColourConverter<uint16_t>::create(0);
+    auto mode    = "YUV420ToBGR444_10_8_"
+                + std::to_string(params.textureVideoUpsampleFilter) + "_"
+                + std::to_string(params.textureVideoFullRange);
+    convert->convert(mode, yuv, brg);
     yuv.clear();
 
     // Save intermediate files
@@ -283,6 +305,8 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
     }
 
     // Store result in 8 bits frames
+    printf("Store result in 8 bits frames \n");
+    fflush(stdout);
     for (int32_t f = 0; f < brg.frameCount(); ++f)
       gof.frame(f).outputTexture = brg[f];
     brg.clear();
@@ -304,6 +328,8 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   auto& stats               = gof.stats;
   stats.reset();
   stats.totalByteCount = _byteCounter;
+  printf("Decompress gop: \n");
+  fflush(stdout);
   if (decodeSequenceHeader(bitstream) != 0) { return -1; }
   _dispVideo.resize(_sps.widthDispVideo,
                     _sps.heightDispVideo,
@@ -355,6 +381,8 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
       && (decompressTextureVideo(bitstream, gof, params) != 0)) {
     return -1;
   }
+  printf("Done \n");
+  fflush(stdout);
   stats.textureByteCount = _byteCounter - stats.textureByteCount;
   stats.totalByteCount   = _byteCounter - stats.totalByteCount;
   byteCounter            = _byteCounter;

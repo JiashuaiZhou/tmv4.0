@@ -39,7 +39,6 @@
 #include "util/mesh.hpp"
 #include "util/verbose.hpp"
 #include "util/vector.hpp"
-#include "version.hpp"
 #include "vmc.hpp"
 
 namespace vmesh {

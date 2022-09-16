@@ -39,9 +39,12 @@
 #  include <cstring>
 #  include <string>
 #  include "vtmLibVideoDecoderCfg.hpp"
-#  include "Utilities/program_options_lite.h"
+// #  include "Utilities/program_options_lite.h"
 #  include "CommonLib/ChromaFormat.h"
 #  include "CommonLib/dtrace_next.h"
+
+#  include "program_options_lite.h"
+namespace po = df::program_options_lite;
 
 namespace vmesh {
 
@@ -69,7 +72,7 @@ vtmLibVideoDecoderCfg::parseCfg(int argc, char* argv[]) {
 #  if ENABLE_SIMD_OPT
   std::string ignore;
 #  endif
-  df::program_options_lite::Options opts;
+  po::Options opts;
   opts.addOptions()
 
     ("help", do_help, false, "this help text")("BitstreamFile,b",
@@ -222,10 +225,10 @@ vtmLibVideoDecoderCfg::parseCfg(int argc, char* argv[]) {
                               0,
                               "Upscaled output for RPR");
 
-  df::program_options_lite::setDefaults(opts);
-  df::program_options_lite::ErrorReporter err;
-  const std::list<const char*>&           argv_unhandled =
-    df::program_options_lite::scanArgv(opts, argc, (const char**)argv, err);
+  po::setDefaults(opts);
+  po::ErrorReporter             err;
+  const std::list<const char*>& argv_unhandled =
+    po::scanArgv(opts, argc, (const char**)argv, err);
 
   for (std::list<const char*>::const_iterator it = argv_unhandled.begin();
        it != argv_unhandled.end();
@@ -234,7 +237,7 @@ vtmLibVideoDecoderCfg::parseCfg(int argc, char* argv[]) {
   }
 
   if (argc == 1 || do_help) {
-    df::program_options_lite::doHelp(std::cout, opts);
+    po::doHelp(std::cout, opts);
     return false;
   }
 

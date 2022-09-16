@@ -31,6 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef USE_VTM_VIDEO_CODEC
+#  include "program_options_lite.h"
 #  include "util/image.hpp"
 #  include "vtmLibVideoEncoder.hpp"
 #  include "vtmLibVideoEncoderImpl.hpp"
@@ -55,7 +56,7 @@ vtmLibVideoEncoder<T>::encode(FrameSequence<T>&       videoSrc,
   std::stringstream cmd;
   cmd << "VTMEncoder";
   cmd << " -c " << params.encoderConfig_;
-  cmd << " --InputFile=" << params.srcYuvFileName_;
+  // cmd << " --InputFile=" << params.srcYuvFileName_;
   cmd << " --InputBitDepth=" << params.inputBitDepth_;
   cmd << " --OutputBitDepth=" << params.outputBitDepth_;
   cmd << " --OutputBitDepthC=" << params.outputBitDepth_;
@@ -65,8 +66,8 @@ vtmLibVideoEncoder<T>::encode(FrameSequence<T>&       videoSrc,
   cmd << " --SourceHeight=" << height;
   cmd << " --ConformanceWindowMode=1 ";
   cmd << " --FramesToBeEncoded=" << frameCount;
-  cmd << " --BitstreamFile=" << params.binFileName_;
-  cmd << " --ReconFile=" << params.recYuvFileName_;
+  // cmd << " --BitstreamFile=" << params.binFileName_;
+  // cmd << " --ReconFile=" << params.recYuvFileName_;
   cmd << " --QP=" << params.qp_;
   if (params.internalBitDepth_ != 0) {
     cmd << " --InternalBitDepth=" << params.internalBitDepth_;
@@ -76,6 +77,14 @@ vtmLibVideoEncoder<T>::encode(FrameSequence<T>&       videoSrc,
         << " --BlockToPatchFile=" << params.blockToPatchFile_
         << " --OccupancyMapFile=" << params.occupancyMapFile_
         << " --PatchInfoFile=" << params.patchInfoFile_;
+  }
+  if (videoSrc.colourSpace() == ColourSpace::YUV444p
+      || videoSrc.colourSpace() == ColourSpace::RGB444p
+      || videoSrc.colourSpace() == ColourSpace::BGR444p
+      || videoSrc.colourSpace() == ColourSpace::GBR444p) {
+    cmd << " --InputChromaFormat=444";
+  } else {
+    cmd << " --InputChromaFormat=420";
   }
   std::cout << cmd.str() << std::endl;
 

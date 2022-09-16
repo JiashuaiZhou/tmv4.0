@@ -215,7 +215,18 @@ struct Material {
 template<typename T>
 class TriangleMesh {
 public:
-  TriangleMesh<T>& operator=(const TriangleMesh<T>&) = default;
+  TriangleMesh<T>& operator=(const TriangleMesh<T>& src) {
+    _disp          = src._disp;
+    _coord         = src._coord;
+    _colour        = src._colour;
+    _coordIndex    = src._coordIndex;
+    _texCoord      = src._texCoord;
+    _texCoordIndex = src._texCoordIndex;
+    _normal        = src._normal;
+    _normalIndex   = src._normalIndex;
+    _mtllib        = src._mtllib;
+    return *this;
+  }
 
   void scaleTextureCoordinates(int qt) {
     const auto scale = qt > 0 ? 1.0 / ((1 << qt) - 1) : 1.0;
@@ -655,7 +666,7 @@ public:
     _normal.clear();
     _normalIndex.clear();
   }
-  
+
   void append(const TriangleMesh<T>& mesh);
 
   void subdivideMidPoint(

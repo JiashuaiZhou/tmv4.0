@@ -25,11 +25,11 @@ categories:
         - subdivInter: ${fitsubdiv_inter}
 
       # configuration for HM
-      - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ld-main10.cfg
+      - gvencconfig: ${cfg-prefix}/${video-config-disp-ld}
       - - !conditional 'defined ${fitsubdiv_inter} and ${fitsubdiv_inter} == 1'
-        - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ld.cfg
+        - tvencconfig: ${cfg-prefix}/${video-config-text-ld}
       - - !conditional 'not defined ${fitsubdiv_inter} or ${fitsubdiv_inter} == 0'
-        - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg
+        - tvencconfig: ${cfg-prefix}/${video-config-text-ai}
 
     # sequences to code in this condition, and their overridden options/vars    
     sequences:
@@ -124,6 +124,6 @@ categories:
           - texwidth: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
           - texheight: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
           # r5 in the CfP submission uses all-intra config (not just no inter)
-          - gvencconfig: { r5: "${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg" }
+          - gvencconfig: { r5: "${cfg-prefix}/${video-config-disp-ai}" }
 
 

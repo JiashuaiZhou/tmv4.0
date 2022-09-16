@@ -45,6 +45,8 @@ dependencies/ffmpeg
 
 # pipeline configuration files
 /generatedConfigFiles/
+generatedConfigFilesHM/
+generatedConfigFilesVTM/
 
 # Temp files
 /*.yuv

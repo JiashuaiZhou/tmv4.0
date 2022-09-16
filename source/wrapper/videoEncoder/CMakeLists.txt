@@ -4,11 +4,14 @@ get_filename_component(MYNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 string(REPLACE " " "_" MYNAME ${MYNAME})
 project(${MYNAME} C CXX)
 
-file(GLOB SRC *.h  *.cpp 
-              ${HM_LIB_SOURCE_DIR}/Utilities/*.cpp
-              ${HM_LIB_SOURCE_DIR}/Utilities/*.h )
+file(GLOB SRC  *.h 
+               *.cpp  
+               ${CMAKE_SOURCE_DIR}/dependencies/program-options-lite/*.cpp
+               ${CMAKE_SOURCE_DIR}/dependencies/program-options-lite/*.h )
 
-include_directories( . ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon )
+include_directories( . 
+                     ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                     ${CMAKE_SOURCE_DIR}/dependencies/program-options-lite )
 
 set( LIBS vmeshCommon )
 
@@ -20,7 +23,8 @@ endif()
 
 # VTM
 if( USE_VTM_VIDEO_CODEC )
-  set( LIBS ${LIBS} CommonLib EncoderLib_vtm DecoderLib_vtm Utilities_vtm )
+  include_directories( ${VTM_LIB_SOURCE_DIR} )
+  set( LIBS ${LIBS} CommonLib EncoderLib_vtm DecoderLib_vtm Utilities_vtm)
 endif()
 
 # FFMPEG

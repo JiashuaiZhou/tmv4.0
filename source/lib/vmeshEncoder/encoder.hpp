@@ -176,7 +176,7 @@ struct VMCEncoderParameters {
   int32_t      geometryVideoWidthInBlocks = 16;
   int32_t      geometryVideoBitDepth      = 10;
   std::string  geometryVideoEncoderConfig = {};
-  VideoCodecId geometryVideoCodecId       = VideoCodecId::UNKNOWN_VIDEO_CODEC;
+  VideoCodecId geometryVideoCodecId       = VideoCodecId::HM;
 
   // texture video
   int32_t      textureVideoBitDepth         = 10;
@@ -187,7 +187,7 @@ struct VMCEncoderParameters {
   int32_t      textureVideoDownsampleFilter = 4;
   int32_t      textureVideoUpsampleFilter   = 0;
   bool         textureVideoFullRange        = false;
-  VideoCodecId textureVideoCodecId = VideoCodecId::UNKNOWN_VIDEO_CODEC;
+  VideoCodecId textureVideoCodecId          = VideoCodecId::HM;
 
   // Mesh
   GeometryCodecId meshCodecId = GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
@@ -277,7 +277,7 @@ private:
   static void    unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
                                VMCGroupOfFrames&           gof,
                                const VMCEncoderParameters& params);
-  int32_t        computeDracoMapping(TriangleMesh<MeshType>        base,
+  int32_t        computeDracoMapping(TriangleMesh<MeshType>      base,
                                      std::vector<int32_t>&       mapping,
                                      int32_t                     frameIndex,
                                      const VMCEncoderParameters& params) const;

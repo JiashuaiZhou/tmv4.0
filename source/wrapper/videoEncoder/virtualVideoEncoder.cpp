@@ -35,7 +35,7 @@
 
 #include "hmLibVideoEncoder.hpp"
 #include "vtmLibVideoEncoder.hpp"
-#ifdef USE_FFMPEG_VIDEO_CODEC
+#if defined(USE_FFMPEG_VIDEO_CODEC)
 #  include "ffmpegLibVideoEncoder.hpp"
 #endif
 
@@ -44,13 +44,13 @@ namespace vmesh {
 template<typename T>
 VideoCodecId
 VirtualVideoEncoder<T>::getDefaultCodecId() {
-#ifdef USE_HM_VIDEO_CODEC
+#if defined(USE_HM_VIDEO_CODEC)
   return VideoCodecId::HM;
 #endif
-#ifdef USE_VTM_VIDEO_CODEC
+#if defined(USE_VTM_VIDEO_CODEC)
   return VideoCodecId::VTM;
 #endif
-#ifdef USE_FFMPEG_VIDEO_CODEC
+#if defined(USE_FFMPEG_VIDEO_CODEC)
   return VideoCodecId::FFMPEG;
 #endif
   return VideoCodecId::UNKNOWN_VIDEO_CODEC;
@@ -60,13 +60,13 @@ template<typename T>
 bool
 VirtualVideoEncoder<T>::checkCodecId(VideoCodecId codecId) {
   switch (codecId) {
-#ifdef USE_HM_VIDEO_CODEC
+#if defined(USE_HM_VIDEO_CODEC)
   case VideoCodecId::HM: break;
 #endif
-#ifdef USE_VTM_VIDEO_CODEC
+#if defined(USE_VTM_VIDEO_CODEC)
   case VideoCodecId::VTM: break;
 #endif
-#ifdef USE_FFMPEG_VIDEO_CODEC
+#if defined(USE_FFMPEG_VIDEO_CODEC)
   case VideoCodecId::FFMPEG: break;
 #endif
   default:
@@ -81,17 +81,17 @@ template<typename T>
 std::shared_ptr<VirtualVideoEncoder<T>>
 VirtualVideoEncoder<T>::create(VideoCodecId codecId) {
   switch (codecId) {
-#ifdef USE_HM_VIDEO_CODEC
+#if defined(USE_HM_VIDEO_CODEC)
   case VideoCodecId::HM:
     return std::make_shared<hmLibVideoEncoder<T>>();
     break;
 #endif
-#ifdef USE_VTM_VIDEO_CODEC
+#if defined(USE_VTM_VIDEO_CODEC)
   case VideoCodecId::VTM:
     return std::make_shared<vtmLibVideoEncoder<T>>();
     break;
 #endif
-#ifdef USE_FFMPEG_VIDEO_CODEC
+#if defined(USE_FFMPEG_VIDEO_CODEC)
   case VideoCodecId::FFMPEG:
     return std::make_shared<ffmpegLibVideoEncoder<T>>();
     break;

@@ -38,6 +38,7 @@
 
 #  include "CommonLib/CommonDef.h"
 #  include <vector>
+#  include <array>
 
 namespace vmesh {
 

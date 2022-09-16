@@ -39,11 +39,19 @@ using namespace vmesh;
 // #define ENABLE_DEBUG_TRACE
 #  ifdef ENABLE_DEBUG_TRACE
 void
-log(const std::string str, const hdrtoolslib::Frame* frame, int comp, int u0 = 1415, int v0 = 495, int n = 6) {
+log(const std::string         str,
+    const hdrtoolslib::Frame* frame,
+    int                       comp,
+    int                       u0 = 1415,
+    int                       v0 = 495,
+    int                       n  = 6) {
   if (comp == 2) {
     printf("%s Y:", str.c_str());
-    if( frame->m_floatComp[0] != NULL )
-      for (int u = u0; u < u0+n; u++) printf("%24.16f ", frame->m_floatComp[0][ v0 * frame->m_width[hdrtoolslib::Y_COMP] + u]);
+    if (frame->m_floatComp[0] != NULL)
+      for (int u = u0; u < u0 + n; u++)
+        printf(
+          "%24.16f ",
+          frame->m_floatComp[0][v0 * frame->m_width[hdrtoolslib::Y_COMP] + u]);
     printf("\n");
     if (frame->m_chromaFormat == hdrtoolslib::ChromaFormat::CF_420) {
       v0 = v0 >> 1;
@@ -51,17 +59,26 @@ log(const std::string str, const hdrtoolslib::Frame* frame, int comp, int u0 = 1
       n  = n >> 1;
     }
     printf("%s U:", str.c_str());
-    if( frame->m_floatComp[1] != NULL )
-    for (int u =  u0; u < u0+n; u++) printf("%24.16f ", frame->m_floatComp[1][v0 * frame->m_width[hdrtoolslib::U_COMP] +u]);
+    if (frame->m_floatComp[1] != NULL)
+      for (int u = u0; u < u0 + n; u++)
+        printf(
+          "%24.16f ",
+          frame->m_floatComp[1][v0 * frame->m_width[hdrtoolslib::U_COMP] + u]);
     printf("\n");
     printf("%s V:", str.c_str());
-    if( frame->m_floatComp[2] != NULL )
-    for (int u = u0; u < u0+n; u++) printf("%24.16f ", frame->m_floatComp[2][v0 * frame->m_width[hdrtoolslib::V_COMP] +u]);
+    if (frame->m_floatComp[2] != NULL)
+      for (int u = u0; u < u0 + n; u++)
+        printf(
+          "%24.16f ",
+          frame->m_floatComp[2][v0 * frame->m_width[hdrtoolslib::V_COMP] + u]);
   }
   if (comp == 1) {
     printf("%s Y:", str.c_str());
-    if( frame->m_ui16Comp[0] != NULL )
-    for (int u = u0; u < u0+n; u++) printf("%16d ", frame->m_ui16Comp[0][v0 * frame->m_width[hdrtoolslib::Y_COMP] +u]);
+    if (frame->m_ui16Comp[0] != NULL)
+      for (int u = u0; u < u0 + n; u++)
+        printf(
+          "%16d ",
+          frame->m_ui16Comp[0][v0 * frame->m_width[hdrtoolslib::Y_COMP] + u]);
     printf("\n");
     if (frame->m_chromaFormat == hdrtoolslib::ChromaFormat::CF_420) {
       v0 = v0 >> 1;
@@ -69,17 +86,25 @@ log(const std::string str, const hdrtoolslib::Frame* frame, int comp, int u0 = 1
       n  = n >> 1;
     }
     printf("%s U:", str.c_str());
-    if( frame->m_ui16Comp[1] != NULL )
-    for (int u = u0; u < u0+n; u++) printf("%16d ", frame->m_ui16Comp[1][v0 * frame->m_width[hdrtoolslib::U_COMP] +u]);
+    if (frame->m_ui16Comp[1] != NULL)
+      for (int u = u0; u < u0 + n; u++)
+        printf(
+          "%16d ",
+          frame->m_ui16Comp[1][v0 * frame->m_width[hdrtoolslib::U_COMP] + u]);
     printf("\n");
     printf("%s V:", str.c_str());
-    if( frame->m_ui16Comp[2] != NULL )
-    for (int u = u0; u < u0+n; u++) printf("%16d ", frame->m_ui16Comp[2][v0 * frame->m_width[hdrtoolslib::V_COMP] +u]);
+    if (frame->m_ui16Comp[2] != NULL)
+      for (int u = u0; u < u0 + n; u++)
+        printf(
+          "%16d ",
+          frame->m_ui16Comp[2][v0 * frame->m_width[hdrtoolslib::V_COMP] + u]);
   }
   if (comp == 0) {
     printf("%s Y:", str.c_str());
-    if( frame->m_comp[0] != NULL )
-    for (int u = u0; u < u0+n; u++) printf("%16d ", frame->m_comp[0][v0 * frame->m_width[hdrtoolslib::Y_COMP] +u]);
+    if (frame->m_comp[0] != NULL)
+      for (int u = u0; u < u0 + n; u++)
+        printf("%16d ",
+               frame->m_comp[0][v0 * frame->m_width[hdrtoolslib::Y_COMP] + u]);
     printf("\n");
     if (frame->m_chromaFormat == hdrtoolslib::ChromaFormat::CF_420) {
       v0 = v0 >> 1;
@@ -87,12 +112,16 @@ log(const std::string str, const hdrtoolslib::Frame* frame, int comp, int u0 = 1
       n  = n >> 1;
     }
     printf("%s U:", str.c_str());
-    if( frame->m_comp[1] != NULL )
-    for (int u = u0; u < u0+n; u++) printf("%16d ", frame->m_comp[1][v0 * frame->m_width[hdrtoolslib::U_COMP] +u]);
+    if (frame->m_comp[1] != NULL)
+      for (int u = u0; u < u0 + n; u++)
+        printf("%16d ",
+               frame->m_comp[1][v0 * frame->m_width[hdrtoolslib::U_COMP] + u]);
     printf("\n");
     printf("%s V:", str.c_str());
-    if( frame->m_comp[2] != NULL )
-    for (int u = u0; u < u0+n; u++) printf("%16d ", frame->m_comp[2][v0 * frame->m_width[hdrtoolslib::V_COMP] +u]);
+    if (frame->m_comp[2] != NULL)
+      for (int u = u0; u < u0 + n; u++)
+        printf("%16d ",
+               frame->m_comp[2][v0 * frame->m_width[hdrtoolslib::V_COMP] + u]);
   }
   printf("\n");
 }
@@ -1036,11 +1065,11 @@ HdrToolsLibColourConverterImpl<T>::process(ProjectParameters* inputParams,
             && m_iFrameStore->m_colorPrimaries
                  != m_oFrameStore->m_colorPrimaries)) {
       if (m_filterInFloat) {
-        // Convert to different format if needed (integer to float)        
+        // Convert to different format if needed (integer to float)
         m_convertIQuantize->process(m_pFrameStore[0], currentFrame);
         log("floa", m_pFrameStore[0], 2);
 
-        if (m_bUseChromaDeblocking) {  // Perform deblocking          
+        if (m_bUseChromaDeblocking) {  // Perform deblocking
           m_frameFilter->process(m_pFrameStore[0]);
         }
         // Chroma conversion
@@ -1076,7 +1105,7 @@ HdrToolsLibColourConverterImpl<T>::process(ProjectParameters* inputParams,
     log("nois", currentFrame, 2);
     m_frameScale->process(m_scaledFrame, currentFrame);
     currentFrame = m_scaledFrame;
-    
+
     log("scal", currentFrame, 2);
     // Now perform a color format conversion
     // Output to m_pFrameStore memory with appropriate color space conversion

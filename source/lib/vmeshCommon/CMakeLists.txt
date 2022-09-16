@@ -5,7 +5,8 @@ project( ${MYNAME} C CXX )
 enable_language( C )
 
 # Determine the software version
-set(VERSION_FALLBACK "release-${VDMC_VERSION_MAJOR}.${VDMC_VERSION_MINOR}")
+set(VERSION_FALLBACK   "v${VDMC_VERSION_MAJOR}.${VDMC_VERSION_MINOR}")
+set(VERSION_EXTRA      "" )
 set(VERSION_FILE       ${CMAKE_CURRENT_BINARY_DIR}/version.cpp)
 set(VERSION_FILE_IN    ${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in)
 set(VERSION_CACHE_FILE ${CMAKE_CURRENT_BINARY_DIR}/version.cache)
@@ -21,7 +22,6 @@ add_custom_target(
                            -P ${CMAKE_SOURCE_DIR}/dependencies/cmake/tools/genversion.cmake
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
-
 add_custom_command( OUTPUT ${VERSION_FILE} DEPENDS genversion )
 
 file(GLOB SRC *.h *.cpp util/*.h util/*.cpp )

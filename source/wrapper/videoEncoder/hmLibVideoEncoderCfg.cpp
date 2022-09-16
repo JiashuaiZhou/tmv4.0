@@ -52,6 +52,7 @@
 #  define MACRO_TO_STRING(val) MACRO_TO_STRING_HELPER(val)
 
 namespace pcc_hm {
+
 template<class T1, class T2>
 static inline istream&
 operator>>(std::istream& in, std::map<T1, T2>& map) {
@@ -60,18 +61,23 @@ operator>>(std::istream& in, std::map<T1, T2>& map) {
   try {
     in >> key;
     in >> value;
-  } catch (...) { in.setstate(ios::failbit); }
+  } catch (...) { in.setstate(std::ios::failbit); }
 
   map[key] = value;
   return in;
 }
-}  // namespace pcc_hm
-#  include "Utilities/program_options_lite.h"
+
+template<class T1, class T2>
+static std::ostream&
+operator<<(std::ostream& out, const std::map<T1, T2> map) {
+  for (auto it = map.begin(); it != map.end(); ++it)
+    out << it->first << "=" << it->second << ";";
+  return out;
+}
+};  // namespace pcc_hm
 
 using namespace std;
 using namespace pcc_hm;
-
-namespace po = pcc_hm::df::program_options_lite;
 
 enum UIProfileName  // this is used for determining profile strings, where
                     // multiple profiles map to a single profile idc with
@@ -221,8 +227,41 @@ operator>>(std::istringstream& in,
   }
   return in;
 }
+
+static std::ostream&
+operator<<(std::ostream& out, GOPEntry& entry) {
+  out << entry.m_sliceType;
+  out << entry.m_POC;
+  out << entry.m_QPOffset;
+#  if X0038_LAMBDA_FROM_QP_CAPABILITY
+  out << entry.m_QPOffsetModelOffset;
+  out << entry.m_QPOffsetModelScale;
+#  endif
+  out << entry.m_CbQPoffset;
+  out << entry.m_CrQPoffset;
+  out << entry.m_QPFactor;
+  out << entry.m_tcOffsetDiv2;
+  out << entry.m_betaOffsetDiv2;
+  out << entry.m_temporalId;
+  out << entry.m_numRefPicsActive;
+  out << entry.m_numRefPics;
+  for (int i = 0; i < entry.m_numRefPics; i++) {
+    out << entry.m_referencePics[i];
+  }
+  out << entry.m_interRPSPrediction;
+  if (entry.m_interRPSPrediction == 1) {
+    out << entry.m_deltaRPS;
+    out << entry.m_numRefIdc;
+    for (Int i = 0; i < entry.m_numRefIdc; i++) { out << entry.m_refIdc[i]; }
+  } else if (entry.m_interRPSPrediction == 2) {
+    out << entry.m_deltaRPS;
+  }
+
+  return out;
+}
+};  // namespace pcc_hm
+
 Bool confirmPara(Bool bflag, const TChar* message);
-}  // namespace pcc_hm
 
 static inline ChromaFormat
 numberToChromaFormat(const Int val) {
@@ -436,8 +475,8 @@ static const struct MapStrToLevel {
   {"8.5", Level::LEVEL8_5},
 };
 
-namespace pcc_hm {
-UInt g_uiMaxCpbSize[2][21] = {
+// namespace pcc_hm {
+UInt g_uiMaxCpbSizeHM[2][21] = {
   // LEVEL1, LEVEL2,LEVEL2_1, LEVEL3, LEVEL3_1,
   // LEVEL4, LEVEL4_1, LEVEL5, LEVEL5_1, LEVEL5_2, LEVEL6,
   // LEVEL6_1, LEVEL6_2
@@ -448,7 +487,7 @@ UInt g_uiMaxCpbSize[2][21] = {
    0, 0,         0,         0,         0,         30000000,  50000000,
    0, 100000000, 160000000, 240000000, 240000000, 480000000, 800000000}};
 
-}  // namespace pcc_hm
+// }  // namespace pcc_hm
 
 static const struct MapStrToCostMode {
   const TChar* str;
@@ -630,7 +669,7 @@ SMultiValueInputHM<T>::readValues(std::istream& in) {
   return in;
 }
 
-// namespace pcc_hm {
+namespace pcc_hm {
 
 // inline to prevent compiler warnings for "unused static function"
 
@@ -649,6 +688,13 @@ operator>>(std::istream& in, SMultiValueInputHM<T>& values) {
   return values.readValues(in);
 }
 
+template<class T>
+static std::ostream&
+operator<<(std::ostream& out, SMultiValueInputHM<T>& values) {
+  for (auto v : values.values) out << v;
+  return out;
+}
+
 #  if JVET_E0059_FLOATING_POINT_QP_FIX
 template<class T>
 static inline istream&
@@ -662,8 +708,16 @@ operator>>(std::istream& in, hmLibVideoEncoderCfg::OptionalValue<T>& value) {
   }
   return in;
 }
+
+template<class T>
+static std::ostream&
+operator<<(std::ostream& out, hmLibVideoEncoderCfg::OptionalValue<T>& values) {
+  if (values.bPresent) out << values.value;
+  return out;
+}
+
 #  endif
-//} // namespace pcc_hm
+}  // namespace pcc_hm
 
 namespace pcc_hm {
 
@@ -689,6 +743,16 @@ namespace Level {
   static inline istream& operator>>(istream& in, Name& level) {
     return readStrToEnum(
       strToLevel, sizeof(strToLevel) / sizeof(*strToLevel), in, level);
+  }
+
+  static std::ostream& operator<<(std::ostream& out, Tier& tier) {
+    out << (int)tier;
+    return out;
+  }
+
+  static inline std::ostream& operator>>(std::ostream& out, Name& level) {
+    out << (int)level;
+    return out;
   }
 }  // namespace Level
 
@@ -754,6 +818,9 @@ automaticallySelectRExtProfile(const Bool         bUsingGeneralRExtTools,
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
+
+#  include "program_options_lite.h"
+namespace po = df::program_options_lite;
 
 /** \param argc number of arguments
  \param argv array of arguments
@@ -3829,7 +3896,7 @@ hmLibVideoEncoderCfg::xCheckParameter() {
         (m_level / 10)
         + (UInt)((m_level % 10)
                  / 3);  // (m_level / 30)*3 + ((m_level % 10) / 3);
-      xConfirmPara(m_RCCpbSize > g_uiMaxCpbSize[m_levelTier][uiLevelIdx],
+      xConfirmPara(m_RCCpbSize > g_uiMaxCpbSizeHM[m_levelTier][uiLevelIdx],
                    "RCCpbSize should be smaller than or equal to Max CPB size "
                    "according to tier and level");
       xConfirmPara(

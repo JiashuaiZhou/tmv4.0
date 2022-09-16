@@ -235,7 +235,8 @@ VMCDecoder::decompressDisplacementsVideo(const Bitstream&            bitstream,
   _byteCounter += byteCountDispVideo;
 
   // Decode video
-  auto decoder = VirtualVideoDecoder<uint16_t>::create(VideoCodecId::HM);
+  auto decoder = VirtualVideoDecoder<uint16_t>::create(
+    VideoCodecId(_sps.geometryVideoCodecId));
   decoder->decode(videoBitstream, _dispVideo, 10);
 
   // Save intermediate files
@@ -261,7 +262,7 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
   // get video bitstream
   uint32_t byteCountTexVideo = 0;
   bitstream.read(byteCountTexVideo, _byteCounter);
-  printf("byteCountTexVideo = %u \n",byteCountTexVideo);
+  printf("byteCountTexVideo = %u \n", byteCountTexVideo);
   fflush(stdout);
   if (byteCountTexVideo == 0) {
     for (auto& frame : gof) {
@@ -275,11 +276,12 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
       bitstream.buffer.begin() + _byteCounter + byteCountTexVideo);
     _byteCounter += byteCountTexVideo;
 
-    // Decode video  
+    // Decode video
     printf("Decode video \n");
     fflush(stdout);
     FrameSequence<uint16_t> yuv;
-    auto decoder = VirtualVideoDecoder<uint16_t>::create(VideoCodecId::HM);
+    auto                    decoder = VirtualVideoDecoder<uint16_t>::create(
+      VideoCodecId(_sps.textureVideoCodecId));
     decoder->decode(videoBitstream, yuv, 10);
 
     // Convert video
@@ -423,17 +425,17 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   bitstream.read(bitField, _byteCounter);
   bitstream.read(bitDepth, _byteCounter);
   bitstream.read(subdivInfo, _byteCounter);
-  #if defined( CODE_CODEC_ID )
+#if defined(CODE_CODEC_ID)
   bitstream.read(meshCodecId, _byteCounter);
 #else
-    geometryVideoCodecId = uint8_t(GeometryCodecId::DRACO);
+  geometryVideoCodecId = uint8_t(GeometryCodecId::DRACO);
 #endif
   bitstream.read(qpBaseMesh, _byteCounter);
   _sps.frameCount               = frameCount;
   _sps.encodeDisplacementsVideo = ((bitField & 1) != 0);
   _sps.encodeTextureVideo       = (((bitField >> 1) & 1) != 0);
   if (_sps.encodeDisplacementsVideo) {
-  #if defined( CODE_CODEC_ID )
+#if defined(CODE_CODEC_ID)
     bitstream.read(geometryVideoCodecId, _byteCounter);
 #else
     geometryVideoCodecId = uint8_t(VideoCodecId::HM);
@@ -446,10 +448,10 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
     bitstream.read(liftingQPs[2], _byteCounter);
   }
   if (_sps.encodeTextureVideo) {
-  #if defined( CODE_CODEC_ID )
+#if defined(CODE_CODEC_ID)
     bitstream.read(textureVideoCodecId, _byteCounter);
 #else
-    textureVideoCodecId = uint8_t(VideoCodecId::HM);
+    textureVideoCodecId  = uint8_t(VideoCodecId::HM);
 #endif
     bitstream.read(widthTexVideo, _byteCounter);
     bitstream.read(heightTexVideo, _byteCounter);

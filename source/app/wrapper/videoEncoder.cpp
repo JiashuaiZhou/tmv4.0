@@ -54,7 +54,7 @@ struct Parameters {
   int                           height{};
   int                           frameCount{};
   vmesh::ColourSpace            colorSpace;
-  vmesh::VideoCodecId           codecId;
+  vmesh::VideoCodecId           codecId = vmesh::VideoCodecId::HM;
   vmesh::VideoEncoderParameters params;
 };
 
@@ -86,7 +86,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     
   (po::Section("Encoder configurations"))
   ("codecId",          params.codecId,                  
-    vmesh::VideoCodecId::UNKNOWN_VIDEO_CODEC, "Video codec Id: HM, VTM, FFMPEG")  
+    vmesh::VideoCodecId::HM, "Video codec Id: HM, VTM, FFMPEG")  
   ("configPath",       params.params.encoderConfig_,    {}, "Configuration file")
   ("qp",               params.params.qp_,               -8, "qp")
   ("inputBitDepth",    params.params.inputBitDepth_,    10, "Input bit depth")

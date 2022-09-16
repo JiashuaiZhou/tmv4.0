@@ -39,7 +39,6 @@
 #include "util/mesh.hpp"
 #include "util/verbose.hpp"
 #include "util/vector.hpp"
-#include "version.hpp"
 #include "vmc.hpp"
 
 #include "encoder.hpp"
@@ -250,13 +249,11 @@ GeometryDecimate::generate(const TriangleMesh<T>&      meshT,
     return false;
   }
 
-  printf("copy \n");
-  fflush(stdout);
   mmesh.triangles() = mesh.triangles();
-  printf("mesh.triangleCount()  = %zu \n", mesh.triangleCount());
-  printf("mesh.pointCount()     = %zu \n", mesh.pointCount());
-  printf("mmesh.triangleCount() = %zu \n", mmesh.triangleCount());
-  printf("mmesh.pointCount()    = %zu \n", mmesh.pointCount());
+  printf("mesh.triangleCount()  = %d \n", mesh.triangleCount());
+  printf("mesh.pointCount()     = %d \n", mesh.pointCount());
+  printf("mmesh.triangleCount() = %d \n", mmesh.triangleCount());
+  printf("mmesh.pointCount()    = %d \n", mmesh.pointCount());
   printf("resizePoints \n");
   fflush(stdout);
   mmesh.resizePoints(mesh.pointCount());

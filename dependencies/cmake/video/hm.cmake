@@ -32,6 +32,12 @@ function(add_hm_library module )
   add_library(VPCC::${module} ALIAS ${module})
 endfunction()
 
+# disable submodule warnings
+if(MSVC)
+else()
+  add_compile_options(-Wno-deprecated-register)
+endif()
+
 add_hm_library(libmd5)
 target_compile_features(libmd5 PUBLIC cxx_std_11)
 target_include_directories(libmd5 PUBLIC "$<BUILD_INTERFACE:${HM_LIB_SOURCE_DIR}>")

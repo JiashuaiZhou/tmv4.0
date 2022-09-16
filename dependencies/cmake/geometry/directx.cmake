@@ -76,4 +76,11 @@ if( NOT EXISTS ${DIR}/PATCHED )
 else()
   message("directx-mesh already patched")
 endif()
+
+# disable submodule warnings
+if(MSVC)
+else()
+  add_compile_options(-Wno-unknown-pragmas -Wno-unused-but-set-variable)
+endif()
+
 add_subdirectory(dependencies/directx-mesh)

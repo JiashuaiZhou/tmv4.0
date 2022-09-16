@@ -53,7 +53,7 @@ struct Filter420to444 {
 };
 
 template<class T>
-class InternalColourConverter : public VirtualColourConverter<T> {
+class InternalColourConverter final : public VirtualColourConverter<T> {
 public:
   InternalColourConverter();
   ~InternalColourConverter();

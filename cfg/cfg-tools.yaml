@@ -99,3 +99,4 @@ tools:
       - pcc:             1
       - ibsm:            1
       - gridSize:        1024
+      - resolution:      ${src-max-bb-len}

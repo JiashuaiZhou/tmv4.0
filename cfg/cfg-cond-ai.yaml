@@ -21,8 +21,8 @@ categories:
         - subdivIsBase: 1
 
       # configuration for HM
-      - gvencconfig: ${cfg-prefix}/hm/ctc-hm-displacements-map-ai-main10.cfg
-      - tvencconfig: ${cfg-prefix}/hm/ctc-hm-texture-ai.cfg
+      - gvencconfig: ${cfg-prefix}/${video-config-disp-ai}
+      - tvencconfig: ${cfg-prefix}/${video-config-text-ai}
 
     # sequences to code in this condition, and their overridden options/vars
     #  pp: sets per-rate decimation parameter

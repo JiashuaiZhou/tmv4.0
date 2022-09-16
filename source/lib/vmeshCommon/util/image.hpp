@@ -75,13 +75,13 @@ operator>>(std::istream& in, VideoCodecId& val) {
   in >> str;
   val = VideoCodecId::UNKNOWN_VIDEO_CODEC;
 #if defined(USE_HM_VIDEO_CODEC)
-  if (str == "HM") { val = VideoCodecId::HM; }
+  if (str == "hm" || str == "HM") { val = VideoCodecId::HM; }
 #endif
 #if defined(USE_VTM_VIDEO_CODEC)
-  if (str == "VTM") val = VideoCodecId::VTM;
+  if (str == "vtm" || str == "VTM") val = VideoCodecId::VTM;
 #endif
 #if defined(USE_FFMPEG_VIDEO_CODEC)
-  if (str == "FFMPEG") val = VideoCodecId::FFMPEG;
+  if (str == "ffmpeg" || str == "FFMPEG") val = VideoCodecId::FFMPEG;
 #endif
   if (val == VideoCodecId::UNKNOWN_VIDEO_CODEC) {
     in.setstate(std::ios::failbit);
@@ -444,7 +444,7 @@ public:
     const size_t stride[3] = {strideY, strideC, strideC};
     int16_t      rounding  = 1 << (shiftbits - 1);
     printf("copy image: Shift=%d Round=%d (%4zux%4zu S=%4zu C:%4zux%4zu => "
-           "%4zux%4zu) stride = %4zu %4zu bgr=%d sizeof(Pel) = %zu sizeof(T) "
+           "%4dx%4d) stride = %4zu %4zu bgr=%d sizeof(Pel) = %zu sizeof(T) "
            "= %zu \n",
            shiftbits,
            rounding,
@@ -510,7 +510,7 @@ public:
     const size_t heightSrc[3] = {(size_t)_height, heightChroma, heightChroma};
     const size_t heightDst[3] = {heightY, heightC, heightC};
     const size_t stride[3]    = {strideY, strideC, strideC};
-    printf("copy image: Shift = %d (%4zux%4zu => %4zux%4zu S=%4zu C: "
+    printf("copy image: Shift = %d (%4dx%4d => %4zux%4zu S=%4zu C: "
            "%4zux%4zu rgb2bgr = %d ) \n",
            shiftbits,
            _width,

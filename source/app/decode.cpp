@@ -281,7 +281,8 @@ saveGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
                   const Parameters&                  params) {
   if (!params.decodedMeshPath.empty() && !params.decodedTexturePath.empty()
       && !params.decodedMaterialLibPath.empty()) {
-    printf("saveGroupOfFrames gofInfo.frameCount_ = %d \n", gofInfo.frameCount_);
+    printf("saveGroupOfFrames gofInfo.frameCount_ = %d \n",
+           gofInfo.frameCount_);
     fflush(stdout);
     for (int f = 0; f < gofInfo.frameCount_; ++f) {
       printf("saveGroupOfFrames f = %d \n", f);
@@ -299,7 +300,7 @@ saveGroupOfFrames(const vmesh::VMCGroupOfFramesInfo& gofInfo,
       } else {
         gof[f].rec.setMaterialLibrary(vmesh::basename(strTex));
       }
-      gof[f].rec.save(strMesh);      
+      gof[f].rec.save(strMesh);
       printf("saveGroupOfFrames f = %d done \n", f);
       fflush(stdout);
     }
@@ -339,7 +340,7 @@ decompress(const Parameters& params) {
     }
     auto end                 = std::chrono::steady_clock::now();
     gof.stats.processingTime = end - start;
-    printf("gof decoded: frameCount = %d in %f sec. \n",
+    printf("gof decoded: frameCount = %zu in %f sec. \n",
            gof.stats.frameCount,
            std::chrono::duration<double>(gof.stats.processingTime).count());
     fflush(stdout);

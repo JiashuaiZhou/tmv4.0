@@ -37,7 +37,7 @@
 namespace vmesh {
 
 template<class T>
-class ffmpegLibVideoEncoder : public VirtualVideoEncoder<T> {
+class ffmpegLibVideoEncoder final : public VirtualVideoEncoder<T> {
 public:
   ffmpegLibVideoEncoder();
   ~ffmpegLibVideoEncoder();

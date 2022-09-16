@@ -38,7 +38,6 @@
 #include "util/misc.hpp"
 #include "util/verbose.hpp"
 #include "util/vector.hpp"
-#include "version.hpp"
 
 #include "util/mesh.hpp"
 #include "util/kdtree.hpp"

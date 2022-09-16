@@ -31,6 +31,13 @@ function(add_vtm_library module)
   add_library(VPCC::${module}_vtm ALIAS ${module}_vtm)
 endfunction()
 
+# disable submodule warnings
+if(MSVC)
+  add_definitions("/wd4996")
+else()
+  add_compile_options(-Wno-deprecated-register)
+endif()
+
 add_vtm_library(libmd5)
 target_compile_features(libmd5_vtm PUBLIC cxx_std_11)
 target_include_directories(libmd5_vtm PUBLIC "$<BUILD_INTERFACE:${VTM_LIB_SOURCE_DIR}>")

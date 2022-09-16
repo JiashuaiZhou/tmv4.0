@@ -22,5 +22,22 @@ else()
   message("uvatlas already patched")
 endif()
 
+# disable submodule warnings
+if(MSVC)
+  add_definitions("/wd4005 /wd4244")
+else()
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wno-unused-value
+      -Wno-sequence-point
+      -Wno-deprecated-copy-with-user-provided-copy
+      -Wno-unused-but-set-variable)
+  else()
+    add_compile_options(-Wno-unused-value
+      -Wno-sequence-point
+      -Wno-class-memaccess)
+  endif()
+endif()
 
 add_subdirectory(dependencies/uvatlas)
+
+

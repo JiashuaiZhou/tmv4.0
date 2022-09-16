@@ -135,7 +135,6 @@ save(const std::string& filename, std::vector<uint8_t>& buffer) {
   return 0;
 }
 
-
 //============================================================================
 
 template<class T>

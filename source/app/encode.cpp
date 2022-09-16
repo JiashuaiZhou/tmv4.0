@@ -721,7 +721,7 @@ compress(const Parameters& params) {
   for (int g = 0; g < sequenceInfo.gofCount(); ++g) {
     vmesh::VMCGroupOfFrames gof;
     const auto&             gofInfo = sequenceInfo[g];
-    printf("loadGroupOfFrames GOF = %d / %zu \n", g, sequenceInfo.gofCount());
+    printf("loadGroupOfFrames GOF = %d / %d \n", g, sequenceInfo.gofCount());
 
     // Load group of frame
     if (loadGroupOfFrames(gofInfo, gof, params) != 0) {

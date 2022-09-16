@@ -397,9 +397,9 @@ template void VMCMetrics::compute<float>(const TriangleMesh<float>&,
                                          const VMCMetricsParameters&);
 
 template void VMCMetrics::compute<double>(const TriangleMesh<double>&,
-                                         const TriangleMesh<double>&,
-                                         const Frame<uint8_t>&,
-                                         const Frame<uint8_t>&,
-                                         const VMCMetricsParameters&);
-                                         
+                                          const TriangleMesh<double>&,
+                                          const Frame<uint8_t>&,
+                                          const Frame<uint8_t>&,
+                                          const VMCMetricsParameters&);
+
 //============================================================================

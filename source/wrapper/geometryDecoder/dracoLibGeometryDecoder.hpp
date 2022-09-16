@@ -37,7 +37,7 @@
 namespace vmesh {
 
 template<class T>
-class DracoLibGeometryDecoder : public VirtualGeometryDecoder<T> {
+class DracoLibGeometryDecoder final : public VirtualGeometryDecoder<T> {
 public:
   DracoLibGeometryDecoder();
   ~DracoLibGeometryDecoder();

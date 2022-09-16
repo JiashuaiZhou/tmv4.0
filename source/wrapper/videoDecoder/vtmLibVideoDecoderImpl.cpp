@@ -709,8 +709,8 @@ vtmLibVideoDecoderImpl<T>::xWritePicture(const Picture*    pic,
                                          FrameSequence<T>& video) {
   int chromaSubsample =
     pic->getPicWidthInLumaSamples() / pic->chromaSize().width;
-  printf("write output frame %zu size = %d %d bit depth = %d - %d = %d in %zd "
-         "bytes buffers ( ChromaSub. = %d )\n",
+  printf("write output frame %d size = %d %d bit depth = %d - %d = %d in %zd "
+         "bytes buffers ( ChromaSub. = %d m_bRGB2GBR = %d )\n",
          video.frameCount(),
          pic->getPicWidthInLumaSamples(),
          pic->getPicHeightInLumaSamples(),
@@ -718,7 +718,8 @@ vtmLibVideoDecoderImpl<T>::xWritePicture(const Picture*    pic,
          m_outputBitDepth[0],
          m_internalBitDepths - m_outputBitDepth[0],
          sizeof(T),
-         chromaSubsample);
+         chromaSubsample,
+         m_bRGB2GBR);
   fflush(stdout);
   ColourSpace format = chromaSubsample > 1 ? ColourSpace::YUV420p
                        : m_bRGB2GBR        ? ColourSpace::RGB444p
@@ -736,7 +737,7 @@ vtmLibVideoDecoderImpl<T>::xWritePicture(const Picture*    pic,
             pic->getBuf(COMPONENT_Cb, PIC_RECONSTRUCTION).stride,
             m_internalBitDepths - m_outputBitDepth[0],
             format,
-            m_bRGB2GBR);
+            false /*m_bRGB2GBR*/);
 }
 
 template<typename T>

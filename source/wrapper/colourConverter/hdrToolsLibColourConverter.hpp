@@ -40,7 +40,7 @@ class ProjectParameters;
 namespace vmesh {
 
 template<class T>
-class HdrToolsLibColourConverter : public VirtualColourConverter<T> {
+class HdrToolsLibColourConverter final : public VirtualColourConverter<T> {
 public:
   HdrToolsLibColourConverter();
   ~HdrToolsLibColourConverter();

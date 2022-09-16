@@ -46,16 +46,6 @@ namespace vmesh {
 
 //============================================================================
 
-// Set CODE_CODEC_ID to enable/disable codecIds saving in vmesh bitstream
-// Note: Disable to stay compliant with v1.0
-// #define CODE_CODEC_ID  
-
-//============================================================================
-
-#define MeshType double
-
-//============================================================================
-
 enum class FrameType {
   INTER = 0,
   INTRA = 1,
@@ -121,9 +111,9 @@ struct VMCSequenceParameterSet {
   DisplacementCoordinateSystem displacementCoordinateSystem =
     DisplacementCoordinateSystem::LOCAL;
 
-  GeometryCodecId meshCodecId = GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
-  VideoCodecId    geometryVideoCodecId = VideoCodecId::UNKNOWN_VIDEO_CODEC;
-  VideoCodecId    textureVideoCodecId  = VideoCodecId::UNKNOWN_VIDEO_CODEC;
+  GeometryCodecId meshCodecId          = GeometryCodecId::DRACO;
+  VideoCodecId    geometryVideoCodecId = VideoCodecId::HM;
+  VideoCodecId    textureVideoCodecId  = VideoCodecId::HM;
 };
 
 //============================================================================
@@ -266,7 +256,6 @@ static int32_t
 subdivideBaseMesh(VMCFrame&               frame,
                   const SubdivisionMethod subdivisionMethod,
                   const int32_t           subdivisionIterationCount) {
-                    
   printf("Subdivide base mesh \n");
   fflush(stdout);
   auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
@@ -285,7 +274,7 @@ subdivideBaseMesh(VMCFrame&               frame,
     return -1;
   }
   rec.resizeNormals(rec.pointCount());
-    
+
   printf("Interpolate subdivision: normals \n");
   fflush(stdout);
   interpolateSubdivision(
@@ -306,7 +295,7 @@ applyDisplacements(
   for (int32_t v = 0, vcount = rec.pointCount(); v < vcount; ++v) {
     const auto& d = disp[v];
     if (displacementCoordinateSystem == DisplacementCoordinateSystem::LOCAL) {
-      const auto   n = rec.normal(v);
+      const auto     n = rec.normal(v);
       Vec3<MeshType> t{};
       Vec3<MeshType> b{};
       computeLocalCoordinatesSystem(n, t, b);

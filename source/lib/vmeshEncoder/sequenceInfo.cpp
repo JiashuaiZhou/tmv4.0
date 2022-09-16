@@ -40,7 +40,6 @@
 #include "util/misc.hpp"
 #include "util/mesh.hpp"
 #include "util/vector.hpp"
-#include "version.hpp"
 #include "vmc.hpp"
 
 #include "sequenceInfo.hpp"

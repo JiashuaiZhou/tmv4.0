@@ -41,21 +41,43 @@
 #  include <string>
 #  include <fstream>
 #  include <limits>
+#  include <map>
 
-//#include "program_options_lite.h"
+template<class T1, class T2>
+static inline std::istream&
+operator>>(std::istream& in, std::map<T1, T2>& map) {
+  T1 key;
+  T2 value;
+  try {
+    in >> key;
+    in >> value;
+  } catch (...) { in.setstate(std::ios::failbit); }
+
+  map[key] = value;
+  return in;
+}
+
+template<class T1, class T2>
+static std::ostream&
+operator<<(std::ostream& out, const std::map<T1, T2> map) {
+  for (auto it = map.begin(); it != map.end(); ++it)
+    out << it->first << "=" << it->second << ";";
+  return out;
+}
+
+#  include "program_options_lite.h"
 #  include "CommonLib/Rom.h"
 #  include "EncoderLib/RateCtrl.h"
-
-#  include "vtmLibVideoEncoderCfg.hpp"
-
 #  include "CommonLib/dtrace_next.h"
 #  include "CommonLib/ProfileLevelTier.h"
+
+#  include "vtmLibVideoEncoderCfg.hpp"
 
 #  define MACRO_TO_STRING_HELPER(val) #  val
 #  define MACRO_TO_STRING(val) MACRO_TO_STRING_HELPER(val)
 
 using namespace std;
-// namespace po = df::program_options_lite;
+namespace po = df::program_options_lite;
 
 enum ExtendedProfileName  // this is used for determining profile strings, where multiple profiles map to a single
 // profile idc with various constraint flag combinations
@@ -139,6 +161,42 @@ operator>>(std::istringstream& in, GOPEntry& entry)  // input
   }
 
   return in;
+}
+
+static std::ostream&
+operator<<(std::ostream& out, GOPEntry& entry)  // input
+{
+  out << entry.m_sliceType;
+  out << entry.m_POC;
+  out << entry.m_QPOffset;
+#  if X0038_LAMBDA_FROM_QP_CAPABILITY
+  out << entry.m_QPOffsetModelOffset;
+  out << entry.m_QPOffsetModelScale;
+#  endif
+#  if W0038_CQP_ADJ
+  out << entry.m_CbQPoffset;
+  out << entry.m_CrQPoffset;
+#  endif
+  out << entry.m_QPFactor;
+  out << entry.m_tcOffsetDiv2;
+  out << entry.m_betaOffsetDiv2;
+  out << entry.m_CbTcOffsetDiv2;
+  out << entry.m_CbBetaOffsetDiv2;
+  out << entry.m_CrTcOffsetDiv2;
+  out << entry.m_CrBetaOffsetDiv2;
+  out << entry.m_temporalId;
+  out << entry.m_numRefPicsActive0;
+  out << entry.m_numRefPics0;
+  for (int i = 0; i < entry.m_numRefPics0; i++) {
+    out << entry.m_deltaRefPics0[i];
+  }
+  out << entry.m_numRefPicsActive1;
+  out << entry.m_numRefPics1;
+  for (int i = 0; i < entry.m_numRefPics1; i++) {
+    out << entry.m_deltaRefPics1[i];
+  }
+
+  return out;
 }
 
 bool confirmPara(bool bflag, const char* message);
@@ -379,6 +437,13 @@ operator>>(std::istream& in, SMultiValueInput<T>& values) {
 }
 
 template<class T>
+static std::ostream&
+operator<<(std::ostream& out, SMultiValueInput<T>& values) {
+  for (auto v : values.values) out << v;
+  return out;
+}
+
+template<class T>
 T
 SMultiValueInput<T>::readValue(const char*& pStr, bool& bSuccess) {
   T           val = T();
@@ -442,7 +507,7 @@ SMultiValueInput<T>::readValues(std::istream& in) {
 
 #  if QP_SWITCHING_FOR_PARALLEL
 template<class T>
-static inline istream&
+static inline std::istream&
 operator>>(std::istream& in, vtmLibVideoEncoderCfg::OptionalValue<T>& value) {
   in >> std::ws;
   if (in.eof()) {
@@ -453,21 +518,8 @@ operator>>(std::istream& in, vtmLibVideoEncoderCfg::OptionalValue<T>& value) {
   }
   return in;
 }
+
 #  endif
-
-template<class T1, class T2>
-static inline istream&
-operator>>(std::istream& in, std::map<T1, T2>& map) {
-  T1 key;
-  T2 value;
-  try {
-    in >> key;
-    in >> value;
-  } catch (...) { in.setstate(ios::failbit); }
-
-  map[key] = value;
-  return in;
-}
 
 static uint32_t
 getMaxTileColsByLevel(Level::Name level) {
@@ -862,10 +914,10 @@ vtmLibVideoEncoderCfg::parseCfg(int argc, char* argv[]) {
   bool sdr = false;
 
   // clang-format off
-  df::program_options_lite::Options opts;
+  po::Options opts;
   opts.addOptions()
   ("help",                                            do_help,                                          false, "this help text")
-  ("c",    df::program_options_lite::parseConfigFile, "configuration file name")
+  ("c",    po::parseConfigFile, "configuration file name")
   ("WarnUnknowParameter,w",                           warnUnknowParameter,                                  0, "warn for unknown configuration parameters instead of failing")
   ("isSDR",                                           sdr,                                              false, "compatibility")
 #if ENABLE_SIMD_OPT
@@ -1646,10 +1698,10 @@ vtmLibVideoEncoderCfg::parseCfg(int argc, char* argv[]) {
     opts.addOptions()(cOSS2.str(), m_olsPtlIdx[i], 0);
   }
 
-  df::program_options_lite::setDefaults(opts);
-  df::program_options_lite::ErrorReporter err;
-  const list<const char*>&                argv_unhandled =
-    df::program_options_lite::scanArgv(opts, argc, (const char**)argv, err);
+  po::setDefaults(opts);
+  po::ErrorReporter        err;
+  const list<const char*>& argv_unhandled =
+    po::scanArgv(opts, argc, (const char**)argv, err);
 
   m_resChangeInClvsEnabled =
     m_scalingRatioHor != 1.0 || m_scalingRatioVer != 1.0;
@@ -1801,7 +1853,7 @@ vtmLibVideoEncoderCfg::parseCfg(int argc, char* argv[]) {
 
   if (argc == 1 || do_help) {
     /* argc == 1: no options have been specified */
-    df::program_options_lite::doHelp(cout, opts);
+    po::doHelp(cout, opts);
     return false;
   }
 

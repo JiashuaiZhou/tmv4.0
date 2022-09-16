@@ -7,19 +7,22 @@ echo -e "\033[0;32mCreate configuration files: ${CURDIR} \033[0m";
 OUTDIR="generatedConfigFiles";
 SEQDIR=""
 UPDATE=0
+CODEC="hm"
 print_usage()
 {
   echo "$0 Create configuration files: "
   echo "";
   echo "    Usage:" 
-  echo "       -o|--outdir=: configured directory                   (default: $OUTDIR )"  
-  echo "       -s|--seqdir=: source sequence directory              (default: $SEQDIR )"
+  echo "       -o|--outdir=: configured directory                    (default: $OUTDIR )"  
+  echo "       -s|--seqdir=: source sequence directory               (default: $SEQDIR )"
+  echo "       -c|--codec=:  video codec: hm, vtm                    (default: $CODEC )"
   echo "       --update:     update cfg files stored in ./cfg/vmesh/ (default: $UPDATE )"
   echo "";
   echo "    Examples:";
-  echo "      - $0  "; 
-  echo "      - $0 --outdir=generatedConfigFiles --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/"; 
-  echo "      - $0 --update";  
+  echo "      $0  "; 
+  echo "      $0 --outdir=generatedConfigFilesHM  --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/ --codec=hm"; 
+  echo "      $0 --outdir=generatedConfigFilesVTM --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/ --codec=vtm";   
+  echo "      $0 --update --codec=hm";  
   echo "    ";
   if [ "$#" != 2 ] ; then echo -e "ERROR: $1 \n"; fi
   exit 0;
@@ -29,6 +32,7 @@ while [[ $# -gt 0 ]] ; do
   case "$C" in    
     -o|--outdir=*   ) OUTDIR=$V;;
     -s|--seqdir=*   ) SEQDIR=$V;;
+    -c|--codec=*    ) CODEC=$V;;
     --update        ) UPDATE=1;;
     -h|--help       ) print_usage ;;
     *               ) print_usage "unsupported arguments: $C ";;
@@ -55,6 +59,22 @@ else
   SEQDIR=${SEQDIR/\/c\//C:\/}
   CFGDIR=${MAINDIR}/cfg
 fi
+case ${CODEC} in  
+  hm)
+    DISP_AI=hm/ctc-hm-displacements-map-ai-main10.cfg
+    DISP_LD=hm/ctc-hm-displacements-map-ld-main10.cfg
+    TEXT_AI=hm/ctc-hm-texture-ai.cfg
+    TEXT_LD=hm/ctc-hm-texture-ld.cfg
+    ;; 
+  vtm)
+    DISP_AI=vtm/displacements-ai.cfg
+    DISP_LD=vtm/displacements-ld.cfg
+    TEXT_AI=vtm/texture-ai.cfg
+    TEXT_LD=vtm/texture-ld.cfg
+    ;;
+  *) print_usage "CODEC = \"${SEQDIR}\" not corrects";;
+esac 
+
 # Update cfg-site.yaml file
 echo -e "\033[0;32mUpdate cfg-site.yaml file: ${CURDIR} \033[0m";
 CFGSITE=${CFGDIR}/cfg-site.yaml
@@ -69,6 +89,12 @@ vars:
  
   # this is the directory containing the hm/hdrtools config 
   cfg-prefix: ${MAINDIR}/cfg/
+
+  # video configuration files
+  video-config-disp-ai: ${DISP_AI}
+  video-config-disp-ld: ${DISP_LD}
+  video-config-text-ai: ${TEXT_AI}
+  video-config-text-ld: ${TEXT_LD}
 
 EOF
 

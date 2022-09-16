@@ -119,7 +119,8 @@ Checksum::add(const vmesh::Frame<uint8_t>& texture) {
 
 template<typename T>
 void
-Checksum::add(const vmesh::TriangleMesh<T>& mesh, const vmesh::Frame<uint8_t>& texture) {
+Checksum::add(const vmesh::TriangleMesh<T>& mesh,
+              const vmesh::Frame<uint8_t>&  texture) {
   add(mesh);
   add(texture);
 }
@@ -131,9 +132,9 @@ std::string
 Checksum::getChecksum(const vmesh::TriangleMesh<T>& mesh) {
   std::string str      = "";
   auto        checksum = compute(mesh);
-  for (auto& c : checksum) { 
+  for (auto& c : checksum) {
     char data[8];
-    snprintf(data, sizeof(data), "%02x", c);    
+    snprintf(data, sizeof(data), "%02x", c);
     str += data;
   }
   return str;
@@ -206,15 +207,15 @@ Checksum::write(const std::string& path) {
 
 template<typename T>
 void
-Checksum::print(const TriangleMesh<T>& mesh, std::string eString) {  
-  printf("Checksum %s: %s \n", eString.c_str(), getChecksum( mesh ).c_str());  
+Checksum::print(const TriangleMesh<T>& mesh, std::string eString) {
+  printf("Checksum %s: %s \n", eString.c_str(), getChecksum(mesh).c_str());
 }
 
 //============================================================================
 
 void
 Checksum::print(const vmesh::Frame<uint8_t>& texture, std::string eString) {
-  printf("Checksum %s: %s \n", eString.c_str(), getChecksum( texture ).c_str());  
+  printf("Checksum %s: %s \n", eString.c_str(), getChecksum(texture).c_str());
 }
 
 //============================================================================
@@ -233,7 +234,8 @@ Checksum::print() {
 //============================================================================
 
 template void Checksum::print<float>(const TriangleMesh<float>&, std::string);
-template void Checksum::print<double>(const TriangleMesh<double>&, std::string);
+template void Checksum::print<double>(const TriangleMesh<double>&,
+                                      std::string);
 
 template std::string
 Checksum::getChecksum<float>(const vmesh::TriangleMesh<float>& mesh);
@@ -252,7 +254,7 @@ template void Checksum::add<float>(const vmesh::TriangleMesh<float>&,
                                    const vmesh::Frame<uint8_t>& texture);
 template void Checksum::add<double>(const vmesh::TriangleMesh<double>&,
                                     const vmesh::Frame<uint8_t>& texture);
-                                    
+
 //============================================================================
 
 }  // namespace vmesh

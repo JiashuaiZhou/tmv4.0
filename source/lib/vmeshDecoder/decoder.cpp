@@ -163,7 +163,7 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
-      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+      auto prefix = _keepFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_base";
       base.save(prefix + "_dec.ply");
@@ -242,7 +242,7 @@ VMCDecoder::decompressDisplacementsVideo(const Bitstream&            bitstream,
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto dispPath =
-      _dispVideo.createName(params.intermediateFilesPathPrefix + "GOF_"
+      _dispVideo.createName(_keepFilesPathPrefix + "GOF_"
                               + std::to_string(_gofInfo.index_) + "_disp_dec",
                             10);
     save(removeExtension(dispPath) + ".bin", videoBitstream);
@@ -299,7 +299,7 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
     if (params.keepIntermediateFiles) {
       FrameSequence<uint8_t> brg8(brg);
       auto                   videoPath =
-        brg8.createName(params.intermediateFilesPathPrefix + "GOF_"
+        brg8.createName(_keepFilesPathPrefix + "GOF_"
                           + std::to_string(_gofInfo.index_) + "_texture_dec",
                         8);
       brg8.save(videoPath);

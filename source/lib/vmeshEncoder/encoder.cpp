@@ -134,7 +134,7 @@ VMCEncoder::compressDisplacementsVideo(Bitstream&                  bitstream,
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+    auto prefix = _keepFilesPathPrefix + "GOF_"
                   + std::to_string(_gofInfo.index_) + "_disp";
     _dispVideo.save(_dispVideo.createName(prefix + "_enc", 10));
     rec.save(rec.createName(prefix + "_rec", 10));
@@ -237,8 +237,8 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
     // Save source video
     std::string prefix;
     if (params.keepIntermediateFiles) {
-      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
-                    + std::to_string(_gofInfo.index_) + "_tex";
+      prefix = _keepFilesPathPrefix + "GOF_" + std::to_string(_gofInfo.index_)
+               + "_tex";
       FrameSequence<uint8_t> bgrSrc(
         width, height, ColourSpace::BGR444p, frameCount);
       for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex)
@@ -309,7 +309,7 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       FrameSequence<uint8_t> bgrRec8(bgrRec);
-      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+      auto                   prefix = _keepFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_tex";
       bgrRec8.save(bgrRec8.createName(prefix + "_rec", 8));
     }
@@ -331,7 +331,8 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
                                 const VMCEncoderParameters& params) const {
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
+    auto prefix = _keepFilesPathPrefix + "GOF_"
+                  + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex) + "_mapping_src.ply";
     base.save(prefix);
   }
@@ -346,7 +347,8 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
   }
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
+    auto prefix = _keepFilesPathPrefix + "GOF_"
+                  + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex) + "_mapping_scale.ply";
     base.save(prefix);
   }
@@ -363,7 +365,7 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+    auto prefix = _keepFilesPathPrefix + "GOF_"
                   + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex) + "_mapping";
     base.save(prefix + "_enc.ply");
@@ -400,8 +402,8 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
   // Geometry parametrisation rec
   // Force truncation of mesh coordinates to get the same results as P11
   if (params.forceCoordTruncation) {
-    auto prefix = params.intermediateFilesPathPrefix + "frw_fr_"
-                  + std::to_string(frameIndex);
+    auto prefix =
+      _keepFilesPathPrefix + "frw_fr_" + std::to_string(frameIndex);
     forceCoordinateTruncation(rec, prefix + "fsubdiv1.ply");
   }
   auto fsubdiv1 = rec;
@@ -546,7 +548,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
+    auto prefix = _keepFilesPathPrefix + "GOF_"
+                  + std::to_string(_gofInfo.index_) + "_fr_"
                   + std::to_string(frameIndex);
     base.save(prefix + "_base_compress.ply");
     subdiv.save(prefix + "_subdiv_compress.ply");
@@ -571,7 +574,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     computeDracoMapping(base, mapping, frameIndex, params);
 
     if (params.keepIntermediateFiles) {
-      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+      auto prefix = _keepFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_post_mapping";
       base.save(prefix + "_base.ply");
@@ -589,7 +592,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
-      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+      auto prefix = _keepFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_post_mapping";
       base.save(prefix + "_base_quant.ply");
@@ -597,8 +600,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
     // Force truncation of mesh coordinates to get the same results as P11
     if (params.forceCoordTruncation) {
-      auto prefix = params.intermediateFilesPathPrefix + "fr_"
-                    + std::to_string(frameIndex);
+      auto prefix = _keepFilesPathPrefix + "fr_" + std::to_string(frameIndex);
       forceCoordinateTruncation(base, prefix + "base_before_enc.ply");
     }
 
@@ -620,14 +622,13 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
     // Force truncation of mesh coordinates to get the same results as P11
     if (params.forceCoordTruncation) {
-      auto prefix = params.intermediateFilesPathPrefix + "fr_"
-                    + std::to_string(frameIndex);
+      auto prefix = _keepFilesPathPrefix + "fr_" + std::to_string(frameIndex);
       forceCoordinateTruncation(rec, prefix + "new_base.ply");
     }
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
-      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+      auto prefix = _keepFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex) + "_base";
       base.save(prefix + "_enc.ply");
@@ -1048,7 +1049,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
     fflush(stdout);
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       auto& frame  = gof.frame(frameIndex);
-      auto  prefix = params.intermediateFilesPathPrefix + "GOF_"
+      auto  prefix = _keepFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex);
 
@@ -1074,7 +1075,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
       if (!skipSimplify) {
         // Save intermediate files
         if (params.keepIntermediateFiles) {
-          auto prefix = "GOF_" + std::to_string(_gofInfo.index_) + "_fr_"
+          auto prefix = _keepFilesPathPrefix + "GOF_"
+                        + std::to_string(_gofInfo.index_) + "_fr_"
                         + std::to_string(frameIndex);
           frame.input.save(prefix + "_simp_input.ply");
         }
@@ -1366,7 +1368,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       const auto& frameInfo = _gofInfo.frameInfo(frameIndex);
       auto&       frame     = gof.frame(frameIndex);
-      auto        prefix    = params.intermediateFilesPathPrefix + "GOF_"
+      auto        prefix    = _keepFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex);
       frame.base.save(prefix + "_base_org.ply");
@@ -1382,7 +1384,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfo,
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
-      auto prefix = params.intermediateFilesPathPrefix + "GOF_"
+      auto prefix = _keepFilesPathPrefix + "GOF_"
                     + std::to_string(_gofInfo.index_) + "_fr_"
                     + std::to_string(frameIndex);
       frame.base.save(prefix + "_base_uni.ply");

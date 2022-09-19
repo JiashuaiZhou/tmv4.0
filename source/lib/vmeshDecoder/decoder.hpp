@@ -50,7 +50,6 @@ namespace vmesh {
 
 struct VMCDecoderParameters {
   std::string textureVideoHDRToolDecConfig = {};
-  std::string intermediateFilesPathPrefix  = {};
   int32_t     textureVideoUpsampleFilter   = 0;
   bool        textureVideoFullRange        = false;
   bool        normalizeUV                  = false;
@@ -73,6 +72,10 @@ public:
                      const VMCDecoderParameters& params);
 
   uint32_t getBitDepthTexCoord() { return _sps.bitDepthTexCoord; }
+
+  inline void setKeepFilesPathPrefix(std::string& path) {
+    _keepFilesPathPrefix = path;
+  }
 
 private:
   int32_t decodeSequenceHeader(const Bitstream& bitstream);
@@ -99,6 +102,7 @@ private:
   VMCGroupOfFramesInfo    _gofInfo;
   VMCSequenceParameterSet _sps;
   FrameSequence<uint16_t> _dispVideo;
+  std::string             _keepFilesPathPrefix = {};
 };
 
 //============================================================================

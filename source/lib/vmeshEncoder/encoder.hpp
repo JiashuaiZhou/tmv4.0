@@ -222,8 +222,7 @@ struct VMCEncoderParameters {
   bool normalizeUV       = false;
 
   // output
-  std::string intermediateFilesPathPrefix = {};
-  bool        keepIntermediateFiles       = false;
+  bool keepIntermediateFiles = false;
 
   // GeometryDecimate
   int32_t texCoordQuantizationBits        = 0;
@@ -272,6 +271,10 @@ public:
                    VMCGroupOfFrames&           gof,
                    Bitstream&                  bitstream,
                    const VMCEncoderParameters& params);
+
+  inline void setKeepFilesPathPrefix(std::string& path) {
+    _keepFilesPathPrefix = path;
+  }
 
 private:
   static void    unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
@@ -327,6 +330,7 @@ private:
 
   VMCGroupOfFramesInfo    _gofInfo;
   FrameSequence<uint16_t> _dispVideo;
+  std::string             _keepFilesPathPrefix = {};
 };
 
 //============================================================================

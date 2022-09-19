@@ -101,10 +101,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       decParams.keepIntermediateFiles, 
       decParams.keepIntermediateFiles, 
       "Keep intermediate files")
-    ("interFilesPathPrefix", 
-      decParams.intermediateFilesPathPrefix, 
-      decParams.intermediateFilesPathPrefix,
-      "Intermediate files path prefix")
     ("checksum", 
       params.checksum, 
       params.checksum, 
@@ -318,8 +314,11 @@ decompress(const Parameters& params) {
               << params.compressedStreamPath << ")\n";
     return -1;
   }
+  std::string keepFilesPathPrefix = "";
+  if (params.decParams.keepIntermediateFiles) {
+    keepFilesPathPrefix = vmesh::dirname(params.compressedStreamPath);
+  }
 
-  vmesh::VMCDecoder           decoder;
   vmesh::VMCGroupOfFramesInfo gofInfo;
   vmesh::VMCStats             totalStats;
   vmesh::Checksum             checksum;
@@ -330,8 +329,10 @@ decompress(const Parameters& params) {
   gofInfo.startFrameIndex_                = params.startFrame;
   while (byteCounter != bitstream.size()) {
     // Decompress
+    vmesh::VMCDecoder       decoder;
     vmesh::VMCGroupOfFrames gof;
-    auto                    start = std::chrono::steady_clock::now();
+    decoder.setKeepFilesPathPrefix(keepFilesPathPrefix);
+    auto start = std::chrono::steady_clock::now();
     if (decoder.decompress(
           bitstream, gofInfo, gof, byteCounter, params.decParams)
         != 0) {

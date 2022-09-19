@@ -131,11 +131,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("keep", 
       encParams.keepIntermediateFiles, 
       encParams.keepIntermediateFiles, 
-      "Keep intermediate files")
-    ("intermediateFilesPathPrefix", 
-      encParams.intermediateFilesPathPrefix, 
-      encParams.intermediateFilesPathPrefix, 
-      "Intermediate files path prefix")      
+      "Keep intermediate files")  
     ("checksum", 
       params.checksum, 
       params.checksum, 
@@ -707,21 +703,24 @@ compress(const Parameters& params) {
                         params.encParams.groupOfFramesMaxSize,
                         params.encParams.analyzeGof,
                         params.inputMeshPath);
+  std::string keepFilesPathPrefix = "";
   if (params.encParams.keepIntermediateFiles) {
-    auto file = params.encParams.intermediateFilesPathPrefix + "gof.txt";
-    sequenceInfo.save(file);
+    keepFilesPathPrefix = vmesh::dirname(params.compressedStreamPath);
+    auto gofPath        = keepFilesPathPrefix + "gof.txt";
+    sequenceInfo.save(gofPath);
   }
 
-  vmesh::VMCEncoder encoder;
   vmesh::Bitstream  bitstream;
   vmesh::VMCStats   totalStats;
   vmesh::Checksum   checksum;
   vmesh::VMCMetrics metrics;
   auto&             metParams = params.metParams;
   for (int g = 0; g < sequenceInfo.gofCount(); ++g) {
+    vmesh::VMCEncoder       encoder;
     vmesh::VMCGroupOfFrames gof;
     const auto&             gofInfo = sequenceInfo[g];
     printf("loadGroupOfFrames GOF = %d / %d \n", g, sequenceInfo.gofCount());
+    encoder.setKeepFilesPathPrefix(keepFilesPathPrefix);
 
     // Load group of frame
     if (loadGroupOfFrames(gofInfo, gof, params) != 0) {

@@ -139,7 +139,6 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
   printf("Decompress base mesh: Frame = %d \n", frameInfo.frameIndex);
   fflush(stdout);
   if (decodeFrameHeader(bitstream, frameInfo) != 0) { return -1; }
-  const auto frameIndex = frameInfo.frameIndex + _gofInfo.startFrameIndex_;
   auto&      base       = frame.base;
   auto&      qpositions = frame.qpositions;
   if (frameInfo.type == FrameType::INTRA) {
@@ -163,9 +162,8 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
-      auto prefix = _keepFilesPathPrefix + "GOF_"
-                    + std::to_string(_gofInfo.index_) + "_fr_"
-                    + std::to_string(frameIndex) + "_base";
+      auto prefix = _keepFilesPathPrefix + "fr_"
+                    + std::to_string(frameInfo.frameIndex) + "_base";
       base.save(prefix + "_dec.ply");
       save(prefix + ".drc", geometryBitstream);
     }
@@ -223,7 +221,8 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
 
 int32_t
 VMCDecoder::decompressDisplacementsVideo(const Bitstream&            bitstream,
-                                         const VMCDecoderParameters& params) {
+  FrameSequence<uint16_t>&dispVideo,
+                                           const VMCDecoderParameters& params) {
   printf("Decompress displacements video \n");
   fflush(stdout);
   // Get video bitstream
@@ -237,16 +236,13 @@ VMCDecoder::decompressDisplacementsVideo(const Bitstream&            bitstream,
   // Decode video
   auto decoder = VirtualVideoDecoder<uint16_t>::create(
     VideoCodecId(_sps.geometryVideoCodecId));
-  decoder->decode(videoBitstream, _dispVideo, 10);
+  decoder->decode(videoBitstream, dispVideo, 10);
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto dispPath =
-      _dispVideo.createName(_keepFilesPathPrefix + "GOF_"
-                              + std::to_string(_gofInfo.index_) + "_disp_dec",
-                            10);
-    save(removeExtension(dispPath) + ".bin", videoBitstream);
-    _dispVideo.save(dispPath);
+    auto path = dispVideo.createName(_keepFilesPathPrefix + "disp_dec", 10);
+    save(removeExtension(path) + ".bin", videoBitstream);
+    dispVideo.save(path);
   }
   return 0;
 }
@@ -288,22 +284,24 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
     printf("Convert video \n");
     fflush(stdout);
     FrameSequence<uint16_t> brg;
+#if USE_HDRTOOLS
+    auto convert = VirtualColourConverter<uint16_t>::create(1);
+    convert->convert(params.textureVideoHDRToolDecConfig, yuv, brg);
+#else
     auto convert = VirtualColourConverter<uint16_t>::create(0);
     auto mode    = "YUV420ToBGR444_10_8_"
                 + std::to_string(params.textureVideoUpsampleFilter) + "_"
                 + std::to_string(params.textureVideoFullRange);
     convert->convert(mode, yuv, brg);
+#endif
     yuv.clear();
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       FrameSequence<uint8_t> brg8(brg);
-      auto                   videoPath =
-        brg8.createName(_keepFilesPathPrefix + "GOF_"
-                          + std::to_string(_gofInfo.index_) + "_texture_dec",
-                        8);
-      brg8.save(videoPath);
-      save(removeExtension(videoPath) + ".bin", videoBitstream);
+      auto path = brg8.createName(_keepFilesPathPrefix + "tex_dec", 8);
+      brg8.save(path);
+      save(removeExtension(path) + ".bin", videoBitstream);
     }
 
     // Store result in 8 bits frames
@@ -320,29 +318,31 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
 
 int32_t
 VMCDecoder::decompress(const Bitstream&            bitstream,
-                       VMCGroupOfFramesInfo&       gofInfo,
+                       VMCGroupOfFramesInfo&       gofInfoSrc,
                        VMCGroupOfFrames&           gof,
                        size_t&                     byteCounter,
                        const VMCDecoderParameters& params) {
+  VMCGroupOfFramesInfo    gofInfo;
   _byteCounter              = byteCounter;
-  _gofInfo.index_           = gofInfo.index_;
-  _gofInfo.startFrameIndex_ = gofInfo.startFrameIndex_;
+  gofInfo.index_           = gofInfoSrc.index_;
+  gofInfo.startFrameIndex_ = gofInfoSrc.startFrameIndex_;
   auto& stats               = gof.stats;
   stats.reset();
   stats.totalByteCount = _byteCounter;
   printf("Decompress gop: \n");
   fflush(stdout);
   if (decodeSequenceHeader(bitstream) != 0) { return -1; }
-  _dispVideo.resize(_sps.widthDispVideo,
+  FrameSequence<uint16_t> dispVideo;
+  dispVideo.resize(_sps.widthDispVideo,
                     _sps.heightDispVideo,
                     ColourSpace::YUV444p,
                     _sps.frameCount);
-  _gofInfo.frameCount_ = _sps.frameCount;
-  _gofInfo.framesInfo_.resize(_sps.frameCount);
+  gofInfo.frameCount_ = _sps.frameCount;
+  gofInfo.framesInfo_.resize(_sps.frameCount);
   gof.resize(_sps.frameCount);
   stats.frameCount = _sps.frameCount;
   for (int32_t frameIndex = 0; frameIndex < _sps.frameCount; ++frameIndex) {
-    auto& frameInfo      = _gofInfo.framesInfo_[frameIndex];
+    auto& frameInfo      = gofInfo.framesInfo_[frameIndex];
     auto& frame          = gof.frame(frameIndex);
     frameInfo.frameIndex = frameIndex;
     decompressBaseMesh(bitstream, gof, frameInfo, frame, stats, params);
@@ -352,7 +352,7 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   }
   stats.displacementsByteCount = _byteCounter;
   if (_sps.encodeDisplacementsVideo
-      && (decompressDisplacementsVideo(bitstream, params) != 0)) {
+      && (decompressDisplacementsVideo(bitstream, dispVideo, params) != 0)) {
     return -1;
   }
   stats.displacementsByteCount = _byteCounter - stats.displacementsByteCount;
@@ -360,7 +360,7 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   if (_sps.encodeDisplacementsVideo) {
     for (int32_t frameIndex = 0; frameIndex < _sps.frameCount; ++frameIndex) {
       auto& frame = gof.frame(frameIndex);
-      reconstructDisplacementFromVideoFrame(_dispVideo.frame(frameIndex),
+      reconstructDisplacementFromVideoFrame(dispVideo.frame(frameIndex),
                                             frame,
                                             _sps.geometryVideoBlockSize,
                                             _sps.geometryVideoBitDepth);
@@ -388,7 +388,7 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   stats.textureByteCount = _byteCounter - stats.textureByteCount;
   stats.totalByteCount   = _byteCounter - stats.totalByteCount;
   byteCounter            = _byteCounter;
-  gofInfo                = _gofInfo;
+  gofInfoSrc             = gofInfo;
   if (!params.normalizeUV) {
     const auto scale = (1 << _sps.bitDepthTexCoord) - 1.0;
     for (int32_t frameIndex = 0; frameIndex < _sps.frameCount; ++frameIndex) {

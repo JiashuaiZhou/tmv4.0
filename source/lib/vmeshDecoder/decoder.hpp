@@ -73,7 +73,7 @@ public:
 
   uint32_t getBitDepthTexCoord() { return _sps.bitDepthTexCoord; }
 
-  inline void setKeepFilesPathPrefix(std::string& path) {
+  inline void setKeepFilesPathPrefix( const std::string& path) {
     _keepFilesPathPrefix = path;
   }
 
@@ -93,15 +93,14 @@ private:
                            std::vector<Vec3<int32_t>>&       current,
                            const VMCDecoderParameters&       params);
   int32_t decompressDisplacementsVideo(const Bitstream&            bitstream,
+                                       FrameSequence<uint16_t>&    dispVideo,
                                        const VMCDecoderParameters& params);
   int32_t decompressTextureVideo(const Bitstream&            bitstream,
                                  VMCGroupOfFrames&           gof,
                                  const VMCDecoderParameters& params);
 
   size_t                  _byteCounter = 0;
-  VMCGroupOfFramesInfo    _gofInfo;
   VMCSequenceParameterSet _sps;
-  FrameSequence<uint16_t> _dispVideo;
   std::string             _keepFilesPathPrefix = {};
 };
 

@@ -272,7 +272,7 @@ public:
                    Bitstream&                  bitstream,
                    const VMCEncoderParameters& params);
 
-  inline void setKeepFilesPathPrefix(std::string& path) {
+  inline void setKeepFilesPathPrefix( const std::string& path) {
     _keepFilesPathPrefix = path;
   }
 
@@ -285,6 +285,7 @@ private:
                                      int32_t                     frameIndex,
                                      const VMCEncoderParameters& params) const;
   int32_t        encodeSequenceHeader(const VMCGroupOfFrames&     gof,
+                                      FrameSequence<uint16_t>&    dispVideo,
                                       Bitstream&                  bitstream,
                                       const VMCEncoderParameters& params) const;
   static int32_t encodeFrameHeader(const VMCFrameInfo& frameInfo,
@@ -313,7 +314,8 @@ private:
           computeDisplacementVideoFrame(const VMCFrame&             frame,
                                         Frame<uint16_t>&            dispVideoFrame,
                                         const VMCEncoderParameters& params);
-  int32_t compressDisplacementsVideo(Bitstream&                  bitstream,
+  int32_t compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
+                                     Bitstream&                  bitstream,
                                      const VMCEncoderParameters& params);
   int32_t compressTextureVideo(VMCGroupOfFrames&           gof,
                                Bitstream&                  bitstream,
@@ -328,9 +330,7 @@ private:
                                  Frame<uint8_t>&               outputTexture,
                                  const VMCEncoderParameters&   params);
 
-  VMCGroupOfFramesInfo    _gofInfo;
-  FrameSequence<uint16_t> _dispVideo;
-  std::string             _keepFilesPathPrefix = {};
+  std::string _keepFilesPathPrefix = {};
 };
 
 //============================================================================

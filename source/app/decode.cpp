@@ -331,7 +331,8 @@ decompress(const Parameters& params) {
     // Decompress
     vmesh::VMCDecoder       decoder;
     vmesh::VMCGroupOfFrames gof;
-    decoder.setKeepFilesPathPrefix(keepFilesPathPrefix);
+    decoder.setKeepFilesPathPrefix(keepFilesPathPrefix + "GOF_"
+                                   + std::to_string(gofInfo.index_) + "_");
     auto start = std::chrono::steady_clock::now();
     if (decoder.decompress(
           bitstream, gofInfo, gof, byteCounter, params.decParams)

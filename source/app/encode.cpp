@@ -720,7 +720,8 @@ compress(const Parameters& params) {
     vmesh::VMCGroupOfFrames gof;
     const auto&             gofInfo = sequenceInfo[g];
     printf("loadGroupOfFrames GOF = %d / %d \n", g, sequenceInfo.gofCount());
-    encoder.setKeepFilesPathPrefix(keepFilesPathPrefix);
+    encoder.setKeepFilesPathPrefix(keepFilesPathPrefix + "GOF_"
+                                   + std::to_string(gofInfo.index_) + "_");
 
     // Load group of frame
     if (loadGroupOfFrames(gofInfo, gof, params) != 0) {

@@ -58,9 +58,51 @@ public:
   InternalColourConverter();
   ~InternalColourConverter();
 
-  void convert(std::string       configuration,
-               FrameSequence<T>& videoSrc,
-               FrameSequence<T>& videoDst);
+  void initialize(std::string configFile);
+
+  void convert(FrameSequence<T>& videoSrc, FrameSequence<T>& videoDst);
+
+  void convert(Frame<T>& src, Frame<T>& dst);
+
+private:
+  bool extractParameters(std::string& configuration);
+  void convertRGB44ToYUV420(Frame<T>& src,
+                            Frame<T>& dst,
+                            size_t    srcNumByte,
+                            size_t    dstNumByte,
+                            size_t    filter,
+                            bool      BGR,
+                            bool      range);
+
+  void convertRGB44ToYUV444(Frame<T>& src,
+                            Frame<T>& dst,
+                            size_t    srcNumByte,
+                            size_t    dstNumByte,
+                            size_t    filter,
+                            bool      range);
+
+  void convertYUV420ToYUV444(Frame<T>& src,
+                             Frame<T>& dst,
+                             size_t    srcNumByte,
+                             size_t    dstNumByte,
+                             size_t    filter,
+                             bool      range);
+
+  void convertYUV420ToRGB444(Frame<T>& src,
+                             Frame<T>& dst,
+                             size_t    srcNumByte,
+                             size_t    dstNumByte,
+                             size_t    filter,
+                             bool      BGR,
+                             bool      range);
+
+  void convertYUV444ToRGB444(Frame<T>& src,
+                             Frame<T>& dst,
+                             size_t    srcNumByte,
+                             size_t    dstNumByte,
+                             size_t    filte,
+                             bool      range);
+
   void upsample(FrameSequence<T>& video,
                 size_t            rate,
                 size_t            srcNumByte,
@@ -74,82 +116,6 @@ public:
                 size_t    dstNumByte,
                 size_t    filter,
                 bool      range);
-
-private:
-  void extractParameters(std::string& configuration,
-                         std::string& config,
-                         int32_t&     srcBitdepth,
-                         int32_t&     dstBitdepth,
-                         int32_t&     filter,
-                         int32_t&     range);
-  void convertRGB44ToYUV420(FrameSequence<T>& videoSrc,
-                            FrameSequence<T>& videoDst,
-                            size_t            srcNumByte,
-                            size_t            dstNumByte,
-                            size_t            filter,
-                            bool              BGR,
-                            bool              range);
-  void convertRGB44ToYUV420(Frame<T>& imageSrc,
-                            Frame<T>& imageDst,
-                            size_t    srcNumByte,
-                            size_t    dstNumByte,
-                            size_t    filter,
-                            bool      BGR,
-                            bool      range);
-
-  void convertRGB44ToYUV444(FrameSequence<T>& videoSrc,
-                            FrameSequence<T>& videoDst,
-                            size_t            srcNumByte,
-                            size_t            dstNumByte,
-                            size_t            filter,
-                            bool              range);
-  void convertRGB44ToYUV444(Frame<T>& imageSrc,
-                            Frame<T>& imageDst,
-                            size_t    srcNumByte,
-                            size_t    dstNumByte,
-                            size_t    filter,
-                            bool      range);
-
-  void convertYUV420ToYUV444(FrameSequence<T>& videoSrc,
-                             FrameSequence<T>& videoDst,
-                             size_t            srcNumByte,
-                             size_t            dstNumByte,
-                             size_t            filter,
-                             bool              range);
-  void convertYUV420ToYUV444(Frame<T>& imageSrc,
-                             Frame<T>& imageDst,
-                             size_t    srcNumByte,
-                             size_t    dstNumByte,
-                             size_t    filter,
-                             bool      range);
-
-  void convertYUV420ToRGB444(FrameSequence<T>& videoSrc,
-                             FrameSequence<T>& videoDst,
-                             size_t            srcNumByte,
-                             size_t            dstNumByte,
-                             size_t            filter,
-                             bool              BGR,
-                             bool              range);
-  void convertYUV420ToRGB444(Frame<T>& imageSrc,
-                             Frame<T>& imageDst,
-                             size_t    srcNumByte,
-                             size_t    dstNumByte,
-                             size_t    filter,
-                             bool      BGR,
-                             bool      range);
-
-  void convertYUV444ToRGB444(FrameSequence<T>& videoSrc,
-                             FrameSequence<T>& videoDst,
-                             size_t            srcNumByte,
-                             size_t            dstNumByte,
-                             size_t            filter,
-                             bool              range);
-  void convertYUV444ToRGB444(Frame<T>& imageSrc,
-                             Frame<T>& imageDst,
-                             size_t    srcNumByte,
-                             size_t    dstNumByte,
-                             size_t    filte,
-                             bool      range);
 
   void
   RGBtoFloatRGB(const Plane<T>& src, Plane<float>& dst, size_t nbyte) const;
@@ -326,6 +292,12 @@ private:
     }
     return (float)((value + (float)offset) * (float)scale);
   }
+  ColourSpace srcColourSpace = ColourSpace::UNKNOW;
+  ColourSpace dstColourSpace = ColourSpace::UNKNOW;
+  int32_t     srcBitdepth    = -1;
+  int32_t     dstBitdepth    = -1;
+  int32_t     filter         = -1;
+  int32_t     range          = -1;
 };
 
 }  // namespace vmesh

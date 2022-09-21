@@ -129,8 +129,8 @@ VMCEncoder::compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
   videoEncoderParams.qp_               = 8;
   FrameSequence<uint16_t> rec;
   std::vector<uint8_t>    videoBitstream;
-  auto                    encoder = VirtualVideoEncoder<uint16_t>::create(
-    vmesh::VideoCodecId(params.geometryVideoCodecId));
+  auto                    encoder =
+    VirtualVideoEncoder<uint16_t>::create(params.geometryVideoCodecId);
   encoder->encode(dispVideo, videoEncoderParams, videoBitstream, rec);
 
   // Save intermediate files
@@ -255,14 +255,15 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
     FrameSequence<uint16_t> yuvSrc;
 #if USE_HDRTOOLS
     auto convert = VirtualColourConverter<uint16_t>::create(1);
-    convert->convert(params.textureVideoHDRToolEncConfig, bgrSrc10, yuvSrc);
+    convert->initialize(params.textureVideoHDRToolEncConfig);
 #else
     auto convert = VirtualColourConverter<uint16_t>::create(0);
-    auto mode    = "BGR444pToYUV420p_8_10_"
+    auto mode    = "BGR444p_YUV420p_8_10_"
                 + std::to_string(params.textureVideoDownsampleFilter) + "_"
                 + std::to_string(params.textureVideoFullRange);
-    convert->convert(mode, bgrSrc10, yuvSrc);
+    convert->initialize(mode);
 #endif
+    convert->convert(bgrSrc10, yuvSrc);
     bgrSrc10.clear();
 
     // Save intermediate files
@@ -279,8 +280,8 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
     videoEncoderParams.qp_               = params.textureVideoQP;
     FrameSequence<uint16_t> yuvRec;
     std::vector<uint8_t>    videoBitstream;
-    auto                    encoder = VirtualVideoEncoder<uint16_t>::create(
-      vmesh::VideoCodecId(params.textureVideoCodecId));
+    auto                    encoder =
+      VirtualVideoEncoder<uint16_t>::create(params.textureVideoCodecId);
     encoder->encode(yuvSrc, videoEncoderParams, videoBitstream, yuvRec);
     bitstream.write((uint32_t)videoBitstream.size());
     bitstream.append(videoBitstream);
@@ -295,14 +296,15 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
     // Convert Rec yuv to bgr
     FrameSequence<uint16_t> bgrRec;
 #if USE_HDRTOOLS
-    convert->convert(params.textureVideoHDRToolDecConfig, yuvRec, bgrRec);
+    convert->initialize(params.textureVideoHDRToolDecConfig);
 #else
-    mode = "YUV420pToBGR444p_10_8_"
+    mode = "YUV420p_BGR444p_10_8_"
            + std::to_string(params.textureVideoUpsampleFilter) + "_"
            + std::to_string(params.textureVideoFullRange);
-    convert->convert(mode, yuvRec, bgrRec);
-    yuvRec.clear();
+    convert->initialize(mode);
 #endif
+    convert->convert(yuvRec, bgrRec);
+    yuvRec.clear();
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -758,12 +760,11 @@ VMCEncoder::transferTexture(VMCFrame&                   frame,
 }
 
 int32_t
-VMCEncoder::transferTexture(
-  const TriangleMesh<MeshType>& targetMesh,
-  const TriangleMesh<MeshType>& sourceMesh,
-  const Frame<uint8_t>&         targetTexture,  // , ColourSpace::BGR444p
-  Frame<uint8_t>&               outputTexture,  // , ColourSpace::BGR444p
-  const VMCEncoderParameters&   params) {
+VMCEncoder::transferTexture(const TriangleMesh<MeshType>& targetMesh,
+                            const TriangleMesh<MeshType>& sourceMesh,
+                            const Frame<uint8_t>&         targetTexture,
+                            Frame<uint8_t>&               outputTexture,
+                            const VMCEncoderParameters&   params) {
   if ((targetMesh.pointCount() == 0) || (sourceMesh.pointCount() == 0)
       || targetMesh.triangleCount() != targetMesh.texCoordTriangleCount()
       || sourceMesh.triangleCount() != sourceMesh.texCoordTriangleCount()
@@ -1406,6 +1407,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
 
   // Reconstruct
   if (params.encodeTextureVideo) {
+    // FrameSequence<uint16_t> textureVideoYuv420;
+    // textureVideoYuv420.resize(params.textureWidth,
+    //                           params.textureHeight,
+    //                           ColourSpace::YUV420p,
+    //                           frameCount);
+
     std::cout << "Generating texture maps ";
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       auto& frame = gof.frame(frameIndex);
@@ -1426,8 +1433,10 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                     params.liftingSkipUpdate);
         applyDisplacements(frame, params.displacementCoordinateSystem);
       }
-      if (transferTexture(frame, params) != 0) { return -1; }
-      std::cout << '.';
+      if (transferTexture(frame, params)
+          != 0) {
+        return -1;
+      }
     }
     std::cout << '\n';
     // compress texture

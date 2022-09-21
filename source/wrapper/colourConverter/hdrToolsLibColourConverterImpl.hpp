@@ -62,16 +62,15 @@ class HdrToolsLibColourConverterImpl {
 public:
   HdrToolsLibColourConverterImpl();
   ~HdrToolsLibColourConverterImpl();
-  void convert(const std::string& configFile,
-               FrameSequence<T>&  videoSrc,
-               FrameSequence<T>&  videoDst);
+  void initialize(const std::string& configFile);
+  void convert(FrameSequence<T>& videoSrc, FrameSequence<T>& videoDst);
+  void convert(Frame<T>& src, Frame<T>& dst);
 
 private:
-  void init(ProjectParameters* inputParams);
-  void process(ProjectParameters* inputParams,
-               FrameSequence<T>&  videoSrc,
-               FrameSequence<T>&  videoDst);
-  void destroy();
+  void        init();
+  void        process(Frame<T>& videoSrc, Frame<T>& videoDst);
+  void        destroy();
+  ColourSpace getOutputColourFormat();
 
   int                 m_nFrameStores;
   hdrtoolslib::Frame* m_oFrameStore;       // picture storage for output frames
@@ -132,6 +131,9 @@ private:
   int                   m_cropHeight{};
   hdrtoolslib::Input*   m_inputFrame;   // input frames
   hdrtoolslib::Output*  m_outputFrame;  // output frames
+  int32_t               m_frameNumber = 0;
+  ProjectParameters*    m_projectParameters;
+  bool                  m_initDone = false;
 };
 
 }  // namespace vmesh

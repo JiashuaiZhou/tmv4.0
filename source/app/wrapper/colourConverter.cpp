@@ -158,16 +158,17 @@ main(int argc, char* argv[]) {
   printf("Src frame count = %d \n", src.frameCount());
 
   // convert
-  auto encoder = vmesh::VirtualColourConverter<uint16_t>::create(params.mode);
+  auto convert = vmesh::VirtualColourConverter<uint16_t>::create(params.mode);
   if (params.mode == 0) {
     std::stringstream format;
-    format << params.inputColorSpace << "To" << params.outputColorSpace << "_"
+    format << params.inputColorSpace << "_" << params.outputColorSpace << "_"
            << params.inputBitDepth << "_" << params.outputBitDepth << "_"
            << params.filter << "_" << params.range;
-    encoder->convert(format.str(), src, dst);
+    convert->initialize(format.str());
   } else {
-    encoder->convert(params.configPath, src, dst);
+    convert->initialize(params.configPath);
   }
+  convert->convert(src, dst);
 
   // Save reconstructed mesh
   dst.save(params.outputPath);

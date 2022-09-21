@@ -46,12 +46,25 @@ HdrToolsLibColourConverter<T>::~HdrToolsLibColourConverter() = default;
 
 template<typename T>
 void
-HdrToolsLibColourConverter<T>::convert(std::string       configFile,
-                                       FrameSequence<T>& videoSrc,
-                                       FrameSequence<T>& videoDst) {
-  HdrToolsLibColourConverterImpl<T> converter;
-  converter.convert(configFile, videoSrc, videoDst);
+HdrToolsLibColourConverter<T>::initialize(std::string configFile) {
+  converter.reset();
+  converter = std::make_shared<HdrToolsLibColourConverterImpl<T>>();
+  converter->initialize(configFile);
 }
+
+template<typename T>
+void
+HdrToolsLibColourConverter<T>::convert(FrameSequence<T>& src,
+                                       FrameSequence<T>& dst) {
+  converter->convert(src, dst);
+}
+
+template<typename T>
+void
+HdrToolsLibColourConverter<T>::convert(Frame<T>& src, Frame<T>& dst) {
+  converter->convert(src, dst);
+}
+
 namespace vmesh {
 template class HdrToolsLibColourConverter<uint8_t>;
 template class HdrToolsLibColourConverter<uint16_t>;

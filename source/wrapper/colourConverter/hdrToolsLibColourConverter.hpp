@@ -40,19 +40,22 @@ class ProjectParameters;
 namespace vmesh {
 
 template<class T>
-class HdrToolsLibColourConverter final : public VirtualColourConverter<T> {
+class HdrToolsLibColourConverterImpl;
+
+template<class T>
+class HdrToolsLibColourConverter : public VirtualColourConverter<T> {
 public:
   HdrToolsLibColourConverter();
   ~HdrToolsLibColourConverter();
-  void convert(std::string configuration, FrameSequence<T>& videoSrc) {
-    FrameSequence<T> videoDst;
-    convert(configuration, videoSrc, videoDst);
-    videoSrc = videoDst;
-  }
 
-  void convert(std::string       configuration,
-               FrameSequence<T>& videoSrc,
-               FrameSequence<T>& videoDst);
+  void initialize(std::string configFile);
+
+  void convert(FrameSequence<T>& src, FrameSequence<T>& dst);
+
+  void convert(Frame<T>& src, Frame<T>& dst);
+
+private:
+  std::shared_ptr<HdrToolsLibColourConverterImpl<T>> converter;
 };
 
 }  // namespace vmesh

@@ -165,52 +165,60 @@ HdrToolsLibColourConverterImpl<T>::HdrToolsLibColourConverterImpl() {
   m_changeColorPrimaries   = false;
   m_inputFile              = nullptr;
   m_outputFile             = nullptr;
+  m_projectParameters      = nullptr;
+  m_frameNumber            = 0;
 }
+
 template<typename T>
 HdrToolsLibColourConverterImpl<T>::~HdrToolsLibColourConverterImpl() {
   destroy();
 }
 
 template<typename T>
-void
-HdrToolsLibColourConverterImpl<T>::convert(const std::string& configFile,
-                                           FrameSequence<T>&  videoSrc,
-                                           FrameSequence<T>&  videoDst) {
-  using hdrtoolslib::params;
-  using hdrtoolslib::ZERO;
-  params            = &ccParams;
-  auto* inputParams = dynamic_cast<ProjectParameters*>(params);
-  inputParams->refresh();
-  if (inputParams->readConfigFile((char*)configFile.c_str()) == 0) {
-    printf("Could not open configuration file: %s.\n", configFile.c_str());
-    exit(-1);
-  }
-  inputParams->m_source.m_width[0]  = videoSrc.width();
-  inputParams->m_source.m_height[0] = videoSrc.height();
-  inputParams->m_numberOfFrames     = videoSrc.frameCount();
-  inputParams->update();
-  init(inputParams);
-  process(inputParams, videoSrc, videoDst);
-  destroy();
-  std::remove(inputParams->m_outputFile.m_fName);
+ColourSpace
+HdrToolsLibColourConverterImpl<T>::getOutputColourFormat() {
+  hdrtoolslib::FrameFormat* output = &m_projectParameters->m_output;
+  return m_oFrameStore->m_chromaFormat == hdrtoolslib::CF_420
+           ? ColourSpace::YUV420p
+         : m_oFrameStore->m_colorSpace == hdrtoolslib::CM_RGB
+           ? output->m_pixelFormat == hdrtoolslib::PF_BGR
+               ? ColourSpace::BGR444p
+               : ColourSpace::RGB444p
+           : ColourSpace::YUV444p;
 }
 
 template<typename T>
 void
-HdrToolsLibColourConverterImpl<T>::init(ProjectParameters* inputParams) {
-  m_filterInFloat        = inputParams->m_filterInFloat;
-  m_inputFile            = &inputParams->m_inputFile;
-  m_outputFile           = &inputParams->m_outputFile;
-  m_startFrame           = m_inputFile->m_startFrame;
-  m_cropOffsetLeft       = inputParams->m_cropOffsetLeft;
-  m_cropOffsetTop        = inputParams->m_cropOffsetTop;
-  m_cropOffsetRight      = inputParams->m_cropOffsetRight;
-  m_cropOffsetBottom     = inputParams->m_cropOffsetBottom;
-  m_bUseChromaDeblocking = inputParams->m_bUseChromaDeblocking;
-  m_bUseWienerFiltering  = inputParams->m_bUseWienerFiltering;
-  m_bUse2DSepFiltering   = inputParams->m_bUse2DSepFiltering;
-  m_bUseNLMeansFiltering = inputParams->m_bUseNLMeansFiltering;
-  m_b2DSepMode           = inputParams->m_b2DSepMode;
+HdrToolsLibColourConverterImpl<T>::initialize(const std::string& configFile) {
+  destroy();
+  using hdrtoolslib::params;
+  using hdrtoolslib::ZERO;
+  params              = &ccParams;
+  m_projectParameters = dynamic_cast<ProjectParameters*>(params);
+  m_projectParameters->refresh();
+  if (m_projectParameters->readConfigFile((char*)configFile.c_str()) == 0) {
+    printf("Could not open configuration file: %s.\n", configFile.c_str());
+    exit(-1);
+  }
+}
+
+template<typename T>
+void
+HdrToolsLibColourConverterImpl<T>::init() {
+  ProjectParameters* inputParams = m_projectParameters;
+  m_filterInFloat                = inputParams->m_filterInFloat;
+  m_inputFile                    = &inputParams->m_inputFile;
+  m_outputFile                   = &inputParams->m_outputFile;
+  m_startFrame                   = m_inputFile->m_startFrame;
+  m_cropOffsetLeft               = inputParams->m_cropOffsetLeft;
+  m_cropOffsetTop                = inputParams->m_cropOffsetTop;
+  m_cropOffsetRight              = inputParams->m_cropOffsetRight;
+  m_cropOffsetBottom             = inputParams->m_cropOffsetBottom;
+  m_bUseChromaDeblocking         = inputParams->m_bUseChromaDeblocking;
+  m_bUseWienerFiltering          = inputParams->m_bUseWienerFiltering;
+  m_bUse2DSepFiltering           = inputParams->m_bUse2DSepFiltering;
+  m_bUseNLMeansFiltering         = inputParams->m_bUseNLMeansFiltering;
+  m_b2DSepMode                   = inputParams->m_b2DSepMode;
   using hdrtoolslib::Frame;
   using hdrtoolslib::FrameFormat;
   using hdrtoolslib::IOFunctions;
@@ -1003,220 +1011,237 @@ HdrToolsLibColourConverterImpl<T>::init(ProjectParameters* inputParams) {
 
 template<typename T>
 void
-HdrToolsLibColourConverterImpl<T>::process(ProjectParameters* inputParams,
-                                           FrameSequence<T>&  videoSrc,
-                                           FrameSequence<T>&  videoDst) {
+HdrToolsLibColourConverterImpl<T>::convert(FrameSequence<T>& src,
+                                           FrameSequence<T>& dst) {
+  if (!m_initDone) {
+    m_projectParameters->m_source.m_width[0]  = src.width();
+    m_projectParameters->m_source.m_height[0] = src.height();
+    m_projectParameters->m_numberOfFrames     = src.frameCount();
+    m_projectParameters->update();
+    init();
+    m_initDone = true;
+  }
+  dst.resize(m_oFrameStore->m_width[hdrtoolslib::Y_COMP],
+             m_oFrameStore->m_height[hdrtoolslib::Y_COMP],
+             getOutputColourFormat(),
+             src.frameCount());
+  for (size_t i = 0; i < src.frameCount(); i++) { process(src[i], dst[i]); }
+}
+
+template<typename T>
+void
+HdrToolsLibColourConverterImpl<T>::convert(Frame<T>& src, Frame<T>& dst) {
+  if (!m_initDone) {
+    m_projectParameters->m_source.m_width[0]  = src.width();
+    m_projectParameters->m_source.m_height[0] = src.height();
+    m_projectParameters->m_numberOfFrames     = 64;
+    m_projectParameters->update();
+    init();
+    m_initDone = true;
+  }
+  process(src, dst);
+}
+
+template<typename T>
+void
+HdrToolsLibColourConverterImpl<T>::process(Frame<T>& src, Frame<T>& dst) {
+  ProjectParameters*        inputParams  = m_projectParameters;
   int                       frameNumber  = 0;
   bool                      errorRead    = false;
   hdrtoolslib::Frame*       currentFrame = nullptr;
   hdrtoolslib::FrameFormat* input        = &inputParams->m_source;
-  videoDst.clear();
+  dst.clear();
   // Now process all frames
-  for (frameNumber = 0; frameNumber < inputParams->m_numberOfFrames;
-       frameNumber++) {
-    // read frames
-    m_iFrameStore->m_frameNo = frameNumber;
-    if (m_iFrameStore->m_isFloat) {
-      printf("float input not supported \n");
-      exit(-1);
-    } else {
-      if (m_iFrameStore->m_bitDepth == 8) {
-        for (int8_t c = 0; c < 3; c++) {
-          auto* src = input->m_pixelFormat == hdrtoolslib::PF_BGR
-                        ? videoSrc.frame(frameNumber).plane(2 - c).data()
-                        : videoSrc.frame(frameNumber).plane(c).data();
-          for (int i = 0; i < m_iFrameStore->m_compSize[c]; i++) {
-            m_iFrameStore->m_comp[c][i] = src[i];
-          }
+  // read frames
+  m_iFrameStore->m_frameNo = m_frameNumber;
+  if (m_iFrameStore->m_isFloat) {
+    printf("float input not supported \n");
+    exit(-1);
+  } else {
+    if (m_iFrameStore->m_bitDepth == 8) {
+      for (int8_t c = 0; c < 3; c++) {
+        auto* ptr = input->m_pixelFormat == hdrtoolslib::PF_BGR
+                      ? src.plane(2 - c).data()
+                      : src.plane(c).data();
+        for (int i = 0; i < m_iFrameStore->m_compSize[c]; i++) {
+          m_iFrameStore->m_comp[c][i] = ptr[i];
         }
-      } else {
-        for (int8_t c = 0; c < 3; c++) {
-          auto* src = input->m_pixelFormat == hdrtoolslib::PF_BGR
-                        ? videoSrc.frame(frameNumber).plane(2 - c).data()
-                        : videoSrc.frame(frameNumber).plane(c).data();
-          for (int i = 0; i < m_iFrameStore->m_compSize[c]; i++) {
-            m_iFrameStore->m_ui16Comp[c][i] = src[i];
-          }
-        }
-        log("src ", m_iFrameStore, 1);
-      }
-    }
-    // optional forced clipping of the data given their defined range. This is
-    // done here without consideration of the upconversion process.
-    if (inputParams->m_forceClipping == 1) { m_iFrameStore->clipRange(); }
-    if (errorRead) { break; }
-    if (!inputParams->m_silentMode) { printf("%05d ", frameNumber); }
-    currentFrame = m_iFrameStore;
-    if (m_croppedFrameStore != nullptr) {
-      m_croppedFrameStore->copy(
-        m_iFrameStore,
-        m_cropOffsetLeft,
-        m_cropOffsetTop,
-        m_iFrameStore->m_width[hdrtoolslib::Y_COMP] + m_cropOffsetRight,
-        m_iFrameStore->m_height[hdrtoolslib::Y_COMP] + m_cropOffsetBottom,
-        0,
-        0);
-      currentFrame = m_croppedFrameStore;
-      log("crop", m_iFrameStore, 2);
-    }
-    if (((m_iFrameStore->m_chromaFormat != m_oFrameStore->m_chromaFormat)
-         && (m_iFrameStore->m_colorSpace != hdrtoolslib::CM_RGB))
-        || (m_iFrameStore->m_chromaFormat != hdrtoolslib::CF_444
-            && m_iFrameStore->m_colorPrimaries
-                 != m_oFrameStore->m_colorPrimaries)) {
-      if (m_filterInFloat) {
-        // Convert to different format if needed (integer to float)
-        m_convertIQuantize->process(m_pFrameStore[0], currentFrame);
-        log("floa", m_pFrameStore[0], 2);
-
-        if (m_bUseChromaDeblocking) {  // Perform deblocking
-          m_frameFilter->process(m_pFrameStore[0]);
-        }
-        // Chroma conversion
-        m_convertFormatIn->process(m_convertFrameStore, m_pFrameStore[0]);
-      } else {
-        m_convertFormatIn->process(m_pFrameStore[0], currentFrame);
-        // Here perform forced clipping of the data after upconversion of the
-        // chroma components
-        if (inputParams->m_forceClipping == 2) {
-          m_pFrameStore[0]->clipRange();
-        }
-        // Convert to different format if needed (integer to float)
-        m_convertIQuantize->process(m_convertFrameStore, m_pFrameStore[0]);
       }
     } else {
+      for (int8_t c = 0; c < 3; c++) {
+        auto* ptr = input->m_pixelFormat == hdrtoolslib::PF_BGR
+                      ? src.plane(2 - c).data()
+                      : src.plane(c).data();
+        for (int i = 0; i < m_iFrameStore->m_compSize[c]; i++) {
+          m_iFrameStore->m_ui16Comp[c][i] = ptr[i];
+        }
+      }
+      log("src ", m_iFrameStore, 1);
+    }
+  }
+  // optional forced clipping of the data given their defined range. This is
+  // done here without consideration of the upconversion process.
+  if (inputParams->m_forceClipping == 1) { m_iFrameStore->clipRange(); }
+  if (errorRead) { return; }
+  if (!inputParams->m_silentMode) { printf("%05d ", m_frameNumber); }
+  currentFrame = m_iFrameStore;
+  if (m_croppedFrameStore != nullptr) {
+    m_croppedFrameStore->copy(
+      m_iFrameStore,
+      m_cropOffsetLeft,
+      m_cropOffsetTop,
+      m_iFrameStore->m_width[hdrtoolslib::Y_COMP] + m_cropOffsetRight,
+      m_iFrameStore->m_height[hdrtoolslib::Y_COMP] + m_cropOffsetBottom,
+      0,
+      0);
+    currentFrame = m_croppedFrameStore;
+    log("crop", m_iFrameStore, 2);
+  }
+  if (((m_iFrameStore->m_chromaFormat != m_oFrameStore->m_chromaFormat)
+       && (m_iFrameStore->m_colorSpace != hdrtoolslib::CM_RGB))
+      || (m_iFrameStore->m_chromaFormat != hdrtoolslib::CF_444
+          && m_iFrameStore->m_colorPrimaries
+               != m_oFrameStore->m_colorPrimaries)) {
+    if (m_filterInFloat) {
       // Convert to different format if needed (integer to float)
-      m_convertIQuantize->process(m_convertFrameStore, currentFrame);
-    }
-    log("conv", m_convertFrameStore, 2);
+      m_convertIQuantize->process(m_pFrameStore[0], currentFrame);
+      log("floa", m_pFrameStore[0], 2);
 
-    // Add noise
-    m_addNoise->process(m_convertFrameStore);
-    if (m_bUseWienerFiltering) {
-      m_frameFilterNoise0->process(m_convertFrameStore);
-    }
-    if (m_bUse2DSepFiltering) {
-      m_frameFilterNoise1->process(m_convertFrameStore);
-    }
-    if (m_bUseNLMeansFiltering) {
-      m_frameFilterNoise2->process(m_convertFrameStore);
-    }
-    currentFrame = m_convertFrameStore;
-    log("nois", currentFrame, 2);
-    m_frameScale->process(m_scaledFrame, currentFrame);
-    currentFrame = m_scaledFrame;
-
-    log("scal", currentFrame, 2);
-    // Now perform a color format conversion
-    // Output to m_pFrameStore memory with appropriate color space conversion
-    // Note that the name of "forward" may be a bit of a misnomer.
-    if (input->m_iConstantLuminance == 0
-        || (input->m_colorSpace != hdrtoolslib::CM_YCbCr
-            && input->m_colorSpace != hdrtoolslib::CM_ICtCp)) {
-      m_colorTransform->process(m_pFrameStore[2], currentFrame);
-      if (!m_useSingleTransferStep) {
-        m_inputTransferFunction->forward(m_pFrameStore[3], m_pFrameStore[2]);
-        m_srcDisplayGammaAdjust->forward(m_pFrameStore[3]);
-        m_normalizeFunction->forward(m_pFrameStore[1], m_pFrameStore[3]);
-      } else {
-        m_inputTransferFunction->forward(m_pFrameStore[1], m_pFrameStore[2]);
-        m_srcDisplayGammaAdjust->forward(m_pFrameStore[1]);
+      if (m_bUseChromaDeblocking) {  // Perform deblocking
+        m_frameFilter->process(m_pFrameStore[0]);
       }
+      // Chroma conversion
+      m_convertFormatIn->process(m_convertFrameStore, m_pFrameStore[0]);
     } else {
-      m_colorTransform->process(m_pFrameStore[2], currentFrame);
-      m_normalizeFunction->forward(m_pFrameStore[1], m_pFrameStore[2]);
+      m_convertFormatIn->process(m_pFrameStore[0], currentFrame);
+      // Here perform forced clipping of the data after upconversion of the
+      // chroma components
+      if (inputParams->m_forceClipping == 2) { m_pFrameStore[0]->clipRange(); }
+      // Convert to different format if needed (integer to float)
+      m_convertIQuantize->process(m_convertFrameStore, m_pFrameStore[0]);
     }
-    log("colo", m_pFrameStore[1], 2);
+  } else {
+    // Convert to different format if needed (integer to float)
+    m_convertIQuantize->process(m_convertFrameStore, currentFrame);
+  }
+  log("conv", m_convertFrameStore, 2);
 
-    if (m_changeColorPrimaries) {
-      m_colorSpaceConvert->process(m_colorSpaceFrame, m_pFrameStore[1]);
+  // Add noise
+  m_addNoise->process(m_convertFrameStore);
+  if (m_bUseWienerFiltering) {
+    m_frameFilterNoise0->process(m_convertFrameStore);
+  }
+  if (m_bUse2DSepFiltering) {
+    m_frameFilterNoise1->process(m_convertFrameStore);
+  }
+  if (m_bUseNLMeansFiltering) {
+    m_frameFilterNoise2->process(m_convertFrameStore);
+  }
+  currentFrame = m_convertFrameStore;
+  log("nois", currentFrame, 2);
+  m_frameScale->process(m_scaledFrame, currentFrame);
+  currentFrame = m_scaledFrame;
+
+  log("scal", currentFrame, 2);
+  // Now perform a color format conversion
+  // Output to m_pFrameStore memory with appropriate color space conversion
+  // Note that the name of "forward" may be a bit of a misnomer.
+  if (input->m_iConstantLuminance == 0
+      || (input->m_colorSpace != hdrtoolslib::CM_YCbCr
+          && input->m_colorSpace != hdrtoolslib::CM_ICtCp)) {
+    m_colorTransform->process(m_pFrameStore[2], currentFrame);
+    if (!m_useSingleTransferStep) {
+      m_inputTransferFunction->forward(m_pFrameStore[3], m_pFrameStore[2]);
+      m_srcDisplayGammaAdjust->forward(m_pFrameStore[3]);
+      m_normalizeFunction->forward(m_pFrameStore[1], m_pFrameStore[3]);
+    } else {
+      m_inputTransferFunction->forward(m_pFrameStore[1], m_pFrameStore[2]);
+      m_srcDisplayGammaAdjust->forward(m_pFrameStore[1]);
+    }
+  } else {
+    m_colorTransform->process(m_pFrameStore[2], currentFrame);
+    m_normalizeFunction->forward(m_pFrameStore[1], m_pFrameStore[2]);
+  }
+  log("colo", m_pFrameStore[1], 2);
+
+  if (m_changeColorPrimaries) {
+    m_colorSpaceConvert->process(m_colorSpaceFrame, m_pFrameStore[1]);
+    m_outDisplayGammaAdjust->inverse(m_colorSpaceFrame);
+    if (m_oFrameStore->m_colorSpace == hdrtoolslib::CM_YCbCr
+        || m_oFrameStore->m_colorSpace == hdrtoolslib::CM_ICtCp) {
+      m_outputTransferFunction->inverse(m_pFrameStore[6], m_colorSpaceFrame);
+      m_colorSpaceConvertMC->process(m_pFrameStore[4], m_pFrameStore[6]);
+    } else {
+      m_outputTransferFunction->inverse(m_pFrameStore[4], m_colorSpaceFrame);
       m_outDisplayGammaAdjust->inverse(m_colorSpaceFrame);
-      if (m_oFrameStore->m_colorSpace == hdrtoolslib::CM_YCbCr
-          || m_oFrameStore->m_colorSpace == hdrtoolslib::CM_ICtCp) {
-        m_outputTransferFunction->inverse(m_pFrameStore[6], m_colorSpaceFrame);
-        m_colorSpaceConvertMC->process(m_pFrameStore[4], m_pFrameStore[6]);
-      } else {
-        m_outputTransferFunction->inverse(m_pFrameStore[4], m_colorSpaceFrame);
-        m_outDisplayGammaAdjust->inverse(m_colorSpaceFrame);
+    }
+    // log( "prim", m_colorSpaceFrame, 2 );
+  } else {
+    // here we apply the output transfer function (to be fixed)
+    m_outDisplayGammaAdjust->inverse(m_pFrameStore[1]);
+    m_outputTransferFunction->inverse(m_pFrameStore[4], m_pFrameStore[1]);
+  }
+  log("444f", m_pFrameStore[4], 2);
+
+  if ((m_iFrameStore->m_chromaFormat != hdrtoolslib::CF_444
+       && m_oFrameStore->m_chromaFormat != hdrtoolslib::CF_444
+       && m_iFrameStore->m_colorPrimaries != m_oFrameStore->m_colorPrimaries)
+      || (m_iFrameStore->m_colorSpace == hdrtoolslib::CM_RGB
+          && m_oFrameStore->m_colorSpace != hdrtoolslib::CM_RGB
+          && (m_oFrameStore->m_chromaFormat != 0))) {
+    printf("m_convertFormatOut + m_convertProcess \n");
+    m_convertFormatOut->process(m_pFrameStore[5], m_pFrameStore[4]);
+
+    log("420f", m_pFrameStore[5], 2);
+    m_convertProcess->process(m_oFrameStore, m_pFrameStore[5]);
+  } else {
+    printf("m_convertProcess \n");
+    m_convertProcess->process(m_oFrameStore, m_pFrameStore[4]);
+  }
+  // frame output
+  m_outputFrame->copyFrame(m_oFrameStore);
+  log("yuv1", m_oFrameStore, 1);
+
+  // m_outputFrame->writeOneFrame( m_outputFile, frameNumber,m_outputFile->m_fileHeader, 0 );
+  if (m_oFrameStore->m_isFloat) {
+    printf("float input not supported \n");
+    exit(-1);
+  } else {
+    // printf( "Create converted video: %dx%d format = %d m_oFrameStore->m_bitDepth = %d \n",
+    //   m_oFrameStore->m_width[hdrtoolslib::Y_COMP],
+    //   m_oFrameStore->m_height[hdrtoolslib::Y_COMP], (int)format, m_oFrameStore->m_bitDepth );
+    hdrtoolslib::FrameFormat* output = &m_projectParameters->m_output;
+    dst.resize(m_oFrameStore->m_width[hdrtoolslib::Y_COMP],
+               m_oFrameStore->m_height[hdrtoolslib::Y_COMP],
+               getOutputColourFormat());
+    if (m_oFrameStore->m_bitDepth == 8) {
+      log("outp", m_oFrameStore, 0);
+      for (int8_t c = 0; c < 3; c++) {
+        auto* ptr = output->m_pixelFormat == hdrtoolslib::PF_BGR
+                      ? dst.plane(2 - c).data()
+                      : dst.plane(c).data();
+        for (int i = 0; i < dst.plane(c).size(); i++) {
+          ptr[i] = m_oFrameStore->m_comp[c][i];
+        }
       }
-      // log( "prim", m_colorSpaceFrame, 2 );
+    } else if (m_oFrameStore->m_bitDepth > 8) {
+      log("outp", m_oFrameStore, 1);
+      for (int8_t c = 0; c < 3; c++) {
+        auto* ptr = output->m_pixelFormat == hdrtoolslib::PF_BGR
+                      ? dst.plane(2 - c).data()
+                      : dst.plane(c).data();
+        for (int i = 0; i < dst.plane(c).size(); i++) {
+          ptr[i] = m_oFrameStore->m_ui16Comp[c][i];
+        }
+      }
     } else {
-      // here we apply the output transfer function (to be fixed)
-      m_outDisplayGammaAdjust->inverse(m_pFrameStore[1]);
-      m_outputTransferFunction->inverse(m_pFrameStore[4], m_pFrameStore[1]);
-    }
-    log("444f", m_pFrameStore[4], 2);
-
-    if ((m_iFrameStore->m_chromaFormat != hdrtoolslib::CF_444
-         && m_oFrameStore->m_chromaFormat != hdrtoolslib::CF_444
-         && m_iFrameStore->m_colorPrimaries != m_oFrameStore->m_colorPrimaries)
-        || (m_iFrameStore->m_colorSpace == hdrtoolslib::CM_RGB
-            && m_oFrameStore->m_colorSpace != hdrtoolslib::CM_RGB
-            && (m_oFrameStore->m_chromaFormat != 0))) {
-      printf("m_convertFormatOut + m_convertProcess \n");
-      m_convertFormatOut->process(m_pFrameStore[5], m_pFrameStore[4]);
-
-      log("420f", m_pFrameStore[5], 2);
-      m_convertProcess->process(m_oFrameStore, m_pFrameStore[5]);
-    } else {
-      printf("m_convertProcess \n");
-      m_convertProcess->process(m_oFrameStore, m_pFrameStore[4]);
-    }
-    // frame output
-    m_outputFrame->copyFrame(m_oFrameStore);
-    log("yuv1", m_oFrameStore, 1);
-
-    // m_outputFrame->writeOneFrame( m_outputFile, frameNumber,m_outputFile->m_fileHeader, 0 );
-    if (m_oFrameStore->m_isFloat) {
-      printf("float input not supported \n");
+      printf("output format not yet supported ( frame depht = %d \n",
+             m_oFrameStore->m_bitDepth);
       exit(-1);
-    } else {
-      hdrtoolslib::FrameFormat* output = &inputParams->m_output;
-      ColourSpace format = m_oFrameStore->m_chromaFormat == hdrtoolslib::CF_420
-                             ? ColourSpace::YUV420p
-                           : m_oFrameStore->m_colorSpace == hdrtoolslib::CM_RGB
-                             ? output->m_pixelFormat == hdrtoolslib::PF_BGR
-                                 ? ColourSpace::BGR444p
-                                 : ColourSpace::RGB444p
-                             : ColourSpace::YUV444p;
-      // printf( "Create converted video: %dx%d format = %d m_oFrameStore->m_bitDepth = %d \n",
-      //   m_oFrameStore->m_width[hdrtoolslib::Y_COMP],
-      //   m_oFrameStore->m_height[hdrtoolslib::Y_COMP], (int)format, m_oFrameStore->m_bitDepth );
-      videoDst.resize(m_oFrameStore->m_width[hdrtoolslib::Y_COMP],
-                      m_oFrameStore->m_height[hdrtoolslib::Y_COMP],
-                      format,
-                      videoDst.frameCount() + 1);
-      auto& image = videoDst.frame(videoDst.frameCount() - 1);
-      image.resize(m_oFrameStore->m_width[hdrtoolslib::Y_COMP],
-                   m_oFrameStore->m_height[hdrtoolslib::Y_COMP],
-                   format);
-      if (m_oFrameStore->m_bitDepth == 8) {
-        log("outp", m_oFrameStore, 0);
-        for (int8_t c = 0; c < 3; c++) {
-          auto* dst = output->m_pixelFormat == hdrtoolslib::PF_BGR
-                        ? image.plane(2 - c).data()
-                        : image.plane(c).data();
-          for (int i = 0; i < image.plane(c).size(); i++) {
-            dst[i] = m_oFrameStore->m_comp[c][i];
-          }
-        }
-      } else if (m_oFrameStore->m_bitDepth > 8) {
-        log("outp", m_oFrameStore, 1);
-        for (int8_t c = 0; c < 3; c++) {
-          auto* dst = output->m_pixelFormat == hdrtoolslib::PF_BGR
-                        ? image.plane(2 - c).data()
-                        : image.plane(c).data();
-          for (int i = 0; i < image.plane(c).size(); i++) {
-            dst[i] = m_oFrameStore->m_ui16Comp[c][i];
-          }
-        }
-      } else {
-        printf("output format not yet supported ( frame depht = %d \n",
-               m_oFrameStore->m_bitDepth);
-        exit(-1);
-      }
     }
-  }  // end for frameNumber
+  }
+  m_frameNumber++;
+  std::remove(m_projectParameters->m_outputFile.m_fName);
 }
 
 template<typename T>
@@ -1337,6 +1362,7 @@ HdrToolsLibColourConverterImpl<T>::destroy() {
     delete m_outDisplayGammaAdjust;
     m_outDisplayGammaAdjust = nullptr;
   }
+  m_frameNumber = 0;
 }
 namespace vmesh {
 template class HdrToolsLibColourConverterImpl<uint8_t>;

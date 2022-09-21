@@ -97,7 +97,8 @@ hdrtoolsConvertion(int                      mode,
   // Convert with lib
   vmesh::FrameSequence<uint16_t> rec;
   auto convert = vmesh::VirtualColourConverter<uint16_t>::create(mode);
-  convert->convert(std::move(configPath0), src, rec);
+  convert->initialize(std::move(configPath0));
+  convert->convert(src, rec);
   if (outputBitDepth == 8) {
     vmesh::FrameSequence<uint8_t> rec8(rec);
     rec8.save(recLibsPath);

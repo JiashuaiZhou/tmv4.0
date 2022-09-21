@@ -43,9 +43,12 @@ public:
 
   static std::shared_ptr<VirtualColourConverter<T>> create(uint8_t codecId);
 
-  virtual void convert(std::string       configFile,
-                       FrameSequence<T>& videoSrc,
+  virtual void initialize(std::string configFile) = 0;
+
+  virtual void convert(FrameSequence<T>& videoSrc,
                        FrameSequence<T>& videoDst) = 0;
+
+  virtual void convert(Frame<T>& src, Frame<T>& dst) = 0;
 
 private:
 };

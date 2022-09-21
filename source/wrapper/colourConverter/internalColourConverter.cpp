@@ -32,6 +32,7 @@
  */
 #include "internalColourConverter.hpp"
 #include "util/image.hpp"
+#include <sstream>
 
 namespace vmesh {
 
@@ -698,110 +699,91 @@ InternalColourConverter<T>::~InternalColourConverter() = default;
 
 template<typename T>
 void
-InternalColourConverter<T>::convert(std::string       configuration,
-                                    FrameSequence<T>& videoSrc,
-                                    FrameSequence<T>& videoDst) {
-  std::string config;
-  int32_t     srcBitdepth = -1;
-  int32_t     dstBitdepth = -1;
-  int32_t     filter      = -1;
-  int32_t     range       = -1;
-  printf("config = %s \n", config.c_str());
-  extractParameters(
-    configuration, config, srcBitdepth, dstBitdepth, filter, range);
-  if (config.empty() || srcBitdepth == -1 || dstBitdepth == -1 || filter == -1
-      || range == -1) {
-    printf("ColorConverter configuration is not correct ( %s bitdepth %d %d "
-           "filter=%d range=%d ) \n",
-           config.c_str(),
-           srcBitdepth,
-           dstBitdepth,
-           filter,
-           range);
+InternalColourConverter<T>::initialize(std::string configuration) {
+  if ((!extractParameters(configuration))
+      && (srcColourSpace == ColourSpace::UNKNOW
+          || dstColourSpace == ColourSpace::UNKNOW || srcBitdepth == -1
+          || dstBitdepth == -1 || filter == -1 || range == -1)) {
+    std::cout << "ColourConverter not correct: " << configuration
+              << " => format " << srcColourSpace << " to " << dstColourSpace
+              << " bits = " << srcBitdepth << " " << dstBitdepth
+              << " filter = " << filter << " range = " << range << std::endl;
     exit(-1);
   }
-  printf("ColorConverter configuration : %s bitdepth = %d %d filter = %d "
-         "range = %d videoSrc "
-         "%d "
-         "frames \n",
-         config.c_str(),
-         srcBitdepth,
-         dstBitdepth,
-         filter,
-         range,
-         videoSrc.frameCount());
-  videoDst.clear();
+}
 
-  int srcNB = srcBitdepth == 8 ? 1 : 2;
-  int dstNB = dstBitdepth == 8 ? 1 : 2;
-  if (config == "YUV420pToYUV444p") {
-    convertYUV420ToYUV444(videoSrc, videoDst, srcNB, dstNB, filter, range);
-  } else if (config == "YUV420pToRGB444p") {
-    convertYUV420ToRGB444(
-      videoSrc, videoDst, srcNB, dstNB, filter, false, range);
-  } else if (config == "YUV420pToBGR444p") {
-    convertYUV420ToRGB444(
-      videoSrc, videoDst, srcNB, dstNB, filter, true, range);
-  } else if (config == "RGB444pToYUV420p") {
-    convertRGB44ToYUV420(
-      videoSrc, videoDst, srcNB, dstNB, filter, false, range);
-  } else if (config == "BGR444pToYUV420p") {
-    convertRGB44ToYUV420(
-      videoSrc, videoDst, srcNB, dstNB, filter, true, range);
-  } else if (config == "RGB444pToYUV444p") {
-    convertRGB44ToYUV444(videoSrc, videoDst, srcNB, dstNB, filter, range);
-  } else if (config == "YUV444pToRGB444p") {
-    convertYUV444ToRGB444(videoSrc, videoDst, srcNB, dstNB, filter, range);
+template<typename T>
+void
+InternalColourConverter<T>::convert(FrameSequence<T>& src,
+                                    FrameSequence<T>& dst) {
+  dst.clear();
+  dst.resize(src.width(), src.height(), dstColourSpace, src.frameCount());
+  std::cout << "ColourConverter format " << srcColourSpace << " to "
+            << dstColourSpace << " bits = " << srcBitdepth << " "
+            << dstBitdepth << " filter = " << filter << " range = " << range
+            << " frame = " << src.frameCount() << std::endl;
+  for (int i = 0; i < src.frameCount(); i++) { convert(src[i], dst[i]); }
+}
+
+template<typename T>
+void
+InternalColourConverter<T>::convert(Frame<T>& src, Frame<T>& dst) {
+  const int srcNB = srcBitdepth == 8 ? 1 : 2;
+  const int dstNB = dstBitdepth == 8 ? 1 : 2;
+  if (srcColourSpace == ColourSpace::YUV420p
+      && dstColourSpace == ColourSpace::YUV444p) {
+    convertYUV420ToYUV444(src, dst, srcNB, dstNB, filter, range);
+  } else if (srcColourSpace == ColourSpace::YUV420p
+             && dstColourSpace == ColourSpace::RGB444p) {
+    convertYUV420ToRGB444(src, dst, srcNB, dstNB, filter, false, range);
+  } else if (srcColourSpace == ColourSpace::YUV420p
+             && dstColourSpace == ColourSpace::BGR444p) {
+    convertYUV420ToRGB444(src, dst, srcNB, dstNB, filter, true, range);
+  } else if (srcColourSpace == ColourSpace::RGB444p
+             && dstColourSpace == ColourSpace::YUV420p) {
+    convertRGB44ToYUV420(src, dst, srcNB, dstNB, filter, false, range);
+  } else if (srcColourSpace == ColourSpace::BGR444p
+             && dstColourSpace == ColourSpace::YUV420p) {
+    convertRGB44ToYUV420(src, dst, srcNB, dstNB, filter, true, range);
+  } else if (srcColourSpace == ColourSpace::RGB444p
+             && dstColourSpace == ColourSpace::YUV444p) {
+    convertRGB44ToYUV444(src, dst, srcNB, dstNB, filter, range);
+  } else if (srcColourSpace == ColourSpace::YUV444p
+             && dstColourSpace == ColourSpace::RGB444p) {
+    convertYUV444ToRGB444(src, dst, srcNB, dstNB, filter, range);
   } else {
-    printf("internalColourConverter convert format not supported: %s \n",
-           config.c_str());
+    std::cout << "ColourConverter format not supported: " << srcColourSpace
+              << " to " << dstColourSpace << std::endl;
     exit(-1);
   }
 }
 
 template<typename T>
-void
-InternalColourConverter<T>::extractParameters(std::string& configuration,
-                                              std::string& config,
-                                              int32_t&     srcBitdepth,
-                                              int32_t&     dstBitdepth,
-                                              int32_t&     filter,
-                                              int32_t&     range) {
-  size_t pos = 0;
-  if ((pos = configuration.find('_')) != std::string::npos) {
-    config = configuration.substr(0, pos);
-    configuration.erase(0, pos + 1);
-    if ((pos = configuration.find('_')) != std::string::npos) {
-      srcBitdepth = std::stoi(configuration.substr(0, pos));
-      configuration.erase(0, pos + 1);
-      if ((pos = configuration.find('_')) != std::string::npos) {
-        dstBitdepth = std::stoi(configuration.substr(0, pos));
-        configuration.erase(0, pos + 1);
-        if ((pos = configuration.find('_')) != std::string::npos) {
-          filter = std::stoi(configuration.substr(0, pos));
-          configuration.erase(0, pos + 1);
-          range = std::stoi(configuration.substr(0, std::string::npos));
-        }
-      }
+bool
+InternalColourConverter<T>::extractParameters(std::string& configuration) {
+  srcColourSpace = ColourSpace::UNKNOW;
+  dstColourSpace = ColourSpace::UNKNOW;
+  srcBitdepth    = -1;
+  dstBitdepth    = -1;
+  filter         = -1;
+  range          = -1;
+  std::istringstream ss(configuration);
+  int                index = 0;
+  std::string        token;
+  while (std::getline(ss, token, '_')) {
+    std::istringstream scp(token);
+    switch (index) {
+    case 0: scp >> srcColourSpace; break;
+    case 1: scp >> dstColourSpace; break;
+    case 2: srcBitdepth = stoi(token); break;
+    case 3: dstBitdepth = stoi(token); break;
+    case 4: filter = stoi(token); break;
+    case 5: range = stoi(token); break;
+    default: return false; break;
     }
+    index++;
   }
-}
-
-template<typename T>
-void
-InternalColourConverter<T>::convertRGB44ToYUV420(FrameSequence<T>& src,
-                                                 FrameSequence<T>& dst,
-                                                 size_t            srcNumByte,
-                                                 size_t            dstNumByte,
-                                                 size_t            filter,
-                                                 bool              BGR,
-                                                 bool              range) {
-  dst.resize(
-    src.width(), src.height(), ColourSpace::YUV420p, src.frameCount());
-  for (int i = 0; i < src.frameCount(); i++) {
-    convertRGB44ToYUV420(
-      src[i], dst[i], srcNumByte, dstNumByte, filter, BGR, range);
-  }
+  return true;
 }
 
 template<typename T>
@@ -815,8 +797,7 @@ InternalColourConverter<T>::convertRGB44ToYUV420(Frame<T>& src,
                                                  bool      range) {
   const auto width  = src.width();
   const auto height = src.height();
-
-  dst.resize(width, height, ColourSpace::YUV420p);
+  dst.resize(width, height, dstColourSpace);
   Plane<float> rgb[3];
   Plane<float> yuv[5];
   RGBtoFloatRGB(src[BGR ? 2 : 0], rgb[0], srcNumByte);
@@ -854,29 +835,13 @@ InternalColourConverter<T>::convertRGB44ToYUV420(Frame<T>& src,
 
 template<typename T>
 void
-InternalColourConverter<T>::convertRGB44ToYUV444(FrameSequence<T>& src,
-                                                 FrameSequence<T>& dst,
-                                                 size_t            srcNumByte,
-                                                 size_t            dstNumByte,
-                                                 size_t            filter,
-                                                 bool              range) {
-  dst.resize(
-    src.width(), src.height(), ColourSpace::YUV444p, src.frameCount());
-  for (int i = 0; i < src.frameCount(); i++) {
-    convertRGB44ToYUV444(
-      src[i], dst[i], srcNumByte, dstNumByte, filter, range);
-  }
-}
-
-template<typename T>
-void
 InternalColourConverter<T>::convertRGB44ToYUV444(Frame<T>& src,
                                                  Frame<T>& dst,
                                                  size_t    srcNumByte,
                                                  size_t    dstNumByte,
                                                  size_t /*filter*/,
                                                  bool range) {
-  dst.resize(src.width(), src.height(), ColourSpace::YUV444p);
+  dst.resize(src.width(), src.height(), dstColourSpace);
   Plane<float> rgb[3];
   Plane<float> yuv[3];
   RGBtoFloatRGB(src[0], rgb[0], srcNumByte);
@@ -890,30 +855,15 @@ InternalColourConverter<T>::convertRGB44ToYUV444(Frame<T>& src,
 
 template<typename T>
 void
-InternalColourConverter<T>::convertYUV420ToYUV444(FrameSequence<T>& src,
-                                                  FrameSequence<T>& dst,
-                                                  size_t            srcNumByte,
-                                                  size_t            dstNumByte,
-                                                  size_t            filter,
-                                                  bool              range) {
-  dst.resize(
-    src.width(), src.height(), ColourSpace::YUV444p, src.frameCount());
-  for (int i = 0; i < src.frameCount(); i++) {
-    convertYUV420ToYUV444(
-      src[i], dst[i], srcNumByte, dstNumByte, filter, range);
-  }
-}
-
-template<typename T>
-void
 InternalColourConverter<T>::convertYUV420ToYUV444(Frame<T>& src,
                                                   Frame<T>& dst,
                                                   size_t    srcNumByte,
                                                   size_t    dstNumByte,
                                                   size_t    filter,
                                                   bool      range) {
-  const auto   width  = src.width();
-  const auto   height = src.height();
+  const auto width  = src.width();
+  const auto height = src.height();
+  dst.resize(width, height, dstColourSpace);
   Plane<float> YUV444[3];
   Plane<float> YUV420[3];
   YUVtoFloatYUV(src[0], YUV420[0], 0, srcNumByte, range);
@@ -929,25 +879,6 @@ InternalColourConverter<T>::convertYUV420ToYUV444(Frame<T>& src,
 
 template<typename T>
 void
-InternalColourConverter<T>::convertYUV420ToRGB444(FrameSequence<T>& src,
-                                                  FrameSequence<T>& dst,
-                                                  size_t            srcNumByte,
-                                                  size_t            dstNumByte,
-                                                  size_t            filter,
-                                                  bool              BGR,
-                                                  bool              range) {
-  dst.resize(src.width(),
-             src.height(),
-             BGR ? ColourSpace::BGR444p : ColourSpace::RGB444p,
-             src.frameCount());
-  for (int i = 0; i < src.frameCount(); i++) {
-    convertYUV420ToRGB444(
-      src[i], dst[i], srcNumByte, dstNumByte, filter, BGR, range);
-  }
-}
-
-template<typename T>
-void
 InternalColourConverter<T>::convertYUV420ToRGB444(Frame<T>& src,
                                                   Frame<T>& dst,
                                                   size_t    srcNumByte,
@@ -957,7 +888,7 @@ InternalColourConverter<T>::convertYUV420ToRGB444(Frame<T>& src,
                                                   bool      range) {
   const auto width  = src.width();
   const auto height = src.height();
-  dst.resize(width, height, BGR ? ColourSpace::BGR444p : ColourSpace::RGB444p);
+  dst.resize(width, height, dstColourSpace);
   Plane<float> YUV444[3];
   Plane<float> YUV420[3];
   Plane<float> RGB444[3];
@@ -993,22 +924,6 @@ InternalColourConverter<T>::convertYUV420ToRGB444(Frame<T>& src,
 
 template<typename T>
 void
-InternalColourConverter<T>::convertYUV444ToRGB444(FrameSequence<T>& src,
-                                                  FrameSequence<T>& dst,
-                                                  size_t            srcNumByte,
-                                                  size_t            dstNumByte,
-                                                  size_t            filter,
-                                                  bool              range) {
-  dst.resize(
-    src.width(), src.height(), ColourSpace::RGB444p, src.frameCount());
-  for (int i = 0; i < src.frameCount(); i++) {
-    convertYUV444ToRGB444(
-      src[i], dst[i], srcNumByte, dstNumByte, filter, range);
-  }
-}
-
-template<typename T>
-void
 InternalColourConverter<T>::convertYUV444ToRGB444(Frame<T>& src,
                                                   Frame<T>& dst,
                                                   size_t    srcNumByte,
@@ -1017,7 +932,7 @@ InternalColourConverter<T>::convertYUV444ToRGB444(Frame<T>& src,
                                                   bool range) {
   const auto width  = src.width();
   const auto height = src.height();
-  dst.resize(width, height, ColourSpace::RGB444p);
+  dst.resize(width, height, dstColourSpace);
   Plane<float> YUV444[3];
   Plane<float> RGB444[3];
   YUVtoFloatYUV(src[0], YUV444[0], 0, srcNumByte, range);

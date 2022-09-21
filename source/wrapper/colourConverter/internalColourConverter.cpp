@@ -734,23 +734,23 @@ InternalColourConverter<T>::convert(std::string       configuration,
 
   int srcNB = srcBitdepth == 8 ? 1 : 2;
   int dstNB = dstBitdepth == 8 ? 1 : 2;
-  if (config == "YUV420ToYUV444") {
+  if (config == "YUV420pToYUV444p") {
     convertYUV420ToYUV444(videoSrc, videoDst, srcNB, dstNB, filter, range);
-  } else if (config == "YUV420ToRGB444") {
+  } else if (config == "YUV420pToRGB444p") {
     convertYUV420ToRGB444(
       videoSrc, videoDst, srcNB, dstNB, filter, false, range);
-  } else if (config == "YUV420ToBGR444") {
+  } else if (config == "YUV420pToBGR444p") {
     convertYUV420ToRGB444(
       videoSrc, videoDst, srcNB, dstNB, filter, true, range);
-  } else if (config == "RGB444ToYUV420") {
+  } else if (config == "RGB444pToYUV420p") {
     convertRGB44ToYUV420(
       videoSrc, videoDst, srcNB, dstNB, filter, false, range);
-  } else if (config == "BGR444ToYUV420") {
+  } else if (config == "BGR444pToYUV420p") {
     convertRGB44ToYUV420(
       videoSrc, videoDst, srcNB, dstNB, filter, true, range);
-  } else if (config == "RGB444ToYUV444") {
+  } else if (config == "RGB444pToYUV444p") {
     convertRGB44ToYUV444(videoSrc, videoDst, srcNB, dstNB, filter, range);
-  } else if (config == "YUV444ToRGB444") {
+  } else if (config == "YUV444pToRGB444p") {
     convertYUV444ToRGB444(videoSrc, videoDst, srcNB, dstNB, filter, range);
   } else {
     printf("internalColourConverter convert format not supported: %s \n",

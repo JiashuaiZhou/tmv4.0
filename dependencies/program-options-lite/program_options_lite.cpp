@@ -277,9 +277,10 @@ namespace program_options_lite {
   static void dumpCfgRange(ostream&                              out,
                            Options::NamesPtrList::const_iterator begin,
                            Options::NamesPtrList::const_iterator end,
-                           int                                   indent) {
+                           int                                   indent,
+                           int                                   maxWidth = 0 ) {
     // find the width of the longest option name
-    size_t max_opt_width = 0;
+    size_t max_opt_width = maxWidth;
     for (auto it = begin; it != end; ++it) {
       size_t      len   = 0;
       const auto& entry = *it;
@@ -307,6 +308,37 @@ namespace program_options_lite {
   /* dump configuration values */
   void dumpCfg(ostream& out, const Options& opts, int indent) {
     dumpCfgRange(out, opts.opt_list.begin(), opts.opt_list.end(), indent);
+  }
+
+  void dumpCfgBySection(ostream& out, const Options& opts, int indent) {
+    size_t maxLen = 0;
+    for( auto& entry : opts.opt_list )  {
+      size_t      len   = 0;
+      if (!entry->opt_long.empty()) len = entry->opt_long.front().size();
+      else if (!entry->opt_short.empty())
+        len = entry->opt_short.front().size();
+      maxLen = max(maxLen, len);
+    }
+    out << "+ Configuration parameters\n";
+    if (opts.sections.empty()) {
+      dumpCfg(out, opts, indent);
+    } else {
+      if (opts.sections.begin()->second != opts.opt_list.begin()) {
+        dumpCfgRange(out,
+                     opts.opt_list.begin(),
+                     opts.sections.begin()->second,
+                     indent,
+                     maxLen);
+      }
+      for (auto it = opts.sections.begin(); it != opts.sections.end(); it++) {
+        auto it_next = std::next(it);
+        auto end     = it_next == opts.sections.end() ? opts.opt_list.end()
+                                                      : it_next->second;
+        out << it->first.name << ":" << std::endl;
+        dumpCfgRange(out, it->second, end, indent, maxLen);
+      }
+    }
+    out << '\n';
   }
 
   void

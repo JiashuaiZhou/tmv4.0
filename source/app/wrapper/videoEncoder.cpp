@@ -121,10 +121,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   }
 
   // Dump the complete derived configuration
-  std::cout << "+ Configuration parameters\n";
-  po::dumpCfg(std::cout, opts, "Input/Output", 4);
-  po::dumpCfg(std::cout, opts, "Encoder configurations", 4);
-  std::cout << '\n';
+  po::dumpCfgBySection(std::cout, opts);
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""

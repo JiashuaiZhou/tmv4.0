@@ -80,10 +80,8 @@ parseParameters(int argc, char* argv[]) try {
 
   if (err.is_errored) { return false; }
 
-  // Dump the complete derived configuration
-  std::cout << "+ Configuration parameters\n";
-  po::dumpCfg(std::cout, opts);
-  std::cout << '\n';
+  // Dump the complete derived configuration  
+  po::dumpCfgBySection(std::cout, opts);
 
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {

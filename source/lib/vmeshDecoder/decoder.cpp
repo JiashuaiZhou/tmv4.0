@@ -283,7 +283,7 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
     convert->convert(params.textureVideoHDRToolDecConfig, yuv, brg);
 #else
     auto convert = VirtualColourConverter<uint16_t>::create(0);
-    auto mode    = "YUV420ToBGR444_10_8_"
+    auto mode    = "YUV420pToBGR444p_10_8_"
                 + std::to_string(params.textureVideoUpsampleFilter) + "_"
                 + std::to_string(params.textureVideoFullRange);
     convert->convert(mode, yuv, brg);

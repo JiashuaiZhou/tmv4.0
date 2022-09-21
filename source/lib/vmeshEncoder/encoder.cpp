@@ -258,7 +258,7 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
     convert->convert(params.textureVideoHDRToolEncConfig, bgrSrc10, yuvSrc);
 #else
     auto convert = VirtualColourConverter<uint16_t>::create(0);
-    auto mode    = "BGR444ToYUV420_8_10_"
+    auto mode    = "BGR444pToYUV420p_8_10_"
                 + std::to_string(params.textureVideoDownsampleFilter) + "_"
                 + std::to_string(params.textureVideoFullRange);
     convert->convert(mode, bgrSrc10, yuvSrc);
@@ -297,7 +297,7 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
 #if USE_HDRTOOLS
     convert->convert(params.textureVideoHDRToolDecConfig, yuvRec, bgrRec);
 #else
-    mode = "YUV420ToBGR444_10_8_"
+    mode = "YUV420pToBGR444p_10_8_"
            + std::to_string(params.textureVideoUpsampleFilter) + "_"
            + std::to_string(params.textureVideoFullRange);
     convert->convert(mode, yuvRec, bgrRec);

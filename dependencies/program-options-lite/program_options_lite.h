@@ -76,6 +76,8 @@ namespace program_options_lite {
 
   void doHelp(std::ostream& out, Options& opts, unsigned columns = 80);
   void dumpCfg(std::ostream& out, const Options& opts, int indent = 0);
+  void
+  dumpCfgBySection(std::ostream& out, const Options& opts, int indent = 2);
   void dumpCfg(std::ostream&  out,
                const Options& opts,
                const char*    section,

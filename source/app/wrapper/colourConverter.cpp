@@ -56,6 +56,8 @@ struct Parameters {
   int                inputBitDepth{};
   int                outputBitDepth{};
   int                mode{};
+  int range = 0;
+  int filter = 0; 
   vmesh::ColourSpace inputColorSpace;
   vmesh::ColourSpace outputColorSpace;
 };
@@ -75,22 +77,26 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   ("config,c", po::parseConfigFile, "Configuration file name")
   ("verbose,v", params.verbose, true, "Verbose output")
 
-  (po::Section("Input/Output"))
+  (po::Section("Input"))
   ("inputPath",        params.inputPath,     {}, "Input video path")
   ("width",            params.width,         0,  "Input video width")
   ("height",           params.height,        0,  "Input video height")
   ("frameCount",       params.frameCount,    0,  "Input video frame count")
-  ("outputPath",       params.outputPath,    {}, "Reconsctructed video path")
-    
-  (po::Section("Convertion"))
-  ("mode",             params.mode,       0, "method: 0:internal, 1:HdrTools")  
-  ("configPath",       params.configPath, {}, "Configuration file")  
   ("inputBitDepth",    params.inputBitDepth,    10, "Input bit depth")
   ("inputColorSpace",  params.inputColorSpace, vmesh::ColourSpace::UNKNOW, 
     "Input video color space: YUV420p, YUV444p, RGB444p, BGR444p ")
+  
+  (po::Section("Output"))
+  ("outputPath",       params.outputPath,    {}, "Reconsctructed video path")
   ("outputColorSpace", params.outputColorSpace, vmesh::ColourSpace::UNKNOW, 
     "Input video color space: YUV420p, YUV444p, RGB444p, BGR444p ")
   ("outputBitDepth",   params.outputBitDepth,   10, "Output bit depth ")  
+    
+  (po::Section("Convertion"))
+  ("mode",             params.mode,       0, "method: 0:internal, 1:HdrTools")  
+  ("HdrToolsCfgPath",  params.configPath, {}, "Configuration file")  
+  ("filter",           params.filter,      0, "Downsample/upsample filter")
+  ("range",            params.range,       0, "Range: 0: limited, 1: full")
   ;
 
   /* clang-format on */
@@ -103,6 +109,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   for (const auto* const arg : argv_unhandled) {
     err.warn() << "Unhandled argument ignored: " << arg << '\n';
   }
+  po::dumpCfgBySection(std::cout, opts);
 
   if (argc == 1 || print_help) {
     std::cout << "usage: " << argv[0] << " [arguments...] \n\n";
@@ -119,10 +126,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
-  std::cout << "+ Configuration parameters\n";
-  po::dumpCfg(std::cout, opts, "Input/Output", 4);
-  po::dumpCfg(std::cout, opts, "Convertion", 4);
-  std::cout << '\n';
+  po::dumpCfgBySection(std::cout, opts);
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
@@ -156,8 +160,11 @@ main(int argc, char* argv[]) {
   // convert
   auto encoder = vmesh::VirtualColourConverter<uint16_t>::create(params.mode);
   if (params.mode == 0) {
-    std::string format = "RGB444ToYUV420_8_10_6";
-    encoder->convert(format, src, dst);
+    std::stringstream format;
+    format << params.inputColorSpace << "To" << params.outputColorSpace << "_"
+           << params.inputBitDepth << "_" << params.outputBitDepth << "_"
+           << params.filter << "_" << params.range;
+    encoder->convert(format.str(), src, dst);
   } else {
     encoder->convert(params.configPath, src, dst);
   }

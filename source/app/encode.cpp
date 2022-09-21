@@ -137,7 +137,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.checksum, 
       "Compute checksum")
 
-  (po::Section("Gof analysis"))
+  (po::Section("Group of frames analysis"))
     ("gofmax", 
       encParams.groupOfFramesMaxSize, 
       encParams.groupOfFramesMaxSize, 
@@ -373,7 +373,21 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       interGeoParams.smoothingDeformSmoothMotion, 
       "Apply smoothing to motion instead of vertex positions")
 
-  (po::Section("Mesh"))
+  (po::Section("Lifting"))
+    ("liftingIt", 
+      encParams.liftingSubdivisionIterationCount, 
+      encParams.liftingSubdivisionIterationCount,       
+      "Lifting subdivision iteration count")
+    ("dqp", 
+      encParams.liftingQuantizationParameters, 
+       {16, 28, 28},
+      "Quantization parameter for displacements")
+    ("dqb", 
+      encParams.liftingQuantizationBias,
+      {1./3., 1./3., 1./3},
+      "Quantization bias for displacements")
+  
+  (po::Section("Base mesh"))
     ("gqp", 
       encParams.qpPosition, 
       encParams.qpPosition, 
@@ -408,6 +422,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Mesh codec id")    
 
   (po::Section("Geometry video"))
+    ("encdisp", 
+      encParams.encodeDisplacementsVideo, 
+      encParams.encodeDisplacementsVideo, 
+      "Encode displacements video")
     ("geometryVideoCodecId",
       encParams.geometryVideoCodecId,
       encParams.geometryVideoCodecId,
@@ -415,9 +433,13 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("gvencconfig", 
       encParams.geometryVideoEncoderConfig, 
       encParams.geometryVideoEncoderConfig, 
-      "Geometry video cfg")    
+      "Geometry video cfg")
         
   (po::Section("Texture video"))
+    ("enctex", 
+      encParams.encodeTextureVideo, 
+      encParams.encodeTextureVideo, 
+      "Encode texture video")
     ("textureVideoCodecId",
       encParams.textureVideoCodecId,
       encParams.textureVideoCodecId,
@@ -445,37 +467,11 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("textureVideoFullRange", 
       encParams.textureVideoFullRange, 
       encParams.textureVideoFullRange, 
-      "Texture video range")
+      "Texture video range: 0: limited, 1: full")
     ("tvqp", 
       encParams.textureVideoQP, 
       encParams.textureVideoQP, 
       "Quantization parameter for texture video")
-  
-  (po::Section("Displacements"))
-    ("encdisp", 
-      encParams.encodeDisplacementsVideo, 
-      encParams.encodeDisplacementsVideo, 
-      "Encode displacements video")
-    ("enctex", 
-      encParams.encodeTextureVideo, 
-      encParams.encodeTextureVideo, 
-      "Encode texture video")
-      
-  (po::Section("Lifting"))
-    ("liftingIt", 
-      encParams.liftingSubdivisionIterationCount, 
-      encParams.liftingSubdivisionIterationCount,       
-      "Lifting subdivision iteration count")
-    ("dqp", 
-      encParams.liftingQuantizationParameters, 
-       {16, 28, 28},
-      "Quantization parameter for displacements")
-    ("dqb", 
-      encParams.liftingQuantizationBias,
-      {1./3., 1./3., 1./3},
-      "Quantization bias for displacements")
-
-  (po::Section("Texture transfer"))
     ("texwidth", 
       encParams.textureWidth, 
       encParams.textureWidth, 
@@ -484,7 +480,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureHeight, 
       encParams.textureHeight, 
       "Output texture height")
-  
+
   (po::Section("Metrics"))
     ("pcc",
       metParams.computePcc,
@@ -571,6 +567,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.forceCoordTruncation, 
       encParams.forceCoordTruncation, 
       "Force truncation of the precision of the intermediate mesh files")
+    ("newInterGofTermination", 
+      encParams.newInterGofTermination, 
+      encParams.newInterGofTermination, 
+      "Enable new inter gof termination (disable to be consistant with v1.0)")
   ;
   /* clang-format on */
 
@@ -612,27 +612,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
-  std::cout << "+ Configuration parameters\n";
-  po::dumpCfg(std::cout, opts, "Common", 4);
-  po::dumpCfg(std::cout, opts, "Input", 4);
-  po::dumpCfg(std::cout, opts, "Output", 4);
-  po::dumpCfg(std::cout, opts, "General", 4);
-  po::dumpCfg(std::cout, opts, "Geometry decimate", 4);
-  po::dumpCfg(std::cout, opts, "Texture parametrization", 4);
-  po::dumpCfg(std::cout, opts, "Geometry parametrization", 4);
-  po::dumpCfg(std::cout, opts, "Intra geometry parametrization", 4);
-  if (encParams.subdivInter) {
-    po::dumpCfg(std::cout, opts, "Inter geometry parametrization", 4);
-  }
-  po::dumpCfg(std::cout, opts, "Mesh", 4);
-  po::dumpCfg(std::cout, opts, "Geometry video", 4);
-  po::dumpCfg(std::cout, opts, "Texture video", 4);
-  po::dumpCfg(std::cout, opts, "Displacements", 4);
-  po::dumpCfg(std::cout, opts, "Lifting", 4);
-  po::dumpCfg(std::cout, opts, "Metrics", 4);
-  po::dumpCfg(std::cout, opts, "Caching", 4);
-  po::dumpCfg(std::cout, opts, "Bug fix", 4);
-  std::cout << '\n';
+  po::dumpCfgBySection(std::cout, opts);
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""

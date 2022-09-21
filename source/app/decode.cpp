@@ -207,33 +207,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     err.error() << "compressed input/output not specified\n";
   }
 
-  // if (params.decodedMeshPath.empty()) {
-  //   err.error() << "decoded mesh not specified\n";
-  // }
-
-  // if (params.decodedTexturePath.empty()) {
-  //   err.error() << "decoded texture not specified\n";
-  // }
-
-  // if (params.decodedMaterialLibPath.empty()) {
-  //   err.error() << "decoded materials not specified\n";
-  // }
-
-  // if (params.decParams.textureVideoHDRToolDecConfig.empty()) {
-  //   err.error() << "hdrtools decoder config not specified\n";
-  // }
-
   if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration
-  std::cout << "+ Configuration parameters\n";
-  po::dumpCfg(std::cout, opts, "Common", 4);
-  po::dumpCfg(std::cout, opts, "Input", 4);
-  po::dumpCfg(std::cout, opts, "Output", 4);
-  po::dumpCfg(std::cout, opts, "General", 4);
-  po::dumpCfg(std::cout, opts, "Decoder", 4);
-  po::dumpCfg(std::cout, opts, "Metrics", 4);
-  std::cout << '\n';
+  po::dumpCfgBySection(std::cout, opts);
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""

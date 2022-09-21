@@ -529,12 +529,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
   auto& base       = frame.base;
   auto& subdiv     = frame.subdiv;
-  auto& mapping    = frame.mapping;
-  auto& qpositions = frame.qpositions;
   frame.base.print("frame.base");
   frame.subdiv.print("frame.subdiv");
-  printf("frame.mapping size    = %zu \n", mapping.size());
-  printf("frame.qpositions size = %zu \n", qpositions.size());
 
   // Save intermediate files
   std::string prefix = "";
@@ -560,8 +556,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     }
     printf("computeDracoMapping: \n");
     fflush(stdout);
-    computeDracoMapping(base, mapping, frameInfo.frameIndex, params);
-
+    computeDracoMapping(base, frame.mapping, frameInfo.frameIndex, params);
     if (params.keepIntermediateFiles) {      
       base.save(prefix + "_post_mapping_base.ply");
     }
@@ -622,13 +617,10 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
     // Round positions
     base = rec;
+    auto& qpositions = frame.qpositions;
     qpositions.resize(base.pointCount());
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-      auto&       qpos  = qpositions[v];
-      const auto& point = base.point(v);
-      for (int32_t k = 0; k < 3; ++k) {
-        qpos[k] = int32_t(std::round(point[k]));
-      }
+      qpositions[v] = base.point(v).round();
     }
     for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
       base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
@@ -641,22 +633,18 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
     // quantize base mesh
     const auto& refFrame = gof.frame(frameInfo.referenceFrameIndex);
-    mapping              = refFrame.mapping;
+    auto&       mapping              = frame.mapping;
+    auto&       qpositions           = frame.qpositions;
+    mapping                          = refFrame.mapping;
     const auto pointCountRecBaseMesh = refFrame.base.pointCount();
     qpositions.resize(pointCountRecBaseMesh);
     for (int32_t v = 0; v < pointCountRecBaseMesh; ++v) {
       assert(mapping[v] >= 0 && mapping[v] < base.pointCount());
-      const auto point = Round(base.point(mapping[v]) * scalePosition);
-      auto&      qpos  = qpositions[v];
-      for (int32_t k = 0; k < 3; ++k) {
-        qpos[k] = int32_t(std::round(point[k]));
-      }
+      qpositions[v] = (base.point(mapping[v]) * scalePosition).round();
     }
     base = refFrame.base;
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-      const auto& qpos  = qpositions[v];
-      auto&       point = base.point(v);
-      for (int32_t k = 0; k < 3; ++k) { point[k] = qpos[k]; }
+      base.point(v) = qpositions[v];
     }
     auto bitstreamByteCount0 = bitstream.size();
     compressMotion(
@@ -676,6 +664,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
   auto rsubdiv = rec;
   std::swap(rsubdiv, subdiv);
+  const auto& mapping = frame.mapping;
   for (int32_t v = 0, vcount = subdiv.pointCount(); v < vcount; ++v) {
     const auto vindex = mapping[v];
     assert(vindex >= 0 && vindex < vcount);
@@ -708,7 +697,6 @@ VMCEncoder::computeDisplacements(VMCFrame&                   frame,
       disp[v] = subdiv.point(v) - rec.point(v);
     }
   }
-
   return 0;
 }
 
@@ -1018,6 +1006,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     GeometryDecimate geometryDecimate;
     printf("frameCount = %d \n", frameCount);
     fflush(stdout);
+    int32_t lastIntraFrameIndex = 0;
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       auto& frame  = gof.frame(frameIndex);
       auto  prefix = _keepFilesPathPrefix + "fr_" + std::to_string(frameIndex);
@@ -1191,9 +1180,10 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
             // target  : ai RNUM reference
             // source  : ai RNUM decimate tex
             // mapped  : ai RNUM mapped
-            printf("frameInfo.referenceFrameIndex = %d \n",
-                   frameInfo.referenceFrameIndex);
+            printf("ref frame= %d \n", frameInfo.referenceFrameIndex);
             fflush(stdout);
+            frameInfo.referenceFrameIndex =
+              std::max(frameInfo.referenceFrameIndex, lastIntraFrameIndex);
             auto& ref = gof.frame(frameInfo.referenceFrameIndex);
             TriangleMesh<MeshType> mappedInter;
             TriangleMesh<MeshType> subdiv0Inter;
@@ -1266,45 +1256,35 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
           auto metIntra = metricsIntra.getPccResults();
           auto metInter = metricsInter.getPccResults();
           int  pos      = 1;
-          if (metIntra[pos] - metInter[pos] > params.maxAllowedD2PSNRLoss) {
-            // Choose Intra
-            printf(
-              "Frame %3d: choose Intra: met %8.4f - %8.4f = %8.4f > %8.4f \n",
-              frameIndex,
-              metIntra[pos],
-              metInter[pos],
-              metIntra[pos] - metInter[pos],
-              params.maxAllowedD2PSNRLoss);
-            chooseIntra = true;
-            if (params.subdivInterWithMapping) {
-              forceSubGofRestToIntra = true;
-            }
-          } else {
-            // Choose Inter
-            printf(
-              "Frame %3d: choose Inter: met %8.4f - %8.4f = %8.4f > %8.4f \n",
-              frameIndex,
-              metIntra[pos],
-              metInter[pos],
-              metIntra[pos] - metInter[pos],
-              params.maxAllowedD2PSNRLoss);
-            chooseIntra = false;
-          }
+          chooseIntra =
+            metIntra[pos] - metInter[pos] > params.maxAllowedD2PSNRLoss;
+          printf(
+            "Frame %3d: choose %s: met %8.4f - %8.4f = %8.4f > %8.4f \n",
+            frameIndex,
+            chooseIntra ? "Intra" : "Inter",
+            metIntra[pos], 
+            metInter[pos],
+            metIntra[pos] - metInter[pos],
+            params.maxAllowedD2PSNRLoss);                  
         }
         if (chooseIntra) {
+          if ((!params.newInterGofTermination)
+              && frameInfo.type != FrameType::INTRA
+              && params.subdivInterWithMapping) {
+            forceSubGofRestToIntra = true;
+          }
           frame.base                    = baseIntra;
           frame.subdiv                  = subdivIntra;
           frameInfo.type                = FrameType::INTRA;
           frameInfo.referenceFrameIndex = -1;
+          lastIntraFrameIndex           = frameIndex;
         } else {
-          auto& frameInfo               = gofInfo.frameInfo(frameIndex);
+          frame.base                    = baseInter;
+          frame.subdiv                  = subdivInter;
           frameInfo.type                = FrameType::SKIP;
           frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
-          printf("update referenceFrameIndex = %d = %d - 1 \n",
-                 frameInfo.referenceFrameIndex,
-                 frameInfo.frameIndex);
-          frame.base   = baseInter;
-          frame.subdiv = subdivInter;
+          printf("Update referenceFrameIndex = %d \n",
+                 frameInfo.referenceFrameIndex);
         }
 
         // Save cache files
@@ -1324,6 +1304,16 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
 
   // Compress
   std::cout << "Compress \n";
+  gofInfo.trace();
+  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+    const auto& frame     = gof.frame(frameIndex);
+    const auto& frameInfo = gofInfo.frameInfo(frameIndex);
+    printf("Frame %d: base = %6d points subdiv = %6d points Ref = %d \n",
+           frameIndex,
+           frame.base.pointCount(),
+           frame.subdiv.pointCount(),
+           frameInfo.referenceFrameIndex);
+  }
   if (params.subdivIsBase) {
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       auto& frame  = gof.frame(frameIndex);

@@ -172,18 +172,14 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
     fflush(stdout);
     qpositions.resize(base.pointCount());
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-      auto&       qpos  = qpositions[v];
-      const auto& point = base.point(v);
-      for (int32_t k = 0; k < 3; ++k) {
-        qpos[k] = int32_t(std::round(point[k]));
-      }
+      qpositions[v] = base.point(v).round();
     }
     printf("Scale TexCoord \n");
     fflush(stdout);
     const auto scaleTexCoord  = std::pow(2.0, _sps.qpTexCoord) - 1.0;
     const auto iscaleTexCoord = 1.0 / scaleTexCoord;
     for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
-      base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
+      base.texCoord(tc) *= iscaleTexCoord;
     }
   } else {
     printf("Inter index = %d ref = %d \n",
@@ -196,9 +192,7 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
       bitstream, base.triangles(), refFrame.qpositions, qpositions, params);
     stats.motionByteCount += _byteCounter - bitstreamByteCount0;
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-      const auto& qpos  = qpositions[v];
-      auto&       point = base.point(v);
-      for (int32_t k = 0; k < 3; ++k) { point[k] = qpos[k]; }
+      base.point(v) = qpositions[v];
     }
   }
 
@@ -208,7 +202,7 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
     ((1 << _sps.qpPosition) - 1.0) / ((1 << _sps.bitDepthPosition) - 1.0);
   const auto iscalePosition = 1.0 / scalePosition;
   for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-    base.setPoint(v, base.point(v) * iscalePosition);
+    base.point(v) *= iscalePosition;
   }
 
   subdivideBaseMesh(
@@ -307,8 +301,9 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
     // Store result in 8 bits frames
     printf("Store result in 8 bits frames \n");
     fflush(stdout);
-    for (int32_t f = 0; f < brg.frameCount(); ++f)
+    for (int32_t f = 0; f < brg.frameCount(); ++f) {
       gof.frame(f).outputTexture = brg[f];
+    }
     brg.clear();
   }
   return 0;
@@ -394,9 +389,7 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
     for (int32_t frameIndex = 0; frameIndex < _sps.frameCount; ++frameIndex) {
       auto&      rec           = gof.frame(frameIndex).rec;
       const auto texCoordCount = rec.texCoordCount();
-      for (int32_t i = 0; i < texCoordCount; ++i) {
-        rec.setTexCoord(i, rec.texCoord(i) * scale);
-      }
+      for (int32_t i = 0; i < texCoordCount; ++i) { rec.texCoord(i) *= scale; }
     }
   }
   return 0;

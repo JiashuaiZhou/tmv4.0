@@ -90,7 +90,7 @@ separator(const std::string& string) {
 static std::string
 dirname(const std::string& string) {
   auto position = string.find_last_of(separator(string));
-  if (position != std::string::npos) { return string.substr(0, position); }
+  if (position != std::string::npos) { return string.substr(0, position + 1); }
   return string;
 }
 

@@ -336,6 +336,14 @@ public:
   }
 
   Vec3& operator=(const Vec3& rhs) = default;
+  
+  template<typename D>
+  Vec3& operator=(const Vec3<D>& rhs) {
+    _vec[0] = rhs[0];
+    _vec[1] = rhs[1];
+    _vec[2] = rhs[2];
+    return *this;    
+  }
 
   Vec3& operator+=(const Vec3& rhs) {
     _vec[0] += rhs._vec[0];
@@ -541,6 +549,12 @@ public:
     _vec[0] = (T)vec.x();
     _vec[1] = (T)vec.y();
     _vec[2] = (T)vec.z();
+  }
+
+  inline Vec3<int32_t> round() const {
+    return Vec3<int32_t>(int32_t(std::round(_vec[0])),
+                         int32_t(std::round(_vec[1])),
+                         int32_t(std::round(_vec[2])));
   }
 
   Vec3()  = default;

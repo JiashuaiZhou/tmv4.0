@@ -255,7 +255,8 @@ struct VMCEncoderParameters {
   bool         ignoreTextureEncoding = false;
 
   // Bug fix
-  bool forceCoordTruncation = false;
+  bool forceCoordTruncation   = false;
+  bool newInterGofTermination = false;
 };
 
 //============================================================================

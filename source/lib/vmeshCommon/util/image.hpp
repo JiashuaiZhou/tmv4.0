@@ -372,6 +372,13 @@ public:
     return *this;
   }
 
+  void swap(Frame<T>& src) {
+    std::swap(_width, src._width);
+    std::swap(_height, src._height);
+    std::swap(_colourSpace, src._colourSpace);
+    std::swap(_planes, src._planes);
+  }
+
   ~Frame() = default;
 
   Plane<T>&       operator[](int planeIndex) { return _planes[planeIndex]; }
@@ -602,10 +609,11 @@ public:
     assert(frameIndex < frameCount());
     return _frames[frameIndex];
   }
-  int         frameCount() const { return int(_frames.size()); }
-  int         width() const { return _width; }
-  int         height() const { return _height; }
-  ColourSpace colourSpace() const { return _colourSpace; }
+  int          frameCount() const { return int(_frames.size()); }
+  int          width() const { return _width; }
+  int          height() const { return _height; }
+  ColourSpace  colourSpace() const { return _colourSpace; }
+  ColourSpace& colourSpace() { return _colourSpace; }
 
   void load(std::istream& is) {
     for (auto& frame : _frames) { frame.load(is); }

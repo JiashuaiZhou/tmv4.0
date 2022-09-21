@@ -714,6 +714,22 @@ InternalColourConverter<T>::initialize(std::string configuration) {
 
 template<typename T>
 void
+InternalColourConverter<T>::convert(FrameSequence<T>& src) {
+  for (int i = 0; i < src.frameCount(); i++) { convert(src[i]); }
+  src.colourSpace() = dstColourSpace;
+}
+
+template<typename T>
+void
+InternalColourConverter<T>::convert(Frame<T>& src) {
+  Frame<T> dst;
+  dst.resize(src.width(), src.height(), dstColourSpace);
+  convert(src, dst);
+  src.swap(dst);
+}
+
+template<typename T>
+void
 InternalColourConverter<T>::convert(FrameSequence<T>& src,
                                     FrameSequence<T>& dst) {
   dst.clear();

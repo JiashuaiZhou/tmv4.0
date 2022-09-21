@@ -59,9 +59,9 @@ public:
   ~InternalColourConverter();
 
   void initialize(std::string configFile);
-
-  void convert(FrameSequence<T>& videoSrc, FrameSequence<T>& videoDst);
-
+  void convert(FrameSequence<T>& src);
+  void convert(Frame<T>& src);
+  void convert(FrameSequence<T>& src, FrameSequence<T>& dst);
   void convert(Frame<T>& src, Frame<T>& dst);
 
 private:

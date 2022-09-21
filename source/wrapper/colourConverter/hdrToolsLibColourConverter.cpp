@@ -54,6 +54,23 @@ HdrToolsLibColourConverter<T>::initialize(std::string configFile) {
 
 template<typename T>
 void
+HdrToolsLibColourConverter<T>::convert(FrameSequence<T>& src) {
+  if (src.frameCount() > 0) {
+    for (int i = 0; i < src.frameCount(); i++) { convert(src[i]); }
+    src.colourSpace() = src[0].colourSpace();
+  }
+}
+
+template<typename T>
+void
+HdrToolsLibColourConverter<T>::convert(Frame<T>& src) {
+  Frame<T> dst;
+  convert(src, dst);
+  src.swap(dst);
+}
+
+template<typename T>
+void
 HdrToolsLibColourConverter<T>::convert(FrameSequence<T>& src,
                                        FrameSequence<T>& dst) {
   converter->convert(src, dst);

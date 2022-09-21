@@ -244,15 +244,14 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
     }
 
     // convert BGR444 8bits to BGR444 10bits
-    FrameSequence<uint16_t> bgrSrc10(
+    FrameSequence<uint16_t> src(
       width, height, ColourSpace::BGR444p, frameCount);
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      bgrSrc10[frameIndex] = gof.frame(frameIndex).outputTexture;
+      src[frameIndex] = gof.frame(frameIndex).outputTexture;
       gof.frame(frameIndex).outputTexture.clear();
     }
 
     // convert BGR444 to YUV420
-    FrameSequence<uint16_t> yuvSrc;
 #if USE_HDRTOOLS
     auto convert = VirtualColourConverter<uint16_t>::create(1);
     convert->initialize(params.textureVideoHDRToolEncConfig);
@@ -263,12 +262,11 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
                 + std::to_string(params.textureVideoFullRange);
     convert->initialize(mode);
 #endif
-    convert->convert(bgrSrc10, yuvSrc);
-    bgrSrc10.clear();
+    convert->convert(src);
 
     // Save intermediate files
     if (params.keepIntermediateFiles){
-      yuvSrc.save(yuvSrc.createName(_keepFilesPathPrefix + "tex_enc", 10));
+      src.save(src.createName(_keepFilesPathPrefix + "tex_enc", 10));
     }
 
     //Encode
@@ -278,23 +276,22 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
     videoEncoderParams.internalBitDepth_ = params.textureVideoBitDepth;
     videoEncoderParams.outputBitDepth_   = params.textureVideoBitDepth;
     videoEncoderParams.qp_               = params.textureVideoQP;
-    FrameSequence<uint16_t> yuvRec;
+    FrameSequence<uint16_t> rec;
     std::vector<uint8_t>    videoBitstream;
     auto                    encoder =
       VirtualVideoEncoder<uint16_t>::create(params.textureVideoCodecId);
-    encoder->encode(yuvSrc, videoEncoderParams, videoBitstream, yuvRec);
+    encoder->encode(src, videoEncoderParams, videoBitstream, rec);
     bitstream.write((uint32_t)videoBitstream.size());
     bitstream.append(videoBitstream);
-    yuvSrc.clear();
+    src.clear();
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
-      yuvRec.save(yuvRec.createName(_keepFilesPathPrefix + "tex_rec", 10));
+      rec.save(rec.createName(_keepFilesPathPrefix + "tex_rec", 10));
       save(_keepFilesPathPrefix + ".h265", videoBitstream);
     }
 
-    // Convert Rec yuv to bgr
-    FrameSequence<uint16_t> bgrRec;
+    // Convert Rec YUV420 to BGR444
 #if USE_HDRTOOLS
     convert->initialize(params.textureVideoHDRToolDecConfig);
 #else
@@ -303,19 +300,18 @@ VMCEncoder::compressTextureVideo(VMCGroupOfFrames&           gof,
            + std::to_string(params.textureVideoFullRange);
     convert->initialize(mode);
 #endif
-    convert->convert(yuvRec, bgrRec);
-    yuvRec.clear();
+    convert->convert(rec);
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
-      FrameSequence<uint8_t> bgrRec8(bgrRec);
-      bgrRec8.save(bgrRec8.createName(_keepFilesPathPrefix + "tex_rec", 8));
+      FrameSequence<uint8_t> rec8(rec);
+      rec8.save(rec8.createName(_keepFilesPathPrefix + "tex_rec", 8));
     }
 
     // convert BGR444 10bits to BGR444 8bits
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex)
-      gof.frame(frameIndex).outputTexture = bgrRec[frameIndex];
-    bgrRec.clear();
+      gof.frame(frameIndex).outputTexture = rec[frameIndex];
+    rec.clear();
   }
   return 0;
 }

@@ -269,15 +269,14 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
     // Decode video
     printf("Decode video \n");
     fflush(stdout);
-    FrameSequence<uint16_t> yuv;
+    FrameSequence<uint16_t> dec;
     auto                    decoder = VirtualVideoDecoder<uint16_t>::create(
       VideoCodecId(_sps.textureVideoCodecId));
-    decoder->decode(videoBitstream, yuv, 10);
+    decoder->decode(videoBitstream, dec, 10);
 
     // Convert video
     printf("Convert video \n");
     fflush(stdout);
-    FrameSequence<uint16_t> brg;
 #if USE_HDRTOOLS
     auto convert = VirtualColourConverter<uint16_t>::create(1);
     convert->initialize(params.textureVideoHDRToolDecConfig);
@@ -288,24 +287,23 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
                 + std::to_string(params.textureVideoFullRange);
     convert->initialize(mode);
 #endif
-    convert->convert(yuv, brg);
-    yuv.clear();
+    convert->convert(dec);
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
-      FrameSequence<uint8_t> brg8(brg);
-      auto path = brg8.createName(_keepFilesPathPrefix + "tex_dec", 8);
-      brg8.save(path);
+      FrameSequence<uint8_t> dec8(dec);
+      auto path = dec8.createName(_keepFilesPathPrefix + "tex_dec", 8);
+      dec8.save(path);
       save(removeExtension(path) + ".bin", videoBitstream);
     }
 
     // Store result in 8 bits frames
     printf("Store result in 8 bits frames \n");
     fflush(stdout);
-    for (int32_t f = 0; f < brg.frameCount(); ++f) {
-      gof.frame(f).outputTexture = brg[f];
+    for (int32_t f = 0; f < dec.frameCount(); ++f) {
+      gof.frame(f).outputTexture = dec[f];
     }
-    brg.clear();
+    dec.clear();
   }
   return 0;
 }

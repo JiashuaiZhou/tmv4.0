@@ -1189,13 +1189,11 @@ HdrToolsLibColourConverterImpl<T>::process(Frame<T>& src, Frame<T>& dst) {
       || (m_iFrameStore->m_colorSpace == hdrtoolslib::CM_RGB
           && m_oFrameStore->m_colorSpace != hdrtoolslib::CM_RGB
           && (m_oFrameStore->m_chromaFormat != 0))) {
-    printf("m_convertFormatOut + m_convertProcess \n");
     m_convertFormatOut->process(m_pFrameStore[5], m_pFrameStore[4]);
 
     log("420f", m_pFrameStore[5], 2);
     m_convertProcess->process(m_oFrameStore, m_pFrameStore[5]);
   } else {
-    printf("m_convertProcess \n");
     m_convertProcess->process(m_oFrameStore, m_pFrameStore[4]);
   }
   // frame output

@@ -268,70 +268,92 @@ public:
   VMCEncoder& operator=(const VMCEncoder& rhs) = delete;
   ~VMCEncoder()                                = default;
 
-  int32_t compress(const VMCGroupOfFramesInfo& gofInfo,
-                   VMCGroupOfFrames&           gof,
-                   Bitstream&                  bitstream,
-                   const VMCEncoderParameters& params);
+  bool compress(const VMCGroupOfFramesInfo& gofInfo,
+                const Sequence&             source,
+                Bitstream&                  bitstream,
+                Sequence&                   reconstruct,
+                const VMCEncoderParameters& params);
 
-  inline void setKeepFilesPathPrefix( const std::string& path) {
+  inline void setKeepFilesPathPrefix(const std::string& path) {
     _keepFilesPathPrefix = path;
   }
 
+  VMCStats& stats() { return _stats; }
+
 private:
-  static void    unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
-                               VMCGroupOfFrames&           gof,
-                               const VMCEncoderParameters& params);
-  int32_t        computeDracoMapping(TriangleMesh<MeshType>      base,
-                                     std::vector<int32_t>&       mapping,
-                                     int32_t                     frameIndex,
-                                     const VMCEncoderParameters& params) const;
-  int32_t        encodeSequenceHeader(const VMCGroupOfFrames&     gof,
-                                      FrameSequence<uint16_t>&    dispVideo,
-                                      Bitstream&                  bitstream,
-                                      const VMCEncoderParameters& params) const;
-  static int32_t encodeFrameHeader(const VMCFrameInfo& frameInfo,
-                                   Bitstream&          bitstream);
-  static int32_t computeDisplacements(VMCFrame&                   frame,
-                                      const VMCEncoderParameters& params);
-  static int32_t quantizeDisplacements(VMCFrame&                   frame,
-                                       const VMCEncoderParameters& params);
+  void decimateInput(const TriangleMesh<MeshType>& input,
+                     VMCFrame&                     frame,
+                     TriangleMesh<MeshType>&       decimate,
+                     const VMCEncoderParameters&   params);
 
-  int32_t init(const VMCGroupOfFrames&     gof,
-               Bitstream&                  bitstream,
-               const VMCEncoderParameters& params);
+  void textureParametrization(VMCFrame&                     frame,
+                              const TriangleMesh<MeshType>& decimate,
+                              const VMCEncoderParameters&   params);
 
-  int32_t        compressBaseMesh(const VMCGroupOfFrames&     gof,
-                                  const VMCFrameInfo&         frameInfo,
-                                  VMCFrame&                   frame,
-                                  Bitstream&                  bitstream,
-                                  VMCStats&                   stats,
+  void geometryParametrization(VMCGroupOfFrames&             gof,
+                               VMCGroupOfFramesInfo&         gofInfo,
+                               VMCFrame&                     frame,
+                               const TriangleMesh<MeshType>& input,
+                               const VMCEncoderParameters&   params,
+                               int32_t& lastIntraFrameIndex,
+                               bool&    forceSubGofRestToIntra);
+
+  void        unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
+                            VMCGroupOfFrames&           gof,
+                            const VMCEncoderParameters& params);
+  bool        computeDracoMapping(TriangleMesh<MeshType>      base,
+                                  std::vector<int32_t>&       mapping,
+                                  int32_t                     frameIndex,
                                   const VMCEncoderParameters& params) const;
-  static int32_t compressMotion(const std::vector<Vec3<int32_t>>& triangles,
-                                const std::vector<Vec3<int32_t>>& current,
-                                const std::vector<Vec3<int32_t>>& reference,
-                                Bitstream&                        bitstream,
-                                const VMCEncoderParameters&       params);
-  static int32_t
-          computeDisplacementVideoFrame(const VMCFrame&             frame,
-                                        Frame<uint16_t>&            dispVideoFrame,
-                                        const VMCEncoderParameters& params);
-  int32_t compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
-                                     Bitstream&                  bitstream,
-                                     const VMCEncoderParameters& params);
-  int32_t compressTextureVideo(VMCGroupOfFrames&           gof,
+  bool        encodeSequenceHeader(const VMCGroupOfFrames&     gof,
+                                   FrameSequence<uint16_t>&    dispVideo,
+                                   Bitstream&                  bitstream,
+                                   const VMCEncoderParameters& params) const;
+  static bool encodeFrameHeader(const VMCFrameInfo& frameInfo,
+                                Bitstream&          bitstream);
+  static bool computeDisplacements(VMCFrame&                     frame,
+                                   const TriangleMesh<MeshType>& rec,
+                                   const VMCEncoderParameters&   params);
+  static bool quantizeDisplacements(VMCFrame&                   frame,
+                                    const VMCEncoderParameters& params);
+
+  bool        compressBaseMesh(const VMCGroupOfFrames&     gof,
+                               const VMCFrameInfo&         frameInfo,
+                               VMCFrame&                   frame,
+                               TriangleMesh<MeshType>&     rec,
                                Bitstream&                  bitstream,
-                               const VMCEncoderParameters& params) const;
+                               const VMCEncoderParameters& params);
+  static bool compressMotion(const std::vector<Vec3<int32_t>>& triangles,
+                             const std::vector<Vec3<int32_t>>& current,
+                             const std::vector<Vec3<int32_t>>& reference,
+                             Bitstream&                        bitstream,
+                             const VMCEncoderParameters&       params);
+  static bool
+       computeDisplacementVideoFrame(const VMCFrame&             frame,
+                                     Frame<uint16_t>&            dispVideoFrame,
+                                     const VMCEncoderParameters& params);
+  bool compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
+                                  Bitstream&                  bitstream,
+                                  const VMCEncoderParameters& params);
+  bool compressTextureVideo(Sequence&                   reconstruct,
+                            Bitstream&                  bitstream,
+                            const VMCEncoderParameters& params) const;
 
-  static int32_t transferTexture(VMCFrame&                   frame,
-                                 const VMCEncoderParameters& params);
+  static bool transferTexture(const TriangleMesh<MeshType>& input,
+                              const Frame<uint8_t>&         inputTexture,
+                              TriangleMesh<MeshType>&       rec,
+                              Frame<uint8_t>&               outputTexture,
+                              const VMCEncoderParameters&   params);
 
-  static int32_t transferTexture(const TriangleMesh<MeshType>& targetMesh,
-                                 const TriangleMesh<MeshType>& sourceMesh,
-                                 const Frame<uint8_t>&         targetTexture,
-                                 Frame<uint8_t>&               outputTexture,
-                                 const VMCEncoderParameters&   params);
+  static bool transferTexture(const TriangleMesh<MeshType>& targetMesh,
+                              const TriangleMesh<MeshType>& sourceMesh,
+                              const Frame<uint8_t>&         targetTexture,
+                              Frame<uint8_t>&               outputTexture,
+                              const VMCEncoderParameters&   params);
 
   std::string _keepFilesPathPrefix = {};
+  int32_t     _gofIndex            = 0;
+  VMCStats    _stats;
 };
 
 //============================================================================

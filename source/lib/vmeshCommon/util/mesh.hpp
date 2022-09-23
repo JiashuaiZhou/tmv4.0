@@ -778,6 +778,92 @@ private:
 
 //============================================================================
 
+template<typename T>
+class MeshSequence {
+public:
+  MeshSequence(int f = 0) { resize(f); }
+  MeshSequence(const MeshSequence&) = default;
+  template<typename D>
+  MeshSequence(const MeshSequence<D>& src) {
+    *this = src;
+  }
+  MeshSequence& operator=(const MeshSequence&) = default;
+  template<typename D>
+  MeshSequence& operator=(const MeshSequence<D>& src) {
+    resize(src.frameCount());
+    for (int i = 0; i < src.frameCount(); i++) { _frames[i] = src.frame(i); }
+    return *this;
+  }
+  ~MeshSequence() = default;
+
+  bool load(const std::string& path,
+            const int32_t      frameStart,
+            const int32_t      frameCount) {
+    printf("Loading a sequence of meshes from %4d to %4d \n",
+           frameStart,
+           frameStart + frameCount - 1);
+    resize(frameCount);
+    auto frameIndex = frameStart;
+    for (auto& frame : _frames) {
+      const auto name = vmesh::expandNum(path, frameIndex);
+      if (!frame.load(name)) {
+        printf("Error loading mesh %d: %s \n", frameIndex, name.c_str());
+        return false;
+      }
+      frameIndex++;
+    }
+    return true;
+  }
+
+  bool save(const std::string& path, int32_t frameStart) {
+    printf("Saving a sequence of meshes from %4d to %4zu \n",
+           frameStart,
+           frameStart + _frames.size() - 1);
+    auto frameIndex = frameStart;
+    for (auto& frame : _frames) {
+      const auto name = vmesh::expandNum(path, frameIndex);
+      if (!frame.save(name)) {
+        printf("Error saving mesh %d: %s \n", frameIndex, name.c_str());
+        return false;
+      }
+      frameIndex++;
+    }
+    return true;
+  }
+
+  TriangleMesh<T>& operator[](int frameIndex) { return _frames[frameIndex]; }
+  const TriangleMesh<T>& operator[](int frameIndex) const {
+    return _frames[frameIndex];
+  }
+  typename std::vector<TriangleMesh<T>>::iterator begin() {
+    return _frames.begin();
+  }
+  typename std::vector<TriangleMesh<T>>::iterator end() {
+    return _frames.end();
+  }
+
+  void resize(int f) { _frames.resize(f); }
+  void clear() {
+    for (auto& frame : _frames) { frame.clear(); }
+    _frames.clear();
+  }
+
+  TriangleMesh<T>& frame(int frameIndex) {
+    assert(frameIndex < frameCount());
+    return _frames[frameIndex];
+  }
+  const TriangleMesh<T>& frame(int frameIndex) const {
+    assert(frameIndex < frameCount());
+    return _frames[frameIndex];
+  }
+  int frameCount() const { return int(_frames.size()); }
+
+private:
+  std::vector<TriangleMesh<T>> _frames;
+};
+
+//============================================================================
+
 inline void
 ComputeVertexToTriangle(
   const std::vector<Triangle>&         triangles,

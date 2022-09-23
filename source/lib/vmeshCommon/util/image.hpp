@@ -206,9 +206,9 @@ struct Plane {
 
   int size() const { return (int)_buffer.size(); }
   T   get(int i, int j) const {
-    assert(i >= 0 && i < _height);
-    assert(j >= 0 && j < _width);
-    return _buffer[i * _width + j];
+      assert(i >= 0 && i < _height);
+      assert(j >= 0 && j < _width);
+      return _buffer[i * _width + j];
   }
   T& get(int i, int j) {
     assert(i >= 0 && i < _height);
@@ -585,11 +585,14 @@ public:
   std::string createName(const std::string& prefix, int bits) {
     return createVideoName(prefix, _width, _height, bits, _colourSpace);
   }
-  Frame<T>& operator[](int frameIndex) { return _frames[frameIndex]; }
+  Frame<T>&       operator[](int frameIndex) { return _frames[frameIndex]; }
+  const Frame<T>& operator[](int frameIndex) const {
+    return _frames[frameIndex];
+  }
   typename std::vector<Frame<T>>::iterator begin() { return _frames.begin(); }
   typename std::vector<Frame<T>>::iterator end() { return _frames.end(); }
 
-  void resize(int w, int h, ColourSpace colourSpace, int f) {
+  void resize(int w, int h, ColourSpace colourSpace, int f) {    
     _width       = w;
     _height      = h;
     _colourSpace = colourSpace;
@@ -635,10 +638,16 @@ public:
     return true;
   }
 
+  int32_t loadImages(const std::string& path,
+                     const int32_t      frameStart,
+                     const int32_t      frameCount);
+
+  int32_t saveImages(const std::string& path, const int32_t frameStart);
+
 private:
-  int                   _width{};
-  int                   _height{};
-  ColourSpace           _colourSpace;
+  int                   _width       = 0;
+  int                   _height      = 0;
+  ColourSpace           _colourSpace = ColourSpace::UNKNOW;
   std::vector<Frame<T>> _frames;
 };
 
@@ -749,9 +758,9 @@ PullPushPadding(Frame<T1>& input, const Plane<T2>& occupancy) {
   const int32_t K            = 3;
   const int32_t K2           = 1;
   const float   kernel[K][K] = {
-    {0.0625, 0.1250, 0.0625},
-    {0.1250, 0.2500, 0.1250},
-    {0.0625, 0.1250, 0.0625},
+      {0.0625, 0.1250, 0.0625},
+      {0.1250, 0.2500, 0.1250},
+      {0.0625, 0.1250, 0.0625},
   };
 
   std::vector<float> v(planeCount);

@@ -109,31 +109,17 @@ convert(const Frame<uint8_t>& src, mm::Image& dst) {
 //============================================================================
 
 void
-VMCMetrics::compute(const VMCGroupOfFrames&     gof,
+VMCMetrics::compute(const Sequence&     sequence0,
+                    const Sequence&     sequence1,
                     const VMCMetricsParameters& params) {
   if (!compare) { compare = std::make_shared<mm::Compare>(); }
-  for (int32_t i = 0; i < gof.frameCount(); i++) {
-    mm::Model srcModel;
-    mm::Model recModel;
-    mm::Image srcImage;
-    mm::Image recImage;
-
-    const auto& frame = gof.frame(i);
-    convert(frame.input, srcModel);
-    convert(frame.rec, recModel);
-
-    convert(frame.inputTexture, srcImage);
-    convert(frame.outputTexture, recImage);
-
-    compute(srcModel,                         // Scr object
-            recModel,                         // Rec object
-            srcImage,                         // Scr map
-            recImage,                         // Rec map
-            "src_mlib_" + std::to_string(i),  // Scr name
-            "rec_mlib_" + std::to_string(i),  // Rec name
-            params);                          // params
+  for (int32_t i = 0; i < sequence0.frameCount(); i++) {
+    compute(sequence0.mesh(i),
+            sequence1.mesh(i),
+            sequence0.texture(i),
+            sequence1.texture(i),
+            params);
   }
-  // display();
 }
 
 //============================================================================
@@ -159,6 +145,30 @@ VMCMetrics::compute(const TriangleMesh<T>&      srcMesh,
           recModel,  // Rec object
           srcImage,  // Scr map
           recImage,  // Rec map
+          "",        // Scr name
+          "",        // Rec name
+          params);   // params
+}
+
+
+//============================================================================
+
+template<typename T>
+void
+VMCMetrics::compute(const TriangleMesh<T>&      srcMesh,
+                    const TriangleMesh<T>&      recMesh,
+                    const VMCMetricsParameters& params) {
+  if (!compare) { compare = std::make_shared<mm::Compare>(); }
+  mm::Model srcModel;
+  mm::Model recModel;
+  mm::Image image(10, 10, 0);
+  convert(srcMesh, srcModel);
+  convert(recMesh, recModel);
+
+  compute(srcModel,  // Scr object
+          recModel,  // Rec object
+          image,     // Scr map
+          image,     // Rec map
           "",        // Scr name
           "",        // Rec name
           params);   // params
@@ -400,6 +410,14 @@ template void VMCMetrics::compute<double>(const TriangleMesh<double>&,
                                           const TriangleMesh<double>&,
                                           const Frame<uint8_t>&,
                                           const Frame<uint8_t>&,
+                                          const VMCMetricsParameters&);
+                                          
+template void VMCMetrics::compute<float>(const TriangleMesh<float>&,
+                                         const TriangleMesh<float>&,
+                                         const VMCMetricsParameters&);
+
+template void VMCMetrics::compute<double>(const TriangleMesh<double>&,
+                                          const TriangleMesh<double>&,
                                           const VMCMetricsParameters&);
 
 //============================================================================

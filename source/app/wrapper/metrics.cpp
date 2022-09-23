@@ -188,35 +188,37 @@ metrics(const Parameters& params) {
   vmesh::VMCMetrics metrics;
   const int         lastFrame = params.startFrame + params.frameCount;
   for (int f = params.startFrame; f < lastFrame; ++f) {
-    vmesh::VMCGroupOfFrames gof;
-    gof.resize(1);
+    vmesh::TriangleMesh<MeshType> srcMesh;
+    vmesh::TriangleMesh<MeshType> recMesh;
+    vmesh::Frame<uint8_t>         srcTexture;
+    vmesh::Frame<uint8_t>         recTexture;
     const auto nameSrcMesh    = vmesh::expandNum(params.srcMeshPath, f);
     const auto nameSrcTexture = vmesh::expandNum(params.srcTexturePath, f);
     const auto nameRecMesh    = vmesh::expandNum(params.decMeshPath, f);
     const auto nameRecTexture = vmesh::expandNum(params.decTexturePath, f);
-    auto&      frame          = gof.frames[0];
-    if (!frame.input.load(nameSrcMesh)) {
+
+    if (!srcMesh.load(nameSrcMesh)) {
       printf("Error loading src mesh %d / %d: %s \n",
              f,
              params.frameCount,
              nameSrcMesh.c_str());
       return -1;
     }
-    if (!vmesh::LoadImage(nameSrcTexture, frame.inputTexture)) {
+    if (!vmesh::LoadImage(nameSrcTexture, srcTexture)) {
       printf("Error loading src texture %d / %d: %s \n",
              f,
              params.frameCount,
              nameSrcTexture.c_str());
       return -1;
     }
-    if (!frame.rec.load(nameRecMesh)) {
+    if (!recMesh.load(nameRecMesh)) {
       printf("Error loading rec mesh %d / %d: %s \n",
              f,
              params.frameCount,
              nameRecMesh.c_str());
       return -1;
     }
-    if (!vmesh::LoadImage(nameRecTexture, frame.outputTexture)) {
+    if (!vmesh::LoadImage(nameRecTexture, recTexture)) {
       printf("Error loading rec texture %d / %d: %s \n",
              f,
              params.frameCount,
@@ -224,7 +226,8 @@ metrics(const Parameters& params) {
       return -1;
     }
     printf("Compute metric frame %d / %d  \n", f, params.frameCount);
-    metrics.compute(gof, params.metParams);
+    metrics.compute(
+      srcMesh, recMesh, srcTexture, recTexture, params.metParams);
   }
   return 0;
 }

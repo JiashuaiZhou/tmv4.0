@@ -118,25 +118,6 @@ struct VMCSequenceParameterSet {
 
 //============================================================================
 
-struct VMCFrame {
-  TriangleMesh<MeshType>            input;
-  TriangleMesh<MeshType>            reference;
-  TriangleMesh<MeshType>            mapped;
-  TriangleMesh<MeshType>            decimateTexture;
-  TriangleMesh<MeshType>            base;
-  TriangleMesh<MeshType>            subdiv;
-  TriangleMesh<MeshType>            rec;
-  std::vector<int32_t>              mapping;
-  std::vector<Vec3<int32_t>>        qpositions;
-  std::vector<Vec3<MeshType>>       disp;
-  std::vector<int64_t>              subdivEdges;
-  std::vector<SubdivisionLevelInfo> subdivInfoLevelOfDetails;
-  Frame<uint8_t>                    inputTexture;
-  Frame<uint8_t>                    outputTexture;
-};
-
-//============================================================================
-
 struct VMCFrameInfo {
   int32_t   frameIndex          = -1;
   int32_t   referenceFrameIndex = -1;
@@ -148,7 +129,7 @@ struct VMCFrameInfo {
 //============================================================================
 
 struct VMCGroupOfFramesInfo {
-  void resize(int32_t fCount) { framesInfo_.resize(fCount); }
+  void resize(int32_t frameCount) { framesInfo_.resize(frameCount); }
 
   const VMCFrameInfo& frameInfo(int32_t frameIndex) const {
     assert(frameIndex >= 0 && frameIndex < frameCount_);
@@ -184,8 +165,27 @@ struct VMCGroupOfFramesInfo {
 
 //============================================================================
 
+struct VMCFrame {
+  int32_t                           frameIndex;
+  TriangleMesh<MeshType>            base;
+  TriangleMesh<MeshType>            reference;
+  TriangleMesh<MeshType>            mapped;
+  TriangleMesh<MeshType>            decimateTexture;
+  TriangleMesh<MeshType>            subdiv;
+  std::vector<int32_t>              mapping;
+  std::vector<Vec3<int32_t>>        qpositions;
+  std::vector<Vec3<MeshType>>       disp;
+  std::vector<int64_t>              subdivEdges;
+  std::vector<SubdivisionLevelInfo> subdivInfoLevelOfDetails;
+};
+
+//============================================================================
+
 struct VMCGroupOfFrames {
-  void resize(int32_t frameCount) { frames.resize(frameCount); }
+  void resize(int32_t frameCount) {
+    frames.resize(frameCount);
+    for (int32_t i = 0; i < frameCount; i++) { frames[i].frameIndex = i; }
+  }
 
   const VMCFrame& frame(int32_t frameIndex) const {
     assert(frameIndex >= 0 && frameIndex < frameCount());
@@ -204,15 +204,79 @@ struct VMCGroupOfFrames {
   typename std::vector<VMCFrame>::iterator begin() { return frames.begin(); }
   typename std::vector<VMCFrame>::iterator end() { return frames.end(); }
 
-  VMCStats              stats;
   std::vector<VMCFrame> frames;
 };
 
 //============================================================================
 
+class Sequence {
+public:
+  Sequence() {}
+  Sequence(const Sequence&) = default;
+
+  Sequence& operator=(const Sequence&) = default;
+
+  ~Sequence() = default;
+
+  MeshSequence<MeshType>&       meshes() { return _meshes; }
+  FrameSequence<uint8_t>&       textures() { return _textures; }
+  const MeshSequence<MeshType>& meshes() const { return _meshes; }
+  const FrameSequence<uint8_t>& textures() const { return _textures; }
+
+  const auto& mesh(int32_t frameIndex) const { return _meshes[frameIndex]; }
+  auto&       mesh(int32_t frameIndex) { return _meshes[frameIndex]; }
+
+  const auto& texture(int32_t frameIndex) const {
+    return _textures[frameIndex];
+  }
+  auto& texture(int32_t frameIndex) { return _textures[frameIndex]; }
+
+  void resize(int32_t frameCount) {
+    _meshes.resize(frameCount);
+    _textures.resize(0, 0, ColourSpace::BGR444p, frameCount);
+  }
+  const int32_t frameCount() const { return _meshes.frameCount(); }
+
+  bool load(const std::string& meshPath,
+            const std::string& texturePath,
+            const int32_t      frameStart,
+            const int32_t      frameCount) {
+    if (!_textures.loadImages(texturePath, frameStart, frameCount))
+      return false;
+    if (!_meshes.load(meshPath, frameStart, frameCount)) return false;
+    return true;
+  }
+
+  bool save(const std::string& meshPath,
+            const std::string& texturePath,
+            const std::string& materialLibPath,
+            const int32_t      frameStart) {
+    vmesh::Material<double> material;
+    if (meshPath.empty()) { return true; }
+    if ((!materialLibPath.empty()) && extension(meshPath) == "obj") {
+      for (int f = 0; f < _meshes.frameCount(); ++f) {
+        const auto n      = frameStart + f;
+        auto       strTex = vmesh::expandNum(texturePath, n);
+        auto       strMat = vmesh::expandNum(materialLibPath, n);
+        material.texture  = vmesh::basename(strTex);
+        _meshes[f].setMaterialLibrary(vmesh::basename(strMat));
+        if (!material.save(strMat)) return false;
+      }
+    }
+    if (!_meshes.save(meshPath, frameStart)) return false;
+    if (!_textures.saveImages(texturePath, frameStart)) return false;
+    return true;
+  }
+
+private:
+  MeshSequence<MeshType> _meshes;
+  FrameSequence<uint8_t> _textures;
+};
+
 static int32_t
 reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
                                       VMCFrame&              frame,
+                                      const TriangleMesh<MeshType>& rec,
                                       const int32_t geometryVideoBlockSize,
                                       const int32_t geometryVideoBitDepth) {
   printf("Reconstruct displacements from video frame \n");
@@ -224,7 +288,7 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
   const auto& Y              = dispVideoFrame.plane(0);
   const auto& U              = dispVideoFrame.plane(1);
   const auto& V              = dispVideoFrame.plane(2);
-  const auto  pointCount     = frame.rec.pointCount();
+  const auto  pointCount     = rec.pointCount();
   auto&       disp           = frame.disp;
   disp.resize(pointCount);
   for (int32_t v = 0; v < pointCount; ++v) {
@@ -254,13 +318,13 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
 
 static int32_t
 subdivideBaseMesh(VMCFrame&               frame,
+                  TriangleMesh<MeshType>& rec,
                   const SubdivisionMethod subdivisionMethod,
                   const int32_t           subdivisionIterationCount) {
   printf("Subdivide base mesh \n");
   fflush(stdout);
   auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   auto& subdivEdges        = frame.subdivEdges;
-  auto& rec                = frame.rec;
   rec                      = frame.base;
   printf("Compute normals \n");
   fflush(stdout);
@@ -287,11 +351,11 @@ subdivideBaseMesh(VMCFrame&               frame,
 static int32_t
 applyDisplacements(
   VMCFrame&                           frame,
+  TriangleMesh<MeshType>&             rec,
   const DisplacementCoordinateSystem& displacementCoordinateSystem) {
   printf("apply displacements \n");
   fflush(stdout);
   const auto& disp = frame.disp;
-  auto&       rec  = frame.rec;
   for (int32_t v = 0, vcount = rec.pointCount(); v < vcount; ++v) {
     const auto& d = disp[v];
     if (displacementCoordinateSystem == DisplacementCoordinateSystem::LOCAL) {

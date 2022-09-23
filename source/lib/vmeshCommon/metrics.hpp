@@ -84,7 +84,8 @@ public:
   VMCMetrics& operator=(const VMCMetrics& rhs) = delete;
   ~VMCMetrics()                                = default;
 
-  void compute(const VMCGroupOfFrames&     gof,
+  void compute(const Sequence&             sequence0,
+               const Sequence&             sequence1,
                const VMCMetricsParameters& params);
 
   template<typename T>
@@ -94,6 +95,10 @@ public:
                const Frame<uint8_t>&       recMap,
                const VMCMetricsParameters& params);
 
+  template<typename T>
+  void compute(const TriangleMesh<T>&      srcMesh,
+               const TriangleMesh<T>&      recMesh,
+               const VMCMetricsParameters& params);
   void display();
 
   std::vector<double> getPccResults();

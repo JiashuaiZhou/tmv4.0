@@ -149,4 +149,56 @@ SaveImage(const std::string&    fileName,
 
 //============================================================================
 
+template<typename T>
+int32_t
+FrameSequence<T>::loadImages(const std::string& path,
+                             const int32_t      frameStart,
+                             const int32_t      frameCount) {
+  printf("Loading a sequence of images from %4d to %4d \n",
+         frameStart,
+         frameStart + frameCount - 1);
+  resize(0, 0, ColourSpace::BGR444p, frameCount);
+  auto frameIndex = frameStart;
+  for (auto& frame : _frames) {
+    const auto name = vmesh::expandNum(path, frameIndex);
+    if (!LoadImage(name, frame)) {
+      printf("Error loading image %d: %s \n", frameIndex, name.c_str());
+      return 0;
+    }
+    frameIndex++;
+  }
+  return 1;
+}
+
+//============================================================================
+
+template<typename T>
+int32_t
+FrameSequence<T>::saveImages(const std::string& path,
+                             const int32_t      frameStart) {
+  printf("Saving a sequence of images from %4d to %4zu \n",
+         frameStart,
+         frameStart + _frames.size() - 1);
+  auto frameIndex = frameStart;
+  for (auto& frame : _frames) {
+    const auto name = vmesh::expandNum(path, frameIndex);
+    if (!SaveImage(name, frame)) {
+      printf("Error saving image %d: %s \n", frameIndex, name.c_str());
+      return 0;
+    }
+    frameIndex++;
+  }
+  return 1;
+}
+
+//============================================================================
+
+template int32_t FrameSequence<uint8_t>::loadImages(const std::string& path,
+                                                    const int32_t frameStart,
+                                                    const int32_t frameCount);
+
+template int32_t FrameSequence<uint8_t>::saveImages(const std::string& path,
+                                                    const int32_t frameStart);
+
+//============================================================================
 }  // namespace vmesh

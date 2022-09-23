@@ -65,9 +65,9 @@ public:
   VMCDecoder& operator=(const VMCDecoder& rhs) = delete;
   ~VMCDecoder()                                = default;
 
-  int32_t decompress(const Bitstream&            bitstream,
+  bool decompress(const Bitstream&            bitstream,
                      VMCGroupOfFramesInfo&       gofInfo,
-                     VMCGroupOfFrames&           gof,
+                     Sequence&                   reconstruct,
                      size_t&                     byteCounter,
                      const VMCDecoderParameters& params);
 
@@ -76,32 +76,34 @@ public:
   inline void setKeepFilesPathPrefix( const std::string& path) {
     _keepFilesPathPrefix = path;
   }
+  VMCStats& stats() { return _stats; }
 
 private:
-  int32_t decodeSequenceHeader(const Bitstream& bitstream);
-  int32_t decodeFrameHeader(const Bitstream& bitstream,
+  bool decodeSequenceHeader(const Bitstream& bitstream);
+  bool decodeFrameHeader(const Bitstream& bitstream,
                             VMCFrameInfo&    frameInfo);
-  int32_t decompressBaseMesh(const Bitstream&            bitstream,
+  bool decompressBaseMesh(const Bitstream&            bitstream,
                              const VMCGroupOfFrames&     gof,
                              VMCFrameInfo&               frameInfo,
                              VMCFrame&                   frame,
-                             VMCStats&                   stats,
+                             TriangleMesh<MeshType>&     rec,
                              const VMCDecoderParameters& params);
-  int32_t decompressMotion(const Bitstream&                  bitstream,
+  bool decompressMotion(const Bitstream&                  bitstream,
                            const std::vector<Vec3<int32_t>>& triangles,
                            const std::vector<Vec3<int32_t>>& reference,
                            std::vector<Vec3<int32_t>>&       current,
                            const VMCDecoderParameters&       params);
-  int32_t decompressDisplacementsVideo(const Bitstream&            bitstream,
+  bool decompressDisplacementsVideo(const Bitstream&            bitstream,
                                        FrameSequence<uint16_t>&    dispVideo,
                                        const VMCDecoderParameters& params);
-  int32_t decompressTextureVideo(const Bitstream&            bitstream,
-                                 VMCGroupOfFrames&           gof,
+  bool decompressTextureVideo(const Bitstream&            bitstream,
+                                 Sequence&                   reconsctruct,
                                  const VMCDecoderParameters& params);
 
   size_t                  _byteCounter = 0;
   VMCSequenceParameterSet _sps;
   std::string             _keepFilesPathPrefix = {};
+  VMCStats                _stats;
 };
 
 //============================================================================

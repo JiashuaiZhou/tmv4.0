@@ -43,7 +43,7 @@ namespace vmesh {
 
 template<typename T>
 std::vector<uint8_t>
-Checksum::compute(const vmesh::TriangleMesh<T>& mesh) {
+Checksum::compute(const TriangleMesh<T>& mesh) {
   std::vector<uint8_t> digest;
   md5::MD5             md5;
   const auto&          points            = mesh.points();
@@ -54,25 +54,25 @@ Checksum::compute(const vmesh::TriangleMesh<T>& mesh) {
   const auto&          texCoordTriangles = mesh.texCoordTriangles();
   const auto&          normalTriangles   = mesh.normalTriangles();
   md5.update(reinterpret_cast<const uint8_t*>(points.data()),
-             points.size() * sizeof(vmesh::Vec3<T>));
+             points.size() * sizeof(Vec3<T>));
   if (!colours.empty())
     md5.update(reinterpret_cast<const uint8_t*>(colours.data()),
-               colours.size() * sizeof(vmesh::Vec3<T>));
+               colours.size() * sizeof(Vec3<T>));
   if (!texCoords.empty())
     md5.update(reinterpret_cast<const uint8_t*>(texCoords.data()),
-               texCoords.size() * sizeof(vmesh::Vec2<T>));
+               texCoords.size() * sizeof(Vec2<T>));
   if (!normals.empty())
     md5.update(reinterpret_cast<const uint8_t*>(normals.data()),
-               normals.size() * sizeof(vmesh::Vec3<T>));
+               normals.size() * sizeof(Vec3<T>));
   if (!triangles.empty())
     md5.update(reinterpret_cast<const uint8_t*>(triangles.data()),
-               triangles.size() * sizeof(vmesh::Vec3<int>));
+               triangles.size() * sizeof(Vec3<int>));
   if (!texCoordTriangles.empty())
     md5.update(reinterpret_cast<const uint8_t*>(texCoordTriangles.data()),
-               texCoordTriangles.size() * sizeof(vmesh::Vec3<int>));
+               texCoordTriangles.size() * sizeof(Vec3<int>));
   if (!normalTriangles.empty())
     md5.update(reinterpret_cast<const uint8_t*>(normalTriangles.data()),
-               normalTriangles.size() * sizeof(vmesh::Vec3<int>));
+               normalTriangles.size() * sizeof(Vec3<int>));
   digest.resize(MD5_DIGEST_STRING_LENGTH);
   md5.finalize(digest.data());
   return digest;
@@ -81,7 +81,7 @@ Checksum::compute(const vmesh::TriangleMesh<T>& mesh) {
 //============================================================================
 
 std::vector<uint8_t>
-Checksum::compute(const vmesh::Frame<uint8_t>& texture) {
+Checksum::compute(const Frame<uint8_t>& texture) {
   std::vector<uint8_t> digest;
   md5::MD5             md5;
   auto texturesize0 = texture.plane(0).width() * texture.plane(0).height();
@@ -102,7 +102,7 @@ Checksum::compute(const vmesh::Frame<uint8_t>& texture) {
 
 template<typename T>
 void
-Checksum::add(const vmesh::TriangleMesh<T>& mesh) {
+Checksum::add(const TriangleMesh<T>& mesh) {
   auto md5 = compute(mesh);
   mesh_.push_back(md5);
 }
@@ -110,26 +110,26 @@ Checksum::add(const vmesh::TriangleMesh<T>& mesh) {
 //============================================================================
 
 void
-Checksum::add(const vmesh::Frame<uint8_t>& texture) {
+Checksum::add(const Frame<uint8_t>& texture) {
   auto md5 = compute(texture);
   texture_.push_back(md5);
 }
 
 //============================================================================
 
-template<typename T>
 void
-Checksum::add(const vmesh::TriangleMesh<T>& mesh,
-              const vmesh::Frame<uint8_t>&  texture) {
-  add(mesh);
-  add(texture);
+Checksum::add(const Sequence& sequence) {
+  for (size_t i = 0; i < sequence.frameCount(); i++) {
+    add(sequence.mesh(i));
+    add(sequence.texture(i));
+  }
 }
 
 //============================================================================
 
 template<typename T>
 std::string
-Checksum::getChecksum(const vmesh::TriangleMesh<T>& mesh) {
+Checksum::getChecksum(const TriangleMesh<T>& mesh) {
   std::string str      = "";
   auto        checksum = compute(mesh);
   for (auto& c : checksum) {
@@ -142,7 +142,7 @@ Checksum::getChecksum(const vmesh::TriangleMesh<T>& mesh) {
 
 //============================================================================
 std::string
-Checksum::getChecksum(const vmesh::Frame<uint8_t>& texture) {
+Checksum::getChecksum(const Frame<uint8_t>& texture) {
   std::string str      = "";
   auto        checksum = compute(texture);
   for (auto& c : checksum) {
@@ -214,7 +214,7 @@ Checksum::print(const TriangleMesh<T>& mesh, std::string eString) {
 //============================================================================
 
 void
-Checksum::print(const vmesh::Frame<uint8_t>& texture, std::string eString) {
+Checksum::print(const Frame<uint8_t>& texture, std::string eString) {
   printf("Checksum %s: %s \n", eString.c_str(), getChecksum(texture).c_str());
 }
 
@@ -238,22 +238,17 @@ template void Checksum::print<double>(const TriangleMesh<double>&,
                                       std::string);
 
 template std::string
-Checksum::getChecksum<float>(const vmesh::TriangleMesh<float>& mesh);
+Checksum::getChecksum<float>(const TriangleMesh<float>& mesh);
 template std::string
-Checksum::getChecksum<double>(const vmesh::TriangleMesh<double>& mesh);
+Checksum::getChecksum<double>(const TriangleMesh<double>& mesh);
 
 template std::vector<uint8_t>
-Checksum::compute<float>(const vmesh::TriangleMesh<float>&);
+Checksum::compute<float>(const TriangleMesh<float>&);
 template std::vector<uint8_t>
-Checksum::compute<double>(const vmesh::TriangleMesh<double>&);
+Checksum::compute<double>(const TriangleMesh<double>&);
 
-template void Checksum::add<float>(const vmesh::TriangleMesh<float>&);
-template void Checksum::add<double>(const vmesh::TriangleMesh<double>&);
-
-template void Checksum::add<float>(const vmesh::TriangleMesh<float>&,
-                                   const vmesh::Frame<uint8_t>& texture);
-template void Checksum::add<double>(const vmesh::TriangleMesh<double>&,
-                                    const vmesh::Frame<uint8_t>& texture);
+template void Checksum::add<float>(const TriangleMesh<float>&);
+template void Checksum::add<double>(const TriangleMesh<double>&);
 
 //============================================================================
 

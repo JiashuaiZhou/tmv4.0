@@ -44,7 +44,6 @@
 //============================================================================
 
 struct Parameters {
-  bool                        verbose        = true;
   std::string                 srcMeshPath    = {};
   std::string                 srcTexturePath = {};
   std::string                 decMeshPath    = {};
@@ -67,9 +66,9 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   opts.addOptions()
   ("help", print_help, false, "This help text")
   ("config,c", po::parseConfigFile, "Configuration file name")
-  ("verbose,v", params.verbose, true, "Verbose output")
+  ("verbose,v", metParams.verbose, false, "Verbose output")
 
-  (po::Section("Input/Output"))
+  (po::Section("Source"))
     ("srcMesh",
       params.srcMeshPath,
       params.srcMeshPath,
@@ -78,6 +77,8 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.srcTexturePath,
       params.srcTexturePath,
       "Source texture")
+  
+  (po::Section("Decoded"))
     ("decMesh", 
       params.decMeshPath,
       params.decMeshPath,
@@ -86,48 +87,58 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.decTexturePath,
       params.decTexturePath,
       "Reconsctructed/decoded texture")
-    ("fstart",
+        
+  (po::Section("Sequence"))
+    ("startFrameIndex",
       params.startFrame,
       params.startFrame,
       "First frame number")
-    ("fcount",
+    ("frameCount",
       params.frameCount,
       params.frameCount,
       "Number of frames")
+    ("minPosition",
+      metParams.minPosition,
+      {0.0, 0.0, 0.0},
+      "Min position")
+    ("maxPosition",
+      metParams.maxPosition,
+      {0.0, 0.0, 0.0},
+      "Max position")
+     ("positionBitDepth",
+      metParams.qp,
+      metParams.qp,
+      "Position bit depth")
+    ("texCoordBitDepth",
+      metParams.qt,
+      metParams.qt,
+      "Texture coordinate bit depth")
     
-  (po::Section("Metrics"))
+  (po::Section("PCC metric"))
     ("pcc",
       metParams.computePcc,
       metParams.computePcc,
       "Compute pcc metrics")
-    ("ibsm",
-      metParams.computeIbsm,
-      metParams.computeIbsm,
-      "Compute ibsm metrics")
-    ("pcqm",
-      metParams.computePcqm,
-      metParams.computePcqm,
-      "Compute pcqm metrics")
     ("gridSize",
       metParams.gridSize,
       metParams.gridSize,
       "Grid size")
-    ("minPosition",
-      metParams.minPosition,
-      {0, 0, 0},
-      "Min position")
-    ("maxPosition",
-      metParams.maxPosition,
-      {0, 0, 0},
-      "Max position")
-    ("qp",
-      metParams.qp,
-      metParams.qp,
-      "qp")
-    ("qt",
-      metParams.qt,
-      metParams.qt,
-      "qt")
+    ("resolution",
+      metParams.resolution,
+      metParams.resolution,
+      "Resolution")
+      
+  (po::Section("IBSM metric"))
+    ("ibsm",
+      metParams.computeIbsm,
+      metParams.computeIbsm,
+      "Compute ibsm metrics")
+
+  (po::Section("PCQM metric"))
+    ("pcqm",
+      metParams.computePcqm,
+      metParams.computePcqm,
+      "Compute PCQM metrics")
     ("pcqmRadiusCurvature",
       metParams.pcqmRadiusCurvature,
       metParams.pcqmRadiusCurvature,
@@ -170,6 +181,19 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   if (params.decTexturePath.empty()) {
     err.error() << "Rec/dec texture not specified\n";
   }
+  if (params.metParams.computePcc && params.metParams.resolution == 0) {
+    err.error() << "PCC resolution must be set\n";
+  }
+  if (params.metParams.minPosition[0] == 0.0
+      && params.metParams.minPosition[1] == 0.0
+      && params.metParams.minPosition[2] == 0.0) {
+    err.error() << "Min position must be set\n";
+  }
+  if (params.metParams.maxPosition[0] == 0.0
+      && params.metParams.maxPosition[1] == 0.0
+      && params.metParams.maxPosition[2] == 0.0) {
+    err.error() << "Max position must be set\n";
+  }
   if (err.is_errored) { return false; }
 
   // Dump the complete derived configuration  
@@ -186,49 +210,31 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
 int32_t
 metrics(const Parameters& params) {
   vmesh::VMCMetrics metrics;
-  const int         lastFrame = params.startFrame + params.frameCount;
-  for (int f = params.startFrame; f < lastFrame; ++f) {
+  for (int i = 0; i < params.frameCount; ++i) {
+    const auto                    f = params.startFrame + i;
+    /*
     vmesh::TriangleMesh<MeshType> srcMesh;
     vmesh::TriangleMesh<MeshType> recMesh;
-    vmesh::Frame<uint8_t>         srcTexture;
-    vmesh::Frame<uint8_t>         recTexture;
-    const auto nameSrcMesh    = vmesh::expandNum(params.srcMeshPath, f);
-    const auto nameSrcTexture = vmesh::expandNum(params.srcTexturePath, f);
-    const auto nameRecMesh    = vmesh::expandNum(params.decMeshPath, f);
-    const auto nameRecTexture = vmesh::expandNum(params.decTexturePath, f);
-
-    if (!srcMesh.load(nameSrcMesh)) {
-      printf("Error loading src mesh %d / %d: %s \n",
-             f,
-             params.frameCount,
-             nameSrcMesh.c_str());
+    vmesh::Frame<uint8_t>         srcText;
+    vmesh::Frame<uint8_t>         recText;
+    if (!srcMesh.load(params.srcMeshPath, f)
+        || !srcText.load(params.srcTexturePath, f)
+        || !recMesh.load(params.decMeshPath, f)
+        || !recText.load(params.decTexturePath, f)) {
+      printf("Error loading frame %d \n", f);
       return -1;
     }
-    if (!vmesh::LoadImage(nameSrcTexture, srcTexture)) {
-      printf("Error loading src texture %d / %d: %s \n",
-             f,
-             params.frameCount,
-             nameSrcTexture.c_str());
-      return -1;
-    }
-    if (!recMesh.load(nameRecMesh)) {
-      printf("Error loading rec mesh %d / %d: %s \n",
-             f,
-             params.frameCount,
-             nameRecMesh.c_str());
-      return -1;
-    }
-    if (!vmesh::LoadImage(nameRecTexture, recTexture)) {
-      printf("Error loading rec texture %d / %d: %s \n",
-             f,
-             params.frameCount,
-             nameRecTexture.c_str());
-      return -1;
-    }
-    printf("Compute metric frame %d / %d  \n", f, params.frameCount);
-    metrics.compute(
-      srcMesh, recMesh, srcTexture, recTexture, params.metParams);
+    printf("Compute metric frame %d / %d  \n", i, params.frameCount);
+    metrics.compute(srcMesh, recMesh, srcText, recText, params.metParams);
+    */
+    metrics.compute(vmesh::expandNum(params.srcMeshPath, f),
+                    vmesh::expandNum(params.decMeshPath, f),
+                    vmesh::expandNum(params.srcTexturePath, f),
+                    vmesh::expandNum(params.decTexturePath, f),
+                    params.metParams);
   }
+  metrics.display(params.metParams.verbose);
+  std::cout << "\nAll frames have been processed. \n";
   return 0;
 }
 
@@ -244,7 +250,7 @@ main(int argc, char* argv[]) {
   Parameters params;
   if (!parseParameters(argc, argv, params)) { return 1; }
 
-  if (params.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
+  if (params.metParams.verbose) { vmesh::vout.rdbuf(std::cout.rdbuf()); }
 
   if (metrics(params) != 0) {
     std::cerr << "Error: can't compute metrics!\n";

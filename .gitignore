@@ -47,6 +47,7 @@ dependencies/ffmpeg
 /generatedConfigFiles/
 generatedConfigFilesHM/
 generatedConfigFilesVTM/
+results/
 
 # Temp files
 /*.yuv

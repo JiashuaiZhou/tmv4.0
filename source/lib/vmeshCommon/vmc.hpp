@@ -99,7 +99,7 @@ struct VMCSequenceParameterSet {
   int32_t qpPosition                          = 0;
   int32_t qpTexCoord                          = 0;
   int32_t subdivisionIterationCount           = 0;
-  int32_t liftingQuantizationParameters[3]    = {0, 0, 0};
+  int32_t liftingQP[3]    = {0, 0, 0};
   double  liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
   double  liftingUpdateWeight                 = 0.125;
   double  liftingPredictionWeight             = 0.5;
@@ -241,9 +241,9 @@ public:
             const std::string& texturePath,
             const int32_t      frameStart,
             const int32_t      frameCount) {
-    if (!_textures.loadImages(texturePath, frameStart, frameCount))
+    if (!_textures.load(texturePath, frameStart, frameCount)
+        || !_meshes.load(meshPath, frameStart, frameCount))
       return false;
-    if (!_meshes.load(meshPath, frameStart, frameCount)) return false;
     return true;
   }
 
@@ -263,8 +263,9 @@ public:
         if (!material.save(strMat)) return false;
       }
     }
-    if (!_meshes.save(meshPath, frameStart)) return false;
-    if (!_textures.saveImages(texturePath, frameStart)) return false;
+    if (!_meshes.save(meshPath, frameStart)
+        || !_textures.save(texturePath, frameStart))
+      return false;
     return true;
   }
 
@@ -378,7 +379,7 @@ inverseQuantizeDisplacements(
   VMCFrame&     frame,
   const int32_t bitDepthPosition,
   const double (&liftingLevelOfDetailInverseScale)[3],
-  const int32_t (&liftingQuantizationParameters)[3]) {
+  const int32_t (&liftingQP)[3]) {
   printf("Inverse quantize displacements \n");
   fflush(stdout);
   const auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
@@ -387,7 +388,7 @@ inverseQuantizeDisplacements(
   double iscale[3];
   double ilodScale[3];
   for (int32_t k = 0; k < 3; ++k) {
-    const auto qp = liftingQuantizationParameters[k];
+    const auto qp = liftingQP[k];
     iscale[k] =
       qp >= 0 ? pow(0.5, 16 - bitDepthPosition + (4 - qp) / 6.0) : 0.0;
     ilodScale[k] = liftingLevelOfDetailInverseScale[k];

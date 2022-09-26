@@ -155,7 +155,7 @@ main(int argc, char* argv[]) {
     return -1;
   }
   // Load PNG
-  if (!vmesh::LoadImage(params.srcTexturePath, srcTex)) {
+  if (!srcTex.load(params.srcTexturePath )) {
     printf("Error loading src texture: %s \n", params.srcTexturePath.c_str());
     return -1;
   }
@@ -163,7 +163,7 @@ main(int argc, char* argv[]) {
   // Save PNG
   srcMesh.materialLibrary() = params.dstTexturePath;
   printf("Save PNG: %s \n", srcMesh.materialLibrary().c_str());
-  if (!SaveImage(srcMesh.materialLibrary(), srcTex)) { return -1; }
+  if (!srcTex.save(srcMesh.materialLibrary())) { return -1; }
 
   // Save PLY
   printf("Save PLY: %s \n", params.dstMeshPath.c_str());

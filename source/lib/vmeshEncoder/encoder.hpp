@@ -202,9 +202,9 @@ struct VMCEncoderParameters {
   double  liftingUpdateWeight                 = 0.125;
   double  liftingPredictionWeight             = 0.5;
   bool    liftingSkipUpdate                   = false;
-  double  liftingQuantizationBias[3]          = {1. / 3., 1. / 3., 1. / 3};
+  double  liftingBias[3]          = {1. / 3., 1. / 3., 1. / 3};
   double  liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
-  int32_t liftingQuantizationParameters[3]    = {16, 28, 28};
+  int32_t liftingQP[3]    = {16, 28, 28};
 
   // texture transfer
   int32_t       textureWidth                                     = 2048;
@@ -256,7 +256,7 @@ struct VMCEncoderParameters {
 
   // Bug fix
   bool forceCoordTruncation   = false;
-  bool newInterGofTermination = false;
+  bool newInterGofTermination = true;
 };
 
 //============================================================================

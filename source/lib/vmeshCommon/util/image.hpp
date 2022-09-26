@@ -162,6 +162,15 @@ operator<<(std::ostream& out, ColourSpace val) {
 
 //============================================================================
 
+enum class ImageFormat {
+  PNG,
+  BMP,
+  TGA,
+  JPG
+};
+
+//============================================================================
+
 static std::string
 createVideoName(const std::string& prefix,
                 const int          width,
@@ -402,18 +411,15 @@ public:
                plane.height() * plane.width() * sizeof(T));
     }
   }
-  bool load(const std::string& fin) {
-    std::ifstream is(fin, std::ios::binary);
-    if (!is.is_open()) { return false; }
-    load(is);
-    return true;
-  }
-  bool save(const std::string& fout) const {
-    std::ofstream os(fout, std::ios::binary);
-    if (!os.is_open()) { return false; }
-    save(os);
-    return true;
-  }
+
+  bool load(const std::string& fileName, const int32_t frameIndex);
+  bool save(const std::string& fileName, const int32_t frameIndex) const;
+  bool load(const std::string& fileName);
+  bool save(const std::string& fileName) const;
+  bool loadImage(const std::string& fileName);
+  bool saveImage(const std::string& fileName,
+                 const ImageFormat  format  = ImageFormat::PNG,
+                 const int32_t      quality = 100) const;
 
   void log(const std::string& str) const {
     printf("%s: %dx%d \n", str.c_str(), _width, _height);
@@ -638,11 +644,11 @@ public:
     return true;
   }
 
-  int32_t loadImages(const std::string& path,
-                     const int32_t      frameStart,
-                     const int32_t      frameCount);
+  bool load(const std::string& path,
+            const int32_t      frameStart,
+            const int32_t      frameCount);
 
-  int32_t saveImages(const std::string& path, const int32_t frameStart);
+  bool save(const std::string& path, const int32_t frameStart);
 
 private:
   int                   _width       = 0;
@@ -991,25 +997,6 @@ SparseLinearPadding(Frame<T1>&       input,
     }
   }
 }
-
-//============================================================================
-
-enum class ImageFormat {
-  PNG,
-  BMP,
-  TGA,
-  JPG
-};
-
-//============================================================================
-
-bool LoadImage(const std::string& fileName, Frame<uint8_t>& image);
-bool LoadImage(const std::string& fileName, int f, Frame<uint8_t>& image);
-
-bool SaveImage(const std::string&    fileName,
-               const Frame<uint8_t>& image,
-               ImageFormat           format  = ImageFormat::PNG,
-               int32_t               quality = 100);
 
 //============================================================================
 

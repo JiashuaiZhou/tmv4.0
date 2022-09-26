@@ -60,8 +60,9 @@ struct VMCMetricsParameters {
   int    gridSize       = 1024;
   int    qp             = 12;
   int    qt             = 13;
-  double minPosition[3] = {0, 0, 0};
-  double maxPosition[3] = {0, 0, 0};
+  double minPosition[3] = {0.0, 0.0, 0.0};
+  double maxPosition[3] = {0.0, 0.0, 0.0};
+  double resolution     = 0;
 
   // PCQM
   double pcqmRadiusCurvature    = 0.001;
@@ -73,6 +74,7 @@ struct VMCMetricsParameters {
   std::string srcTexturePath = {};
   int         frameCount     = 0;
   int         frameStart     = 0;
+  bool        verbose        = false;
 };
 
 //============================================================================
@@ -88,6 +90,12 @@ public:
                const Sequence&             sequence1,
                const VMCMetricsParameters& params);
 
+  void compute(const std::string           srcMesh,
+               const std::string           recMesh,
+               const std::string           srcMap,
+               const std::string           recMap,
+               const VMCMetricsParameters& params);
+
   template<typename T>
   void compute(const TriangleMesh<T>&      srcModel,
                const TriangleMesh<T>&      recModel,
@@ -99,7 +107,7 @@ public:
   void compute(const TriangleMesh<T>&      srcMesh,
                const TriangleMesh<T>&      recMesh,
                const VMCMetricsParameters& params);
-  void display();
+  void display( const bool verbose = false );
 
   std::vector<double> getPccResults();
   std::vector<double> getIbsmResults();

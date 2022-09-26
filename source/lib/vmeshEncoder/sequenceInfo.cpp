@@ -91,21 +91,17 @@ SequenceInfo::generate(const int          frameCount,
     TriangleMesh<double> mesh0;
     TriangleMesh<double> mesh1;
     auto                 frameIndex0 = startFrame;
-    const auto&          name        = expandNum(inputPath, frameIndex0);
-    if (!mesh0.load(name)) {
-      std::cerr << "Error: can't load frame" << frameIndex0 << ' ' << name
-                << '\n';
+    if (!mesh0.load(inputPath, frameIndex0)) {
+      std::cerr << "Error: can't load frame" << frameIndex0 << '\n';
       return 1;
     }
     std::vector<Vec3<int32_t>> predStructure(frameCount);
     predStructure[0]        = Vec3<int32_t>(frameIndex0, frameIndex0, 0);
     int32_t interFrameCount = 0;
     for (int32_t f = 1; f < frameCount; ++f) {
-      const auto  frameIndex1 = startFrame + f;
-      const auto& name        = expandNum(inputPath, frameIndex1);
-      if (!mesh1.load(name)) {
-        std::cerr << "Error: can't load frame" << frameIndex1 << ' ' << name
-                  << '\n';
+      const auto frameIndex1 = startFrame + f;
+      if (!mesh1.load(inputPath, frameIndex1)) {
+        std::cerr << "Error: can't load frame" << frameIndex1 << '\n';
         return 1;
       }
       bool same = false;

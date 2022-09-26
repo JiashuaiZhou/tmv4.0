@@ -141,9 +141,9 @@ struct Bitstream {
   }
 
   bool save(std::ofstream& file) const {
-    if (!file.is_open()) { return true; }
+    if (!file.is_open()) { return false; }
     file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
-    return false;
+    return true;
   }
 
   bool save(const std::string& fileName) const {
@@ -152,10 +152,10 @@ struct Bitstream {
   }
 
   bool load(std::ifstream& file) {
-    if (!file.is_open()) { return true; }
+    if (!file.is_open()) { return false; }
     buffer.resize(0);
     append(file, false);
-    return false;
+    return true;
   }
 
   bool load(const std::string& fileName) {

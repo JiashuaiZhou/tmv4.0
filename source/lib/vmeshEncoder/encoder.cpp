@@ -979,7 +979,7 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
   double scale[3];
   double lodScale[3];
   for (int32_t k = 0; k < 3; ++k) {
-    const auto qp = params.liftingQuantizationParameters[k];
+    const auto qp = params.liftingQP[k];
     scale[k] =
       qp >= 0 ? pow(2.0, 16 - params.bitDepthPosition + (4 - qp) / 6.0) : 0.0;
     lodScale[k] = 1.0 / params.liftingLevelOfDetailInverseScale[k];
@@ -992,9 +992,9 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
       for (int32_t k = 0; k < 3; ++k) {
         d[k] =
           d[k] >= 0.0
-            ? std::floor(d[k] * scale[k] + params.liftingQuantizationBias[k])
+            ? std::floor(d[k] * scale[k] + params.liftingBias[k])
             : -std::floor(-d[k] * scale[k]
-                          + params.liftingQuantizationBias[k]);
+                          + params.liftingBias[k]);
       }
     }
     vcount0 = vcount1;
@@ -1342,9 +1342,9 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
   const auto qpBaseMesh =
     uint8_t((params.qpPosition - 1) + ((params.qpTexCoord - 1) << 4));
   const uint8_t liftingQPs[3] = {
-    uint8_t(params.liftingQuantizationParameters[0]),
-    uint8_t(params.liftingQuantizationParameters[1]),
-    uint8_t(params.liftingQuantizationParameters[2])};
+    uint8_t(params.liftingQP[0]),
+    uint8_t(params.liftingQP[1]),
+    uint8_t(params.liftingQP[2])};
   const uint8_t bitField =
     static_cast<int>(params.encodeDisplacementsVideo)
     | (static_cast<int>(params.encodeTextureVideo) << 1);
@@ -1548,7 +1548,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
         inverseQuantizeDisplacements(frame,
                                      params.bitDepthPosition,
                                      params.liftingLevelOfDetailInverseScale,
-                                     params.liftingQuantizationParameters);
+                                     params.liftingQP);
         computeInverseLinearLifting(frame.disp,
                                     frame.subdivInfoLevelOfDetails,
                                     frame.subdivEdges,

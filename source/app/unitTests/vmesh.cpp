@@ -79,12 +79,12 @@ TEST(vmesh, all) {
   std::stringstream cmd;
   cmd << g_vmeshEncodePath << "  "
       << "  -c " << cfgPath            // Configuration file name
-      << "  --imesh=" << meshPath      // Input mesh
-      << "  --itex=" << texPath        // Input texture
+      << "  --srcMesh=" << meshPath      // Input mesh
+      << "  --srcTex=" << texPath        // Input texture
       << "  --compressed=" << binPath  // Compressed bitstream
-      << "  --recmesh=" << recObjPath  // Reconstructed mesh
-      << "  --rectex=" << recPngPath   // Reconstructed texture
-      << "  --recmat=mat.mtl ";        // Reconstructed materials
+      << "  --recMesh=" << recObjPath  // Reconstructed mesh
+      << "  --recTex=" << recPngPath   // Reconstructed texture
+      << "  --recMat=mat.mtl ";        // Reconstructed materials
 
   if (disableSubProcessLog.disableLog()) { cmd << "  2>&1 > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
@@ -94,7 +94,7 @@ TEST(vmesh, all) {
   cmd.str("");
   cmd << g_vmeshDecodePath << "  "
       << "  --compressed=" << binPath
-      << "  --cscdecconfig=cfg/hdrconvert/yuv420tobgr444.cfg "
+      << "  --textureVideoDecoderConvertConfig=cfg/hdrconvert/yuv420tobgr444.cfg "
       << "  --decmesh=" << decObjPath << "  --dectex=" << decPngPath
       << "  --decmat=mat.mtl ";
   if (disableSubProcessLog.disableLog()) { cmd << "  2>&1 > /dev/null"; }

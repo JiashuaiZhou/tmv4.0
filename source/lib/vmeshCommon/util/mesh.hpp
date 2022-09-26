@@ -749,6 +749,7 @@ public:
     printf("#####\n");
   }
 
+  bool load(const std::string& fileName, const int32_t frameIndex );
   bool load(const std::string& fileName);
   bool save(const std::string& fileName,
             const uint32_t     bitDepthTexCoord = 0,

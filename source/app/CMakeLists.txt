@@ -23,6 +23,13 @@ create_executable( NAME      decode
                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshDecoder
                              ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 
+  # Metrics
+  create_executable( NAME     metrics 
+                    SOURCES   metrics.cpp 
+                    LIBRARIES po vmeshCommon
+                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                              ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
+
 ########################### Unit tests ###########################
 
 if ( BUILD_WRAPPER_APPS )
@@ -61,13 +68,6 @@ if ( BUILD_WRAPPER_APPS )
                     LIBRARIES po colourConverter
                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                               ${CMAKE_SOURCE_DIR}/source/wrapper/colourConverter )
-
-  # Metrics
-  create_executable( NAME     metrics 
-                    SOURCES   wrapper/metrics.cpp 
-                    LIBRARIES po vmeshCommon
-                    INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
-                              ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 endif()
                                                         
 ########################### Test applications ###########################

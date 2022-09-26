@@ -81,15 +81,29 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("verbose,v", params.verbose,                 true,   "Verbose output")
 
   (po::Section("Input"))
-    ("compressed", params.compressedStreamPath, {},     "Compressed bitstream")
+    ("compressed", 
+      params.compressedStreamPath, 
+      params.compressedStreamPath, 
+      "Compressed bitstream")
 
   (po::Section("Output"))
-    ("decmat",  params.decodedMaterialLibPath,  {},     "Decoded materials")
-    ("decmesh", params.decodedMeshPath,         {},     "Decoded mesh")
-    ("dectex",  params.decodedTexturePath,      {},     "Decoded texture")
-
-  (po::Section("General"))
-    ("fstart",   
+    ("decMesh", 
+      params.decodedMeshPath,
+      params.decodedMeshPath,
+      "Decoded mesh")
+    ("decTex",  
+      params.decodedTexturePath, 
+      params.decodedTexturePath,
+       "Decoded texture")
+    ("decMat",  
+      params.decodedMaterialLibPath,  
+      params.decodedMaterialLibPath, 
+      "Decoded materials")
+    ("normalizeUV",
+      decParams.normalizeUV, 
+      decParams.normalizeUV,
+      "Normalize uv texture coordinates")
+    ("startFrameIndex",   
       params.startFrame, 
       params.startFrame,
       "First frame number")
@@ -97,6 +111,8 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.framerate, 
       params.framerate, 
       "Frame rate")
+
+  (po::Section("General"))
     ("keep",    
       decParams.keepIntermediateFiles, 
       decParams.keepIntermediateFiles, 
@@ -107,11 +123,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Compute checksum")
 
   (po::Section("Decoder"))
-    ("normuv",
-      decParams.normalizeUV, 
-      decParams.normalizeUV,
-      "Normalize uv texture coordinates")
-    ("cscdecconfig", 
+    ("textureVideoDecoderConvertConfig", 
       decParams.textureVideoHDRToolDecConfig, 
       decParams.textureVideoHDRToolDecConfig,
       "HDRTools decode cfg") 
@@ -149,14 +161,14 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       metParams.maxPosition,
       {0, 0, 0},
       "Max position")
-    ("qp",
+    ("positionBitDepth",
       metParams.qp,
       metParams.qp,
-      "qp")
-    ("qt",
+      "Position bit depth")
+    ("texCoordBitDepth",
       metParams.qt,
       metParams.qt,
-      "qt")
+      "Texture coordinate bit depth")
     ("pcqmRadiusCurvature",
       metParams.pcqmRadiusCurvature,
       metParams.pcqmRadiusCurvature,
@@ -169,11 +181,15 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       metParams.pcqmRadiusFactor,
       metParams.pcqmRadiusFactor,
       "PCQM radius factor")      
-    ("fstart",
+    ("resolution",
+      metParams.resolution,
+      metParams.resolution,
+      "resolution")      
+    ("startFrameIndex",
       metParams.frameStart, 
       metParams.frameStart, 
       "Metric frame start")
-    ("fcount",
+    ("frameCount",
       metParams.frameCount, 
       metParams.frameCount, 
       "Metric frame count")
@@ -206,6 +222,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   if (params.compressedStreamPath.empty()) {
     err.error() << "compressed input/output not specified\n";
   }
+  if ((metParams.computePcc || metParams.computeIbsm || metParams.computePcqm)
+      && (metParams.srcMeshPath.empty() || metParams.srcTexturePath.empty())) {
+    err.error() << "Source mesh/texture must be define to compute metrics\n";
+  }
 
   if (err.is_errored) { return false; }
 
@@ -223,7 +243,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
 bool
 decompress(const Parameters& params) {
   vmesh::Bitstream bitstream;
-  if (bitstream.load(params.compressedStreamPath)) {
+  if (!bitstream.load(params.compressedStreamPath)) {
     std::cerr << "Error: can't load compressed bitstream ! ("
               << params.compressedStreamPath << ")\n";
     return false;

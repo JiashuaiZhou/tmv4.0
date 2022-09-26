@@ -10,6 +10,7 @@ MD_SRC=\
 	README.clone.md \
 	README.dec_params.md \
 	README.enc_params.md \
+	README.met_params.md \
 	README.usage.md \
 	$(NULL)
 
@@ -29,6 +30,10 @@ README.enc_params.md:
 README.dec_params.md:
 	bash ./update_input_parameters.sh ../build/Release/bin/decode > README.dec_params.md
 	@echo create README.dec_params.md
+
+README.met_params.md:
+	bash ./update_input_parameters.sh ../build/Release/bin/metrics > README.met_params.md
+	@echo create README.met_params.md
 
 # for bibtex
 %.aux: %.tex
@@ -67,4 +72,5 @@ clean:
 		 mpeg-vmesh-sw-manual.toc \
 		 mpeg-vmesh-sw-manual.blg \
 		 README.enc_params.md \
-		 README.dec_params.md
+		 README.dec_params.md \
+		 README.met_params.md

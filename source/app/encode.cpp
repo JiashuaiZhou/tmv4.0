@@ -86,46 +86,54 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("verbose,v", params.verbose, true, "Verbose output")
 
   (po::Section("Input"))
-    ("imesh", 
+    ("srcMesh", 
       params.inputMeshPath, 
       params.inputMeshPath, 
       "Input mesh")
-    ("itex", 
+    ("srcTex", 
       params.inputTexturePath, 
       params.inputTexturePath, 
       "Input texture")
-
-  (po::Section("Output"))
-    ("compressed",
-      params.compressedStreamPath, 
-      params.compressedStreamPath, 
-      "Compressed bitstream")
-    ("recmat", 
-      params.reconstructedMaterialLibPath, 
-      params.reconstructedMaterialLibPath, 
-      "Reconstructed materials")
-    ("recmesh", 
-      params.reconstructedMeshPath, 
-      params.reconstructedMeshPath, 
-      "Reconstructed mesh")
-    ("rectex", 
-      params.reconstructedTexturePath, 
-      params.reconstructedTexturePath, 
-      "Reconstructed texture")
-
-  (po::Section("General"))
-    ("fstart", 
+    ("positionBitDepth", 
+      encParams.bitDepthPosition, 
+      encParams.bitDepthPosition, 
+      "Input positions bit depth")
+    ("texCoordBitDepth", 
+      encParams.bitDepthTexCoord, 
+      encParams.bitDepthTexCoord, 
+      "Input texture coordinates bit depth")    
+    ("startFrameIndex", 
       params.startFrame, 
       params.startFrame, 
       "First frame number")
-    ("fcount", 
+    ("frameCount", 
       params.frameCount, 
       params.frameCount, 
       "Number of frames")
     ("framerate", 
       params.framerate, 
       params.framerate, 
-      "Frame rate")  
+      "Frame rate")   
+
+  (po::Section("Output"))
+    ("compressed",
+      params.compressedStreamPath, 
+      params.compressedStreamPath, 
+      "Compressed bitstream")
+    ("recMesh", 
+      params.reconstructedMeshPath, 
+      params.reconstructedMeshPath, 
+      "Reconstructed mesh")
+    ("recTex", 
+      params.reconstructedTexturePath, 
+      params.reconstructedTexturePath, 
+      "Reconstructed texture")
+    ("recMat", 
+      params.reconstructedMaterialLibPath, 
+      params.reconstructedMaterialLibPath, 
+      "Reconstructed materials")
+
+  (po::Section("General"))
     ("keep", 
       encParams.keepIntermediateFiles, 
       encParams.keepIntermediateFiles, 
@@ -136,7 +144,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Compute checksum")
 
   (po::Section("Group of frames analysis"))
-    ("gofmax", 
+    ("gofMaxSize", 
       encParams.groupOfFramesMaxSize, 
       encParams.groupOfFramesMaxSize, 
       "Maximum group of frames size")
@@ -150,11 +158,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.targetTriangleRatio, 
       encParams.targetTriangleRatio, 
       "Target triangle count ratio")
-    ("qt", 
-      encParams.texCoordQuantizationBits, 
-      encParams.texCoordQuantizationBits, 
-      "texture coordinate quantization bits")
-    ("cctcount", 
+    ("minCCTriangleCount", 
       encParams.minCCTriangleCount, 
       encParams.minCCTriangleCount, 
       "minimum triangle count per connected component")
@@ -168,27 +172,27 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Max position")
 
   (po::Section("Texture parametrization"))
-    ("quality", 
+    ("textureParametrizationQuality", 
       encParams.uvOptions, 
       encParams.uvOptions,       
       "Quality level of DEFAULT, FAST or QUALITY")
-    ("maxCharts", 
+    ("textureParametrizationMaxCharts", 
       encParams.maxCharts, 
       encParams.maxCharts, 
       "Maximum number of charts to generate")
-    ("stretch", 
+    ("textureParametrizationMaxStretch", 
       encParams.maxStretch, 
       encParams.maxStretch,       
       "Maximum amount of stretch 0 to 1")
-    ("gutter", 
+    ("textureParametrizationGutter", 
       encParams.gutter, 
       encParams.gutter, 
       "Gutter width betwen charts in texels")
-    ("width", 
+    ("textureParametrizationWidth", 
       encParams.width, 
       encParams.width,       
       "texture width")
-    ("height", 
+    ("textureParametrizationHeight", 
       encParams.height, 
       encParams.height,       
       "texture height")
@@ -372,45 +376,37 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Apply smoothing to motion instead of vertex positions")
 
   (po::Section("Lifting"))
-    ("liftingIt", 
+    ("liftingIterationCount", 
       encParams.liftingSubdivisionIterationCount, 
       encParams.liftingSubdivisionIterationCount,       
       "Lifting subdivision iteration count")
-    ("dqp", 
-      encParams.liftingQuantizationParameters, 
+    ("liftingQP", 
+      encParams.liftingQP, 
        {16, 28, 28},
       "Quantization parameter for displacements")
-    ("dqb", 
-      encParams.liftingQuantizationBias,
+    ("liftingBias", 
+      encParams.liftingBias,
       {1./3., 1./3., 1./3},
       "Quantization bias for displacements")
   
   (po::Section("Base mesh"))
-    ("gqp", 
+    ("baseMeshPositionBitDepth", 
       encParams.qpPosition, 
       encParams.qpPosition, 
       "Quantization bits for base mesh positions")
-    ("tqp", 
+    ("baseMeshTexCoordBitDepth", 
       encParams.qpTexCoord, 
       encParams.qpTexCoord, 
-      "Quantization bits for base mesh texture coordinates")
-    ("gdepth", 
-      encParams.bitDepthPosition, 
-      encParams.bitDepthPosition, 
-      "Input positions bit depth")
-    ("tdepth", 
-      encParams.bitDepthTexCoord, 
-      encParams.bitDepthTexCoord, 
-      "Input texture coordinates bit depth")    
-    ("invorient", 
+      "Quantization bits for base mesh texture coordinates")  
+    ("invertOrientation", 
       encParams.invertOrientation, 
       encParams.invertOrientation, 
       "Invert triangles orientation")
-    ("unifvertices", 
+    ("unifyVertices", 
       encParams.unifyVertices, 
       encParams.unifyVertices, 
       "Unify duplicated vertices")
-    ("normuv", 
+    ("normalizeUV", 
       encParams.normalizeUV, 
       encParams.normalizeUV, 
       "Normalize uv texture coordinates")    
@@ -420,7 +416,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Mesh codec id")    
 
   (po::Section("Geometry video"))
-    ("encdisp", 
+    ("encodeGeometryVideo", 
       encParams.encodeDisplacementsVideo, 
       encParams.encodeDisplacementsVideo, 
       "Encode displacements video")
@@ -428,13 +424,13 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.geometryVideoCodecId,
       encParams.geometryVideoCodecId,
       "Geometry video codec id")
-    ("gvencconfig", 
+    ("geometryVideoEncoderConfig", 
       encParams.geometryVideoEncoderConfig, 
       encParams.geometryVideoEncoderConfig, 
-      "Geometry video cfg")
+      "Geometry video config file")
         
   (po::Section("Texture video"))
-    ("enctex", 
+    ("encodeTextureVideo", 
       encParams.encodeTextureVideo, 
       encParams.encodeTextureVideo, 
       "Encode texture video")
@@ -442,18 +438,18 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureVideoCodecId,
       encParams.textureVideoCodecId,
       "Texture video codec id")
-    ("tvencconfig", 
+    ("textureVideoEncoderConfig", 
       encParams.textureVideoEncoderConfig, 
       encParams.textureVideoEncoderConfig, 
-      "Texture video cfg")
-    ("cscencconfig", 
+      "Texture video encoder configuration file")
+    ("textureVideoEncoderConvertConfig", 
       encParams.textureVideoHDRToolEncConfig, 
       encParams.textureVideoHDRToolEncConfig, 
-      "HDRTools encode cfg")
-    ("cscdecconfig", 
+      "HDRTools encode configuration file")
+    ("textureVideoDecoderConvertConfig", 
       encParams.textureVideoHDRToolDecConfig, 
       encParams.textureVideoHDRToolDecConfig, 
-      "HDRTools decode cfg")    
+      "HDRTools decode configuration file")    
     ("textureVideoDownsampleFilter", 
       encParams.textureVideoDownsampleFilter, 
       encParams.textureVideoDownsampleFilter, 
@@ -466,15 +462,15 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureVideoFullRange, 
       encParams.textureVideoFullRange, 
       "Texture video range: 0: limited, 1: full")
-    ("tvqp", 
+    ("textureVideoQP", 
       encParams.textureVideoQP, 
       encParams.textureVideoQP, 
       "Quantization parameter for texture video")
-    ("texwidth", 
+    ("textureVideoWidth", 
       encParams.textureWidth, 
       encParams.textureWidth, 
       "Output texture width")
-    ("texheight", 
+    ("textureVideoHeight", 
       encParams.textureHeight, 
       encParams.textureHeight, 
       "Output texture height")
@@ -496,22 +492,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       metParams.gridSize,
       metParams.gridSize,
       "Grid size")
-    ("minPosition",
-      metParams.minPosition,
-      {0, 0, 0},
-      "Min position")
-    ("maxPosition",
-      metParams.maxPosition,
-      {0, 0, 0},
-      "Max position")
-    ("qp",
-      metParams.qp,
-      metParams.qp,
-      "qp")
-    ("qt",
-      metParams.qt,
-      metParams.qt,
-      "qt")
+    ("resolution",
+      metParams.resolution,
+      metParams.resolution,
+      "Resolution")  
     ("pcqmRadiusCurvature",
       metParams.pcqmRadiusCurvature,
       metParams.pcqmRadiusCurvature,
@@ -523,23 +507,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("pcqmRadiusFactor",
       metParams.pcqmRadiusFactor,
       metParams.pcqmRadiusFactor,
-      "PCQM radius factor")
-    ("fstart",
-      metParams.frameStart, 
-      metParams.frameStart, 
-      "Metric frame start")
-    ("fcount",
-      metParams.frameCount, 
-      metParams.frameCount, 
-      "Metric frame count")
-    ("srcMesh",
-      metParams.srcMeshPath,
-      metParams.srcMeshPath,
-      "Metric Source mesh path")
-    ("srcTex", 
-      metParams.srcTexturePath, 
-      metParams.srcTexturePath,
-      "Source texture path")
+      "PCQM radius factor")  
 
   (po::Section("Caching"))    
     ("ignoreTextureEncoding", 
@@ -611,6 +579,17 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
 
   // Dump the complete derived configuration
   po::dumpCfgBySection(std::cout, opts);
+
+  // Copy duplicate parameters
+  for (int k = 0; k < 3; k++){
+    metParams.minPosition[k] = encParams.minPosition[k];
+    metParams.maxPosition[k] = encParams.maxPosition[k];
+  }
+  metParams.qp         = encParams.bitDepthPosition;
+  metParams.qt         = encParams.bitDepthTexCoord;
+  metParams.frameCount = params.frameCount;
+  metParams.frameStart = params.startFrame;
+
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""
@@ -716,7 +695,7 @@ compress(const Parameters& params) {
   std::cout << "---------------------------------------\n";
 
   // save bistream
-  if (bitstream.save(params.compressedStreamPath)) {
+  if (!bitstream.save(params.compressedStreamPath)) {
     std::cerr << "Error: can't save compressed bitstream!\n";
     return false;
   }

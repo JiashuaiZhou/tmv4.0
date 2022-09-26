@@ -109,8 +109,8 @@ convert(const Frame<uint8_t>& src, mm::Image& dst) {
 //============================================================================
 
 void
-VMCMetrics::compute(const Sequence&     sequence0,
-                    const Sequence&     sequence1,
+VMCMetrics::compute(const Sequence&             sequence0,
+                    const Sequence&             sequence1,
                     const VMCMetricsParameters& params) {
   if (!compare) { compare = std::make_shared<mm::Compare>(); }
   for (int32_t i = 0; i < sequence0.frameCount(); i++) {
@@ -119,6 +119,30 @@ VMCMetrics::compute(const Sequence&     sequence0,
             sequence0.texture(i),
             sequence1.texture(i),
             params);
+  }
+}
+
+//============================================================================
+
+void
+VMCMetrics::compute(const std::string           srcMesh,
+                    const std::string           recMesh,
+                    const std::string           srcMap,
+                    const std::string           recMap,
+                    const VMCMetricsParameters& params) {
+  if (!compare) { compare = std::make_shared<mm::Compare>(); }
+  mm::Model srcModel;
+  mm::Model recModel;
+  mm::Image srcImage;
+  mm::Image recImage;
+  if (mm::IO::_loadModel(srcMesh, srcModel)
+      && mm::IO::_loadModel(recMesh, recModel)
+      && mm::IO::_loadImage(srcMap, srcImage)
+      && mm::IO::_loadImage(recMap, recImage)) {
+    compute(srcModel, recModel, srcImage, recImage, "", "", params);
+  } else {
+    printf("Error: can't load models and maps. \n");
+    exit(-1);
   }
 }
 
@@ -141,15 +165,8 @@ VMCMetrics::compute(const TriangleMesh<T>&      srcMesh,
   convert(srcMap, srcImage);
   convert(recMap, recImage);
 
-  compute(srcModel,  // Scr object
-          recModel,  // Rec object
-          srcImage,  // Scr map
-          recImage,  // Rec map
-          "",        // Scr name
-          "",        // Rec name
-          params);   // params
+  compute(srcModel, recModel, srcImage, recImage, "", "", params);
 }
-
 
 //============================================================================
 
@@ -165,13 +182,7 @@ VMCMetrics::compute(const TriangleMesh<T>&      srcMesh,
   convert(srcMesh, srcModel);
   convert(recMesh, recModel);
 
-  compute(srcModel,  // Scr object
-          recModel,  // Rec object
-          image,     // Scr map
-          image,     // Rec map
-          "",        // Scr name
-          "",        // Rec name
-          params);   // params
+  compute(srcModel, recModel, image, image, "", "", params);
 }
 
 //============================================================================
@@ -188,6 +199,7 @@ VMCMetrics::compute(const mm::Model&            srcModel,
   mm::Model reindex[2];
   mm::Model sampled[2];
 
+  const bool verbose = params.verbose;
   // Sample
   glm::vec3 minPos(
     params.minPosition[0], params.minPosition[1], params.minPosition[2]);
@@ -195,26 +207,29 @@ VMCMetrics::compute(const mm::Model&            srcModel,
     params.maxPosition[0], params.maxPosition[1], params.maxPosition[2]);
   for (size_t i = 0; i < 2; i++) {
     const auto& model = i == 0 ? srcModel : recModel;
-    std::cout << (i == 0 ? "Src" : "Rec")
-              << " model: " << (i == 0 ? srcName : recName) << std::endl;
-    std::cout << "  Vertices: " << model.vertices.size() / 3 << std::endl;
-    std::cout << "  UVs: " << model.uvcoords.size() / 2 << std::endl;
-    std::cout << "  Colors: " << model.colors.size() / 3 << std::endl;
-    std::cout << "  Normals: " << model.normals.size() / 3 << std::endl;
-    std::cout << "  Triangles: " << model.triangles.size() / 3 << std::endl;
-    std::cout << "  Trianglesuv: " << model.trianglesuv.size() / 3
-              << std::endl;
-
+    if (verbose) {
+      std::cout << (i == 0 ? "Src" : "Rec")
+                << " model: " << (i == 0 ? srcName : recName) << std::endl;
+      std::cout << "  Vertices: " << model.vertices.size() / 3 << std::endl;
+      std::cout << "  UVs: " << model.uvcoords.size() / 2 << std::endl;
+      std::cout << "  Colors: " << model.colors.size() / 3 << std::endl;
+      std::cout << "  Normals: " << model.normals.size() / 3 << std::endl;
+      std::cout << "  Triangles: " << model.triangles.size() / 3 << std::endl;
+      std::cout << "  Trianglesuv: " << model.trianglesuv.size() / 3
+                << std::endl;
+    }
     // Dequantize
     glm::vec2 zero2(0, 0);
     glm::vec2 one2(1, 1);
     glm::vec3 zero3(0, 0, 0);
 
-    std::cout << "De-quantizing" << std::endl;
-    std::cout << "  qp = " << params.qp << std::endl;
-    std::cout << "  qt = " << params.qt << std::endl;
-    std::cout << "  qn = " << 0 << std::endl;
-    std::cout << "  qc = " << 0 << std::endl;
+    if (verbose) {
+      std::cout << "De-quantizing" << std::endl;
+      std::cout << "  qp = " << params.qp << std::endl;
+      std::cout << "  qt = " << params.qt << std::endl;
+      std::cout << "  qn = " << 0 << std::endl;
+      std::cout << "  qc = " << 0 << std::endl;
+    }
     mm::Dequantize::dequantize(model,          // input
                                dequantize[i],  // output
                                params.qp,      // qp
@@ -230,13 +245,16 @@ VMCMetrics::compute(const mm::Model&            srcModel,
                                zero3,          // minCol
                                zero3,          // maxCol
                                true,           // useFixedPoint,
-                               false);         // colorSpaceConversion
+                               false,          // colorSpaceConversion
+                               verbose);       // verbose
 
     if (params.computePcc || params.computePcqm) {
       // Reindex
       const std::string sort = "oriented";
-      std::cout << "Reindex" << std::endl;
-      std::cout << "  sort = " << sort << std::endl;
+      if (verbose) {
+        std::cout << "Reindex" << std::endl;
+        std::cout << "  sort = " << sort << std::endl;
+      }
       if (sort == "none") {
         mm::reindex(dequantize[i], reindex[i]);
       } else if (sort == "vertex" || sort == "oriented"
@@ -253,16 +271,18 @@ VMCMetrics::compute(const mm::Model&            srcModel,
       const size_t nbSamplesMax  = 0;
       const size_t maxIterations = 10;
       const bool   useFixedPoint = true;
-      std::cout << "Sampling in GRID mode" << std::endl;
-      std::cout << "  Grid Size = " << params.gridSize << std::endl;
-      std::cout << "  Use Normal = " << useNormal << std::endl;
-      std::cout << "  Bilinear = " << bilinear << std::endl;
-      std::cout << "  hideProgress = " << hideProgress << std::endl;
-      std::cout << "  nbSamplesMin = " << nbSamplesMin << std::endl;
-      std::cout << "  nbSamplesMax = " << nbSamplesMax << std::endl;
-      std::cout << "  maxIterations = " << maxIterations << std::endl;
-      std::cout << "  useFixedPoint = " << useFixedPoint << std::endl;
-      std::cout << "  using contrained mode with gridSize " << std::endl;
+      if (verbose) {
+        std::cout << "Sampling in GRID mode" << std::endl;
+        std::cout << "  Grid Size = " << params.gridSize << std::endl;
+        std::cout << "  Use Normal = " << useNormal << std::endl;
+        std::cout << "  Bilinear = " << bilinear << std::endl;
+        std::cout << "  hideProgress = " << hideProgress << std::endl;
+        std::cout << "  nbSamplesMin = " << nbSamplesMin << std::endl;
+        std::cout << "  nbSamplesMax = " << nbSamplesMax << std::endl;
+        std::cout << "  maxIterations = " << maxIterations << std::endl;
+        std::cout << "  useFixedPoint = " << useFixedPoint << std::endl;
+        std::cout << "  using contrained mode with gridSize " << std::endl;
+      }
       mm::Sample::meshToPcGrid(reindex[i],                // input
                                sampled[i],                // output
                                i == 0 ? srcMap : recMap,  // map
@@ -272,7 +292,8 @@ VMCMetrics::compute(const mm::Model&            srcModel,
                                useNormal,                 // use normal
                                useFixedPoint,             // useFixedPoint
                                minPos,                    // minPos
-                               maxPos);                   // maxPos
+                               maxPos,                    // maxPos
+                               verbose);                  // verbose
     }
   }
 
@@ -290,27 +311,31 @@ VMCMetrics::compute(const mm::Model&            srcModel,
   pccParams.bAverageNormals = true;
 
   if (params.computePcc) {
-    std::cout << "Compare models using MPEG PCC distortion metric"
-              << std::endl;
-    std::cout << "  singlePass = " << pccParams.singlePass << std::endl;
-    std::cout << "  hausdorff = " << pccParams.hausdorff << std::endl;
-    std::cout << "  color = " << pccParams.bColor << std::endl;
-    std::cout << "  resolution = " << pccParams.resolution << std::endl;
-    std::cout << "  neighborsProc = " << pccParams.neighborsProc << std::endl;
-    std::cout << "  dropDuplicates = " << pccParams.dropDuplicates
-              << std::endl;
-    std::cout << "  averageNormals = " << pccParams.bAverageNormals
-              << std::endl;
+    if (verbose) {
+      std::cout << "Compare models using MPEG PCC distortion metric"
+                << std::endl;
+      std::cout << "  singlePass     = " << pccParams.singlePass << std::endl;
+      std::cout << "  hausdorff      = " << pccParams.hausdorff << std::endl;
+      std::cout << "  color          = " << pccParams.bColor << std::endl;
+      std::cout << "  resolution     = " << pccParams.resolution << std::endl;
+      std::cout << "  neighborsProc  = " << pccParams.neighborsProc
+                << std::endl;
+      std::cout << "  dropDuplicates = " << pccParams.dropDuplicates
+                << std::endl;
+      std::cout << "  averageNormals = " << pccParams.bAverageNormals
+                << std::endl;
+    }
     compare->pcc(sampled[0],  // modelA
                  sampled[1],  // modelB
                  srcMap,      // mapA
                  recMap,      // mapB
                  pccParams,   // params
                  outPcc[0],   // outputA
-                 outPcc[1]);  // outputB
+                 outPcc[1],   // outputB
+                 verbose);    // verbose
   }
 
-  // // PCQM
+  // PCQM
   if (params.computePcqm) {
     mm::Model outPcqm[2];
     compare->pcqm(sampled[0],                     // modelA
@@ -321,7 +346,8 @@ VMCMetrics::compute(const mm::Model&            srcModel,
                   params.pcqmThresholdKnnSearch,  // thresholdKnnSearch
                   params.pcqmRadiusFactor,        // radiusFactor
                   outPcqm[0],                     // outputA
-                  outPcqm[1]);                    // outputB
+                  outPcqm[1],                     // outputB
+                  verbose);                       // verbose
   }
 
   // IBSM
@@ -334,17 +360,19 @@ VMCMetrics::compute(const mm::Model&            srcModel,
     const std::string  ibsmOutputPrefix;
     const bool         ibsmDisableReordering = false;
     const bool         ibsmDisableCulling    = false;
-    std::cout << "Compare models using IBSM distortion metric" << std::endl;
-    std::cout << "  ibsmRenderer = " << ibsmRenderer << std::endl;
-    std::cout << "  ibsmCameraCount = " << ibsmCameraCount << std::endl;
-    std::cout << "  ibsmCameraRotation = " << ibsmCamRotParams[0] << " "
-              << ibsmCamRotParams[1] << " " << ibsmCamRotParams[2] << " "
-              << std::endl;
-    std::cout << "  ibsmResolution = " << ibsmResolution << std::endl;
-    std::cout << "  ibsmDisableCulling = " << ibsmDisableCulling << std::endl;
-    std::cout << "  ibsmOutputPrefix = "
-              << "" << std::endl;
-
+    if (verbose) {
+      std::cout << "Compare models using IBSM distortion metric" << std::endl;
+      std::cout << "  ibsmRenderer =     " << ibsmRenderer << std::endl;
+      std::cout << "  ibsmCameraCount    = " << ibsmCameraCount << std::endl;
+      std::cout << "  ibsmCameraRotation = " << ibsmCamRotParams[0] << " "
+                << ibsmCamRotParams[1] << " " << ibsmCamRotParams[2] << " "
+                << std::endl;
+      std::cout << "  ibsmResolution     = " << ibsmResolution << std::endl;
+      std::cout << "  ibsmDisableCulling = " << ibsmDisableCulling
+                << std::endl;
+      std::cout << "  ibsmOutputPrefix   = "
+                << "" << std::endl;
+    }
     compare->ibsm(dequantize[0],          // modelA
                   dequantize[1],          // modelB
                   srcMap,                 // mapA
@@ -357,21 +385,57 @@ VMCMetrics::compute(const mm::Model&            srcModel,
                   ibsmOutputPrefix,       // outputPrefix
                   ibsmDisableCulling,     // disableCulling
                   outIbsm[0],             // outputA
-                  outIbsm[1]);            // outputB
+                  outIbsm[1],             // outputB
+                  verbose);               // verbose
   }
 }
 
 //============================================================================
 
+// void
+// print(double value) {
+//   if (value > 999.98) std::cout << "999.99 ";
+//   else std::cout << value << ' ';
+// }
+
 void
-VMCMetrics::display() {
-  printf("Metrics results :\n");
-  printf("PCC:\n");
-  compare->pccFinalize();
-  printf("PCQM:\n");
-  compare->pcqmFinalize();
-  printf("IBSM:\n");
-  compare->ibsmFinalize();
+VMCMetrics::display(bool verbose) {
+  if (verbose) {
+    printf("Metrics results :\n");
+    printf("PCC:\n");
+    compare->pccFinalize();
+    printf("PCQM:\n");
+    compare->pcqmFinalize();
+    printf("IBSM:\n");
+    compare->ibsmFinalize();
+  } else {
+    auto print = [](const std::vector<double> pcc,
+                    const std::vector<double> ibsm,
+                    const std::string         str) {
+      auto printCastMax = [](double value) {
+        if (value > 999.98)
+          std::cout << std::right << std::setw(12) << "999.99 ";
+        else std::cout << std::right << std::setw(12) << value << ' ';
+      };
+      std::cout << std::left << std::setw(25) << str << ": ";
+      printCastMax(pcc[0]);
+      printCastMax(pcc[1]);
+      printCastMax(pcc[2]);
+      printCastMax(pcc[3]);
+      printCastMax(pcc[4]);
+      printCastMax(ibsm[6]);
+      printCastMax(ibsm[2]);
+      std::cout << std::left << '\n';
+    };
+    for (size_t i = 0; i < compare->size(); i++) {
+      print(compare->getPccResults(i),
+            compare->getIbsmResults(i),
+            "Metric_frame_" + std::to_string(i));
+    }    
+    print(compare->getFinalPccResults(),
+          compare->getFinalIbsmResults(),
+          "Metric_results");
+  }
 }
 
 //============================================================================
@@ -411,7 +475,7 @@ template void VMCMetrics::compute<double>(const TriangleMesh<double>&,
                                           const Frame<uint8_t>&,
                                           const Frame<uint8_t>&,
                                           const VMCMetricsParameters&);
-                                          
+
 template void VMCMetrics::compute<float>(const TriangleMesh<float>&,
                                          const TriangleMesh<float>&,
                                          const VMCMetricsParameters&);

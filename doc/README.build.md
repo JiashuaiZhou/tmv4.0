@@ -61,5 +61,5 @@ These dependencies are:
 | [HDRTools](http:/gitlab.com/standards/HDRTools.git) | `v0.23` |
 | [HM](https:/vcgit.hhi.fraunhofer.de/jvet/HM.git) | `HM-16.21+SCM-8.8` |
 | [VTM](https:/vcgit.hhi.fraunhofer.de/jvet/VVCSoftware_VTM.git) | `VTM-13.0` |
-| [mpeg-pcc-mmetric](http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git) | `1_0_1_lib_beta_v2` |
+| [mpeg-pcc-mmetric](http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git) | `1_0_1_lib_beta_v5` |
  

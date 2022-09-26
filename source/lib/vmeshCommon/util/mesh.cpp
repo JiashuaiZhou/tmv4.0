@@ -60,6 +60,14 @@ convertFromPlyData(std::shared_ptr<tinyply::PlyData>& src,
 
 template<typename T>
 bool
+TriangleMesh<T>::load(const std::string& fileName, const int32_t frameIndex) {
+  return load(expandNum(fileName, frameIndex));
+}
+
+//============================================================================
+
+template<typename T>
+bool
 TriangleMesh<T>::load(const std::string& fileName) {
   auto ext = extension(fileName);
   if (ext == "obj") return loadFromOBJ(fileName);
@@ -140,7 +148,7 @@ TriangleMesh<T>::loadFromOBJ(const std::string& fileName) {
       }
     }
     fin.close();
-    print("Load: " + fileName);
+    // print("Load: " + fileName);
     return true;
   }
   printf("Error loading file: %s \n", fileName.c_str());
@@ -389,20 +397,8 @@ TriangleMesh<T>::loadFromPLY(const std::string& fileName) {
     printf("failed to open: %s \n", fileName.c_str());
     return false;
   }
-  printf("loadFromPLY: %s \n", fileName.c_str());
-  fflush(stdout);
   tinyply::PlyFile ply;
   ply.parse_header(*file);
-
-  // Read checksum
-  std::string readChecksum = "";
-  for (const auto& c : ply.get_comments()) {
-    if (c.rfind("# Checksum:", 0) == 0) {
-      auto str = c.substr(c.find_first_of(":") + 1);
-      str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
-      readChecksum = str;
-    }
-  }
 
   std::shared_ptr<tinyply::PlyData> coords, normals, colours, texcoords,
     triangles, texTriangles;
@@ -434,9 +430,6 @@ TriangleMesh<T>::loadFromPLY(const std::string& fileName) {
   } catch (const std::exception&) {}
 
   ply.read(*file);
-
-  printf("convertFromPlyData \n");
-  fflush(stdout);
   convertFromPlyData(coords, _coord);
   convertFromPlyData(normals, _normal);
   convertFromPlyData(colours, _colour);
@@ -449,8 +442,6 @@ TriangleMesh<T>::loadFromPLY(const std::string& fileName) {
     uvCoords.resize(triCount);
     _texCoordIndex.resize(triCount);
     _texCoord.clear();
-
-    printf("texTriangles->count = %zu \n", texTriangles->count);
     std::memcpy(
       reinterpret_cast<uint8_t*>(reinterpret_cast<void*>(uvCoords.data())),
       texTriangles->buffer.get(),
@@ -471,8 +462,7 @@ TriangleMesh<T>::loadFromPLY(const std::string& fileName) {
       }
     }
   }
-  print("Load: " + fileName);
-
+  // print("Load: " + fileName);
   return true;
 }
 
@@ -484,8 +474,8 @@ TriangleMesh<T>::saveToVMB(const std::string& fileName) const {
   // Compute checksum
   Checksum checksum;
   auto     strChecksum = checksum.getChecksum(*this);
-  print("Save: " + fileName);
-  std::cout << "# Checksum:     " << strChecksum << "\n";
+  // print("Save: " + fileName);
+  // std::cout << "# Checksum:     " << strChecksum << "\n";
 
   // Get data type
   std::string type = "float";
@@ -639,7 +629,7 @@ TriangleMesh<T>::loadFromVMB(const std::string& fileName) {
              _texCoordIndex.size() * sizeof(int) * 3);
   ifs.close();
 
-  print("Load: " + fileName);
+  // print("Load: " + fileName);
 
   // Compare checksums
   if (!readChecksum.empty()) {

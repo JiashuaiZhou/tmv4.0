@@ -2,7 +2,7 @@ set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/mmetric )
 if( NOT EXISTS ${DIR} )
   CPMAddPackage( NAME             mmetric
                 GIT_REPOSITORY    http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git
-                GIT_TAG           1_0_1_lib_beta_v4
+                GIT_TAG           1_0_1_lib_beta_v5
                 SOURCE_DIR        ${DIR}
                 OPTIONS           "MM_BUILD_CMD off"
                 OPTIONS           "USE_OPENMP   off"

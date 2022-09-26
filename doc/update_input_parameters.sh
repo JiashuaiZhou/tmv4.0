@@ -10,15 +10,16 @@ then
   echo " "
   echo "  $0 ./build/Release/bin/encode"
   echo "  $0 ./build/Release/bin/decode"
-  echo "  $0 ../build/Release/bin/encode > ./README.enc_params.md"
-  echo "  $0 ../build/Release/bin/decode > ./README.dec_params.md"
+  echo "  $0 ../build/Release/bin/encode  > ./README.enc_params.md"
+  echo "  $0 ../build/Release/bin/decode  > ./README.dec_params.md"
+  echo "  $0 ../build/Release/bin/metrics > ./README.met_params.md"
   echo " "
   echo "input parameter not corrects"
   exit 
 fi
 
 ${SOFT} > tmp.txt
-
+NAME=$(basename $SOFT)
 sed -i '/usage:/,$!d' tmp.txt # remove header
 sed -i 1d  tmp.txt            # remove header 
 sed -i '/---/d' tmp.txt
@@ -26,7 +27,7 @@ sed -i '/---/d' tmp.txt
 isIn=0;
 
 echo ""
-echo "<!--- $(basename $SOFT) input paramters --->" 
+echo "<!--- ${NAME^} software input paramters --->" 
 echo ""
 echo "<!--- "
 echo "  Note: "
@@ -37,7 +38,14 @@ echo "        Please re-run this script whereas edit this file"
 echo ""
 echo "--->"
 echo ""
-echo "# $(basename $SOFT) input paramters"  
+if [ $NAME == encode ]
+then   
+  echo "# Main software input parameters"    
+  echo ""
+  echo "The following subsections contain input parameters for encoding, decoding, and metrics software."
+  echo ""
+fi
+echo "## ${NAME^} software input parameters"
 
 echo "" 
 echo "| **--key=value** | **Usage** | "

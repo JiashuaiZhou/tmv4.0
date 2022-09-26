@@ -363,7 +363,7 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
       inverseQuantizeDisplacements(frame,
                                    _sps.bitDepthPosition,
                                    _sps.liftingLevelOfDetailInverseScale,
-                                   _sps.liftingQuantizationParameters);
+                                   _sps.liftingQP);
       computeInverseLinearLifting(frame.disp,
                                   frame.subdivInfoLevelOfDetails,
                                   frame.subdivEdges,
@@ -462,9 +462,9 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   _sps.subdivisionIterationCount        = (subdivInfo >> 4) & 15;
   _sps.qpPosition                       = 1 + (qpBaseMesh & 15);
   _sps.qpTexCoord                       = 1 + ((qpBaseMesh >> 4) & 15);
-  _sps.liftingQuantizationParameters[0] = liftingQPs[0];
-  _sps.liftingQuantizationParameters[1] = liftingQPs[1];
-  _sps.liftingQuantizationParameters[2] = liftingQPs[2];
+  _sps.liftingQP[0] = liftingQPs[0];
+  _sps.liftingQP[1] = liftingQPs[1];
+  _sps.liftingQP[2] = liftingQPs[2];
   _sps.meshCodecId                      = GeometryCodecId(meshCodecId);
   _sps.geometryVideoCodecId             = VideoCodecId(geometryVideoCodecId);
   _sps.textureVideoCodecId              = VideoCodecId(textureVideoCodecId);

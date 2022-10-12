@@ -14,6 +14,7 @@ print_usage()
   echo "";
   echo "    Usage:" 
   echo "       -h|--help    : Display this information."  
+  echo "       --ouptut     : Output build directory."
   echo "       --debug      : Build in debug mode."
   echo "       --release    : Build in release mode."
   echo "       --meshType=* : Define template mesh type: float or double."
@@ -37,12 +38,14 @@ print_usage()
 MODE=Release
 TARGETS=()
 CMAKE_FLAGS=()
+OUTPUT=build
 case $(uname -s) in Linux*) NUMBER_OF_PROCESSORS=$( grep -c ^processor /proc/cpuinfo );; esac
 
 while [[ $# -gt 0 ]] ; do  
   C=$1; if [[ "$C" =~ [=] ]] ; then V=${C#*=}; elif [[ $2 == -* ]] ; then  V=""; else V=$2; shift; fi;
   case "$C" in    
     -h|--help     ) print_usage ;;
+    --output=*    ) OUTPUT=${V};;
     --debug       ) MODE=Debug; CMAKE_FLAGS+=("-DCMAKE_C_FLAGS=\"-g3\"" "-DCMAKE_CXX_FLAGS=\"-g3\"" );;
     --release     ) MODE=Release;;
     --meshType=*  ) CMAKE_FLAGS+=( "-DMESH_TYPE=${V}" );;
@@ -59,13 +62,13 @@ done
 
 CMAKE_FLAGS+=( "-DCMAKE_BUILD_TYPE=$MODE" ) 
 CMAKE_FLAGS+=( "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON" )
-CMAKE_FLAGS+=( "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CURDIR}/build/${MODE}/bin" )
-CMAKE_FLAGS+=( "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=${CURDIR}/build/${MODE}/lib" )
-CMAKE_FLAGS+=( "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CURDIR}/build/${MODE}/lib" )
+CMAKE_FLAGS+=( "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CURDIR}/${OUTPUT}/${MODE}/bin" )
+CMAKE_FLAGS+=( "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=${CURDIR}/${OUTPUT}/${MODE}/lib" )
+CMAKE_FLAGS+=( "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CURDIR}/${OUTPUT}/${MODE}/lib" )
 # CMAKE_FLAGS+=( "-DCMAKE_CXX_FLAGS=-stdlib=libc++" )
 
 echo "$CMAKE_FLAGS"
-if ! ${CMAKE} -H${CURDIR} -B"${CURDIR}/build/${MODE}" "${CMAKE_FLAGS[@]}";
+if ! ${CMAKE} -H${CURDIR} -B"${CURDIR}/${OUTPUT}/${MODE}" "${CMAKE_FLAGS[@]}";
 then
   echo -e "\033[1;31mfailed \033[0m"
   exit 1;
@@ -85,14 +88,14 @@ then
       else
         ${CC}-tidy \
           -format-style=file \
-          -p ${CURDIR}/build/${MODE} \
+          -p ${CURDIR}/${OUTPUT}/${MODE} \
           -fix \
           -fix-errors \
           $( find ${CURDIR}/source/ -name '*.cpp' -o -name '*.hpp' )
       fi
     else 
       echo -e "\033[0;32m${TARGET}: ${CURDIR} \033[0m";
-      ${CMAKE} --build "${CURDIR}/build/${MODE}" --target ${TARGET}
+      ${CMAKE} --build "${CURDIR}/${OUTPUT}/${MODE}" --target ${TARGET}
       echo -e "\033[0;32mdone \033[0m";
     fi
   done
@@ -100,8 +103,8 @@ then
 fi
 
 echo -e "\033[0;32mBuild: ${CURDIR} \033[0m";
-echo -e "${CMAKE} --build "${CURDIR}/build/${MODE}" --config ${MODE} --parallel "${NUMBER_OF_PROCESSORS}"";
-if ! ${CMAKE} --build "${CURDIR}/build/${MODE}" --config ${MODE} --parallel "${NUMBER_OF_PROCESSORS}" ;
+echo -e "${CMAKE} --build "${CURDIR}/${OUTPUT}/${MODE}" --config ${MODE} --parallel "${NUMBER_OF_PROCESSORS}"";
+if ! ${CMAKE} --build "${CURDIR}/${OUTPUT}/${MODE}" --config ${MODE} --parallel "${NUMBER_OF_PROCESSORS}" ;
 then
   echo -e "\033[1;31mfailed \033[0m"
   exit 1;

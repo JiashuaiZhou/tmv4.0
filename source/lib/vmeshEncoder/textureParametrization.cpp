@@ -44,6 +44,8 @@
 #include "encoder.hpp"
 #include "textureParametrization.hpp"
 
+#include "util/checksum.hpp"
+
 // NB: these must come after the standard headers as they define prohibited
 //     macros that conflict with the system implementation
 #include <DirectXMath.h>
@@ -56,13 +58,12 @@ namespace vmesh {
 //============================================================================
 
 HRESULT __cdecl UVAtlasCallback(float fPercentDone) {
-  static auto prev = std::chrono::steady_clock::now();
-  const auto  tick = std::chrono::steady_clock::now();
-
-  if (tick - prev > std::chrono::seconds(1)) {
-    std::cout << fPercentDone * 100. << "%   \r" << std::flush;
-    prev = tick;
-  }
+  // static auto prev = std::chrono::steady_clock::now();
+  // const auto  tick = std::chrono::steady_clock::now();
+  // if (tick - prev > std::chrono::seconds(1)) {
+  //   std::cout << fPercentDone * 100. << "%   \r" << std::flush;
+  //   prev = tick;
+  // }
   return S_OK;
 }
 

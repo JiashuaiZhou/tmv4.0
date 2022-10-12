@@ -37,9 +37,9 @@ set(CMAKE_CXX_EXTENSIONS           OFF)
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_language(C)
 if (MSVC)
-  add_definitions("/W3 /D_CRT_SECURE_NO_WARNINGS /nologo")
+  add_definitions("/W3 /D_CRT_SECURE_NO_WARNINGS /nologo /std:c++14")
 else ()
-  add_compile_options( -Wall -Wextra -Wno-unused-function -Wno-unused-parameter )   
+  add_compile_options( -Wall -Wextra -Wno-unused-function -Wno-unused-parameter)   
 endif()
 if (UNIX)
   if(NOT APPLE)
@@ -52,12 +52,12 @@ endif()
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_XM_NO_INTRINSICS_")
 # compile flags still to be harmonized to guarantee strict same compilation results on float operations
 if (NOT WIN32)
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -m64 -DNDEBUG -mfpmath=sse -ffp-contract=off \
-          -ffp-model=strict ") # -Wno-unknown-warning-option
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -m64 -DNDEBUG -mfpmath=sse -ffp-contract=off -ffloat-store")
-    endif()
+  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -m64 -DNDEBUG -mfpmath=sse -ffp-contract=off -stdlib=libc++ \
+        -ffp-model=strict ") # -Wno-unknown-warning-option
+  else()
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -m64 -DNDEBUG -mfpmath=sse -ffp-contract=off -ffloat-store")
+  endif()
 endif()
 
 # Tools

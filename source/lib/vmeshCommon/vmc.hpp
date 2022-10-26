@@ -262,6 +262,12 @@ public:
         _meshes[f].setMaterialLibrary(vmesh::basename(strMat));
         if (!material.save(strMat)) return false;
       }
+    } else { 
+      for (int f = 0; f < _meshes.frameCount(); ++f) {
+        const auto n      = frameStart + f;
+        auto       strTex = vmesh::expandNum(texturePath, n);
+        _meshes[f].setMaterialLibrary( vmesh::basename(strTex) );
+      }
     }
     if (!_meshes.save(meshPath, frameStart)
         || !_textures.save(texturePath, frameStart))

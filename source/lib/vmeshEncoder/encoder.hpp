@@ -286,8 +286,11 @@ private:
                      TriangleMesh<MeshType>&       decimate,
                      const VMCEncoderParameters&   params);
 
+  void removeDegeneratedTrianglesCrossProduct(TriangleMesh<MeshType>& mesh,
+                                              const int32_t& frameIndex);
+
   void textureParametrization(VMCFrame&                     frame,
-                              const TriangleMesh<MeshType>& decimate,
+                              TriangleMesh<MeshType>&       decimate,
                               const VMCEncoderParameters&   params);
 
   void geometryParametrization(VMCGroupOfFrames&             gof,

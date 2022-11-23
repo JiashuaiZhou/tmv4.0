@@ -160,8 +160,169 @@ VMCEncoder::decimateInput(const TriangleMesh<MeshType>& input,
 //============================================================================
 
 void
+VMCEncoder::removeDegeneratedTrianglesCrossProduct(TriangleMesh<MeshType>& mesh,
+                                                   const int32_t& frameIndex) {
+
+    TriangleMesh<MeshType> degenerateMesh;
+
+    auto& degenerateTriangles = degenerateMesh.triangles();
+    auto& degenerateTexCoordTriangles = degenerateMesh.texCoordTriangles();
+    auto& degenerateNormalTriangles = degenerateMesh.normalTriangles();
+    degenerateMesh.points().resize(mesh.pointCount());
+
+    auto triangleCount = mesh.triangleCount();
+    if (triangleCount <= 0) { return; }
+
+    const auto hasTexCoords = mesh.texCoordTriangleCount() == triangleCount;
+    const auto hasNormals = mesh.normalTriangleCount() == triangleCount;
+    std::vector<Triangle> triangles;
+    triangles.reserve(triangleCount);
+
+    int32_t removedDegeneratedTrianglesArea0 = 0;
+
+    for (int32_t tindex = 0; tindex < triangleCount; tindex++) {
+        const auto& tri = mesh.triangle(tindex);
+        const auto& coord = mesh.points();
+
+        const auto i = tri[0];
+        const auto j = tri[1];
+        const auto k = tri[2];
+        auto area = computeTriangleArea(coord[tri[0]], coord[tri[1]], coord[tri[2]]);
+
+        if (area > 0) {
+            triangles.push_back(tri);
+        }
+        else {
+            std::cout << "Triangle with area 0 is removed." << std::endl;
+            removedDegeneratedTrianglesArea0++;
+            degenerateTriangles.push_back(tri);
+        }
+    }
+
+    std::cout << "frame : " << frameIndex << " , removedDegeneratedTrianglesArea0count = " << removedDegeneratedTrianglesArea0 << std::endl;
+
+    std::swap(mesh.triangles(), triangles);
+
+    //Change connectivity
+    if (1) {
+
+        triangles.clear();
+
+        triangleCount = mesh.triangleCount();
+        auto degenerateTriangleCount = degenerateMesh.triangleCount();
+
+        std::vector<int32_t> vertexID0s(degenerateTriangleCount), vertexID1s(degenerateTriangleCount), vertexID2s(degenerateTriangleCount);
+
+        for (uint32_t degetindex = 0; degetindex < degenerateTriangleCount; degetindex++) {
+            auto& degetri = degenerateTriangles[degetindex];
+
+            const auto& coord = mesh.points();
+
+            //Check middle point
+            auto doubleMax = std::numeric_limits<double>::max();
+            auto doubleMin = std::numeric_limits<double>::min();
+            std::vector<double> minV = { doubleMax ,doubleMax ,doubleMax };
+            std::vector<double> maxV = { doubleMin ,doubleMin ,doubleMin };
+
+            std::vector<int> minID = { 0,0,0 }, maxID = { 0,0,0 };
+
+            for (int vertexID = 0; vertexID < 3; vertexID++) {
+
+                auto& p = coord[degetri[vertexID]];
+
+                //xyz
+                for (int i = 0; i < 3; i++) {
+                    if (p[i] < minV[i])
+                    {
+                        minV[i] = p[i];
+                        minID[i] = vertexID;
+                    }
+                    if (p[i] > maxV[i])
+                    {
+                        maxV[i] = p[i];
+                        maxID[i] = vertexID;
+                    }
+
+                }
+            }
+
+            int middleID = 0;
+            for (int vertexID = 0; vertexID < 3; vertexID++) {
+                //xyz
+                bool flag = false;
+                for (int i = 0; i < 3; i++) {
+                    if (minID[i] == vertexID || maxID[i] == vertexID) {
+                        flag = 1;
+                    }
+                }
+                if (!flag) {
+                    middleID = vertexID;
+                    break;
+                }
+            }
+
+            auto& vertexID0 = vertexID0s[degetindex];
+            auto& vertexID1 = vertexID1s[degetindex];
+            auto& vertexID2 = vertexID2s[degetindex];
+
+            if (middleID == 0) {
+                vertexID0 = degetri[0];
+                vertexID1 = degetri[1];
+                vertexID2 = degetri[2];
+            }
+            else if (middleID == 1) {
+                vertexID0 = degetri[1];
+                vertexID1 = degetri[2];
+                vertexID2 = degetri[0];
+            }
+            else if (middleID == 2) {
+                vertexID0 = degetri[2];
+                vertexID1 = degetri[0];
+                vertexID2 = degetri[1];
+            }
+        }
+
+        for (int32_t tindex = 0; tindex < triangleCount; tindex++) {
+            const auto& tri = mesh.triangle(tindex);
+            const auto& coord = mesh.points();
+
+            bool addedFlag = false;
+            Vec3<int> newFace1, newFace2;
+
+            for (uint32_t degetindex = 0; !addedFlag && (degetindex < degenerateTriangleCount); degetindex++) {
+                auto& vertexID0 = vertexID0s[degetindex];
+                auto& vertexID1 = vertexID1s[degetindex];
+                auto& vertexID2 = vertexID2s[degetindex];
+
+                std::vector<Vec3<int>> vIDs{ { tri[0], tri[1], tri[2] }, { tri[1], tri[2], tri[0] }, { tri[2], tri[0], tri[1] } };
+                for (auto& vID : vIDs) {
+                    auto& vID0 = vID[0];
+                    auto& vID1 = vID[1];
+                    auto& vID2 = vID[2];
+
+                    if ((vID1 == vertexID1 && vID2 == vertexID2) || (vID1 == vertexID2 && vID2 == vertexID1)) {
+                        newFace1 = { vID1, vertexID0, vID0 };
+                        newFace2 = { vID0, vertexID0, vID2 };
+
+                        triangles.push_back(newFace1);
+                        triangles.push_back(newFace2);
+                        addedFlag = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!addedFlag) triangles.push_back(tri);
+        }
+        std::swap(mesh.triangles(), triangles);
+    }
+
+}
+//============================================================================
+
+void
 VMCEncoder::textureParametrization(VMCFrame&                     frame,
-                                   const TriangleMesh<MeshType>& decimate,
+                                   TriangleMesh<MeshType>&       decimate,
                                    const VMCEncoderParameters&   params) {
   auto prefix =
     _keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex);
@@ -182,6 +343,10 @@ VMCEncoder::textureParametrization(VMCFrame&                     frame,
   printf("skipUVAtlas = %d \n", skipUVAtlas);
   fflush(stdout);
   if (!skipUVAtlas) {
+
+    //Remove degenerate triangles
+    removeDegeneratedTrianglesCrossProduct(decimate, frame.frameIndex);
+
     TextureParametrization textureParametrization;
     textureParametrization.generate(decimate, frame.decimateTexture, params);
 

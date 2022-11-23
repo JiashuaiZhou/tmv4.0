@@ -20,9 +20,13 @@ if( EXISTS ${DIR}/CMakeLists.txt )
         message(FATAL_ERROR "Error during the draco patch process. ")
       endif()
     endforeach()
-
     file(WRITE ${DIR}/PATCHED "patched")
   endif()
+endif()
+
+
+if (USE_POSITION_PATCH)
+  add_definitions(-DDRACO_USE_POSITION)
 endif()
 
 # disable submodule warnings

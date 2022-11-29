@@ -1,5 +1,5 @@
 
-all: mpeg-vmesh-sw-manual.pdf README.md cleantmpfiles
+all: cleanpdf mpeg-vmesh-sw-manual.pdf README.md cleantmpfiles
 
 ## mpegdoc.cls : https://mpeg.expert/software/dflynn/mpeg-report
 
@@ -7,6 +7,7 @@ MD_SRC=\
 	readme/about.md \
 	readme/architecture.md \
 	readme/build.md \
+	readme/dependencies.md \
 	readme/clone.md \
 	readme/dec_params.md \
 	readme/enc_params.md \
@@ -24,16 +25,20 @@ mpeg-vmesh-sw-manual.pdf: $(TEX_SRC)
 
 LATEX:=$(shell which xelatex || which pdflatex || which latex) 
 
+readme/dependencies.md:
+	bash ./scripts/build_dependencies.sh > readme/dependencies.md
+	@echo create readme/dependencies.md
+
 readme/enc_params.md:
-	bash ./update_input_parameters.sh ../build/Release/bin/encode > readme/enc_params.md
+	bash ./scripts/build_input_parameters.sh ../build/Release/bin/encode > readme/enc_params.md
 	@echo create readme/enc_params.md
 
 readme/dec_params.md:
-	bash ./update_input_parameters.sh ../build/Release/bin/decode > readme/dec_params.md
+	bash ./scripts/build_input_parameters.sh ../build/Release/bin/decode > readme/dec_params.md
 	@echo create readme/dec_params.md
 
 readme/met_params.md:
-	bash ./update_input_parameters.sh ../build/Release/bin/metrics > readme/met_params.md
+	bash ./scripts/build_input_parameters.sh ../build/Release/bin/metrics > readme/met_params.md
 	@echo create readme/met_params.md
 
 # for bibtex
@@ -71,8 +76,8 @@ endif
 	pandoc -f markdown -t latex -o $@ $<
 
 README.md: $(patsubst %.md,%.tex,$(MD_SRC))
-	@echo ./build-doc.sh
-	./build-doc.sh
+	@echo ./scripts/build_readme.sh
+	./scripts/build_readme.sh
 
 cleantmpfiles:
 	@echo cleantmpfiles
@@ -84,10 +89,14 @@ cleantmpfiles:
 		 mpeg-vmesh-sw-manual.bbl \
 		 mpeg-vmesh-sw-manual.bib \
 		 mpeg-vmesh-sw-manual.aux \
+		 readme/dependencies.md \
 		 readme/enc_params.md \
 		 readme/dec_params.md \
 		 readme/met_params.md
 
-clean: cleantmpfiles
-	@echo clean
+cleanpdf:
+	@echo cleanpdf	
 	rm -f mpeg-vmesh-sw-manual.pdf
+
+clean: cleanpdf cleantmpfiles
+	@echo clean

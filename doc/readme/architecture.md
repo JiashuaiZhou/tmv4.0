@@ -33,7 +33,7 @@ These libraries are based on a virtual object that can be derived to implement o
 
 The source codes of V-Mesh applications are stored in the `source/app/` sub-folder. 
 
-### main applications
+### Main applications
 
 The two main application of the V-Mesh test model are: 
 

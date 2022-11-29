@@ -82,3 +82,4 @@ done < tmp.txt
 if [ "$FIRST" != "" ] ; then echo  "| $FIRST | $SECOND | "; FIRST=""; fi
      
 rm tmp.txt
+

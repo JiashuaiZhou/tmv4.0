@@ -36,6 +36,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ```
 
+# User manual
+
+The user manual of the TMM can be found in the mpeg-vmesh-tm repository: [./doc/mpeg-vmesh-sw-manual.pdf](http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/tree/main/doc/mpeg-vmesh-sw-manual.pdf).
+
 # Contacts and reporting issues
 
 For any issues or questions don't hesitate to open issues in V-Mesh git repository or to contact us:

@@ -4,19 +4,21 @@ set( FETCHCONTENT_QUIET off )
 # VVENC
 set( vvenc_SOURCE_DIR  ${CMAKE_SOURCE_DIR}/dependencies/vvenc )
 message("Fetch VVENC libraries: ${vvenc_SOURCE_DIR}") 
-FetchContent_Declare( VVENC GIT_REPOSITORY https://github.com/fraunhoferhhi/vvenc.git 
-                            GIT_TAG        v1.4.0
-                            SOURCE_DIR     ${vvenc_SOURCE_DIR}
-                            GIT_PROGRESS   TRUE )              
+FetchContent_Declare( VVENC 
+                      GIT_REPOSITORY https://github.com/fraunhoferhhi/vvenc.git 
+                      GIT_TAG        v1.4.0
+                      SOURCE_DIR     ${vvenc_SOURCE_DIR}
+                      GIT_PROGRESS   TRUE )              
 set(vvenc_ADD_SUBDIRECTORIES "source/Lib/apputils;source/App/vvencFFapp")
 
 # VVDEC
 set( vvdec_SOURCE_DIR ${CMAKE_SOURCE_DIR}/dependencies/vvdec )
 message("Fetch VVDEC libraries: ${vvdec_SOURCE_DIR}") 
-FetchContent_Declare( VVDEC GIT_REPOSITORY https://github.com/fraunhoferhhi/vvdec.git
-                            GIT_TAG        v1.5.0
-                            SOURCE_DIR     ${vvdec_SOURCE_DIR}
-                            GIT_PROGRESS   TRUE )
+FetchContent_Declare( VVDEC 
+                      GIT_REPOSITORY https://github.com/fraunhoferhhi/vvdec.git
+                      GIT_TAG        v1.5.0
+                      SOURCE_DIR     ${vvdec_SOURCE_DIR}
+                      GIT_PROGRESS   TRUE )
 set(vvdec_ADD_SUBDIRECTORIES "source/App/vvdecapp")
 
 # MAKE AVAILABLE

@@ -1,0 +1,580 @@
+From 6d89e68f0b5cfe40fb8d98b157d31326804451e4 Mon Sep 17 00:00:00 2001
+From: Julien Ricard <julien.ricard@interdigital.com>
+Date: Tue, 29 Nov 2022 11:09:52 +0100
+Subject: [PATCH] Update draco use uv patch
+
+---
+ ...ediction_scheme_tex_coords_portable_predictor.h | 536 +++++++++++++++++++++
+ 1 file changed, 536 insertions(+)
+
+diff --git a/src/draco/compression/attributes/prediction_schemes/mesh_prediction_scheme_tex_coords_portable_predictor.h b/src/draco/compression/attributes/prediction_schemes/mesh_prediction_scheme_tex_coords_portable_predictor.h
+index f05e5dd..8f626c2 100644
+--- a/src/draco/compression/attributes/prediction_schemes/mesh_prediction_scheme_tex_coords_portable_predictor.h
++++ b/src/draco/compression/attributes/prediction_schemes/mesh_prediction_scheme_tex_coords_portable_predictor.h
+@@ -22,6 +22,10 @@
+ #include "draco/core/vector_d.h"
+ #include "draco/mesh/corner_table.h"
+ 
++#if defined( DRACO_USE_UV )
++#define DBL_EPSILON 2.2204460492503131e-016
++#endif
++
+ namespace draco {
+ 
+ // Predictor functionality used for portable UV prediction by both encoder and
+@@ -105,6 +109,41 @@ bool MeshPredictionSchemeTexCoordsPortablePredictor<
+   next_data_id = mesh_data_.vertex_to_data_map()->at(next_vert_id);
+   prev_data_id = mesh_data_.vertex_to_data_map()->at(prev_vert_id);
+ 
++#if defined( DRACO_USE_UV )
++  // opp
++  int opp_data_id, opp_vert_id;
++  const CornerIndex opp_corner_id =
++      mesh_data_.corner_table()->Opposite(corner_id);
++  if (opp_corner_id != kInvalidCornerIndex) {
++    opp_vert_id = mesh_data_.corner_table()->Vertex(opp_corner_id).value();
++    opp_data_id = mesh_data_.vertex_to_data_map()->at(opp_vert_id);
++  } else {
++    opp_data_id = data_id;
++  }
++
++  // n.o
++  int n_opp_data_id, n_opp_vert_id;
++  const CornerIndex n_opp_corner_id =
++      mesh_data_.corner_table()->Opposite(next_corner_id);
++  if (n_opp_corner_id != kInvalidCornerIndex) {
++    n_opp_vert_id = mesh_data_.corner_table()->Vertex(n_opp_corner_id).value();
++    n_opp_data_id = mesh_data_.vertex_to_data_map()->at(n_opp_vert_id);
++  } else {
++    n_opp_data_id = data_id;
++  }
++
++  // p.o
++  int p_opp_data_id, p_opp_vert_id;
++  const CornerIndex p_opp_corner_id =
++      mesh_data_.corner_table()->Opposite(prev_corner_id);
++  if (p_opp_corner_id != kInvalidCornerIndex) {
++    p_opp_vert_id = mesh_data_.corner_table()->Vertex(p_opp_corner_id).value();
++    p_opp_data_id = mesh_data_.vertex_to_data_map()->at(p_opp_vert_id);
++  } else {
++    p_opp_data_id = data_id;
++  }
++#endif
++
+   if (prev_data_id < data_id && next_data_id < data_id) {
+     // Both other corners have available UV coordinates for prediction.
+     const VectorD<int64_t, 2> n_uv = GetTexCoordForEntryId(next_data_id, data);
+@@ -192,6 +231,502 @@ bool MeshPredictionSchemeTexCoordsPortablePredictor<
+       // Predicted uv coordinate is then computed by either adding or
+       // subtracting CX_UV to/from X_UV.
+       VectorD<int64_t, 2> predicted_uv;
++#if defined(DRACO_USE_UV)
++      if (opp_data_id < data_id) {
++        // If texture triangles are degenerate triangles, opposite corners are
++        // not used
++        const VectorD<int64_t, 2> o_uv =
++            GetTexCoordForEntryId(opp_data_id, data);
++        float triangleArea_o = abs(
++            0.5 * (n_uv[0] * p_uv[1] + p_uv[0] * o_uv[1] + o_uv[0] * n_uv[1] -
++                   n_uv[0] * o_uv[1] - p_uv[0] * n_uv[1] - o_uv[0] * p_uv[1]));
++        if (triangleArea_o < DBL_EPSILON) {
++          opp_data_id = data_id;
++        }
++      }
++      bool flag = false;
++      if (n_opp_data_id < data_id && p_opp_data_id < data_id) {
++        // n.o and p.o exist
++        flag = true;
++        // compute n.o
++        const VectorD<int64_t, 2> no_uv =
++            GetTexCoordForEntryId(n_opp_data_id, data);
++
++        const VectorD<int64_t, 3> no_pos = GetPositionForEntryId(n_opp_data_id);
++
++        const VectorD<int64_t, 3> nop = no_pos - prev_pos;
++        const uint64_t nop_norm2_squared = nop.SquaredNorm();
++
++        if (p_uv == no_uv || nop_norm2_squared == 0) {  // we can't use n.o.
++          flag = false;
++        }
++
++        if (nop_norm2_squared != 0) {
++          const VectorD<int64_t, 3> cp = tip_pos - prev_pos;
++          const int64_t cp_dot_nop = nop.Dot(cp);
++          const VectorD<int64_t, 2> nop_uv = no_uv - p_uv;
++          const VectorD<int64_t, 2> x1_uv =
++              p_uv * nop_norm2_squared + (cp_dot_nop * nop_uv);
++          const int64_t nop_absmax_element = std::max(
++              std::max(std::abs(nop[0]), std::abs(nop[1])), std::abs(nop[2]));
++          if (cp_dot_nop >
++              std::numeric_limits<int64_t>::max() / nop_absmax_element) {
++            // if squared length calculation would overflow.
++            flag = false;
++          }
++
++          // Compute squared length of vector CX in position coordinate system:
++          const VectorD<int64_t, 3> x1_pos =
++              prev_pos + (cp_dot_nop * nop) / nop_norm2_squared;
++          const uint64_t cx1_norm2_squared = (tip_pos - x1_pos).SquaredNorm();
++
++          VectorD<int64_t, 2> cx1_uv(nop_uv[1], -nop_uv[0]);  // Rotated NOP_UV.
++          // Compute CX.Norm2() * PN.Norm2()
++          const uint64_t norm0_squared =
++              IntSqrt(cx1_norm2_squared * nop_norm2_squared);
++          // Final cx_uv in the scaled coordinate space.
++          cx1_uv = cx1_uv * norm0_squared;
++
++          // compute p.o
++          const VectorD<int64_t, 2> po_uv =
++              GetTexCoordForEntryId(p_opp_data_id, data);
++
++          const VectorD<int64_t, 3> po_pos =
++              GetPositionForEntryId(p_opp_data_id);
++
++          const VectorD<int64_t, 3> npo = next_pos - po_pos;
++          const uint64_t npo_norm2_squared = npo.SquaredNorm();
++
++          if (po_uv == n_uv || npo_norm2_squared == 0) {  // we can't use p.o.
++            flag = false;
++          }
++
++          if (npo_norm2_squared != 0) {
++            const VectorD<int64_t, 3> cpo = tip_pos - po_pos;
++            const int64_t cpo_dot_npo = npo.Dot(cpo);
++            const VectorD<int64_t, 2> npo_uv = n_uv - po_uv;
++            const VectorD<int64_t, 2> x2_uv =
++                po_uv * npo_norm2_squared + (cpo_dot_npo * npo_uv);
++            const int64_t npo_absmax_element = std::max(
++                std::max(std::abs(npo[0]), std::abs(npo[1])), std::abs(npo[2]));
++            if (cpo_dot_npo >
++                std::numeric_limits<int64_t>::max() / npo_absmax_element) {
++              // if squared length calculation would overflow.
++              flag = false;
++            }
++
++            // Compute squared length of vector CX in position coordinate
++            // system:
++            const VectorD<int64_t, 3> x2_pos =
++                po_pos + (cpo_dot_npo * npo) / npo_norm2_squared;
++            const uint64_t cx2_norm2_squared = (tip_pos - x2_pos).SquaredNorm();
++
++            VectorD<int64_t, 2> cx2_uv(
++                npo_uv[1],
++                -npo_uv[0]);  // Rotated NPO_UV. Compute CX.Norm2() * PN.Norm2()
++            const uint64_t norm1_squared =
++                IntSqrt(cx2_norm2_squared * npo_norm2_squared);
++            // Final cx_uv in the scaled coordinate space.
++            cx2_uv = cx2_uv * norm1_squared;
++
++            if (is_encoder_t) {
++              const VectorD<int64_t, 2> c_uv =
++                  GetTexCoordForEntryId(data_id, data);
++              const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                       pn_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                       pn_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_no0((x1_uv + cx1_uv) /
++                                                         nop_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_no1((x1_uv - cx1_uv) /
++                                                         nop_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_po0((x2_uv + cx2_uv) /
++                                                         npo_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_po1((x2_uv - cx2_uv) /
++                                                         npo_norm2_squared);
++              // Judge whether the opposite corner exists
++              if (opp_data_id < data_id) {
++                const VectorD<int64_t, 2> o_uv =
++                    GetTexCoordForEntryId(opp_data_id, data);
++                // existent
++                if ((o_uv - predicted_uv_0).SquaredNorm() >
++                    (o_uv - predicted_uv_1).SquaredNorm()) {
++                  predicted_uv =
++                      (predicted_uv_0 + predicted_uv_no0 + predicted_uv_po0) /
++                      3;
++                } else {
++                  predicted_uv =
++                      (predicted_uv_1 + predicted_uv_no1 + predicted_uv_po1) /
++                      3;
++                }
++              } else {
++                // non-existent
++                if ((c_uv - predicted_uv_0).SquaredNorm() <
++                    (c_uv - predicted_uv_1).SquaredNorm()) {
++                  predicted_uv =
++                      (predicted_uv_0 + predicted_uv_no0 + predicted_uv_po0) /
++                      3;
++                  orientations_.push_back(true);
++                } else {
++                  predicted_uv =
++                      (predicted_uv_1 + predicted_uv_no1 + predicted_uv_po1) /
++                      3;
++                  orientations_.push_back(false);
++                }
++              }
++
++            } else {
++              // decode
++              if (opp_data_id < data_id) {
++                const VectorD<int64_t, 2> o_uv =
++                    GetTexCoordForEntryId(opp_data_id, data);
++                const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                         pn_norm2_squared);
++                const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                         pn_norm2_squared);
++                const VectorD<int64_t, 2> predicted_uv_no0((x1_uv + cx1_uv) /
++                                                           nop_norm2_squared);
++                const VectorD<int64_t, 2> predicted_uv_no1((x1_uv - cx1_uv) /
++                                                           nop_norm2_squared);
++                const VectorD<int64_t, 2> predicted_uv_po0((x2_uv + cx2_uv) /
++                                                           npo_norm2_squared);
++                const VectorD<int64_t, 2> predicted_uv_po1((x2_uv - cx2_uv) /
++                                                           npo_norm2_squared);
++                if ((o_uv - predicted_uv_0).SquaredNorm() >
++                    (o_uv - predicted_uv_1).SquaredNorm()) {
++                  predicted_uv =
++                      (predicted_uv_0 + predicted_uv_no0 + predicted_uv_po0) /
++                      3;
++                } else {
++                  predicted_uv =
++                      (predicted_uv_1 + predicted_uv_no1 + predicted_uv_po1) /
++                      3;
++                }
++              } else {
++                if (orientations_.empty()) {
++                  return false;
++                }
++                const bool orientation = orientations_.back();
++                orientations_.pop_back();
++                if (orientation) {
++                  const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                           pn_norm2_squared);
++                  const VectorD<int64_t, 2> predicted_uv_no((x1_uv + cx1_uv) /
++                                                            nop_norm2_squared);
++                  const VectorD<int64_t, 2> predicted_uv_po((x2_uv + cx2_uv) /
++                                                            npo_norm2_squared);
++                  predicted_uv =
++                      (predicted_uv_0 + predicted_uv_no + predicted_uv_po) / 3;
++                } else {
++                  const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                           pn_norm2_squared);
++                  const VectorD<int64_t, 2> predicted_uv_no((x1_uv - cx1_uv) /
++                                                            nop_norm2_squared);
++                  const VectorD<int64_t, 2> predicted_uv_po((x2_uv - cx2_uv) /
++                                                            npo_norm2_squared);
++                  predicted_uv =
++                      (predicted_uv_1 + predicted_uv_no + predicted_uv_po) / 3;
++                }
++              }
++            }
++          }
++        }
++      }
++      if (n_opp_data_id < data_id && flag == false) {
++        flag = true;
++        // n.o exists
++        const VectorD<int64_t, 2> no_uv =
++            GetTexCoordForEntryId(n_opp_data_id, data);
++
++        const VectorD<int64_t, 3> no_pos = GetPositionForEntryId(n_opp_data_id);
++
++        const VectorD<int64_t, 3> nop = no_pos - prev_pos;
++        const uint64_t nop_norm2_squared = nop.SquaredNorm();
++
++        if (p_uv == no_uv || nop_norm2_squared == 0) {  // we can't use n.o.
++          flag = false;
++        }
++
++        if (nop_norm2_squared != 0) {
++          const VectorD<int64_t, 3> cp = tip_pos - prev_pos;
++          const int64_t cp_dot_nop = nop.Dot(cp);
++          const VectorD<int64_t, 2> nop_uv = no_uv - p_uv;
++          const VectorD<int64_t, 2> x1_uv =
++              p_uv * nop_norm2_squared + (cp_dot_nop * nop_uv);
++          const int64_t nop_absmax_element = std::max(
++              std::max(std::abs(nop[0]), std::abs(nop[1])), std::abs(nop[2]));
++          if (cp_dot_nop >
++              std::numeric_limits<int64_t>::max() / nop_absmax_element) {
++            // if squared length calculation would overflow.
++            flag = false;
++          }
++
++          // Compute squared length of vector CX in position coordinate system:
++          const VectorD<int64_t, 3> x1_pos =
++              prev_pos + (cp_dot_nop * nop) / nop_norm2_squared;
++          const uint64_t cx1_norm2_squared = (tip_pos - x1_pos).SquaredNorm();
++
++          VectorD<int64_t, 2> cx1_uv(
++              nop_uv[1],
++              -nop_uv[0]);  // Rotated NOP_UV. Compute CX.Norm2() * PN.Norm2()
++          const uint64_t norm0_squared =
++              IntSqrt(cx1_norm2_squared * nop_norm2_squared);
++          // Final cx_uv in the scaled coordinate space.
++          cx1_uv = cx1_uv * norm0_squared;
++
++          if (is_encoder_t) {
++            // encoder
++            const VectorD<int64_t, 2> c_uv =
++                GetTexCoordForEntryId(data_id, data);
++            const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                     pn_norm2_squared);
++            const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                     pn_norm2_squared);
++            const VectorD<int64_t, 2> predicted_uv_no0((x1_uv + cx1_uv) /
++                                                       nop_norm2_squared);
++            const VectorD<int64_t, 2> predicted_uv_no1((x1_uv - cx1_uv) /
++                                                       nop_norm2_squared);
++
++            if (opp_data_id < data_id) {
++              const VectorD<int64_t, 2> o_uv =
++                  GetTexCoordForEntryId(opp_data_id, data);
++              if ((o_uv - predicted_uv_0).SquaredNorm() >
++                  (o_uv - predicted_uv_1).SquaredNorm()) {
++                predicted_uv = (predicted_uv_0 + predicted_uv_no0) / 2;
++              } else {
++                predicted_uv = (predicted_uv_1 + predicted_uv_no1) / 2;
++              }
++            } else {
++              if ((c_uv - predicted_uv_0).SquaredNorm() <
++                  (c_uv - predicted_uv_1).SquaredNorm()) {
++                predicted_uv = (predicted_uv_0 + predicted_uv_no0) / 2;
++                orientations_.push_back(true);
++              } else {
++                predicted_uv = (predicted_uv_1 + predicted_uv_no1) / 2;
++                orientations_.push_back(false);
++              }
++            }
++
++          } else {
++            // decoder
++            if (opp_data_id < data_id) {
++              const VectorD<int64_t, 2> o_uv =
++                  GetTexCoordForEntryId(opp_data_id, data);
++              const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                       pn_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                       pn_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_no0((x1_uv + cx1_uv) /
++                                                         nop_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_no1((x1_uv - cx1_uv) /
++                                                         nop_norm2_squared);
++              if ((o_uv - predicted_uv_0).SquaredNorm() >
++                  (o_uv - predicted_uv_1).SquaredNorm()) {
++                predicted_uv = (predicted_uv_0 + predicted_uv_no0) / 2;
++              } else {
++                predicted_uv = (predicted_uv_1 + predicted_uv_no1) / 2;
++              }
++            } else {
++              if (orientations_.empty()) {
++                return false;
++              }
++              const bool orientation = orientations_.back();
++              orientations_.pop_back();
++              if (orientation) {
++                const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                         pn_norm2_squared);
++                const VectorD<int64_t, 2> predicted_uv_no((x1_uv + cx1_uv) /
++                                                          nop_norm2_squared);
++                predicted_uv = (predicted_uv_0 + predicted_uv_no) / 2;
++              } else {
++                const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                         pn_norm2_squared);
++                const VectorD<int64_t, 2> predicted_uv_no((x1_uv - cx1_uv) /
++                                                          nop_norm2_squared);
++                predicted_uv = (predicted_uv_1 + predicted_uv_no) / 2;
++              }
++            }
++          }
++        }
++      }
++      if (p_opp_data_id < data_id && flag == false) {
++        flag = true;
++        // p.o exists
++        const VectorD<int64_t, 2> po_uv =
++            GetTexCoordForEntryId(p_opp_data_id, data);
++
++        const VectorD<int64_t, 3> po_pos = GetPositionForEntryId(p_opp_data_id);
++
++        const VectorD<int64_t, 3> npo = next_pos - po_pos;
++        const uint64_t npo_norm2_squared = npo.SquaredNorm();
++
++        if (po_uv == n_uv || npo_norm2_squared == 0) {  // we can't use p.o.
++          flag = false;
++        }
++
++        if (npo_norm2_squared != 0) {
++          const VectorD<int64_t, 3> cpo = tip_pos - po_pos;
++          const int64_t cpo_dot_npo = npo.Dot(cpo);
++          const VectorD<int64_t, 2> npo_uv = n_uv - po_uv;
++          const VectorD<int64_t, 2> x1_uv =
++              po_uv * npo_norm2_squared + (cpo_dot_npo * npo_uv);
++          const int64_t npo_absmax_element = std::max(
++              std::max(std::abs(npo[0]), std::abs(npo[1])), std::abs(npo[2]));
++          if (cpo_dot_npo >
++              std::numeric_limits<int64_t>::max() / npo_absmax_element) {
++            // if squared length calculation would overflow.
++            flag = false;
++          }
++
++          // Compute squared length of vector CX in position coordinate system:
++          const VectorD<int64_t, 3> x1_pos =
++              po_pos + (cpo_dot_npo * npo) / npo_norm2_squared;
++          const uint64_t cx1_norm2_squared = (tip_pos - x1_pos).SquaredNorm();
++
++          VectorD<int64_t, 2> cx1_uv(npo_uv[1], -npo_uv[0]);  // Rotated NPO_UV.
++          // Compute CX.Norm2() * PN.Norm2()
++          const uint64_t norm0_squared =
++              IntSqrt(cx1_norm2_squared * npo_norm2_squared);
++          // Final cx_uv in the scaled coordinate space.
++          cx1_uv = cx1_uv * norm0_squared;
++
++          if (is_encoder_t) {
++            // encoder
++            const VectorD<int64_t, 2> c_uv =
++                GetTexCoordForEntryId(data_id, data);
++            const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                     pn_norm2_squared);
++            const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                     pn_norm2_squared);
++            const VectorD<int64_t, 2> predicted_uv_po0((x1_uv + cx1_uv) /
++                                                       npo_norm2_squared);
++            const VectorD<int64_t, 2> predicted_uv_po1((x1_uv - cx1_uv) /
++                                                       npo_norm2_squared);
++            if (opp_data_id < data_id) {
++              const VectorD<int64_t, 2> o_uv =
++                  GetTexCoordForEntryId(opp_data_id, data);
++              if ((o_uv - predicted_uv_0).SquaredNorm() >
++                  (o_uv - predicted_uv_1).SquaredNorm()) {
++                predicted_uv = (predicted_uv_0 + predicted_uv_po0) / 2;
++              } else {
++                predicted_uv = (predicted_uv_1 + predicted_uv_po1) / 2;
++              }
++            } else {
++              if ((c_uv - predicted_uv_0).SquaredNorm() <
++                  (c_uv - predicted_uv_1).SquaredNorm()) {
++                predicted_uv = (predicted_uv_0 + predicted_uv_po0) / 2;
++                orientations_.push_back(true);
++              } else {
++                predicted_uv = (predicted_uv_1 + predicted_uv_po1) / 2;
++                orientations_.push_back(false);
++              }
++            }
++
++          } else {
++            // decoder
++            if (opp_data_id < data_id) {
++              const VectorD<int64_t, 2> o_uv =
++                  GetTexCoordForEntryId(opp_data_id, data);
++              const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                       pn_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                       pn_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_po0((x1_uv + cx1_uv) /
++                                                         npo_norm2_squared);
++              const VectorD<int64_t, 2> predicted_uv_po1((x1_uv - cx1_uv) /
++                                                         npo_norm2_squared);
++              if ((o_uv - predicted_uv_0).SquaredNorm() >
++                  (o_uv - predicted_uv_1).SquaredNorm()) {
++                predicted_uv = (predicted_uv_0 + predicted_uv_po0) / 2;
++              } else {
++                predicted_uv = (predicted_uv_1 + predicted_uv_po1) / 2;
++              }
++            } else {
++              if (orientations_.empty()) {
++                return false;
++              }
++              const bool orientation = orientations_.back();
++              orientations_.pop_back();
++              if (orientation) {
++                const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                         pn_norm2_squared);
++                const VectorD<int64_t, 2> predicted_uv_po((x1_uv + cx1_uv) /
++                                                          npo_norm2_squared);
++                predicted_uv = (predicted_uv_0 + predicted_uv_po) / 2;
++              } else {
++                const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                         pn_norm2_squared);
++                const VectorD<int64_t, 2> predicted_uv_po((x1_uv - cx1_uv) /
++                                                          npo_norm2_squared);
++                predicted_uv = (predicted_uv_1 + predicted_uv_po) / 2;
++              }
++            }
++          }
++        }
++      }
++      if (flag == false) {
++        // This indicates that there is no n.o or p.o corner, so only the
++        // current triangle is used for prediction.
++        if (is_encoder_t) {
++          // When encoding, compute both possible vectors and determine which
++          // one results in a better prediction. Both vectors need to be
++          // transformed back from the scaled space to the real UV coordinate
++          // space.
++          const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                   pn_norm2_squared);
++          const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                   pn_norm2_squared);
++          if (opp_data_id < data_id) {
++            const VectorD<int64_t, 2> o_uv =
++                GetTexCoordForEntryId(opp_data_id, data);
++            if ((o_uv - predicted_uv_0).SquaredNorm() >
++                (o_uv - predicted_uv_1).SquaredNorm()) {
++              predicted_uv = predicted_uv_0;
++            } else {
++              predicted_uv = predicted_uv_1;
++            }
++          } else {
++            const VectorD<int64_t, 2> c_uv =
++                GetTexCoordForEntryId(data_id, data);
++            if ((c_uv - predicted_uv_0).SquaredNorm() <
++                (c_uv - predicted_uv_1).SquaredNorm()) {
++              predicted_uv = predicted_uv_0;
++              orientations_.push_back(true);
++            } else {
++              predicted_uv = predicted_uv_1;
++              orientations_.push_back(false);
++            }
++          }
++        } else {
++          // When decoding the data, we already know which orientation to use.
++          if (opp_data_id < data_id) {
++            const VectorD<int64_t, 2> o_uv =
++                GetTexCoordForEntryId(opp_data_id, data);
++            const VectorD<int64_t, 2> predicted_uv_0((x_uv + cx_uv) /
++                                                     pn_norm2_squared);
++            const VectorD<int64_t, 2> predicted_uv_1((x_uv - cx_uv) /
++                                                     pn_norm2_squared);
++            if ((o_uv - predicted_uv_0).SquaredNorm() >
++                (o_uv - predicted_uv_1).SquaredNorm()) {
++              predicted_uv = predicted_uv_0;
++            } else {
++              predicted_uv = predicted_uv_1;
++            }
++          } else {
++            if (orientations_.empty()) {
++              return false;
++            }
++            const bool orientation = orientations_.back();
++            orientations_.pop_back();
++            if (orientation) {
++              predicted_uv = (x_uv + cx_uv) / pn_norm2_squared;
++            } else {
++              predicted_uv = (x_uv - cx_uv) / pn_norm2_squared;
++            }
++          }
++        }
++      }
++#else
+       if (is_encoder_t) {
+         // When encoding, compute both possible vectors and determine which one
+         // results in a better prediction.
+@@ -223,6 +758,7 @@ bool MeshPredictionSchemeTexCoordsPortablePredictor<
+           predicted_uv = (x_uv - cx_uv) / pn_norm2_squared;
+         }
+       }
++#endif
+       predicted_value_[0] = static_cast<int>(predicted_uv[0]);
+       predicted_value_[1] = static_cast<int>(predicted_uv[1]);
+       return true;
+-- 
+1.8.3.1
+

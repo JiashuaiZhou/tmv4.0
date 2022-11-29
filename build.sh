@@ -29,6 +29,7 @@ print_usage()
   echo "       --tidy       : Check source code with clang-tidy"
   echo "       --cppcheck   : Check source code with cppcheck"
   echo "       --position   : Turn on position compression enhancement"
+  echo "       --uv         : Turn on uv coordinates compression enhancement"
   echo "       --test       : Build unit tests"
   echo "       --codeCodecId: Code codec id used in the bitstream"
   echo "";
@@ -60,8 +61,9 @@ while [[ $# -gt 0 ]] ; do
     --doc         ) make -C "${CURDIR}/doc/"; exit 0;;
     --format      ) TARGETS+=( "clang-format" );;
     --tidy        ) TARGETS+=( "clang-tidy" );;
-    --cppcheck    ) TARGETS+=( "cppcheck" );;
+    --cppcheck    ) TARGETS+=( "cppcheck" );;       
     --position    ) CMAKE_FLAGS+=( "-DUSE_POSITION_PATCH=TRUE" ) ;;    
+    --uv          ) CMAKE_FLAGS+=( "-DUSE_UV_PATCH=TRUE" ) ;;
     --test        ) CMAKE_FLAGS+=( "-DBUILD_UNIT_TEST_APPS=TRUE" ) ;;
     --codeCodecId ) CMAKE_FLAGS+=( "-DCODE_CODEC_ID=TRUE" ) ;;
     *             ) print_usage "unsupported arguments: $C ";;

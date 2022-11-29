@@ -24,9 +24,11 @@ if( EXISTS ${DIR}/CMakeLists.txt )
   endif()
 endif()
 
-
 if (USE_POSITION_PATCH)
   add_definitions(-DDRACO_USE_POSITION)
+endif()
+if (USE_UV_PATCH)
+  add_definitions(-DDRACO_USE_UV)
 endif()
 
 # disable submodule warnings

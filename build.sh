@@ -14,9 +14,15 @@ print_usage()
   echo "";
   echo "    Usage:" 
   echo "       -h|--help    : Display this information."  
-  echo "       --ouptut     : Output build directory."
+  echo "       -o|--ouptut  : Output build directory."
+  echo "       -n|--ninja   : Use Ninja."
   echo "       --debug      : Build in debug mode."
   echo "       --release    : Build in release mode."
+  echo "       --doc        : Build documentation (latex and pdflatex requiered)."
+  echo "       --format     : Format source code."
+  echo "       --tidy       : Check source code with clang-tidy."
+  echo "       --cppcheck   : Check source code with cppcheck."
+  echo "       --test       : Build unit tests."
   echo "       --meshType=* : Define template mesh type: float or double."
   echo "       --doc        : Build documentation (latex and pdflatex requiered)"
   echo "       --format     : Format source code"
@@ -46,7 +52,8 @@ while [[ $# -gt 0 ]] ; do
   C=$1; if [[ "$C" =~ [=] ]] ; then V=${C#*=}; elif [[ $2 == -* ]] ; then  V=""; else V=$2; shift; fi;
   case "$C" in    
     -h|--help     ) print_usage ;;
-    --output=*    ) OUTPUT=${V};;
+    -o|--output=* ) OUTPUT=${V};;
+    -n|--ninja    ) CMAKE_FLAGS+=("-GNinja");;
     --debug       ) MODE=Debug; CMAKE_FLAGS+=("-DCMAKE_C_FLAGS=\"-g3\"" "-DCMAKE_CXX_FLAGS=\"-g3\"" );;
     --release     ) MODE=Release;;
     --meshType=*  ) CMAKE_FLAGS+=( "-DMESH_TYPE=${V}" );;

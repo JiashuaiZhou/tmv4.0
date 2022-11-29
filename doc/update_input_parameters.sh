@@ -49,7 +49,7 @@ echo "## ${NAME^} software input parameters"
 
 echo "" 
 echo "| **--key=value** | **Usage** | "
-echo "|---|---|"
+echo "|---|---| "
 FIRST="";
 SECOND="";
 while read -r line;
@@ -70,8 +70,9 @@ do
   else
     if [ $isIn == 0 ]
     then  
-     if [ "$FIRST" != "" ] ; then echo  "| $FIRST | $SECOND | "; FIRST=""; fi
-     echo  "| **${line}** |  | "
+     if [ "$FIRST" != "" ] ; then echo  "| $FIRST | $SECOND | "; FIRST=""; fi     
+      echo "||| "
+      echo  "| **${line}** || "
     else                 
       SECOND="${SECOND} $line"
     fi

@@ -24,9 +24,6 @@ DerivedData
 # configure files
 source/lib/vdmcUtil/config.h
 
-# doc
-doc/mpeg-vmesh-sw-manual.aux
-
 # Dependencies
 dependencies/directx-headers
 dependencies/directx-math
@@ -45,9 +42,9 @@ dependencies/ffmpeg
 
 # pipeline configuration files
 /generatedConfigFiles/
-generatedConfigFilesHM/
-generatedConfigFilesVTM/
-results/
+/generatedConfigFilesHM/
+/generatedConfigFilesVTM/
+/scripts/.modules/
 
 # Temp files
 /*.yuv

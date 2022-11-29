@@ -60,6 +60,7 @@ struct VMCMetricsParameters {
   int    gridSize       = 1024;
   int    qp             = 12;
   int    qt             = 13;
+  bool   dequantizeUV   = true;
   double minPosition[3] = {0.0, 0.0, 0.0};
   double maxPosition[3] = {0.0, 0.0, 0.0};
   double resolution     = 0;

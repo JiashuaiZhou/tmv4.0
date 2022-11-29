@@ -1,0 +1,4 @@
+Name,EncParams,DecParams    
+anchor,,
+texture1k,--textureVideoWidth=1024 --textureVideoHeight=1024,
+texture2k,--textureVideoWidth=2048 --textureVideoHeight=2048,

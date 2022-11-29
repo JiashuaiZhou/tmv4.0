@@ -219,9 +219,9 @@ struct VMCEncoderParameters {
   // input
   bool unifyVertices     = false;
   bool invertOrientation = false;
-  bool normalizeUV       = false;
 
   // output
+  bool dequantizeUV          = true;
   bool keepIntermediateFiles = false;
 
   // GeometryDecimate
@@ -253,10 +253,7 @@ struct VMCEncoderParameters {
   CachingPoint cachingPoint          = CachingPoint::NONE;
   std::string  cachingDirectory      = {};
   bool         ignoreTextureEncoding = false;
-
-  // Bug fix
-  bool forceCoordTruncation   = false;
-  bool newInterGofTermination = true;
+  
 };
 
 //============================================================================
@@ -298,8 +295,7 @@ private:
                                VMCFrame&                     frame,
                                const TriangleMesh<MeshType>& input,
                                const VMCEncoderParameters&   params,
-                               int32_t& lastIntraFrameIndex,
-                               bool&    forceSubGofRestToIntra);
+                               int32_t& lastIntraFrameIndex);
 
   void        unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
                             VMCGroupOfFrames&           gof,

@@ -9,13 +9,13 @@ print_usage()
 {
   echo "$0Clone and build external tools used by run.sh script and unit tests: "
   echo "";
-  echo "    Usage:" 
-  echo "       --all: clone HM and HDRTools for unit tests (default: $ALL)"
+  echo "  Usage:" 
+  echo "    --all: clone HM and HDRTools for unit tests (default: $ALL)"
   echo "";
-  echo "    Examples:";
-  echo "      - $0  "; 
-  echo "      - $0 --all";  
-  echo "    ";
+  echo "  Examples:";
+  echo "    $0  "; 
+  echo "    $0 --all";  
+  echo "";
   if [ "$#" != 0 ] ; then echo -e "ERROR: $# $1 \n"; fi
   exit 0;
 }
@@ -50,18 +50,10 @@ MMETRIC=${DEPDIR}/mpeg-pcc-mmetric
 if [ ! -d ${MMETRIC} ] 
 then 
   echo -e "\033[0;32mClone: ${MMETRIC} \033[0m";
-  git clone http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git -b 1_0_1 ${MMETRIC} 
+  git clone http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git -b new_library_architecture ${MMETRIC} 
 fi    
 echo -e "\033[0;32mBuild: ${MMETRIC} \033[0m";
-cd ${MMETRIC}
-pwd
-if [ ! -d ./deps/glfw/ ] ; then ./build-deps.sh ; fi
-if [ ! -d build ] ; then mkdir build; fi
-cd build 
-${CMAKE} ..
-${CMAKE} --build . --config Release --parallel 20
-cd ${CURDIR}
-
+${MMETRIC}/build.sh
 echo "ALL = ${ALL}"
 
 if [ ${ALL} == 1 ]

@@ -99,10 +99,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.decodedMaterialLibPath,  
       params.decodedMaterialLibPath, 
       "Decoded materials")
-    ("normalizeUV",
-      decParams.normalizeUV, 
-      decParams.normalizeUV,
-      "Normalize uv texture coordinates")
+    ("dequantizeUV",
+      decParams.dequantizeUV, 
+      decParams.dequantizeUV,
+      "Dequantize texture coordinates of the decoded meshes")
     ("startFrameIndex",   
       params.startFrame, 
       params.startFrame,
@@ -226,6 +226,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       && (metParams.srcMeshPath.empty() || metParams.srcTexturePath.empty())) {
     err.error() << "Source mesh/texture must be define to compute metrics\n";
   }
+  metParams.dequantizeUV = decParams.dequantizeUV;
 
   if (err.is_errored) { return false; }
 

@@ -223,17 +223,18 @@ VMCMetrics::compute(const mm::Model&            srcModel,
     glm::vec2 one2(1, 1);
     glm::vec3 zero3(0, 0, 0);
 
+    auto qt = i == 0 || !params.dequantizeUV ? params.qt : 0;
     if (verbose) {
       std::cout << "De-quantizing" << std::endl;
       std::cout << "  qp = " << params.qp << std::endl;
-      std::cout << "  qt = " << params.qt << std::endl;
+      std::cout << "  qt = " << qt << std::endl;
       std::cout << "  qn = " << 0 << std::endl;
       std::cout << "  qc = " << 0 << std::endl;
     }
     mm::Dequantize::dequantize(model,          // input
                                dequantize[i],  // output
                                params.qp,      // qp
-                               params.qt,      // qt,
+                               qt,             // qt,
                                0,              // qn,
                                0,              // qc,
                                minPos,         // minPos
@@ -280,7 +281,6 @@ VMCMetrics::compute(const mm::Model&            srcModel,
         std::cout << "  nbSamplesMin = " << nbSamplesMin << std::endl;
         std::cout << "  nbSamplesMax = " << nbSamplesMax << std::endl;
         std::cout << "  maxIterations = " << maxIterations << std::endl;
-        std::cout << "  useFixedPoint = " << useFixedPoint << std::endl;
         std::cout << "  using contrained mode with gridSize " << std::endl;
       }
       mm::Sample::meshToPcGrid(reindex[i],                // input
@@ -412,19 +412,14 @@ VMCMetrics::display(bool verbose) {
     auto print = [](const std::vector<double> pcc,
                     const std::vector<double> ibsm,
                     const std::string         str) {
-      auto printCastMax = [](double value) {
-        if (value > 999.98)
-          std::cout << std::right << std::setw(12) << "999.99 ";
-        else std::cout << std::right << std::setw(12) << value << ' ';
-      };
       std::cout << std::left << std::setw(25) << str << ": ";
-      printCastMax(pcc[0]);
-      printCastMax(pcc[1]);
-      printCastMax(pcc[2]);
-      printCastMax(pcc[3]);
-      printCastMax(pcc[4]);
-      printCastMax(ibsm[6]);
-      printCastMax(ibsm[2]);
+      std::cout << std::right << std::setw(12) << pcc[0] << ' ';
+      std::cout << std::right << std::setw(12) << pcc[1] << ' ';
+      std::cout << std::right << std::setw(12) << pcc[2] << ' ';
+      std::cout << std::right << std::setw(12) << pcc[3] << ' ';
+      std::cout << std::right << std::setw(12) << pcc[4] << ' ';
+      std::cout << std::right << std::setw(12) << ibsm[6] << ' ';
+      std::cout << std::right << std::setw(12) << ibsm[2] << ' ';
       std::cout << std::left << '\n';
     };
     for (size_t i = 0; i < compare->size(); i++) {

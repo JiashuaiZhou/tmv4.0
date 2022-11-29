@@ -12,3 +12,9 @@ vars:
   # this is the directory containing the hm/hdrtools config
   # NB: it must end with a directory separator
   cfg-prefix: /path/to/mpeg-vmesh-tm/cfg/
+
+  # video configuration files
+  video-config-disp-ai: disp-ai.cfg
+  video-config-disp-ld: disp-ld.cfg
+  video-config-text-ai: text-ai.cfg
+  video-config-text-ld: text-ld.cfg

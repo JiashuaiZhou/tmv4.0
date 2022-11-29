@@ -113,6 +113,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       metParams.qt,
       metParams.qt,
       "Texture coordinate bit depth")
+    ("dequantizeUV",
+      metParams.dequantizeUV, 
+      metParams.dequantizeUV,
+      "Texture coordinates of the decoded meshes are quantized")
     
   (po::Section("PCC metric"))
     ("pcc",

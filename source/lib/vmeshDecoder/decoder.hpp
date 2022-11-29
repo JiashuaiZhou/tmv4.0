@@ -52,7 +52,7 @@ struct VMCDecoderParameters {
   std::string textureVideoHDRToolDecConfig = {};
   int32_t     textureVideoUpsampleFilter   = 0;
   bool        textureVideoFullRange        = false;
-  bool        normalizeUV                  = false;
+  bool        dequantizeUV                 = true;
   bool        keepIntermediateFiles        = false;
 };
 

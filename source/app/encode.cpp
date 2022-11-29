@@ -128,6 +128,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.reconstructedTexturePath, 
       params.reconstructedTexturePath, 
       "Reconstructed texture")
+    ("dequantizeUV", 
+      encParams.dequantizeUV, 
+      encParams.dequantizeUV, 
+      "Dequantize texture coordinates of the reconstructed meshes")
     ("recMat", 
       params.reconstructedMaterialLibPath, 
       params.reconstructedMaterialLibPath, 
@@ -406,10 +410,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.unifyVertices, 
       encParams.unifyVertices, 
       "Unify duplicated vertices")
-    ("normalizeUV", 
-      encParams.normalizeUV, 
-      encParams.normalizeUV, 
-      "Normalize uv texture coordinates")    
     ("meshCodecId", 
       encParams.meshCodecId, 
       encParams.meshCodecId, 
@@ -527,16 +527,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "  - 1/uvatlas : symplify\n"
       "  - 2/subdiv  : subdiv \n"
       "  - 255/create: create caching files")
-
-  (po::Section("Bug fix"))    
-    ("forceCoordTruncation", 
-      encParams.forceCoordTruncation, 
-      encParams.forceCoordTruncation, 
-      "Force truncation of the precision of the intermediate mesh files")
-    ("newInterGofTermination", 
-      encParams.newInterGofTermination, 
-      encParams.newInterGofTermination, 
-      "Enable new inter gof termination (disable to be consistant with v1.0)")
   ;
   /* clang-format on */
 
@@ -585,11 +575,12 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     metParams.minPosition[k] = encParams.minPosition[k];
     metParams.maxPosition[k] = encParams.maxPosition[k];
   }
-  metParams.qp         = encParams.bitDepthPosition;
-  metParams.qt         = encParams.bitDepthTexCoord;
-  metParams.frameCount = params.frameCount;
-  metParams.frameStart = params.startFrame;
-
+  metParams.qp           = encParams.bitDepthPosition;
+  metParams.qt           = encParams.bitDepthTexCoord;
+  metParams.frameCount   = params.frameCount;
+  metParams.frameStart   = params.startFrame;
+  metParams.dequantizeUV = encParams.dequantizeUV;
+  
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""

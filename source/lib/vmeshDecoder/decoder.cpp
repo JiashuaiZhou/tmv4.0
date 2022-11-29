@@ -383,9 +383,11 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   fflush(stdout);
   _stats.textureByteCount = _byteCounter - _stats.textureByteCount;
   _stats.totalByteCount   = _byteCounter - _stats.totalByteCount;
-  byteCounter            = _byteCounter;
-  gofInfoSrc             = gofInfo;
-  if (!params.normalizeUV) {
+  byteCounter             = _byteCounter;
+  gofInfoSrc              = gofInfo;
+
+  // Quantize UV coordinate
+  if (!params.dequantizeUV) {
     const auto scale = (1 << _sps.bitDepthTexCoord) - 1.0;
     for (auto& rec : reconstruct.meshes()) {
       const auto texCoordCount = rec.texCoordCount();

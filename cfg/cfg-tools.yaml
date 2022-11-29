@@ -13,7 +13,7 @@ tools:
 
       # Geometry decimate   
       - target:             ${pp}
-      - minCCTriangleCount: 8
+      - minCCTriangleCount: 0
       - minPosition:        ${src-min-pos}
       - maxPosition:        ${src-max-pos}
 

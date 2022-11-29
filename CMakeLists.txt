@@ -30,8 +30,11 @@ SET( MESH_TYPE "double" CACHE STRING "Mesh coordinate type: float or double" )
 # Note: Disable to stay compliant with v1.0
 OPTION( CODE_CODEC_ID            "Code codec id in bitstreams"            FALSE )
 
-# turn off/on the postion compressoin enhancement tool for draco
+# turn off/on the postion compression enhancement tool for draco
 OPTION( USE_POSITION_PATCH "postion compression enhancement tool for draco" FALSE )
+
+# turn off/on the uv coordinates compression enhancement tool for draco
+OPTION( USE_UV_PATCH "uv coordinates compression enhancement tool for draco" FALSE )
 
 # Building options
 set(CMAKE_CXX_STANDARD             14)

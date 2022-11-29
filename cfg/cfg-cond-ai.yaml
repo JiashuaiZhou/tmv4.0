@@ -6,105 +6,133 @@ categories:
     tools: [ encoder, decoder, mmetric ]
 
     # NB: common options are in cfg-tools.yaml
-    encoder:    
+    encoder:
       - analyzeGof: 0
-      # if the encoder should ignore subdivsion, use subdiv=base
-      # NB: If the subdiv mesh was computed with it=0, it is the same as base.
-      #     However, some base meshes in the CfP submission were generated with
-      #     it>0, causing the base mesh to be fitted to the subdivision result
-      #     even though the sequence wasn't coded with the subdivision mesh.
-      - - !conditional '${pp} >= 0.24 and ${pp} < 1.0'
-        - subdivIsBase: 1
-      # if pp not set, or no decimation, use input sequence
-      - - !conditional 'not defined ${pp} or ${pp} == 1.0'
-        - baseIsSrc:    1
-        - subdivIsBase: 1
+      - baseMeshTexCoordBitDepth: 10
 
       # configuration for HM
       - geometryVideoEncoderConfig: ${cfg-prefix}/${video-config-disp-ai}
-      - textureVideoEncoderConfig:  ${cfg-prefix}/${video-config-text-ai}
+      - textureVideoEncoderConfig: ${cfg-prefix}/${video-config-text-ai}
 
     # sequences to code in this condition, and their overridden options/vars
     #  pp: sets per-rate decimation parameter
     sequences:
       longdress:
         seq-id: 1
-        pp: { r1: 0.03, r2: 0.06, r3: 0.36, r4: 0.48, r5: 1.00 }
+        pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.06, r5: 1.00 }
         encoder:
-          - liftingIterationCount: { r1: 3, r2: 3, r3: 0, r4: 0, r5: 0 }
-          - baseMeshPositionBitDepth: 10
-          - textureVideoQP: { r1: 47, r2: 43, r3: 42, r4: 41, r5: 39 }
-          - liftingQP: { r1: "30,42,42", r2: "26,38,38", r3: "32,44,44", r4: "26,38,38", r5: "34,46,46" }
+          - liftingQP: { r1: "34,46,46", r2: "31,43,43", r3: "28,40,40", r4: "25,37,37", r5: "22,34,34" }
+          - liftingIterationCount:  { r1: 3, r2: 3, r3: 3, r4: 3, r5: 0 }
+          - textureVideoQP: { r1: 46, r2: 43, r3: 40, r4: 37, r5: 37 }
+          - encodeGeometryVideo: { r5: 0 }
+          - ai_fitSubdiv: { r5: 0 }
           - unifyVertices: { r5: 1 }
+          - subdivIsBase: { r5: 1 }
+          - baseIsSrc: { r5: 1 }
+          - baseMeshPositionBitDepth: 10
 
       soldier:
         seq-id: 2
-        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.48, r5: 1.00 }
+        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.06, r5: 1.00 }
         encoder:
-          - liftingIterationCount: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
-          - baseMeshPositionBitDepth: 10
-          - textureVideoQP: { r1: 43, r2: 40, r3: 36, r4: 36, r5: 34 }
-          - liftingQP: { r1: "31,43,43", r2: "24,36,36", r3: "24,36,36", r4: "27,39,39", r5: "34,46,46" }
+          - liftingQP: { r1: "34,46,46", r2: "31,43,43", r3: "28,40,40", r4: "25,37,37", r5: "22,34,34" }
+          - liftingIterationCount:  { r1: 3, r2: 3, r3: 3, r4: 3, r5: 0 }
+          - textureVideoQP: { r1: 44, r2: 41, r3: 38, r4: 35, r5: 32 }
+          - encodeGeometryVideo: { r5: 0 }
+          - ai_fitSubdiv: { r5: 0 }
           - unifyVertices: { r5: 1 }
+          - subdivIsBase: { r5: 1 }
+          - baseIsSrc: { r5: 1 }
+          - baseMeshPositionBitDepth: 10
 
       basketball_player:
         seq-id: 3
-        pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.36, r5: 0.48 }
+        pp: { r1: 0.03, r2: 0.06, r3: 0.06, r4: 0.48, r5: 1.00 }
         encoder:
+          - liftingQP: { r1: "31,43,43", r2: "28,40,40", r3: "25,37,37", r4: "25,37,37", r5: "25,37,37" }
           - liftingIterationCount: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - textureVideoQP: { r1: 38, r2: 33, r3: 28, r4: 28, r5: 28 }
+          - encodeGeometryVideo: { r4: 0, r5: 0 }
+          - ai_fitSubdiv: { r4: 0, r5: 0 }
+          - unifyVertices: { r5: 1 }
+          - subdivIsBase: { r4: 1, r5: 1 }
+          - baseIsSrc: { r5: 1 }
+          - invertOrientation: { r5: 1 }
           - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
-          - textureVideoQP: { r1: 41, r2: 38, r3: 30, r4: 29, r5: 25 }
-          - liftingQP: { r1: "43,55,55", r2: "25,37,37", r3: "23,35,35", r4: "28,40,40", r5: "30,42,42" }
 
       dancer:
         seq-id: 4
-        pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.36, r5: 0.48 }
+        pp: { r1: 0.03, r2: 0.03, r3: 0.06, r4: 0.06, r5: 1.00 }
         encoder:
-          - liftingIterationCount: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
-          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
-          - textureVideoQP: { r1: 42, r2: 39, r3: 31, r4: 30, r5: 26 }
-          - liftingQP: { r1: "42,54,54", r2: "24,36,36", r3: "23,35,35", r4: "28,40,40", r5: "28,40,40" }
+          - liftingQP: { r1: "34,46,46", r2: "31,43,43", r3: "28,40,40", r4: "25,37,37", r5: "25,37,37" }
+          - liftingIterationCount: { r1: 3, r2: 3, r3: 3, r4: 3, r5: 0 }
+          - textureVideoQP: { r1: 43, r2: 38, r3: 33, r4: 28, r5: 28 }
+          - encodeGeometryVideo: { r5: 0 }
+          - ai_fitSubdiv: { r5: 0 }
+          - unifyVertices: { r5: 1 }
+          - subdivIsBase: { r5: 1 }
+          - baseIsSrc: { r5: 1 }
+          - invertOrientation: { r5: 1 }
+          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 11, r4: 11, r5: 12 }
 
       mitch:
         seq-id: 5
-        pp: { r1: 0.03, r2: 0.06, r3: 0.48, r4: 0.72, r5: 0.72 }
+        pp: { r1: 0.06, r2: 0.06, r3: 0.06, r4: 0.36, r5: 1.00 }
         encoder:
-          - liftingIterationCount: { r1: 3, r2: 3, r3: 0, r4: 0, r5: 0 }
-          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 12, r4: 12, r5: 12 }
-          - textureVideoQP: { r1: 42, r2: 39, r3: 45, r4: 42, r5: 38 }
-          - liftingQP: { r1: "28,40,40", r2: "28,40,40", r3: "30,42,42", r4: "30,42,42", r5: "30,42,42" }
-          - textureVideoWidth: { r3: 4096, r4: 4096, r5: 4096 }
-          - textureVideoHeight: { r3: 4096, r4: 4096, r5: 4096 }
+          - liftingQP: { r1: "34,46,46", r2: "31,43,43", r3: "28,40,40", r4: "25,37,37", r5: "22,34,34" }
+          - liftingIterationCount: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - textureVideoQP: { r1: 46, r2: 44, r3: 42, r4: 40, r5: 38 }
+          - encodeGeometryVideo: { r4: 0, r5: 0 }
+          - ai_fitSubdiv: { r4: 0, r5: 0 }
+          - unifyVertices: { r5: 1 }
+          - subdivIsBase: { r4: 0, r5: 1 }
+          - baseIsSrc: { r5: 1 }
+          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - textureVideoWidth: 4096
+          - textureVideoHeight: 4096
 
       thomas:
         seq-id: 6
-        pp: { r1: 0.06, r2: 0.06, r3: 0.48, r4: 0.60, r5: 0.60 }
+        pp: { r1: 0.06, r2: 0.06, r3: 0.06, r4: 0.36, r5: 1.00 }
         encoder:
-          - liftingIterationCount: { r1: 3, r2: 3, r3: 0, r4: 0, r5: 0 }
-          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 12, r4: 12, r5: 12 }
-          - textureVideoQP: { r1: 40, r2: 36, r3: 41, r4: 38, r5: 35 }
-          - liftingQP: { r1: "30,42,42", r2: "27,39,39", r3: "28,40,40", r4: "28,40,40", r5: "28,40,40" }
-          - textureVideoWidth: { r3: 4096, r4: 4096, r5: 4096 }
-          - textureVideoHeight: { r3: 4096, r4: 4096, r5: 4096 }
+          - liftingQP: { r1: "34,46,46", r2: "31,43,43", r3: "28,40,40", r4: "25,37,37", r5: "22,34,34" }
+          - liftingIterationCount: { r1: 3, r2: 3, r3: 3, r4: 0, r5: 0 }
+          - textureVideoQP: { r1: 43, r2: 41, r3: 39, r4: 37, r5: 35 }
+          - encodeGeometryVideo: { r4: 0, r5: 0 }
+          - ai_fitSubdiv: { r4: 0, r5: 0 }
+          - unifyVertices: { r5: 1 }
+          - subdivIsBase: { r4: 0, r5: 1 }
+          - baseIsSrc: { r5: 1 }
+          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
+          - textureVideoWidth: 4096
+          - textureVideoHeight: 4096
 
       football:
         seq-id: 7
-        pp: { r1: 0.03, r2: 0.06, r3: 0.12, r4: 0.48, r5: 0.72 }
+        pp: { r1: 0.06, r2: 0.06, r3: 0.12, r4: 0.24, r5: 0.72 }
         encoder:
-          - liftingIterationCount: { r1: 3, r2: 3, r3: 2, r4: 0, r5: 0 }
-          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
-          - textureVideoQP: { r1: 44, r2: 37, r3: 41, r4: 41, r5: 36 }
-          - liftingQP: { r1: "40,52,52", r2: "34,46,46", r3: "26,38,38", r4: "30,42,42", r5: "27,39,39" }
-          - textureVideoWidth: { r3: 4096, r4: 4096, r5: 4096 }
-          - textureVideoHeight: { r3: 4096, r4: 4096, r5: 4096 }
+          - liftingQP: { r1: "34,46,46", r2: "31,43,43", r3: "28,40,40", r4: "28,40,40", r5: "25,37,37" }
+          - liftingIterationCount: { r1: 3, r2: 3, r3: 2, r4: 2, r5: 0 }
+          - textureVideoQP: { r1: 49, r2: 45, r3: 41, r4: 41, r5: 37 }
+          - encodeGeometryVideo: { r5: 0 }
+          - ai_fitSubdiv: { r5: 0 }
+          - unifyVertices: { r5: 1 }
+          - subdivIsBase: { r5: 1 }
+          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 11, r4: 11, r5: 12 }
+          - textureVideoWidth: 4096
+          - textureVideoHeight: 4096
 
       levi:
         seq-id: 8
-        pp: { r1: 0.03, r2: 0.12, r3: 0.12, r4: 0.24, r5: 0.48 }
+        pp: { r1: 0.06, r2: 0.06, r3: 0.12, r4: 0.24, r5: 0.48 }
         encoder:
-          - liftingIterationCount: { r1: 3, r2: 2, r3: 2, r4: 0, r5: 0 }
-          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 11, r4: 12, r5: 12 }
-          - textureVideoQP: { r1: 38, r2: 40, r3: 35, r4: 32, r5: 30 }
-          - liftingQP: { r1: "39,51,51", r2: "34,46,46", r3: "30,42,42", r4: "30,42,42", r5: "28,40,40" }
-          - textureVideoWidth: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
-          - textureVideoHeight: { r2: 4096, r3: 4096, r4: 4096, r5: 4096 }
+          - liftingQP: { r1: "34,46,46", r2: "31,43,43", r3: "28,40,40", r4: "28,40,40", r5: "25,37,37" }
+          - liftingIterationCount:  { r1: 3, r2: 3, r3: 2, r4: 2, r5: 0 }
+          - textureVideoQP: { r1: 44, r2: 40, r3: 36, r4: 36, r5: 32 }
+          - encodeGeometryVideo: { r5: 0 }
+          - ai_fitSubdiv: { r5: 0 }
+          - unifyVertices: { r5: 1 }
+          - subdivIsBase: { r5: 1 }
+          - baseMeshPositionBitDepth: { r1: 11, r2: 11, r3: 11, r4: 11, r5: 12 }
+          - textureVideoWidth: 4096
+          - textureVideoHeight: 4096

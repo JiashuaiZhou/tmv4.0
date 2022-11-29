@@ -252,7 +252,6 @@ struct VMCEncoderParameters {
   // Caching
   CachingPoint cachingPoint          = CachingPoint::NONE;
   std::string  cachingDirectory      = {};
-  bool         ignoreTextureEncoding = false;
   
 };
 

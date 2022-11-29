@@ -612,17 +612,16 @@ bool
 VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
                                  Bitstream&                  bitstream,
                                  const VMCEncoderParameters& params) const {
-  const auto width      = params.textureWidth;
-  const auto height     = params.textureHeight;
-  const auto frameCount = reconstruct.frameCount();
-  if (params.ignoreTextureEncoding) {
-    bitstream.write((uint32_t)0);
+  if ( !params.encodeTextureVideo  ) {
     for (auto& texture : reconstruct.textures()) {
       texture.clear();
       texture.resize(1, 1, ColourSpace::BGR444p);
       texture.zero();
     }
   } else {
+    const auto width      = params.textureWidth;
+    const auto height     = params.textureHeight;
+    const auto frameCount = reconstruct.frameCount();
     // Save source video
     if (params.keepIntermediateFiles) {
       FrameSequence<uint8_t> bgrSrc(
@@ -1429,8 +1428,8 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
   const auto     frameCount             = uint16_t(gof.frameCount());
   const uint16_t widthDispVideo         = uint32_t(dispVideo.width());
   const uint16_t heightDispVideo        = uint32_t(dispVideo.height());
-  const uint16_t widthTexVideo          = uint32_t(params.textureWidth);
-  const uint16_t heightTexVideo         = uint32_t(params.textureHeight);
+  const uint16_t widthTexVideo          = uint32_t( params.textureWidth );
+  const uint16_t heightTexVideo         = uint32_t( params.textureHeight );
   const uint8_t  geometryVideoBlockSize = params.geometryVideoBlockSize;
   const auto     bitDepth               = uint8_t((params.bitDepthPosition - 1)
                                 + ((params.bitDepthTexCoord - 1) << 4));
@@ -1630,48 +1629,48 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     bitstream.size() - _stats.displacementsByteCount;
 
   // Reconstruct
-  if (params.encodeTextureVideo) {
-    std::cout << "Generating texture maps ";
-    reconstruct.textures().resize(params.textureWidth,
-                                  params.textureHeight,
-                                  ColourSpace::BGR444p,
-                                  frameCount);
-    for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      auto& frame = gof.frame(frameIndex);
-      if (params.encodeDisplacementsVideo) {
-        reconstructDisplacementFromVideoFrame(dispVideo.frame(frameIndex),
-                                              frame,
-                                              reconstruct.mesh(frameIndex),
-                                              params.geometryVideoBlockSize,
-                                              params.geometryVideoBitDepth);
-        inverseQuantizeDisplacements(frame,
-                                     params.bitDepthPosition,
-                                     params.liftingLevelOfDetailInverseScale,
-                                     params.liftingQP);
-        computeInverseLinearLifting(frame.disp,
-                                    frame.subdivInfoLevelOfDetails,
-                                    frame.subdivEdges,
-                                    params.liftingPredictionWeight,
-                                    params.liftingUpdateWeight,
-                                    params.liftingSkipUpdate);
-        applyDisplacements(frame,
-                           reconstruct.mesh(frameIndex),
-                           params.displacementCoordinateSystem);
-      }
-      if (!transferTexture(source.mesh(frameIndex),
-                           source.texture(frameIndex),
-                           reconstruct.mesh(frameIndex),
-                           reconstruct.texture(frameIndex),
-                           params)) {
-        return false;
-      }
+  reconstruct.textures().resize(
+    params.encodeTextureVideo ? params.textureWidth : 1,
+    params.encodeTextureVideo ? params.textureHeight : 1,
+    ColourSpace::BGR444p,
+    frameCount);
+
+  for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+    auto& frame = gof.frame(frameIndex);
+    if (params.encodeDisplacementsVideo) {
+      reconstructDisplacementFromVideoFrame(dispVideo.frame(frameIndex),
+                                            frame,
+                                            reconstruct.mesh(frameIndex),
+                                            params.geometryVideoBlockSize,
+                                            params.geometryVideoBitDepth);
+      inverseQuantizeDisplacements(frame,
+                                   params.bitDepthPosition,
+                                   params.liftingLevelOfDetailInverseScale,
+                                   params.liftingQP);
+      computeInverseLinearLifting(frame.disp,
+                                  frame.subdivInfoLevelOfDetails,
+                                  frame.subdivEdges,
+                                  params.liftingPredictionWeight,
+                                  params.liftingUpdateWeight,
+                                  params.liftingSkipUpdate);
+      applyDisplacements(frame,
+                         reconstruct.mesh(frameIndex),
+                         params.displacementCoordinateSystem);
     }
-    std::cout << '\n';
-    // compress texture
-    _stats.textureByteCount = bitstream.size();
-    if (!compressTextureVideo(reconstruct, bitstream, params)) {
+    if (params.encodeTextureVideo
+        && !transferTexture(source.mesh(frameIndex),
+                            source.texture(frameIndex),
+                            reconstruct.mesh(frameIndex),
+                            reconstruct.texture(frameIndex),
+                            params)) {
       return false;
     }
+  }
+  std::cout << '\n';
+  // compress texture
+  _stats.textureByteCount = bitstream.size();
+  if ( !compressTextureVideo(reconstruct, bitstream, params)) {
+    return false;
   }
   _stats.textureByteCount = bitstream.size() - _stats.textureByteCount;
   _stats.totalByteCount   = bitstream.size() - _stats.totalByteCount;

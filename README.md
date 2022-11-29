@@ -848,7 +848,6 @@ The following subsections contain input parameters for encoding, decoding, and m
 | --pcqmRadiusFactor=2 | PCQM radius factor | 
 ||| 
 | **Caching** || 
-| --ignoreTextureEncoding=0 | Ignore texture encoding | 
 | --cachingDirectory="" | Caching directory | 
 | --cachingPoint=none | Caching points: - 0/none    : off - 1/simplify: symplify - 1/uvatlas : symplify - 2/subdiv  : subdiv - 255/create: create caching files | 
 

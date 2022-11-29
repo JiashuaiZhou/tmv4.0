@@ -252,18 +252,18 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
                                    const VMCDecoderParameters& params) {
   printf("Decompress texture video\n");
   fflush(stdout);
-  // get video bitstream
-  uint32_t byteCountTexVideo = 0;
-  bitstream.read(byteCountTexVideo, _byteCounter);
-  printf("byteCountTexVideo = %u \n", byteCountTexVideo);
-  fflush(stdout);
-  if (byteCountTexVideo == 0) {
+  if (_sps.encodeTextureVideo == 0) {
     for (auto& texture : reconsctruct.textures()) {
       texture.clear();
       texture.resize(1, 1, ColourSpace::BGR444p);
       texture.zero();
     }
   } else {
+    // get video bitstream
+    uint32_t byteCountTexVideo = 0;
+    bitstream.read(byteCountTexVideo, _byteCounter);
+    printf("byteCountTexVideo = %u \n", byteCountTexVideo);
+    fflush(stdout);
     std::vector<uint8_t> videoBitstream(
       bitstream.buffer.begin() + _byteCounter,
       bitstream.buffer.begin() + _byteCounter + byteCountTexVideo);
@@ -375,8 +375,7 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   }
   _stats.textureByteCount = _byteCounter;
   // decompress texture
-  if (_sps.encodeTextureVideo
-      && !decompressTextureVideo(bitstream, reconstruct, params) ) {
+  if ( !decompressTextureVideo(bitstream, reconstruct, params) ) {
     return false;
   }
   printf("Done \n");

@@ -510,10 +510,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "PCQM radius factor")  
 
   (po::Section("Caching"))    
-    ("ignoreTextureEncoding", 
-      encParams.ignoreTextureEncoding, 
-      encParams.ignoreTextureEncoding, 
-      "Ignore texture encoding")
     ("cachingDirectory", 
       encParams.cachingDirectory, 
       encParams.cachingDirectory, 

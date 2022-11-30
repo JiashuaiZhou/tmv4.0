@@ -50,7 +50,7 @@ MMETRIC=${DEPDIR}/mpeg-pcc-mmetric
 if [ ! -d ${MMETRIC} ] 
 then 
   echo -e "\033[0;32mClone: ${MMETRIC} \033[0m";
-  git clone http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git -b new_library_architecture ${MMETRIC} 
+  git clone http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git -b 1.1.0 ${MMETRIC} 
 fi    
 echo -e "\033[0;32mBuild: ${MMETRIC} \033[0m";
 ${MMETRIC}/build.sh

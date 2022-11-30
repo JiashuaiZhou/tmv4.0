@@ -132,7 +132,7 @@ The V-DMC test model software uses several dependencies that are cloned and patc
 | [DirectXMath         ](https://github.com/microsoft/DirectXMath.git                          ) | b404898c9dcaff7b686bbaf6d2fba8ff0184a17e | 
 | [DirectXMesh         ](https://github.com/microsoft/DirectXMesh.git                          ) | 2c0ed18e271afa99a70948f784dfe082127fa0de | 
 | [draco               ](https://github.com/google/draco.git                                   ) | 1af95a20b81624f64c4b19794cb3ca991e6d0a76 | 
-| [mpeg-pcc-mmetric    ](http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git       ) | new_library_architecture | 
+| [mpeg-pcc-mmetric    ](http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git       ) | 1.1.0 | 
 | [tinyply             ](https://github.com/ddiakopoulos/tinyply.git                           ) | 2.3.4 | 
 | [UVAtlas             ](https://github.com/microsoft/UVAtlas.git                              ) | 5af1b5d2a0fd9e0e5d17aa0971ab17c890e318e0 | 
 | [HDRTools            ](http://gitlab.com/standards/HDRTools.git                              ) | v0.23 | 

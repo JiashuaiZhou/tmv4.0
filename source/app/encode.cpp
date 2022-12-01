@@ -413,7 +413,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("meshCodecId", 
       encParams.meshCodecId, 
       encParams.meshCodecId, 
-      "Mesh codec id")    
+      "Mesh codec id")
 
   (po::Section("Geometry video"))
     ("encodeGeometryVideo", 

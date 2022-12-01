@@ -57,6 +57,7 @@ struct VMCStats {
     faceCount += rhs.faceCount;
     baseMeshVertexCount += rhs.baseMeshVertexCount;
     processingTime += rhs.processingTime;
+    colorTransferTime += rhs.colorTransferTime;
     return *this;
   }
 
@@ -92,6 +93,10 @@ struct VMCStats {
               << std::right
               << std::chrono::duration<double>(processingTime).count()
               << " s \n";
+    std::cout << header << " color transfer time   " << std::setw(16)
+              << std::right
+              << std::chrono::duration<double>(colorTransferTime).count()
+              << " s \n";
     std::cout << header << " meshes bitrate        " << std::setw(16)
               << std::right << baseMeshBitrate << " mbps " << std::setw(16)
               << std::right << baseMeshByteCount << " B " << std::setw(16)
@@ -124,6 +129,7 @@ struct VMCStats {
   size_t                              faceCount              = 0;
   size_t                              baseMeshVertexCount    = 0;
   std::chrono::steady_clock::duration processingTime{};
+  std::chrono::steady_clock::duration colorTransferTime{};
 };
 
 //============================================================================

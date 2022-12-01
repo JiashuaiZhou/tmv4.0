@@ -195,8 +195,9 @@ struct VMCEncoderParameters {
   // displacements
   DisplacementCoordinateSystem displacementCoordinateSystem =
     DisplacementCoordinateSystem::LOCAL;
-  bool encodeDisplacementsVideo = true;
-  bool encodeTextureVideo       = true;
+  bool encodeDisplacementsVideo        = true;
+  bool encodeTextureVideo              = true;
+  bool applyOneDimensionalDisplacement = false;
 
   // lifting
   double  liftingUpdateWeight                 = 0.125;

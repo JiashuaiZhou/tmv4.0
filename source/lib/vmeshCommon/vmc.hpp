@@ -106,6 +106,7 @@ struct VMCSequenceParameterSet {
   bool    liftingSkipUpdate                   = false;
   bool    encodeDisplacementsVideo            = true;
   bool    encodeTextureVideo                  = true;
+  bool    applyOneDimensionalDisplacement     = false;
 
   SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
   DisplacementCoordinateSystem displacementCoordinateSystem =
@@ -292,12 +293,10 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
     dispVideoFrame.width() / geometryVideoBlockSize;
   const auto  pixelsPerBlock = geometryVideoBlockSize * geometryVideoBlockSize;
   const auto  shift          = uint16_t((1 << geometryVideoBitDepth) >> 1);
-  const auto& Y              = dispVideoFrame.plane(0);
-  const auto& U              = dispVideoFrame.plane(1);
-  const auto& V              = dispVideoFrame.plane(2);
+  const auto  planeCount     = dispVideoFrame.planeCount();
   const auto  pointCount     = rec.pointCount();
   auto&       disp           = frame.disp;
-  disp.resize(pointCount);
+  disp.assign(pointCount, Vec3<double>(0));
   for (int32_t v = 0; v < pointCount; ++v) {
     // to do: optimize power of 2
     const auto blockIndex       = v / pixelsPerBlock;
@@ -314,9 +313,10 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
     const auto x1 = x0 + x;
     const auto y1 = y0 + y;
     auto&      d  = disp[v];
-    d[0]          = double(Y.get(y1, x1)) - shift;
-    d[1]          = double(U.get(y1, x1)) - shift;
-    d[2]          = double(V.get(y1, x1)) - shift;
+    for (int32_t p = 0; p < planeCount; ++p) {
+      const auto& plane = dispVideoFrame.plane(p);
+      d[p] = double(plane.get(y1, x1)) - shift;
+    }
   }
   return 0;
 }

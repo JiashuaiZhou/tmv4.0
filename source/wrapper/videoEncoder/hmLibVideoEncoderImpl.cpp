@@ -898,11 +898,15 @@ Void
 hmLibVideoEncoderImpl<T>::xWritePicture(const TComPicYuv* pic,
                                         FrameSequence<T>& video) {
   int chromaSubsample =
-    pic->getWidth(COMPONENT_Y) / pic->getWidth(COMPONENT_Cb);
+    pic->getChromaFormat() == CHROMA_400
+      ? std::numeric_limits<int>::max()
+      : pic->getWidth(COMPONENT_Y) / pic->getWidth(COMPONENT_Cb);
   int         width  = m_iSourceWidth - m_confWinLeft - m_confWinRight;
   int         height = m_iSourceHeight - m_confWinTop - m_confWinBottom;
   ColourSpace format = m_cTEncTop.getChromaFormatIdc() == CHROMA_420
                          ? ColourSpace::YUV420p
+                       : m_cTEncTop.getChromaFormatIdc() == CHROMA_400
+                         ? ColourSpace::YUV400p
                        : m_bRGBformat ? ColourSpace::RGB444p
                                       : ColourSpace::YUV444p;
   video.resize(width, height, format, video.frameCount() + 1);

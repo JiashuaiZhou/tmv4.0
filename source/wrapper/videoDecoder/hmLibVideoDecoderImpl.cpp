@@ -377,7 +377,9 @@ void
 hmLibVideoDecoderImpl<T>::xWritePicture(const pcc_hm::TComPicYuv* pic,
                                         FrameSequence<T>&         video) {
   int chromaSubsample =
-    pic->getWidth(COMPONENT_Y) / pic->getWidth(COMPONENT_Cb);
+    pic->getChromaFormat() == CHROMA_400
+      ? std::numeric_limits<int>::max()
+      : pic->getWidth(COMPONENT_Y) / pic->getWidth(COMPONENT_Cb);
   printf("write output frame %d size = %d %d bit depth = %d - %d = %d in %zd "
          "bytes buffers ( ChromaSub. = %d m_bRGB2GBR = %d )\n",
          video.frameCount(),
@@ -390,9 +392,10 @@ hmLibVideoDecoderImpl<T>::xWritePicture(const pcc_hm::TComPicYuv* pic,
          chromaSubsample,
          m_bRGB2GBR);
   fflush(stdout);
-  ColourSpace format = chromaSubsample > 1 ? ColourSpace::YUV420p
-                       : m_bRGB2GBR        ? ColourSpace::BGR444p
-                                           : ColourSpace::YUV444p;
+  ColourSpace format = chromaSubsample > 2   ? ColourSpace::YUV400p
+                       : chromaSubsample > 1 ? ColourSpace::YUV420p
+                       : m_bRGB2GBR          ? ColourSpace::BGR444p
+                                             : ColourSpace::YUV444p;
   video.resize(m_outputWidth, m_outputHeight, format, video.frameCount() + 1);
   auto& image = video.frame(video.frameCount() - 1);
   image.set(pic->getAddr(COMPONENT_Y),

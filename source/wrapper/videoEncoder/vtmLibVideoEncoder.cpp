@@ -83,6 +83,8 @@ vtmLibVideoEncoder<T>::encode(FrameSequence<T>&       videoSrc,
       || videoSrc.colourSpace() == ColourSpace::BGR444p
       || videoSrc.colourSpace() == ColourSpace::GBR444p) {
     cmd << " --InputChromaFormat=444";
+  } else if (videoSrc.colourSpace() == ColourSpace::YUV400p) {
+    cmd << " --InputChromaFormat=400";
   } else {
     cmd << " --InputChromaFormat=420";
   }

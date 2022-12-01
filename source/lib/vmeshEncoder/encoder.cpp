@@ -1761,17 +1761,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                             params)) {
       return false;
     }
-    auto end = std::chrono::steady_clock::now();
-    _stats.colorTransferTime += end - start;
-
+    _stats.colorTransferTime += std::chrono::steady_clock::now() - start;
   }
-  std::cout << '\n';
-  // compress texture
-  _stats.textureByteCount = bitstream.size();
-  if ( !compressTextureVideo(reconstruct, bitstream, params)) {
-    return false;
-  }
-
   // compress texture  
   printf("Compress texture video \n");
   fflush(stdout);
@@ -1779,8 +1770,6 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   if ( !compressTextureVideo(reconstruct, bitstream, params)) {
     return false;
   }
-  printf("Compress texture video done \n");
-  fflush(stdout);
   _stats.textureByteCount = bitstream.size() - _stats.textureByteCount;
   _stats.totalByteCount   = bitstream.size() - _stats.totalByteCount;
 

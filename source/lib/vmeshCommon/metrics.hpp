@@ -115,6 +115,7 @@ public:
   std::vector<double> getPcqmResults();
 
 private:
+  void print(int32_t frameIndex = -1);
   void compute(const mm::Model&            srcModel,
                const mm::Model&            recModel,
                const mm::Image&            srcMap,

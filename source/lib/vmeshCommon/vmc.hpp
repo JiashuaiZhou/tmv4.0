@@ -333,21 +333,14 @@ subdivideBaseMesh(VMCFrame&               frame,
   auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   auto& subdivEdges        = frame.subdivEdges;
   rec                      = frame.base;
-  printf("Compute normals \n");
-  fflush(stdout);
   rec.computeNormals();
   if (subdivisionMethod == SubdivisionMethod::MID_POINT) {
-    printf("Compute normals \n");
-    fflush(stdout);
     rec.subdivideMidPoint(
       subdivisionIterationCount, &infoLevelOfDetails, &subdivEdges);
   } else {
     return -1;
   }
   rec.resizeNormals(rec.pointCount());
-
-  printf("Interpolate subdivision: normals \n");
-  fflush(stdout);
   interpolateSubdivision(
     rec.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);
   return 0;

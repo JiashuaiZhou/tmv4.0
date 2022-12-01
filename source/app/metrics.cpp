@@ -216,7 +216,7 @@ metrics(const Parameters& params) {
   vmesh::VMCMetrics metrics;
   for (int i = 0; i < params.frameCount; ++i) {
     const auto                    f = params.startFrame + i;
-    /*
+#if 0
     vmesh::TriangleMesh<MeshType> srcMesh;
     vmesh::TriangleMesh<MeshType> recMesh;
     vmesh::Frame<uint8_t>         srcText;
@@ -230,12 +230,13 @@ metrics(const Parameters& params) {
     }
     printf("Compute metric frame %d / %d  \n", i, params.frameCount);
     metrics.compute(srcMesh, recMesh, srcText, recText, params.metParams);
-    */
+#else
     metrics.compute(vmesh::expandNum(params.srcMeshPath, f),
                     vmesh::expandNum(params.decMeshPath, f),
                     vmesh::expandNum(params.srcTexturePath, f),
                     vmesh::expandNum(params.decTexturePath, f),
                     params.metParams);
+#endif
   }
   metrics.display(params.metParams.verbose);
   std::cout << "\nAll frames have been processed. \n";

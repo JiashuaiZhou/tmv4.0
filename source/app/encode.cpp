@@ -576,7 +576,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   metParams.frameCount   = params.frameCount;
   metParams.frameStart   = params.startFrame;
   metParams.dequantizeUV = encParams.dequantizeUV;
-  
+  metParams.verbose      = params.verbose;
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {
   std::cerr << "Error parsing option \"" << e.arg << "\" with argument \""

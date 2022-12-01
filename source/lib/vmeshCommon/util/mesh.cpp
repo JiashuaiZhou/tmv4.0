@@ -43,16 +43,40 @@ namespace vmesh {
 
 //============================================================================
 
+template<typename T, typename D>
+void templateConvert( std::shared_ptr<tinyply::PlyData> src,
+                      std::vector<T>&                   dst ) {
+  const size_t   numBytes = src->buffer.size_bytes();
+  std::vector<D> data;
+  dst.resize(src->count);
+  const size_t length = dst[0].size();
+  data.resize(src->count * length);
+  std::memcpy(data.data(), src->buffer.get(), numBytes);
+  for (size_t i = 0, idx = 0; i < src->count; i++)
+    for (size_t j = 0; j < length; j++, idx++) dst[i][j] = data[idx];
+}
+
 template<typename T>
 void
-convertFromPlyData(std::shared_ptr<tinyply::PlyData>& src,
-                   std::vector<T>&                    dst) {
+set(std::shared_ptr<tinyply::PlyData> src,
+    std::vector<T>&                   dst,
+    std::string                       name) {
   if (src) {
-    dst.resize(src->count);
-    std::memcpy(
-      reinterpret_cast<uint8_t*>(reinterpret_cast<void*>(dst.data())),
-      src->buffer.get(),
-      src->buffer.size_bytes());
+    switch (src->t) {
+    case tinyply::Type::INT8: templateConvert<T, int8_t>(src, dst); break;
+    case tinyply::Type::UINT8: templateConvert<T, uint8_t>(src, dst); break;
+    case tinyply::Type::INT16: templateConvert<T, int16_t>(src, dst); break;
+    case tinyply::Type::UINT16: templateConvert<T, uint16_t>(src, dst); break;
+    case tinyply::Type::INT32: templateConvert<T, int32_t>(src, dst); break;
+    case tinyply::Type::UINT32: templateConvert<T, uint32_t>(src, dst); break;
+    case tinyply::Type::FLOAT32: templateConvert<T, float>(src, dst); break;
+    case tinyply::Type::FLOAT64: templateConvert<T, double>(src, dst); break;
+    default:
+      printf( "ERROR: PLY type not supported: %s \n", name.c_str() );
+      fflush( stdout );
+      exit( -1 );
+      break;
+    }
   }
 }
 
@@ -81,13 +105,11 @@ TriangleMesh<T>::load(const std::string& fileName) {
 
 template<typename T>
 bool
-TriangleMesh<T>::save(const std::string& fileName,
-                      const uint32_t     bitDepthTexCoord,
-                      const bool         binary) const {
-  printf("Save %s qt = %u \n", fileName.c_str(), bitDepthTexCoord);
+TriangleMesh<T>::save(const std::string& fileName, const bool binary) const {
+  printf("Save %s \n", fileName.c_str());
   auto ext = extension(fileName);
-  if (ext == "obj") return saveToOBJ(fileName, bitDepthTexCoord);
-  if (ext == "ply") return saveToPLY(fileName, bitDepthTexCoord, binary);
+  if (ext == "obj") return saveToOBJ(fileName);
+  if (ext == "ply") return saveToPLY(fileName, binary);
   if (ext == "vmb") return saveToVMB(fileName);
   printf("Can't read extension type: %s \n", fileName.c_str());
   return false;
@@ -160,8 +182,7 @@ TriangleMesh<T>::loadFromOBJ(const std::string& fileName) {
 
 template<typename T>
 bool
-TriangleMesh<T>::saveToOBJ(const std::string& fileName,
-                           const int32_t      bitDepthTexCoord) const {
+TriangleMesh<T>::saveToOBJ(const std::string& fileName) const {
   std::ofstream fout(fileName);
   if (fout.is_open()) {
     const int32_t ptCount    = pointCount();
@@ -193,17 +214,9 @@ TriangleMesh<T>::saveToOBJ(const std::string& fileName,
       fout << '\n';
     }
 
-    if (bitDepthTexCoord == 0) {
-      for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
-        const auto& uv = texCoord(uvIndex);
-        fout << "vt " << T(uv.x()) << ' ' << T(uv.y()) << '\n';
-      }
-    } else {
-      const double uvScale = 1.0 / (double)((1u << bitDepthTexCoord) - 1);
-      for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
-        const auto& uv = texCoord(uvIndex) * uvScale;
-        fout << "vt " << T(uv.x()) << ' ' << T(uv.y()) << '\n';
-      }
+    for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
+      const auto& uv = texCoord(uvIndex);
+      fout << "vt " << T(uv.x()) << ' ' << T(uv.y()) << '\n';
     }
 
     for (int32_t nIndex = 0; nIndex < nCount; ++nIndex) {
@@ -294,7 +307,6 @@ TriangleMesh<T>::saveToOBJ(const std::string& fileName,
 template<typename T>
 bool
 TriangleMesh<T>::saveToPLY(const std::string& fileName,
-                           const uint32_t     bitDepthTexCoord,
                            const bool         binary) const {
   std::filebuf fb;
   fb.open(fileName, binary ? std::ios::out | std::ios::binary : std::ios::out);
@@ -364,19 +376,16 @@ TriangleMesh<T>::saveToPLY(const std::string& fileName,
                                 3);
 
   // Face texture coordinate
-  std::vector<Vec3<Vec2<float>>> uvCoords;
+  std::vector<Vec3<Vec2<T>>> uvCoords;
   if (!_texCoordIndex.empty()) {
     const size_t triCount = triangleCount();
     uvCoords.resize(triCount);
-    const double uvScale = bitDepthTexCoord == 0
-                             ? 1.0
-                             : 1.0 / (double)((1u << bitDepthTexCoord) - 1);
     for (size_t i = 0; i < triCount; i++)
       for (size_t j = 0; j < 3; j++)
-        uvCoords[i][j] = uvScale * _texCoord[_texCoordIndex[i][j]];
+        uvCoords[i][j] = _texCoord[_texCoordIndex[i][j]];
     ply.add_properties_to_element("face",
                                   {"texcoord"},
-                                  tinyply::Type::FLOAT32,
+                                  type,
                                   triCount,
                                   CAST_UINT8(uvCoords),
                                   tinyply::Type::UINT8,
@@ -430,23 +439,43 @@ TriangleMesh<T>::loadFromPLY(const std::string& fileName) {
   } catch (const std::exception&) {}
 
   ply.read(*file);
-  convertFromPlyData(coords, _coord);
-  convertFromPlyData(normals, _normal);
-  convertFromPlyData(colours, _colour);
-  convertFromPlyData(texcoords, _texCoord);
-  convertFromPlyData(triangles, _coordIndex);
-
+  set(coords, _coord, "vertices");
+  set(normals, _normal, "normals");
+  set(colours, _colour, "colors");
+  set(texcoords, _texCoord, "uvcoords");
+  set(triangles, _coordIndex, "triangles");
   if (texTriangles) {
+    const auto                 nbBytes  = texTriangles->buffer.size_bytes();
     const auto                 triCount = texTriangles->count;
     std::vector<Vec3<Vec2<T>>> uvCoords;
     uvCoords.resize(triCount);
+    switch (texTriangles->t) {
+    case tinyply::Type::FLOAT32: {
+      std::vector<float> data;
+      data.resize(texTriangles->count * 6);
+      std::memcpy(data.data(), texTriangles->buffer.get(), nbBytes);
+      for (size_t i = 0, idx = 0; i < triCount; i++)
+        for (size_t j = 0; j < 3; j++)
+          for (size_t k = 0; k < 2; k++, idx++) uvCoords[i][j][k] = data[idx];
+      break;
+    }
+    case tinyply::Type::FLOAT64: {
+      std::vector<double> data;
+      data.resize(texTriangles->count * 6);
+      std::memcpy(data.data(), texTriangles->buffer.get(), nbBytes);
+      for (size_t i = 0, idx = 0; i < triCount; i++)
+        for (size_t j = 0; j < 3; j++)
+          for (size_t k = 0; k < 2; k++, idx++) uvCoords[i][j][k] = data[idx];
+      break;
+    }
+    default:
+      printf("ERROR: PLY only supports texcoord type: double or float \n");
+      fflush(stdout);
+      exit(-1);
+      break;
+    }
     _texCoordIndex.resize(triCount);
     _texCoord.clear();
-    std::memcpy(
-      reinterpret_cast<uint8_t*>(reinterpret_cast<void*>(uvCoords.data())),
-      texTriangles->buffer.get(),
-      texTriangles->buffer.size_bytes());
-
     for (size_t i = 0; i < triCount; i++) {
       for (size_t j = 0; j < 3; j++) {
         size_t index = 0;
@@ -462,7 +491,6 @@ TriangleMesh<T>::loadFromPLY(const std::string& fileName) {
       }
     }
   }
-  // print("Load: " + fileName);
   return true;
 }
 
@@ -741,8 +769,6 @@ TriangleMesh<T>::subdivideMidPoint(
   std::vector<int64_t>*              coordEdges,
   std::vector<int64_t>*              texCoordEdges,
   std::vector<int32_t>*              triangleToBaseMeshTriangle) {
-  printf("Subdivide Mid Point iterationCount = %d \n", iterationCount);
-  fflush(stdout);
   if (triangleToBaseMeshTriangle != nullptr) {
     auto&      triToBaseMeshTri = *triangleToBaseMeshTriangle;
     const auto tCount0          = this->triangleCount();

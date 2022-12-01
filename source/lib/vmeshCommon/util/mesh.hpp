@@ -734,7 +734,7 @@ public:
     }
   }
 
-  inline void print(std::string str) const {
+  inline void print(std::string str, const int32_t logFaces = 0 ) const {
     printf("#####\n");
     printf("## %s \n", str.c_str());
     printf("## Coord:        %-6d \n", pointCount());
@@ -746,24 +746,43 @@ public:
     printf("## TexTriangles: %-6d \n", texCoordTriangleCount());
     printf("## NrmTriangles: %-6d \n", normalTriangleCount());
     printf("## MTL:          %s \n", _mtllib.c_str());
+    if( logFaces > 0 ){
+      printf("## Faces: \n");
+      for (size_t i = 0; i < triangleCount(); i += logFaces) {
+        printf(
+          "## Tri %6zu: "
+          "XYZ: (%9.5f %9.5f %9.5f)(%9.5f %9.5f %9.5f)(%9.5f %9.5f %9.5f) "
+          "UV: (%9.5f %9.5f)(%9.5f %9.5f)(%9.5f %9.5f)\n", i,
+          _coord[_coordIndex[i][0]][0],
+          _coord[_coordIndex[i][0]][1],
+          _coord[_coordIndex[i][0]][2],
+          _coord[_coordIndex[i][1]][0],
+          _coord[_coordIndex[i][1]][1],
+          _coord[_coordIndex[i][1]][2],
+          _coord[_coordIndex[i][2]][0],
+          _coord[_coordIndex[i][2]][1],
+          _coord[_coordIndex[i][2]][2],
+          _texCoord[_texCoordIndex[i][0]][0],
+          _texCoord[_texCoordIndex[i][0]][1],
+          _texCoord[_texCoordIndex[i][1]][0],
+          _texCoord[_texCoordIndex[i][1]][1],
+          _texCoord[_texCoordIndex[i][2]][0],
+          _texCoord[_texCoordIndex[i][2]][1]);
+      }
+    }
     printf("#####\n");
   }
 
-  bool load(const std::string& fileName, const int32_t frameIndex );
+  bool load(const std::string& fileName, const int32_t frameIndex);
   bool load(const std::string& fileName);
-  bool save(const std::string& fileName,
-            const uint32_t     bitDepthTexCoord = 0,
-            const bool         binary           = true) const;
+  bool save(const std::string& fileName, const bool binary = true) const;
 
 private:
   bool loadFromOBJ(const std::string& fileName);
   bool loadFromPLY(const std::string& fileName);
   bool loadFromVMB(const std::string& fileName);
-  bool saveToOBJ(const std::string& fileName,
-                 const int32_t      bitDepthTexCoord = 0) const;
-  bool saveToPLY(const std::string& fileName,
-                 const uint32_t     bitDepthTexCoord = 0,
-                 const bool         binary           = true) const;
+  bool saveToOBJ(const std::string& fileName) const;
+  bool saveToPLY(const std::string& fileName, const bool binary = true) const;
   bool saveToVMB(const std::string& fileName) const;
 
   std::vector<Vec3<T>>   _disp;

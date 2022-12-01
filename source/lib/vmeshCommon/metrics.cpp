@@ -33,6 +33,7 @@
 
 #include "metrics.hpp"
 #include "util/image.hpp"
+#include "util/checksum.hpp"
 
 #include "mmSample.h"
 #include "mmModel.h"
@@ -164,8 +165,8 @@ VMCMetrics::compute(const TriangleMesh<T>&      srcMesh,
   convert(recMesh, recModel);
   convert(srcMap, srcImage);
   convert(recMap, recImage);
-
   compute(srcModel, recModel, srcImage, recImage, "", "", params);
+  print( compare->size() - 1);
 }
 
 //============================================================================
@@ -181,7 +182,6 @@ VMCMetrics::compute(const TriangleMesh<T>&      srcMesh,
   mm::Image image(10, 10, 0);
   convert(srcMesh, srcModel);
   convert(recMesh, recModel);
-
   compute(srcModel, recModel, image, image, "", "", params);
 }
 
@@ -397,6 +397,31 @@ VMCMetrics::compute(const mm::Model&            srcModel,
 //   if (value > 999.98) std::cout << "999.99 ";
 //   else std::cout << value << ' ';
 // }
+void
+VMCMetrics::print(int32_t frameIndex) {
+  auto print = [](const std::vector<double> pcc,
+                  const std::vector<double> ibsm,
+                  const std::string         str) {
+    std::cout << std::left << std::setw(25) << str << ": ";
+    std::cout << std::right << std::setw(12) << pcc[0] << ' ';
+    std::cout << std::right << std::setw(12) << pcc[1] << ' ';
+    std::cout << std::right << std::setw(12) << pcc[2] << ' ';
+    std::cout << std::right << std::setw(12) << pcc[3] << ' ';
+    std::cout << std::right << std::setw(12) << pcc[4] << ' ';
+    std::cout << std::right << std::setw(12) << ibsm[6] << ' ';
+    std::cout << std::right << std::setw(12) << ibsm[2] << ' ';
+    std::cout << std::left << '\n';
+  };
+  if (frameIndex >= 0) {
+    print(compare->getPccResults(frameIndex),
+          compare->getIbsmResults(frameIndex),
+          "Metric_frame_" + std::to_string(frameIndex));
+  } else {
+    print(compare->getFinalPccResults(),
+          compare->getFinalIbsmResults(),
+          "Metric_results");
+  }
+}
 
 void
 VMCMetrics::display(bool verbose) {
@@ -409,27 +434,8 @@ VMCMetrics::display(bool verbose) {
     printf("IBSM:\n");
     compare->ibsmFinalize();
   } else {
-    auto print = [](const std::vector<double> pcc,
-                    const std::vector<double> ibsm,
-                    const std::string         str) {
-      std::cout << std::left << std::setw(25) << str << ": ";
-      std::cout << std::right << std::setw(12) << pcc[0] << ' ';
-      std::cout << std::right << std::setw(12) << pcc[1] << ' ';
-      std::cout << std::right << std::setw(12) << pcc[2] << ' ';
-      std::cout << std::right << std::setw(12) << pcc[3] << ' ';
-      std::cout << std::right << std::setw(12) << pcc[4] << ' ';
-      std::cout << std::right << std::setw(12) << ibsm[6] << ' ';
-      std::cout << std::right << std::setw(12) << ibsm[2] << ' ';
-      std::cout << std::left << '\n';
-    };
-    for (size_t i = 0; i < compare->size(); i++) {
-      print(compare->getPccResults(i),
-            compare->getIbsmResults(i),
-            "Metric_frame_" + std::to_string(i));
-    }    
-    print(compare->getFinalPccResults(),
-          compare->getFinalIbsmResults(),
-          "Metric_results");
+    for (size_t i = 0; i < compare->size(); i++) { print(i); }
+    print();
   }
 }
 

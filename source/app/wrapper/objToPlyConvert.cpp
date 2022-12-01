@@ -167,7 +167,7 @@ main(int argc, char* argv[]) {
 
   // Save PLY
   printf("Save PLY: %s \n", params.dstMeshPath.c_str());
-  srcMesh.save(params.dstMeshPath, params.qt, params.binary);
+  srcMesh.save(params.dstMeshPath, params.binary);
 
   // Load PLY
   printf("Load PLY: %s \n", params.dstMeshPath.c_str());

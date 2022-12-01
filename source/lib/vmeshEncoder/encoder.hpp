@@ -344,10 +344,11 @@ private:
                               Frame<uint8_t>&               outputTexture,
                               const VMCEncoderParameters&   params);
 
-  static bool transferTexture(const TriangleMesh<MeshType>& targetMesh,
-                              const TriangleMesh<MeshType>& sourceMesh,
+  static bool transferTexture(TriangleMesh<MeshType>&       targetMesh,
+                              TriangleMesh<MeshType>&       sourceMesh,
                               const Frame<uint8_t>&         targetTexture,
                               Frame<uint8_t>&               outputTexture,
+                              const std::vector<int32_t>&   srcTri2tgtTri,
                               const VMCEncoderParameters&   params);
 
   std::string _keepFilesPathPrefix = {};

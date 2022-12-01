@@ -429,6 +429,12 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.geometryVideoEncoderConfig, 
       "Geometry video config file")
         
+  (po::Section("Displacements"))
+    ("applyOneDimensionalDisplacement",
+      encParams.applyOneDimensionalDisplacement,
+      encParams.applyOneDimensionalDisplacement,
+      "Apply one dimensional displacement")
+
   (po::Section("Texture video"))
     ("encodeTextureVideo", 
       encParams.encodeTextureVideo, 

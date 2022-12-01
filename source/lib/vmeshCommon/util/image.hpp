@@ -507,7 +507,9 @@ public:
            size_t  strideC,
            int16_t shiftbits,
            bool    rgb2bgr) {
-    size_t chromaSubsample = widthY / widthC;
+    size_t chromaSubsample = _colourSpace == ColourSpace::YUV400p
+                               ? std::numeric_limits<size_t>::max()
+                               : widthY / widthC;
     if ((chromaSubsample == 1 && _colourSpace == ColourSpace::YUV420p)
         || (chromaSubsample == 2 && _colourSpace != ColourSpace::YUV420p)) {
       printf("Error: image get not possible from image of format = %d with  "

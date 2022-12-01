@@ -708,7 +708,9 @@ void
 vtmLibVideoDecoderImpl<T>::xWritePicture(const Picture*    pic,
                                          FrameSequence<T>& video) {
   int chromaSubsample =
-    pic->getPicWidthInLumaSamples() / pic->chromaSize().width;
+    pic->chromaFormat == CHROMA_400
+      ? std::numeric_limits<int>::max()
+      : pic->getPicWidthInLumaSamples() / pic->chromaSize().width;
   printf("write output frame %d size = %d %d bit depth = %d - %d = %d in %zd "
          "bytes buffers ( ChromaSub. = %d m_bRGB2GBR = %d )\n",
          video.frameCount(),
@@ -721,9 +723,10 @@ vtmLibVideoDecoderImpl<T>::xWritePicture(const Picture*    pic,
          chromaSubsample,
          m_bRGB2GBR);
   fflush(stdout);
-  ColourSpace format = chromaSubsample > 1 ? ColourSpace::YUV420p
-                       : m_bRGB2GBR        ? ColourSpace::RGB444p
-                                           : ColourSpace::YUV444p;
+  ColourSpace format = chromaSubsample > 2   ? ColourSpace::YUV400p
+                       : chromaSubsample > 1 ? ColourSpace::YUV420p
+                       : m_bRGB2GBR          ? ColourSpace::RGB444p
+                                             : ColourSpace::YUV444p;
   video.resize(m_outputWidth, m_outputHeight, format, video.frameCount() + 1);
   auto& image = video.frame(video.frameCount() - 1);
   image.set(pic->getBuf(COMPONENT_Y, PIC_RECONSTRUCTION).bufAt(0, 0),

@@ -1053,9 +1053,10 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
   const auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   const auto  lodCount           = int32_t(infoLevelOfDetails.size());
   assert(lodCount > 0);
-  double scale[3];
-  double lodScale[3];
-  for (int32_t k = 0; k < 3; ++k) {
+  const auto dispDimensions = params.applyOneDimensionalDisplacement ? 1 : 3;
+  std::vector<double> scale(dispDimensions);
+  std::vector<double> lodScale(dispDimensions);
+  for (int32_t k = 0; k < dispDimensions; ++k) {
     const auto qp = params.liftingQP[k];
     scale[k] =
       qp >= 0 ? pow(2.0, 16 - params.bitDepthPosition + (4 - qp) / 6.0) : 0.0;
@@ -1066,7 +1067,7 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
     const auto vcount1 = infoLevelOfDetails[it].pointCount;
     for (int32_t v = vcount0; v < vcount1; ++v) {
       auto& d = disp[v];
-      for (int32_t k = 0; k < 3; ++k) {
+      for (int32_t k = 0; k < dispDimensions; ++k) {
         d[k] =
           d[k] >= 0.0
             ? std::floor(d[k] * scale[k] + params.liftingBias[k])
@@ -1075,7 +1076,7 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
       }
     }
     vcount0 = vcount1;
-    for (int32_t k = 0; k < 3; ++k) { scale[k] *= lodScale[k]; }
+    for (int32_t k = 0; k < dispDimensions; ++k) { scale[k] *= lodScale[k]; }
   }
   return true;
 }
@@ -1085,18 +1086,16 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
 bool
 VMCEncoder::computeDisplacementVideoFrame(
   const VMCFrame&             frame,
-  Frame<uint16_t>&            dispVideoFrame,  // , ColourSpace::YUV444p
+  Frame<uint16_t>&            dispVideoFrame,  // , ColourSpace::YUV400p, ColourSpace::YUV444p
   const VMCEncoderParameters& params) {
   const auto pixelsPerBlock =
     params.geometryVideoBlockSize * params.geometryVideoBlockSize;
   const auto  shift = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
   const auto& disp  = frame.disp;
-  auto&       Y     = dispVideoFrame.plane(0);
-  auto&       U     = dispVideoFrame.plane(1);
-  auto&       V     = dispVideoFrame.plane(2);
-  Y.fill(shift);
-  U.fill(shift);
-  V.fill(shift);
+  const auto  planeCount = dispVideoFrame.planeCount();
+  for (int32_t p = 0; p < planeCount; ++p) {
+    dispVideoFrame.plane(p).fill(shift);
+  }
   for (int32_t v = 0, vcount = int32_t(disp.size()); v < vcount; ++v) {
     const auto& d          = disp[v];
     const auto  blockIndex = v / pixelsPerBlock;  // to do: optimize power of 2
@@ -1116,16 +1115,11 @@ VMCEncoder::computeDisplacementVideoFrame(
 
     const auto x1 = x0 + x;
     const auto y1 = y0 + y;
-    const auto d0 = int32_t(shift + d[0]);
-    const auto d1 = int32_t(shift + d[1]);
-    const auto d2 = int32_t(shift + d[2]);
-
-    assert(d0 >= 0 && d0 < (1 << params.geometryVideoBitDepth));
-    assert(d1 >= 0 && d1 < (1 << params.geometryVideoBitDepth));
-    assert(d2 >= 0 && d2 < (1 << params.geometryVideoBitDepth));
-    Y.set(y1, x1, uint16_t(d0));
-    U.set(y1, x1, uint16_t(d1));
-    V.set(y1, x1, uint16_t(d2));
+    for (int32_t p = 0; p < planeCount; ++p) {
+      const auto dshift = int32_t(shift + d[p]);
+      assert(dshift >= 0 && dshift < (1 << params.geometryVideoBitDepth));
+      dispVideoFrame.plane(p).set(y1, x1, uint16_t(dshift));
+    }
   }
   return true;
 }
@@ -1413,7 +1407,8 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
     uint8_t(params.liftingQP[2])};
   const uint8_t bitField =
     static_cast<int>(params.encodeDisplacementsVideo)
-    | (static_cast<int>(params.encodeTextureVideo) << 1);
+    | (static_cast<int>(params.encodeTextureVideo) << 1)
+    | (static_cast<int>(params.applyOneDimensionalDisplacement) << 2);
   bitstream.write(frameCount);
   bitstream.write(bitField);
   bitstream.write(bitDepth);
@@ -1539,8 +1534,11 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   const auto widthDispVideo =
     params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
   auto                    heightDispVideo = 0;
+  const auto colourSpaceDispVideo = params.applyOneDimensionalDisplacement
+                                      ? ColourSpace::YUV400p
+                                      : ColourSpace::YUV444p;
   FrameSequence<uint16_t> dispVideo;
-  dispVideo.resize(0, 0, ColourSpace::YUV444p, frameCount);
+  dispVideo.resize(0, 0, colourSpaceDispVideo, frameCount);
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frameInfo      = gofInfo.frameInfo(frameIndex);
     auto&       frame          = gof.frame(frameIndex);
@@ -1561,7 +1559,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
         std::max(heightDispVideo,
                  geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
       dispVideoFrame.resize(
-        widthDispVideo, heightDispVideo, ColourSpace::YUV444p);
+        widthDispVideo, heightDispVideo, colourSpaceDispVideo);
       computeDisplacements(frame, rec, params);
       computeForwardLinearLifting(frame.disp,
                                   frame.subdivInfoLevelOfDetails,
@@ -1576,7 +1574,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   // resize all the frame to the same resolution
   if (params.encodeDisplacementsVideo) {
     dispVideo.resize(
-      widthDispVideo, heightDispVideo, ColourSpace::YUV444p, frameCount);
+      widthDispVideo, heightDispVideo, colourSpaceDispVideo, frameCount);
   } else {
     dispVideo.resize(0, 0, ColourSpace::YUV444p, 0);
   }

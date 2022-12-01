@@ -1583,13 +1583,16 @@ void
 vtmLibVideoEncoderImpl<T>::xWritePicture(const PelUnitBuf* pic,
                                          FrameSequence<T>& video) {
   int chromaSubsample =
-    pic->get(COMPONENT_Y).width / pic->get(COMPONENT_Cb).width;
+    pic->chromaFormat == CHROMA_400
+      ? std::numeric_limits<int>::max()
+      : pic->get(COMPONENT_Y).width / pic->get(COMPONENT_Cb).width;
   int         width  = m_sourceWidth - m_confWinLeft - m_confWinRight;
   int         height = m_sourceHeight - m_confWinTop - m_confWinBottom;
-  ColourSpace format = m_cEncLib.getChromaFormatIdc() == CHROMA_420
-                         ? ColourSpace::YUV420p
-                       : m_rgbFormat ? ColourSpace::RGB444p
-                                     : ColourSpace::YUV444p;
+  ColourSpace format =
+    m_cEncLib.getChromaFormatIdc() == CHROMA_420   ? ColourSpace::YUV420p
+    : m_cEncLib.getChromaFormatIdc() == CHROMA_400 ? ColourSpace::YUV400p
+    : m_rgbFormat                                  ? ColourSpace::RGB444p
+                                                   : ColourSpace::YUV444p;
   video.resize(width, height, format, video.frameCount() + 1);
   auto& image = video.frame(video.frameCount() - 1);
   image.set(pic->get(COMPONENT_Y).bufAt(0, 0),

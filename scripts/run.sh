@@ -125,7 +125,7 @@ function mmetric() {
         --inputModel    ${NAME}_%04d_dec.ply \
         --useFixedPoint \
         --qp            ${QP} \
-        --qt            ${QT} \
+        --qt            0 \
         --minPos        \"${MINPOSITION}\" \
         --maxPos        \"${MAXPOSITION}\" \
         --minUv         \"0.0 0.0\" \
@@ -202,8 +202,12 @@ function render() {
     SRCMESH=$(     cat ${CFGSUBDIR}/mmetric.cfg | grep "srcMesh:"          | awk '{print $2}' )
     SRCTEX=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "srcTex:"           | awk '{print $2}' )
     QP=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "positionBitDepth:" | awk '{print $2}' )
-    QT=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "texCoordBitDepth:" | awk '{print $2}' )
-    MINPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "minPosition:"      | awk '{print $2" "$3" "$4}' )
+	if [[ "$1" == "dec" ]]; then
+	  QT=0
+	else
+      QT=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "texCoordBitDepth:" | awk '{print $2}' )
+    fi
+	MINPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "minPosition:"      | awk '{print $2" "$3" "$4}' )
     MAXPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "maxPosition:"      | awk '{print $2" "$3" "$4}' )
     LAST=$(( START + FRAMECOUNT - 1 ))  
     INDEXFRAME=$(( $START + $INDEXFRAME ))

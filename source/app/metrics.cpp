@@ -64,9 +64,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   /* clang-format off */
   po::Options opts;
   opts.addOptions()
-  ("help", print_help, false, "This help text")
-  ("config,c", po::parseConfigFile, "Configuration file name")
-  ("verbose,v", metParams.verbose, false, "Verbose output")
+  (po::Section("Common"))
+    ("help",      print_help,          false, "This help text")
+    ("config,c",  po::parseConfigFile, "Configuration file name")
+    ("verbose,v", metParams.verbose,   false, "Verbose output")
 
   (po::Section("Source"))
     ("srcMesh",

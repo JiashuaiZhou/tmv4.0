@@ -76,9 +76,9 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   po::Options opts;
   opts.addOptions()
   (po::Section("Common"))
-    ("help",      print_help,                     false,  "This help text")
-    ("config,c",  po::parseConfigFile,                    "Configuration file name")
-    ("verbose,v", params.verbose,                 true,   "Verbose output")
+    ("help",      print_help,          false, "This help text")
+    ("config,c",  po::parseConfigFile, "Configuration file name")
+    ("verbose,v", metParams.verbose,   false, "Verbose output")
 
   (po::Section("Input"))
     ("compressed", 

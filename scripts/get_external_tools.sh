@@ -67,7 +67,8 @@ then
   fi    
   echo -e "\033[0;32mBuild: ${HMDIR} \033[0m";
 
-  sed -i  's/-Wno-unknown-attributes/-Wno-unused-but-set-variable -Wno-unknown-attributes/'  ${HMDIR}/CMakeLists.txt
+  sed -i  's/-Wno-unknown-attributes/-Wno-unused-but-set-variable -Wno-unknown-attributes -Wno-error/' \
+    ${HMDIR}/CMakeLists.txt
   ${CMAKE} -B ${HMDIR}/build_dir ${HMDIR}/  
   ${CMAKE} --build ${HMDIR}/build_dir --config Release --parallel ${NUMBER_OF_PROCESSORS}  
 

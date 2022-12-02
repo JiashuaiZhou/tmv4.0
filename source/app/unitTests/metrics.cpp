@@ -53,7 +53,7 @@ TEST(metrics, compare) {
   std::string                 decObjPath = "data/levi_fr%04d_decoded.obj";
   std::string                 decTexPath = "data/levi_fr%04d_decoded.png";
   const int                   startFrame = 0;
-  const int                   frameCount = 0;
+  const int                   frameCount = 1;
   params.computePcc                      = true;
   params.computeIbsm                     = false;
   params.computePcqm                     = false;
@@ -69,61 +69,26 @@ TEST(metrics, compare) {
   params.pcqmRadiusCurvature             = 0.001;
   params.pcqmThresholdKnnSearch          = 20;
   params.pcqmRadiusFactor                = 2.0;
+  params.dequantizeUV                    = false;
+  params.verbose                         = true;
 
-  vmesh::VMCMetrics metrics;
-  const int         lastFrame = startFrame + frameCount;
-  for (int f = startFrame; f <= lastFrame; ++f) {
-    vmesh::VMCGroupOfFrames gof;
-    gof.resize(1);
-    const auto srcObjName = vmesh::expandNum(srcObjPath, f);
-    const auto srcTexName = vmesh::expandNum(srcTexPath, f);
-    const auto decObjName = vmesh::expandNum(decObjPath, f);
-    const auto decTexName = vmesh::expandNum(decTexPath, f);
-
-    auto& frame = gof.frames[0];
-    if (!frame.input.load(srcObjName)) {
-      disableSubProcessLog.enable();
-      printf("Error loading src mesh %d / %d: %s \n",
-             f,
-             frameCount,
-             srcObjName.c_str());
-      fflush(stdout);
-      return;
-    }
-    if (!vmesh::LoadImage(srcTexName, frame.inputTexture)) {
-      disableSubProcessLog.enable();
-      printf("Error loading src texture %d / %d: %s \n",
-             f,
-             frameCount,
-             srcTexName.c_str());
-      fflush(stdout);
-      return;
-    }
-    if (!frame.rec.load(decObjName)) {
-      disableSubProcessLog.enable();
-      printf("Error loading rec mesh %d / %d: %s \n",
-             f,
-             frameCount,
-             decObjName.c_str());
-      fflush(stdout);
-      return;
-    }
-    if (!vmesh::LoadImage(decTexName, frame.outputTexture)) {
-      disableSubProcessLog.enable();
-      printf("Error loading rec texture %d / %d: %s \n",
-             f,
-             frameCount,
-             decTexName.c_str());
-      fflush(stdout);
-      return;
-    }
-    printf("Compute metrics frame %d /%d \n", f, frameCount);
-    fflush(stdout);
-    metrics.compute(gof, params);
+ // Compute metric with VMCMetrics:
+  vmesh::Sequence source, reconstruct;
+  if (!source.load(srcObjPath, srcTexPath, startFrame, frameCount)) {
+    std::cerr << "Error: can't load source sequence\n";
+    FAIL() << "Error: can't load source sequence\n";
+    return;
+  }
+  if (!reconstruct.load(decObjPath, decTexPath, startFrame, frameCount)) {
+    std::cerr << "Error: can't load reconstruct sequence\n";
+    FAIL() << "Error: can't load reconstruct sequence\n";
+    return;
   }
 
-  // Compute metric with mm command:
+  vmesh::VMCMetrics metrics;
+  metrics.compute(source, reconstruct, params);
 
+  // Compute metric with mm command:
   // ISBM metrics
   std::stringstream cmd;
   // printf("START METRICS mm \n"); fflush(stdout);
@@ -273,4 +238,4 @@ TEST(metrics, compare) {
 
   // Remove tmp files
   remove("metric_pcc.log");
-}
+  }

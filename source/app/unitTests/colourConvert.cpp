@@ -47,7 +47,7 @@
 #include "common.hpp"
 
 void
-hdrtoolsConvertion(int                      mode,
+hdrtoolsConvertion(const std::string        mode,
                    const std::string&       inputPath,
                    const int                width,
                    const int                height,
@@ -56,18 +56,11 @@ hdrtoolsConvertion(int                      mode,
                    const int                outputBitDepth,
                    const vmesh::ColourSpace inputColourSpace,
                    const vmesh::ColourSpace outputColourSpace,
-                   std::string              configPath0,
-                   const std::string&       configPath1) {
-  auto recLibsPath = createVideoName("conv_libs_" + std::to_string(mode),
-                                     width,
-                                     height,
-                                     outputBitDepth,
-                                     outputColourSpace);
-  auto recSoftPath = createVideoName("conv_soft_" + std::to_string(mode),
-                                     width,
-                                     height,
-                                     outputBitDepth,
-                                     outputColourSpace);
+                   const std::string&       hdrToolsConfigPath) {
+  auto recLibsPath = createVideoName(
+    "conv_libs_", width, height, outputBitDepth, outputColourSpace);
+  auto recSoftPath = createVideoName(
+    "conv_soft_", width, height, outputBitDepth, outputColourSpace);
 
   // Check encoder and decoder path exist
   if (!checkSoftwarePath()) {
@@ -96,8 +89,8 @@ hdrtoolsConvertion(int                      mode,
 
   // Convert with lib
   vmesh::FrameSequence<uint16_t> rec;
-  auto convert = vmesh::VirtualColourConverter<uint16_t>::create(mode);
-  convert->initialize(std::move(configPath0));
+  auto convert = vmesh::VirtualColourConverter<uint16_t>::create(0);
+  convert->initialize(mode);
   convert->convert(src, rec);
   if (outputBitDepth == 8) {
     vmesh::FrameSequence<uint8_t> rec8(rec);
@@ -109,7 +102,7 @@ hdrtoolsConvertion(int                      mode,
   // Convert with application
   std::stringstream cmd;
   cmd << g_hdrConvertPath << " "
-      << "  -f " << configPath1 << " "
+      << "  -f " << hdrToolsConfigPath << " "
       << "  -p SourceFile=" << inputPath << " "
       << "  -p SourceWidth=" << width << " "
       << "  -p SourceHeight=" << height << " "
@@ -140,7 +133,7 @@ hdrtoolsConvertion(int                      mode,
 }
 
 TEST(colourConvert, hdrToolsUp) {
-  hdrtoolsConvertion(1,
+  hdrtoolsConvertion("YUV420p_BGR444p_10_8_0_0",
                      "data/tex_512x512_10bits_p420.yuv",
                      512,
                      512,
@@ -149,12 +142,11 @@ TEST(colourConvert, hdrToolsUp) {
                      8,
                      vmesh::ColourSpace::YUV420p,
                      vmesh::ColourSpace::BGR444p,
-                     "cfg/hdrconvert/yuv420tobgr444.cfg",
                      "cfg/hdrconvert/yuv420tobgr444.cfg");
 }
 
 TEST(colourConvert, hdrToolsDown) {
-  hdrtoolsConvertion(1,
+  hdrtoolsConvertion("BGR444p_YUV420p_8_10_4_0",
                      "data/tex_512x512_8bits_p444.bgr",
                      512,
                      512,
@@ -163,7 +155,6 @@ TEST(colourConvert, hdrToolsDown) {
                      10,
                      vmesh::ColourSpace::BGR444p,
                      vmesh::ColourSpace::YUV420p,
-                     "cfg/hdrconvert/bgr444toyuv420.cfg",
                      "cfg/hdrconvert/bgr444toyuv420.cfg");
 }
 

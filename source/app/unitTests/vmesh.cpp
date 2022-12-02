@@ -50,9 +50,9 @@ TEST(vmesh, all) {
   std::string texPath    = "data/levi_fr0000.png";
   std::string cfgPath    = "data/encoder.cfg";
   std::string binPath    = "bin.bin";
-  std::string recObjPath = "rec.obj";
+  std::string recObjPath = "rec.ply";
   std::string recPngPath = "rec.png";
-  std::string decObjPath = "dec.obj";
+  std::string decObjPath = "dec.ply";
   std::string decPngPath = "rec.png";
 
   if (!checkSoftwarePath()) {
@@ -79,12 +79,11 @@ TEST(vmesh, all) {
   std::stringstream cmd;
   cmd << g_vmeshEncodePath << "  "
       << "  -c " << cfgPath            // Configuration file name
-      << "  --srcMesh=" << meshPath      // Input mesh
-      << "  --srcTex=" << texPath        // Input texture
+      << "  --srcMesh=" << meshPath    // Input mesh
+      << "  --srcTex=" << texPath      // Input texture
       << "  --compressed=" << binPath  // Compressed bitstream
       << "  --recMesh=" << recObjPath  // Reconstructed mesh
-      << "  --recTex=" << recPngPath   // Reconstructed texture
-      << "  --recMat=mat.mtl ";        // Reconstructed materials
+      << "  --recTex=" << recPngPath;  // Reconstructed texture
 
   if (disableSubProcessLog.disableLog()) { cmd << "  2>&1 > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
@@ -93,10 +92,10 @@ TEST(vmesh, all) {
   // Decode
   cmd.str("");
   cmd << g_vmeshDecodePath << "  "
-      << "  --compressed=" << binPath
-      << "  --textureVideoDecoderConvertConfig=cfg/hdrconvert/yuv420tobgr444.cfg "
-      << "  --decmesh=" << decObjPath << "  --dectex=" << decPngPath
-      << "  --decmat=mat.mtl ";
+      << "  --compressed=" << binPath  // Compressed bitstream
+      << "  --decMesh=" << decObjPath  // Reconstructed mesh
+      << "  --decTex=" << decPngPath;  // Reconstructed texture
+
   if (disableSubProcessLog.disableLog()) { cmd << "  2>&1 > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());

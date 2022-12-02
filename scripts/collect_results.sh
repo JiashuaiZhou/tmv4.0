@@ -7,16 +7,16 @@ function print_usage() {
   echo "$0 Collect results from log files"
   echo "";
   echo "  Usage:"   
-  echo "    -h|--help   : print help ";
-  echo "    -q|--quiet  : disable logs            (default: $VERBOSE )";
-  echo "    --condId=   : condition: 1, 2         (default: $CONDID )";
-  echo "    --seqId=    : seq: 1,2,3,4,5,6,7,8    (default: $SEQID )";
-  echo "    --rateId=   : Rate: 1,2,3,4,5         (default: $RATEID )";
-  echo "    --vdmc      : vdmc bitstream file     (default: \"$VDMC\" )";
-  echo "    --logenc    : encoder log file        (default: \"$LOGENC\" )";
-  echo "    --logdec    : decoder log file        (default: \"$LOGDEC\" )";
-  echo "    --logmet    : metrics log file        (default: \"$LOGMET\" )";  
-  echo "    --csv       : generate .csv file      (default: \"$CSV\" )";    
+  echo "    -h|--help : print help ";
+  echo "    -q|--quiet: disable logs         (default: $VERBOSE )";
+  echo "    --condId= : condition: 1, 2      (default: $CONDID )";
+  echo "    --seqId=  : seq: 1,2,3,4,5,6,7,8 (default: $SEQID )";
+  echo "    --rateId= : Rate: 1,2,3,4,5      (default: $RATEID )";
+  echo "    --vdmc    : vdmc bitstream file  (default: \"$VDMC\" )";
+  echo "    --logenc  : encoder log file     (default: \"$LOGENC\" )";
+  echo "    --logdec  : decoder log file     (default: \"$LOGDEC\" )";
+  echo "    --logmet  : metrics log file     (default: \"$LOGMET\" )";  
+  echo "    --csv     : generate .csv file   (default: \"$CSV\" )";    
   echo "";
   echo "  Examples:";
   echo "    $0 -h"; 

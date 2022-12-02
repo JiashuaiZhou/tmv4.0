@@ -1,4 +1,8 @@
-# Licence
+
+
+# Other informations
+
+## Licence
 
 ```
 The copyright in this software is being made available under the BSD
@@ -36,15 +40,16 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ```
 
-# User manual
+## Documentation
 
-The user manual of the TMM can be found in the mpeg-vmesh-tm repository: [./doc/mpeg-vmesh-sw-manual.pdf](http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/tree/main/doc/mpeg-vmesh-sw-manual.pdf).
+A pdf version of the user manual of the TMM can be found in the mpeg-vmesh-tm repository: (http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/tree/main/doc/mpeg-vmesh-sw-manual.pdf).
 
-# Contacts and reporting issues
+
+## Issue reporting 
 
 For any issues or questions don't hesitate to open issues in V-Mesh git repository or to contact us:
 
 - Julien Ricard (julien.ricard@interdigital.com)
 - Wenjie Zou (wjzou@xidian.edu.cn)
 
-Bugs should be reported on the issue tracker at <http://mpegx.int-evry.fr/software/MPEG/vmesh/TM/mpeg-vmesh-tmc/issues>.
+Bugs should be reported on the issue tracker at: (http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/issues).

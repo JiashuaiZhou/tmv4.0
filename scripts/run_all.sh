@@ -57,7 +57,7 @@ function print_usage() {
   echo "    -o|--outdir    : output directory                (default: $OUTDIR )"
   echo "    --experiments  : csv configuration files         (default: $CSVFILE )"
   echo "    --tmmMetric    : Use TMM metric software         (default: 0 )"
-  echo "    -t|--threads   : Number of parallel experiments  (default: $THREAD )"
+  echo "    -t|--threads   : Number of parallel experiments  (default: $THREADS )"
   echo "    --render       : Create pdf  rendered images     (default: $RENDER )"
   echo "    --graph        : Create pdf with metric graphs   (default: $GRAPH )"
   echo "    --xlsm         : Create CTC xlsm files           (default: $XLSM )"

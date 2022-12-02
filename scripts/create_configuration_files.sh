@@ -13,16 +13,20 @@ print_usage()
   echo "$0 Create configuration files: "
   echo "";
   echo "  Usage:" 
-  echo "    -o|--outdir=: configured directory                    (default: $OUTDIR )"  
-  echo "    -s|--seqdir=: source sequence directory               (default: $SEQDIR )"
-  echo "    -c|--codec=:  video codec: hm, vtm                    (default: $CODEC )"
-  echo "    --update:     update cfg files stored in ./cfg/vmesh/ (default: $UPDATE )"
+  echo "    -o|--outdir=: configured directory      (default: $OUTDIR )"  
+  echo "    -s|--seqdir=: source sequence directory (default: $SEQDIR )"
+  echo "    -c|--codec=:  video codec: hm, vtm      (default: $CODEC )"
   echo "";
   echo "  Examples:";
   echo "    $0  "; 
-  echo "    $0 --outdir=generatedConfigFilesHM  --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/ --codec=hm"; 
-  echo "    $0 --outdir=generatedConfigFilesVTM --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/ --codec=vtm";   
-  echo "    $0 --update --codec=hm";  
+  echo "    $0 \\"; 
+  echo "      --outdir=generatedConfigFilesHM  \\"; 
+  echo "      --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/ \\"; 
+  echo "      --codec=hm"; 
+  echo "    $0 \\"; 
+  echo "      --outdir=generatedConfigFilesVTM \\"; 
+  echo "      --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/ \\"; 
+  echo "      --codec=vtm";     
   echo "    ";
   if [ "$#" != 0 ] ; then echo -e "ERROR: $1 \n"; fi
   exit 0;

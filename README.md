@@ -295,28 +295,24 @@ This operation can be executed with script './scripts/create_configuration_files
 ```console
 
 $ ./scripts/create_configuration_files.sh 
+. /scripts/create_configuration_files.sh Create configuration files:
 
-./scripts/create_configuration_files.sh Create configuration files:
+  Usage:
+    -o|--outdir=: configured directory      (default: config/ )
+    -s|--seqdir=: source sequence directory (default:  )
+    -c|--codec=:  video codec: hm, vtm      (default: hm )
 
-    Usage:
-       -o|--outdir=: configured directory                    (default: generatedConfigFiles )
-       -s|--seqdir=: source sequence directory               (default:  )
-       -c|--codec=:  video codec: hm, vtm                    (default: hm )
-       --update:     update cfg files stored in ./cfg/vmesh/ (default: 0 )
+  Examples:
+    ./scripts/create_configuration_files.sh
+    ./scripts/create_configuration_files.sh \
+      --outdir=generatedConfigFilesHM  \
+      --seqdir=/path/to/contents/voxelized/ \
+      --codec=hm
+    ./scripts/create_configuration_files.sh \
+      --outdir=generatedConfigFilesVTM \
+      --seqdir=/path/to/contents/voxelized/ \
+      --codec=vtm
 
-    Examples:
-      ./scripts/create_configuration_files.sh
-      ./scripts/create_configuration_files.sh \
-        --outdir=generatedConfigFilesHM  \
-        --seqdir=/path/to/contents/voxelized/ \
-        --codec=hm
-      ./scripts/create_configuration_files.sh \
-        --outdir=generatedConfigFilesVTM \
-        --seqdir=/path/to/contents/voxelized \
-        --codec=vtm
-      ./scripts/create_configuration_files.sh \
-        --update \
-        --codec=hm
 ```
 
 ## Run experiment
@@ -567,20 +563,21 @@ DecTime            : 0.355798779
 
 To collect the results from the log files (encoder, decoder and metric), the `./scripts/collect_results.sh` script can be uses:
 
-```
+```console
+$ ./scripts/collect_results.sh
 ./scripts/collect_results.sh Collect results from log files
 
   Usage:
     -h|--help   : print help
-    -q|--quiet  : disable logs            (default: 1 )
-    --condId=   : condition: 1, 2         (default: 1 )
-    --seqId=    : seq: 1,2,3,4,5,6,7,8    (default: 1 )
-    --rateId=   : Rate: 1,2,3,4,5         (default: 1 )
-    --vdmc      : vdmc bitstream file     (default: "" )
-    --logenc    : encoder log file        (default: "" )
-    --logdec    : decoder log file        (default: "" )
-    --logmet    : metrics log file        (default: "" )
-    --csv       : generate .csv file      (default: "" )
+    -q|--quiet  : disable logs         (default: 1 )
+    --condId=   : condition: 1, 2      (default: 1 )
+    --seqId=    : seq: 1,2,3,4,5,6,7,8 (default: 1 )
+    --rateId=   : Rate: 1,2,3,4,5      (default: 1 )
+    --vdmc      : vdmc bitstream file  (default: "" )
+    --logenc    : encoder log file     (default: "" )
+    --logdec    : decoder log file     (default: "" )
+    --logmet    : metrics log file     (default: "" )
+    --csv       : generate .csv file   (default: "" )
 
   Examples:
     ./scripts/collect_results.sh -h
@@ -596,7 +593,7 @@ To collect the results from the log files (encoder, decoder and metric), the `./
 
 This script can be used to parse the log files and display or get the bitrate/metric values:
 
-```
+```console
 $ ./scripts/collect_results.sh  \
   --condId  1 \
   --seqId   2 \
@@ -605,7 +602,8 @@ $ ./scripts/collect_results.sh  \
   --logenc  encoder.log     \
   --logdec  decoder.log     \
   --logmet  metrics.log
-2,1,2,152064,206976,72.1250986,74.0027083,29.7090586,43.1735896,43.2807054,48.3653428,29.1616112,24.8878219,0.257652824,484.457,178.211
+2,1,2,152064,206976,72.1250986,74.0027083,29.7090586,43.1735896,43.2807054,\
+48.3653428,29.1616112,24.8878219,0.257652824,484.457,178.211
 $ RES=( $( ./scripts/collect_results.sh  \
   --condId  1 \
   --seqId   2 \
@@ -637,21 +635,21 @@ RES[15] = 178.211
 
 To run CTC experiments with all sequences, all conditions and all rates as definied in CTC conditions, the `./scripts/run_all.sh`script can be used :
 
-```
+```console
 $ ./scripts/run_all.sh --help
 ./scripts/run_all.sh execute all encoding/decoding/metrics
   Usage:
-    -h|--help      : print help
-    -q|--quiet     : disable logs                    (default: 1 )
-    -f|--frames    : frame count                     (default: 1 )
-    -c|--cfgdir    : configured directory            (default: "generatedConfigFilesHM" )
-    -o|--outdir    : output directory                (default: experiments )
-    --experiments  : csv configuration files         (default: /srv/wp21/PCC/ricardj/gitv20/tmv20_v06/scripts/test.csv )
-    --tmmMetric    : Use TMM metric software         (default: 0 )
-    -t|--threads   : Number of parallel experiments  (default:  )
-    --render       : Create pdf  rendered images     (default: 0 )
-    --graph        : Create pdf with metric graphs   (default: 0 )
-    --xlsm         : Create CTC xlsm files           (default: 0 )
+    -h|--help    : print help
+    -q|--quiet   : disable logs                   (default: 1 )
+    -f|--frames  : frame count                    (default: 1 )
+    -c|--cfgdir  : configured directory           (default: "config" )
+    -o|--outdir  : output directory               (default: tests )
+    --experiments: csv configuration files        (default: test.csv )
+    --tmmMetric  : Use TMM metric software        (default: 0 )
+    -t|--threads : Number of parallel experiments (default: 1 )
+    --render     : Create pdf with rendered images(default: 0 )
+    --graph      : Create pdf with metric graphs  (default: 0 )
+    --xlsm       : Create CTC xlsm files          (default: 0 )
 
   Examples:
     ./scripts/run_all.sh -h
@@ -674,7 +672,7 @@ This scripts executes severals experiments that must be defined in `./scripts/te
 
 An example of this file is the following one:
 
-```
+```console
 $ cat ./scripts/test.csv
 Name,EncParams,DecParams
 anchor,,
@@ -684,7 +682,7 @@ texture2k,--textureVideoWidth=2048 --textureVideoHeight=2048,
 
 The experiments can be executed with the following command line:
 
-```
+```console
 $ ./scripts/run_all.sh \
   --frame=4 \
   --threads 10 \
@@ -710,7 +708,35 @@ Note: The `--xlsm` option uses `openpyxl` Python module to fill the XLSM files a
 
 The `--threads N` option allows experiments to be run in parallel with N which defines the number of parallel tests. 
 
-Note: This option has been used on Linux and uses Linux commands to work. Please, use this script in a Linux terminal. On Window, please uses: msys, cygwin, mingw or Windows Subsystem for Linux (WSL),
+Note: This option has been used on Linux and uses Linux commands to work. Please, use this script in a Linux terminal. On Window, please uses: msys, cygwin, mingw or Windows Subsystem for Linux (WSL).
+
+## View decoded sequences
+
+The subjective quality of the decoded sequences can be evaluated by playing the decoded .ply/.png files with the mpeg-pcc-renderer (http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-renderer.git).
+
+The following commands can be used to install and to execute this software:
+
+```console
+git clone http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-renderer.git
+cd mpeg-pcc-renderer/
+./build.sh
+./bin/windows/Release/PccAppRenderer.exe \
+  -f ./s1c1r1_long/s1c1r1_long_dec_fr1051.ply
+```
+
+A specific script can be used to create video of the decoded sequences like shown in figure 3:
+
+```console
+./scripts/renderer.sh \
+  -i ./s1c1r1_long/  \
+  --videoType=4   \
+  -w 600 \
+  -h 800 \
+  --cameraPathIndex=10
+  
+```
+
+![Screenshoot of the mpeg-pcc-renderer software.](doc/images/renderer.png){width=520 height=400}
 <!--- Encode software input paramters --->
 
 <!--- 
@@ -976,7 +1002,11 @@ The following subsections contain input parameters for encoding, decoding, and m
 | --pcqmRadiusCurvature=0.001 | PCQM radius curvature | 
 | --pcqmThresholdKnnSearch=20 | PCQM threshold Knn search | 
 | --pcqmRadiusFactor=2 | PCQM radius factor | 
-# Licence
+
+
+# Other informations
+
+## Licence
 
 ```
 The copyright in this software is being made available under the BSD
@@ -1014,11 +1044,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ```
 
-# User manual
+## Documentation
 
-The user manual of the TMM can be found in the mpeg-vmesh-tm repository: [./doc/mpeg-vmesh-sw-manual.pdf](http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/tree/main/doc/mpeg-vmesh-sw-manual.pdf).
+A pdf version of the user manual of the TMM can be found in the mpeg-vmesh-tm repository: [./doc/mpeg-vmesh-sw-manual.pdf](http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/tree/main/doc/mpeg-vmesh-sw-manual.pdf).
 
-# Contacts and reporting issues
+
+## Issue reporting 
 
 For any issues or questions don't hesitate to open issues in V-Mesh git repository or to contact us:
 

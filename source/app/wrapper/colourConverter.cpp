@@ -56,8 +56,8 @@ struct Parameters {
   int                inputBitDepth{};
   int                outputBitDepth{};
   int                mode{};
-  int range = 0;
-  int filter = 0; 
+  int                range  = 0;
+  int                filter = 0;
   vmesh::ColourSpace inputColorSpace;
   vmesh::ColourSpace outputColorSpace;
 };

@@ -218,8 +218,8 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
 
 bool
 VMCDecoder::decompressDisplacementsVideo(const Bitstream&            bitstream,
-  FrameSequence<uint16_t>&dispVideo,
-                                           const VMCDecoderParameters& params) {
+                                         FrameSequence<uint16_t>&    dispVideo,
+                                         const VMCDecoderParameters& params) {
   printf("Decompress displacements video \n");
   fflush(stdout);
   // Get video bitstream
@@ -378,7 +378,7 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   }
   _stats.textureByteCount = _byteCounter;
   // decompress texture
-  if ( !decompressTextureVideo(bitstream, reconstruct, params) ) {
+  if (!decompressTextureVideo(bitstream, reconstruct, params)) {
     return false;
   }
   printf("Done \n");
@@ -449,30 +449,30 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
 #if defined(CODE_CODEC_ID)
     bitstream.read(textureVideoCodecId, _byteCounter);
 #else
-    textureVideoCodecId  = uint8_t(VideoCodecId::HM);
+    textureVideoCodecId = uint8_t(VideoCodecId::HM);
 #endif
     bitstream.read(widthTexVideo, _byteCounter);
     bitstream.read(heightTexVideo, _byteCounter);
   }
 
   // Update SPS
-  _sps.widthDispVideo                   = widthDispVideo;
-  _sps.heightDispVideo                  = heightDispVideo;
-  _sps.widthTexVideo                    = widthTexVideo;
-  _sps.heightTexVideo                   = heightTexVideo;
-  _sps.geometryVideoBlockSize           = geometryVideoBlockSize;
-  _sps.bitDepthPosition                 = 1 + (bitDepth & 15);
-  _sps.bitDepthTexCoord                 = 1 + ((bitDepth >> 4) & 15);
-  _sps.subdivisionMethod                = SubdivisionMethod(subdivInfo & 15);
-  _sps.subdivisionIterationCount        = (subdivInfo >> 4) & 15;
-  _sps.qpPosition                       = 1 + (qpBaseMesh & 15);
-  _sps.qpTexCoord                       = 1 + ((qpBaseMesh >> 4) & 15);
-  _sps.liftingQP[0] = liftingQPs[0];
-  _sps.liftingQP[1] = liftingQPs[1];
-  _sps.liftingQP[2] = liftingQPs[2];
-  _sps.meshCodecId                      = GeometryCodecId(meshCodecId);
-  _sps.geometryVideoCodecId             = VideoCodecId(geometryVideoCodecId);
-  _sps.textureVideoCodecId              = VideoCodecId(textureVideoCodecId);
+  _sps.widthDispVideo            = widthDispVideo;
+  _sps.heightDispVideo           = heightDispVideo;
+  _sps.widthTexVideo             = widthTexVideo;
+  _sps.heightTexVideo            = heightTexVideo;
+  _sps.geometryVideoBlockSize    = geometryVideoBlockSize;
+  _sps.bitDepthPosition          = 1 + (bitDepth & 15);
+  _sps.bitDepthTexCoord          = 1 + ((bitDepth >> 4) & 15);
+  _sps.subdivisionMethod         = SubdivisionMethod(subdivInfo & 15);
+  _sps.subdivisionIterationCount = (subdivInfo >> 4) & 15;
+  _sps.qpPosition                = 1 + (qpBaseMesh & 15);
+  _sps.qpTexCoord                = 1 + ((qpBaseMesh >> 4) & 15);
+  _sps.liftingQP[0]              = liftingQPs[0];
+  _sps.liftingQP[1]              = liftingQPs[1];
+  _sps.liftingQP[2]              = liftingQPs[2];
+  _sps.meshCodecId               = GeometryCodecId(meshCodecId);
+  _sps.geometryVideoCodecId      = VideoCodecId(geometryVideoCodecId);
+  _sps.textureVideoCodecId       = VideoCodecId(textureVideoCodecId);
   return true;
 }
 

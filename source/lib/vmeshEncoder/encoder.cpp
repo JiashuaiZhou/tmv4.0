@@ -140,170 +140,169 @@ VMCEncoder::decimateInput(const TriangleMesh<MeshType>& input,
 //============================================================================
 
 void
-VMCEncoder::removeDegeneratedTrianglesCrossProduct(TriangleMesh<MeshType>& mesh,
-                                                   const int32_t& frameIndex) {
+VMCEncoder::removeDegeneratedTrianglesCrossProduct(
+  TriangleMesh<MeshType>& mesh,
+  const int32_t&          frameIndex) {
+  TriangleMesh<MeshType> degenerateMesh;
 
-    TriangleMesh<MeshType> degenerateMesh;
+  auto& degenerateTriangles         = degenerateMesh.triangles();
+  auto& degenerateTexCoordTriangles = degenerateMesh.texCoordTriangles();
+  auto& degenerateNormalTriangles   = degenerateMesh.normalTriangles();
+  degenerateMesh.points().resize(mesh.pointCount());
 
-    auto& degenerateTriangles = degenerateMesh.triangles();
-    auto& degenerateTexCoordTriangles = degenerateMesh.texCoordTriangles();
-    auto& degenerateNormalTriangles = degenerateMesh.normalTriangles();
-    degenerateMesh.points().resize(mesh.pointCount());
+  auto triangleCount = mesh.triangleCount();
+  if (triangleCount <= 0) { return; }
 
-    auto triangleCount = mesh.triangleCount();
-    if (triangleCount <= 0) { return; }
+  const auto hasTexCoords = mesh.texCoordTriangleCount() == triangleCount;
+  const auto hasNormals   = mesh.normalTriangleCount() == triangleCount;
+  std::vector<Triangle> triangles;
+  triangles.reserve(triangleCount);
 
-    const auto hasTexCoords = mesh.texCoordTriangleCount() == triangleCount;
-    const auto hasNormals = mesh.normalTriangleCount() == triangleCount;
-    std::vector<Triangle> triangles;
-    triangles.reserve(triangleCount);
+  int32_t removedDegeneratedTrianglesArea0 = 0;
 
-    int32_t removedDegeneratedTrianglesArea0 = 0;
+  for (int32_t tindex = 0; tindex < triangleCount; tindex++) {
+    const auto& tri   = mesh.triangle(tindex);
+    const auto& coord = mesh.points();
+
+    const auto i = tri[0];
+    const auto j = tri[1];
+    const auto k = tri[2];
+    auto       area =
+      computeTriangleArea(coord[tri[0]], coord[tri[1]], coord[tri[2]]);
+
+    if (area > 0) {
+      triangles.push_back(tri);
+    } else {
+      std::cout << "Triangle with area 0 is removed." << std::endl;
+      removedDegeneratedTrianglesArea0++;
+      degenerateTriangles.push_back(tri);
+    }
+  }
+
+  std::cout << "frame : " << frameIndex
+            << " , removedDegeneratedTrianglesArea0count = "
+            << removedDegeneratedTrianglesArea0 << std::endl;
+
+  std::swap(mesh.triangles(), triangles);
+
+  //Change connectivity
+  if (1) {
+    triangles.clear();
+
+    triangleCount                = mesh.triangleCount();
+    auto degenerateTriangleCount = degenerateMesh.triangleCount();
+
+    std::vector<int32_t> vertexID0s(degenerateTriangleCount),
+      vertexID1s(degenerateTriangleCount), vertexID2s(degenerateTriangleCount);
+
+    for (uint32_t degetindex = 0; degetindex < degenerateTriangleCount;
+         degetindex++) {
+      auto& degetri = degenerateTriangles[degetindex];
+
+      const auto& coord = mesh.points();
+
+      //Check middle point
+      auto                doubleMax = std::numeric_limits<double>::max();
+      auto                doubleMin = std::numeric_limits<double>::min();
+      std::vector<double> minV      = {doubleMax, doubleMax, doubleMax};
+      std::vector<double> maxV      = {doubleMin, doubleMin, doubleMin};
+
+      std::vector<int> minID = {0, 0, 0}, maxID = {0, 0, 0};
+
+      for (int vertexID = 0; vertexID < 3; vertexID++) {
+        auto& p = coord[degetri[vertexID]];
+
+        //xyz
+        for (int i = 0; i < 3; i++) {
+          if (p[i] < minV[i]) {
+            minV[i]  = p[i];
+            minID[i] = vertexID;
+          }
+          if (p[i] > maxV[i]) {
+            maxV[i]  = p[i];
+            maxID[i] = vertexID;
+          }
+        }
+      }
+
+      int middleID = 0;
+      for (int vertexID = 0; vertexID < 3; vertexID++) {
+        //xyz
+        bool flag = false;
+        for (int i = 0; i < 3; i++) {
+          if (minID[i] == vertexID || maxID[i] == vertexID) { flag = 1; }
+        }
+        if (!flag) {
+          middleID = vertexID;
+          break;
+        }
+      }
+
+      auto& vertexID0 = vertexID0s[degetindex];
+      auto& vertexID1 = vertexID1s[degetindex];
+      auto& vertexID2 = vertexID2s[degetindex];
+
+      if (middleID == 0) {
+        vertexID0 = degetri[0];
+        vertexID1 = degetri[1];
+        vertexID2 = degetri[2];
+      } else if (middleID == 1) {
+        vertexID0 = degetri[1];
+        vertexID1 = degetri[2];
+        vertexID2 = degetri[0];
+      } else if (middleID == 2) {
+        vertexID0 = degetri[2];
+        vertexID1 = degetri[0];
+        vertexID2 = degetri[1];
+      }
+    }
 
     for (int32_t tindex = 0; tindex < triangleCount; tindex++) {
-        const auto& tri = mesh.triangle(tindex);
-        const auto& coord = mesh.points();
+      const auto& tri   = mesh.triangle(tindex);
+      const auto& coord = mesh.points();
 
-        const auto i = tri[0];
-        const auto j = tri[1];
-        const auto k = tri[2];
-        auto area = computeTriangleArea(coord[tri[0]], coord[tri[1]], coord[tri[2]]);
+      bool      addedFlag = false;
+      Vec3<int> newFace1, newFace2;
 
-        if (area > 0) {
-            triangles.push_back(tri);
+      for (uint32_t degetindex = 0;
+           !addedFlag && (degetindex < degenerateTriangleCount);
+           degetindex++) {
+        auto& vertexID0 = vertexID0s[degetindex];
+        auto& vertexID1 = vertexID1s[degetindex];
+        auto& vertexID2 = vertexID2s[degetindex];
+
+        std::vector<Vec3<int>> vIDs{{tri[0], tri[1], tri[2]},
+                                    {tri[1], tri[2], tri[0]},
+                                    {tri[2], tri[0], tri[1]}};
+        for (auto& vID : vIDs) {
+          auto& vID0 = vID[0];
+          auto& vID1 = vID[1];
+          auto& vID2 = vID[2];
+
+          if ((vID1 == vertexID1 && vID2 == vertexID2)
+              || (vID1 == vertexID2 && vID2 == vertexID1)) {
+            newFace1 = {vID1, vertexID0, vID0};
+            newFace2 = {vID0, vertexID0, vID2};
+
+            triangles.push_back(newFace1);
+            triangles.push_back(newFace2);
+            addedFlag = true;
+            break;
+          }
         }
-        else {
-            std::cout << "Triangle with area 0 is removed." << std::endl;
-            removedDegeneratedTrianglesArea0++;
-            degenerateTriangles.push_back(tri);
-        }
+      }
+
+      if (!addedFlag) triangles.push_back(tri);
     }
-
-    std::cout << "frame : " << frameIndex << " , removedDegeneratedTrianglesArea0count = " << removedDegeneratedTrianglesArea0 << std::endl;
-
     std::swap(mesh.triangles(), triangles);
-
-    //Change connectivity
-    if (1) {
-
-        triangles.clear();
-
-        triangleCount = mesh.triangleCount();
-        auto degenerateTriangleCount = degenerateMesh.triangleCount();
-
-        std::vector<int32_t> vertexID0s(degenerateTriangleCount), vertexID1s(degenerateTriangleCount), vertexID2s(degenerateTriangleCount);
-
-        for (uint32_t degetindex = 0; degetindex < degenerateTriangleCount; degetindex++) {
-            auto& degetri = degenerateTriangles[degetindex];
-
-            const auto& coord = mesh.points();
-
-            //Check middle point
-            auto doubleMax = std::numeric_limits<double>::max();
-            auto doubleMin = std::numeric_limits<double>::min();
-            std::vector<double> minV = { doubleMax ,doubleMax ,doubleMax };
-            std::vector<double> maxV = { doubleMin ,doubleMin ,doubleMin };
-
-            std::vector<int> minID = { 0,0,0 }, maxID = { 0,0,0 };
-
-            for (int vertexID = 0; vertexID < 3; vertexID++) {
-
-                auto& p = coord[degetri[vertexID]];
-
-                //xyz
-                for (int i = 0; i < 3; i++) {
-                    if (p[i] < minV[i])
-                    {
-                        minV[i] = p[i];
-                        minID[i] = vertexID;
-                    }
-                    if (p[i] > maxV[i])
-                    {
-                        maxV[i] = p[i];
-                        maxID[i] = vertexID;
-                    }
-
-                }
-            }
-
-            int middleID = 0;
-            for (int vertexID = 0; vertexID < 3; vertexID++) {
-                //xyz
-                bool flag = false;
-                for (int i = 0; i < 3; i++) {
-                    if (minID[i] == vertexID || maxID[i] == vertexID) {
-                        flag = 1;
-                    }
-                }
-                if (!flag) {
-                    middleID = vertexID;
-                    break;
-                }
-            }
-
-            auto& vertexID0 = vertexID0s[degetindex];
-            auto& vertexID1 = vertexID1s[degetindex];
-            auto& vertexID2 = vertexID2s[degetindex];
-
-            if (middleID == 0) {
-                vertexID0 = degetri[0];
-                vertexID1 = degetri[1];
-                vertexID2 = degetri[2];
-            }
-            else if (middleID == 1) {
-                vertexID0 = degetri[1];
-                vertexID1 = degetri[2];
-                vertexID2 = degetri[0];
-            }
-            else if (middleID == 2) {
-                vertexID0 = degetri[2];
-                vertexID1 = degetri[0];
-                vertexID2 = degetri[1];
-            }
-        }
-
-        for (int32_t tindex = 0; tindex < triangleCount; tindex++) {
-            const auto& tri = mesh.triangle(tindex);
-            const auto& coord = mesh.points();
-
-            bool addedFlag = false;
-            Vec3<int> newFace1, newFace2;
-
-            for (uint32_t degetindex = 0; !addedFlag && (degetindex < degenerateTriangleCount); degetindex++) {
-                auto& vertexID0 = vertexID0s[degetindex];
-                auto& vertexID1 = vertexID1s[degetindex];
-                auto& vertexID2 = vertexID2s[degetindex];
-
-                std::vector<Vec3<int>> vIDs{ { tri[0], tri[1], tri[2] }, { tri[1], tri[2], tri[0] }, { tri[2], tri[0], tri[1] } };
-                for (auto& vID : vIDs) {
-                    auto& vID0 = vID[0];
-                    auto& vID1 = vID[1];
-                    auto& vID2 = vID[2];
-
-                    if ((vID1 == vertexID1 && vID2 == vertexID2) || (vID1 == vertexID2 && vID2 == vertexID1)) {
-                        newFace1 = { vID1, vertexID0, vID0 };
-                        newFace2 = { vID0, vertexID0, vID2 };
-
-                        triangles.push_back(newFace1);
-                        triangles.push_back(newFace2);
-                        addedFlag = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!addedFlag) triangles.push_back(tri);
-        }
-        std::swap(mesh.triangles(), triangles);
-    }
-
+  }
 }
 //============================================================================
 
 void
-VMCEncoder::textureParametrization(VMCFrame&                     frame,
-                                   TriangleMesh<MeshType>&       decimate,
-                                   const VMCEncoderParameters&   params) {
+VMCEncoder::textureParametrization(VMCFrame&                   frame,
+                                   TriangleMesh<MeshType>&     decimate,
+                                   const VMCEncoderParameters& params) {
   auto prefix =
     _keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex);
   std::cout << "Texture parametrization \n";
@@ -323,7 +322,6 @@ VMCEncoder::textureParametrization(VMCFrame&                     frame,
   printf("skipUVAtlas = %d \n", skipUVAtlas);
   fflush(stdout);
   if (!skipUVAtlas) {
-
     //Remove degenerate triangles
     removeDegeneratedTrianglesCrossProduct(decimate, frame.frameIndex);
 
@@ -524,7 +522,7 @@ VMCEncoder::unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
       const auto                  pointCount0 = base.pointCount();
       const auto&                 frameInfo   = gofInfo.frameInfo(findex);
       auto&                       umapping    = umappings[findex];
-      if (frameInfo.type == FrameType::INTRA) {        
+      if (frameInfo.type == FrameType::INTRA) {
         printf("Frame %2d: INTRA \n", findex);
         UnifyVertices(
           base.points(), base.triangles(), upoints, utriangles, umapping);
@@ -573,50 +571,44 @@ VMCEncoder::unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
 //============================================================================
 
 static bool
-computeTriangleMapping(
-  vmesh::TriangleMesh<double>& targetMesh,
-  vmesh::TriangleMesh<double>& sourceMesh,
-  std::vector<int32_t>& mapping)
-{
+computeTriangleMapping(vmesh::TriangleMesh<double>& targetMesh,
+                       vmesh::TriangleMesh<double>& sourceMesh,
+                       std::vector<int32_t>&        mapping) {
   std::unordered_map<std::string, int32_t> cent2tindex;
   for (int32_t t = 0; t < targetMesh.triangleCount(); t++) {
-    const auto& tri = targetMesh.triangle(t);
+    const auto&  tri  = targetMesh.triangle(t);
     Vec3<double> cent = 0;
-    for (int32_t k = 0; k < 3; ++k) {
-      cent += targetMesh.point(tri[k]);
-    }
+    for (int32_t k = 0; k < 3; ++k) { cent += targetMesh.point(tri[k]); }
     std::string cent_str = "";
     for (int32_t k = 0; k < 3; ++k) {
-      cent_str += std::to_string(int32_t(cent[k])); // assume quantized mesh
+      cent_str += std::to_string(int32_t(cent[k]));  // assume quantized mesh
       cent_str += " ";
     }
     cent2tindex[cent_str] = t;
   }
-  
+
   mapping.resize(sourceMesh.triangleCount());
   for (int32_t t = 0; t < sourceMesh.triangleCount(); t++) {
-    const auto& tri = sourceMesh.triangle(t);
+    const auto&  tri  = sourceMesh.triangle(t);
     Vec3<double> cent = 0;
-    for (int32_t k = 0; k < 3; ++k) {
-      cent += sourceMesh.point(tri[k]);
-    }
+    for (int32_t k = 0; k < 3; ++k) { cent += sourceMesh.point(tri[k]); }
     std::string cent_str = "";
     for (int32_t k = 0; k < 3; ++k) {
-      cent_str += std::to_string(int32_t(cent[k])); // assume quantized mesh
+      cent_str += std::to_string(int32_t(cent[k]));  // assume quantized mesh
       cent_str += " ";
     }
-    
+
     if (cent2tindex.find(cent_str) == cent2tindex.end()) {
       mapping.clear();
       return false;
     }
     int32_t tt = cent2tindex[cent_str];
     mapping[t] = tt;
-    
-    auto ttri = targetMesh.triangle(tt);
-    auto ttriUV = targetMesh.texCoordTriangle(tt);
+
+    auto          ttri   = targetMesh.triangle(tt);
+    auto          ttriUV = targetMesh.texCoordTriangle(tt);
     Vec3<int32_t> order;
-    bool reorder = false;
+    bool          reorder = false;
     if (sourceMesh.point(tri[0]) != targetMesh.point(ttri[0])) {
       reorder = true;
       if (sourceMesh.point(tri[0]) == targetMesh.point(ttri[1])) {
@@ -632,16 +624,18 @@ computeTriangleMapping(
       }
     } else if (sourceMesh.point(tri[1]) != targetMesh.point(ttri[1])) {
       reorder = true;
-      order = Vec3<int32_t>(0, 2, 1);
+      order   = Vec3<int32_t>(0, 2, 1);
     }
-    
+
     if (reorder) {
-      targetMesh.setTriangle(tt, ttri[order[0]], ttri[order[1]], ttri[order[2]]);
-      targetMesh.setTexCoordTriangle(tt, ttriUV[order[0]], ttriUV[order[1]], ttriUV[order[2]]);
+      targetMesh.setTriangle(
+        tt, ttri[order[0]], ttri[order[1]], ttri[order[2]]);
+      targetMesh.setTexCoordTriangle(
+        tt, ttriUV[order[0]], ttriUV[order[1]], ttriUV[order[2]]);
     }
-    
+
     const auto& tri2 = targetMesh.triangle(tt);
-    if (   sourceMesh.point(tri[0]) != targetMesh.point(tri2[0])
+    if (sourceMesh.point(tri[0]) != targetMesh.point(tri2[0])
         || sourceMesh.point(tri[1]) != targetMesh.point(tri2[1])
         || sourceMesh.point(tri[2]) != targetMesh.point(tri2[2])) {
       if (reorder) {
@@ -652,7 +646,7 @@ computeTriangleMapping(
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -695,7 +689,7 @@ bool
 VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
                                  Bitstream&                  bitstream,
                                  const VMCEncoderParameters& params) const {
-  if ( !params.encodeTextureVideo  ) {
+  if (!params.encodeTextureVideo) {
     for (auto& texture : reconstruct.textures()) {
       texture.clear();
       texture.resize(1, 1, ColourSpace::BGR444p);
@@ -875,7 +869,7 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
       const auto&                 point1        = fsubdiv1.point(indexPos);
       const auto&                 texCoord1 = fsubdiv1.texCoord(indexTexCoord);
       const std::array<double, 5> vertex1   = {
-          point1[0], point1[1], point1[2], texCoord1[0], texCoord1[1]};
+        point1[0], point1[1], point1[2], texCoord1[0], texCoord1[1]};
       const auto it = map0.find(vertex1);
       if (it != map0.end()) {
         mapping[indexPos] = map0[vertex1];
@@ -1155,11 +1149,9 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
     for (int32_t v = vcount0; v < vcount1; ++v) {
       auto& d = disp[v];
       for (int32_t k = 0; k < dispDimensions; ++k) {
-        d[k] =
-          d[k] >= 0.0
-            ? std::floor(d[k] * scale[k] + params.liftingBias[k])
-            : -std::floor(-d[k] * scale[k]
-                          + params.liftingBias[k]);
+        d[k] = d[k] >= 0.0
+                 ? std::floor(d[k] * scale[k] + params.liftingBias[k])
+                 : -std::floor(-d[k] * scale[k] + params.liftingBias[k]);
       }
     }
     vcount0 = vcount1;
@@ -1172,13 +1164,14 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
 
 bool
 VMCEncoder::computeDisplacementVideoFrame(
-  const VMCFrame&             frame,
-  Frame<uint16_t>&            dispVideoFrame,  // , ColourSpace::YUV400p, ColourSpace::YUV444p
+  const VMCFrame& frame,
+  Frame<uint16_t>&
+    dispVideoFrame,  // , ColourSpace::YUV400p, ColourSpace::YUV444p
   const VMCEncoderParameters& params) {
   const auto pixelsPerBlock =
     params.geometryVideoBlockSize * params.geometryVideoBlockSize;
-  const auto  shift = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
-  const auto& disp  = frame.disp;
+  const auto  shift      = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
+  const auto& disp       = frame.disp;
   const auto  planeCount = dispVideoFrame.planeCount();
   for (int32_t p = 0; p < planeCount; ++p) {
     dispVideoFrame.plane(p).fill(shift);
@@ -1271,18 +1264,18 @@ VMCEncoder::transferTexture(const TriangleMesh<MeshType>& input,
   for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
     targetMesh.setTexCoord(uvIndex, targetMesh.texCoord(uvIndex) * uvScale);
   }
-  
+
   std::vector<int32_t> srcTri2tgtTri;
   computeTriangleMapping(targetMesh, rec, srcTri2tgtTri);
-  
+
   if (srcTri2tgtTri.empty()) {
     targetMesh.subdivideMidPoint(
       params.textureTransferSamplingSubdivisionIterationCount);
   }
-  
+
   if (params.invertOrientation) { rec.invertOrientation(); }
-  bool ret =
-    transferTexture(targetMesh, rec, inputTexture, outputTexture, srcTri2tgtTri, params);
+  bool ret = transferTexture(
+    targetMesh, rec, inputTexture, outputTexture, srcTri2tgtTri, params);
   if (params.invertOrientation) { rec.invertOrientation(); }
   return ret;
 }
@@ -1290,20 +1283,21 @@ VMCEncoder::transferTexture(const TriangleMesh<MeshType>& input,
 //----------------------------------------------------------------------------
 
 bool
-VMCEncoder::transferTexture(TriangleMesh<MeshType>&       targetMesh,
-                            TriangleMesh<MeshType>&       sourceMesh,
-                            const Frame<uint8_t>&         targetTexture,
-                            Frame<uint8_t>&               outputTexture,
-                            const std::vector<int32_t>&   srcTri2tgtTri,
-                            const VMCEncoderParameters&   params) {
+VMCEncoder::transferTexture(TriangleMesh<MeshType>&     targetMesh,
+                            TriangleMesh<MeshType>&     sourceMesh,
+                            const Frame<uint8_t>&       targetTexture,
+                            Frame<uint8_t>&             outputTexture,
+                            const std::vector<int32_t>& srcTri2tgtTri,
+                            const VMCEncoderParameters& params) {
   if (srcTri2tgtTri.empty()) {
     printf("transfer texture through 3D\n");
   } else {
     printf("transfer texture between UV\n");
   }
   fflush(stdout);
-  
-  if ((targetMesh.pointCount() == 0) || (sourceMesh.pointCount() == 0)
+
+  if ((targetMesh.pointCount() == 0)
+      || (sourceMesh.pointCount() == 0)
       // || targetMesh.triangleCount() != targetMesh.texCoordTriangleCount()
       // || sourceMesh.triangleCount() != sourceMesh.texCoordTriangleCount()
       || outputTexture.width() <= 0 || outputTexture.height() <= 0) {
@@ -1364,42 +1358,42 @@ VMCEncoder::transferTexture(TriangleMesh<MeshType>&       targetMesh,
     j0 = std::max(j0, 0);
     j1 = std::min(j1, oWidthMinus1);
     for (int32_t i = i0; i <= i1; ++i) {
-      const auto y = double(i) / oHeightMinus1;
+      const auto y  = double(i) / oHeightMinus1;
       const auto ii = oHeightMinus1 - i;
       for (int32_t j = j0; j <= j1; ++j) {
         //if (!occupancy(ii, j)) {
-          const auto         x = double(j) / oWidthMinus1;
-          const Vec2<double> uvP(x, y);
-          auto               w0 = ((uv[2] - uv[1]) ^ (uvP - uv[1])) * iarea;
-          auto               w1 = ((uv[0] - uv[2]) ^ (uvP - uv[2])) * iarea;
-          auto               w2 = ((uv[1] - uv[0]) ^ (uvP - uv[0])) * iarea;
-          if (w0 >= 0.0 && w1 >= 0.0 && w2 >= 0.0) {
-            Vec3<double> bgr;
-            if (srcTri2tgtTri.empty()) {
-              const auto point0   = w0 * pos[0] + w1 * pos[1] + w2 * pos[2];
-              double     minDist2 = NAN;
-              bgr                 = computeNearestPointColour(point0,
-                                                        targetTexture,
-                                                        targetMesh,
-                                                        kdtree,
-                                                        vertexToTriangleTarget,
-                                                        minDist2);
-            } else {
-              const auto& tindex = srcTri2tgtTri[t];
-              const auto& triUVtgt = targetMesh.texCoordTriangle(tindex);
-              const auto& uv0 = targetMesh.texCoord(triUVtgt[0]);
-              const auto& uv1 = targetMesh.texCoord(triUVtgt[1]);
-              const auto& uv2 = targetMesh.texCoord(triUVtgt[2]);
-              const auto ruv = w0 * uv0 + w1 * uv1 + w2 * uv2;
-              bgr = targetTexture.bilinear(ruv[1], ruv[0]);
-            }
-            
-            oB.set(ii, j, uint8_t(std::round(bgr[0])));
-            oG.set(ii, j, uint8_t(std::round(bgr[1])));
-            oR.set(ii, j, uint8_t(std::round(bgr[2])));
-            occupancy.set(ii, j, uint8_t(255));
-            triangleMap.set(ii, j, t);
+        const auto         x = double(j) / oWidthMinus1;
+        const Vec2<double> uvP(x, y);
+        auto               w0 = ((uv[2] - uv[1]) ^ (uvP - uv[1])) * iarea;
+        auto               w1 = ((uv[0] - uv[2]) ^ (uvP - uv[2])) * iarea;
+        auto               w2 = ((uv[1] - uv[0]) ^ (uvP - uv[0])) * iarea;
+        if (w0 >= 0.0 && w1 >= 0.0 && w2 >= 0.0) {
+          Vec3<double> bgr;
+          if (srcTri2tgtTri.empty()) {
+            const auto point0   = w0 * pos[0] + w1 * pos[1] + w2 * pos[2];
+            double     minDist2 = NAN;
+            bgr                 = computeNearestPointColour(point0,
+                                            targetTexture,
+                                            targetMesh,
+                                            kdtree,
+                                            vertexToTriangleTarget,
+                                            minDist2);
+          } else {
+            const auto& tindex   = srcTri2tgtTri[t];
+            const auto& triUVtgt = targetMesh.texCoordTriangle(tindex);
+            const auto& uv0      = targetMesh.texCoord(triUVtgt[0]);
+            const auto& uv1      = targetMesh.texCoord(triUVtgt[1]);
+            const auto& uv2      = targetMesh.texCoord(triUVtgt[2]);
+            const auto  ruv      = w0 * uv0 + w1 * uv1 + w2 * uv2;
+            bgr                  = targetTexture.bilinear(ruv[1], ruv[0]);
           }
+
+          oB.set(ii, j, uint8_t(std::round(bgr[0])));
+          oG.set(ii, j, uint8_t(std::round(bgr[1])));
+          oR.set(ii, j, uint8_t(std::round(bgr[2])));
+          occupancy.set(ii, j, uint8_t(255));
+          triangleMap.set(ii, j, t);
+        }
         //}
       }
     }
@@ -1425,7 +1419,8 @@ VMCEncoder::transferTexture(TriangleMesh<MeshType>&       targetMesh,
           ++count;
 
           if (!srcTri2tgtTri.empty()) {
-            bgr += Vec3<double>(oB.get(i1, j1), oG.get(i1, j1), oR.get(i1, j1));
+            bgr +=
+              Vec3<double>(oB.get(i1, j1), oG.get(i1, j1), oR.get(i1, j1));
           } else {
             const auto y = double(oHeightMinus1 - i) / oHeightMinus1;
             const auto x = double(j) / oWidthMinus1;
@@ -1440,8 +1435,8 @@ VMCEncoder::transferTexture(TriangleMesh<MeshType>&       targetMesh,
 
             const auto&        triPos = sourceMesh.triangle(t);
             const Vec3<double> pos[3] = {sourceMesh.point(triPos[0]),
-                                        sourceMesh.point(triPos[1]),
-                                        sourceMesh.point(triPos[2])};
+                                         sourceMesh.point(triPos[1]),
+                                         sourceMesh.point(triPos[2])};
             const auto         area   = (uv[1] - uv[0]) ^ (uv[2] - uv[0]);
             assert(area > 0.0);
             const auto iarea    = area > 0.0 ? 1.0 / area : 1.0;
@@ -1451,11 +1446,11 @@ VMCEncoder::transferTexture(TriangleMesh<MeshType>&       targetMesh,
             const auto point0   = w0 * pos[0] + w1 * pos[1] + w2 * pos[2];
             double     minDist2 = NAN;
             bgr += computeNearestPointColour(point0,
-                                            targetTexture,
-                                            targetMesh,
-                                            kdtree,
-                                            vertexToTriangleTarget,
-                                            minDist2);
+                                             targetTexture,
+                                             targetMesh,
+                                             kdtree,
+                                             vertexToTriangleTarget,
+                                             minDist2);
             if (minDist2 < minTriangleDist2) {
               minTriangleDist2 = minDist2;
               triangleMap.set(i, j, t);
@@ -1471,7 +1466,7 @@ VMCEncoder::transferTexture(TriangleMesh<MeshType>&       targetMesh,
         }
       }
     }
-  }  
+  }
   if (params.textureTransferPaddingDilateIterationCount != 0) {
     Frame<uint8_t> tmpTexture;
     Plane<uint8_t> tmpOccupancy;
@@ -1516,20 +1511,19 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
   const auto     frameCount             = uint16_t(gof.frameCount());
   const uint16_t widthDispVideo         = uint32_t(dispVideo.width());
   const uint16_t heightDispVideo        = uint32_t(dispVideo.height());
-  const uint16_t widthTexVideo          = uint32_t( params.textureWidth );
-  const uint16_t heightTexVideo         = uint32_t( params.textureHeight );
+  const uint16_t widthTexVideo          = uint32_t(params.textureWidth);
+  const uint16_t heightTexVideo         = uint32_t(params.textureHeight);
   const uint8_t  geometryVideoBlockSize = params.geometryVideoBlockSize;
   const auto     bitDepth               = uint8_t((params.bitDepthPosition - 1)
                                 + ((params.bitDepthTexCoord - 1) << 4));
-  const uint8_t subdivInfo =
+  const uint8_t  subdivInfo =
     uint8_t(params.intraGeoParams.subdivisionMethod)
     + ((params.liftingSubdivisionIterationCount) << 4);
   const auto qpBaseMesh =
     uint8_t((params.qpPosition - 1) + ((params.qpTexCoord - 1) << 4));
-  const uint8_t liftingQPs[3] = {
-    uint8_t(params.liftingQP[0]),
-    uint8_t(params.liftingQP[1]),
-    uint8_t(params.liftingQP[2])};
+  const uint8_t liftingQPs[3] = {uint8_t(params.liftingQP[0]),
+                                 uint8_t(params.liftingQP[1]),
+                                 uint8_t(params.liftingQP[2])};
   const uint8_t bitField =
     static_cast<int>(params.encodeDisplacementsVideo)
     | (static_cast<int>(params.encodeTextureVideo) << 1)
@@ -1594,8 +1588,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   VMCGroupOfFrames gof;
   auto             gofInfo = gofInfoSrc;
   gofInfo.trace();
-  const int32_t frameCount             = gofInfo.frameCount_;
-  int32_t       lastIntraFrameIndex    = 0;
+  const int32_t frameCount          = gofInfo.frameCount_;
+  int32_t       lastIntraFrameIndex = 0;
   _stats.reset();
   _stats.totalByteCount = bitstream.size();
   gof.resize(source.frameCount());
@@ -1658,7 +1652,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     params.geometryVideoBlockSize * params.geometryVideoBlockSize;
   const auto widthDispVideo =
     params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
-  auto                    heightDispVideo = 0;
+  auto       heightDispVideo      = 0;
   const auto colourSpaceDispVideo = params.applyOneDimensionalDisplacement
                                       ? ColourSpace::YUV400p
                                       : ColourSpace::YUV444p;
@@ -1730,7 +1724,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
 
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     auto& frame = gof.frame(frameIndex);
-    printf("Reconstruct frame %2d / %d \n",frameIndex,frameCount);
+    printf("Reconstruct frame %2d / %d \n", frameIndex, frameCount);
     fflush(stdout);
     if (params.encodeDisplacementsVideo) {
       reconstructDisplacementFromVideoFrame(dispVideo.frame(frameIndex),
@@ -1763,13 +1757,11 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     }
     _stats.colorTransferTime += std::chrono::steady_clock::now() - start;
   }
-  // compress texture  
+  // compress texture
   printf("Compress texture video \n");
   fflush(stdout);
   _stats.textureByteCount = bitstream.size();
-  if ( !compressTextureVideo(reconstruct, bitstream, params)) {
-    return false;
-  }
+  if (!compressTextureVideo(reconstruct, bitstream, params)) { return false; }
   _stats.textureByteCount = bitstream.size() - _stats.textureByteCount;
   _stats.totalByteCount   = bitstream.size() - _stats.totalByteCount;
 

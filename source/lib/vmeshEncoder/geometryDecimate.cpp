@@ -57,10 +57,9 @@ GeometryDecimate::generate(const TriangleMesh<T>&      input,
                            TriangleMesh<T>&            decimate,
                            TriangleMesh<T>&            mapped,
                            const VMCEncoderParameters& params) {
-                            
-      // - width:  $eval{ 1 << ${src-texcoord-bits} - 1 }
-      // - height: $eval{ 1 << ${src-texcoord-bits} - 1 }
-      // - gutter: $eval{ 1 << (${src-texcoord-bits} - 8) }
+  // - width:  $eval{ 1 << ${src-texcoord-bits} - 1 }
+  // - height: $eval{ 1 << ${src-texcoord-bits} - 1 }
+  // - gutter: $eval{ 1 << (${src-texcoord-bits} - 8) }
   reference = input;
   if (!unifyVertices(reference)) {
     std::cerr << "Error: can't unify vertices!\n";

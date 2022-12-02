@@ -108,7 +108,7 @@ public:
   void compute(const TriangleMesh<T>&      srcMesh,
                const TriangleMesh<T>&      recMesh,
                const VMCMetricsParameters& params);
-  void display( const bool verbose = false );
+  void display(const bool verbose = false);
 
   std::vector<double> getPccResults();
   std::vector<double> getIbsmResults();

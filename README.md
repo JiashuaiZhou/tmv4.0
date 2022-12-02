@@ -760,7 +760,7 @@ The following subsections contain input parameters for encoding, decoding, and m
 | **Common** || 
 | --help=0 | This help text | 
 | -c, --config=... | --config=... Configuration file name | 
-| -v, --verbose=1 | --verbose=1 Verbose output | 
+| -v, --verbose=0 | --verbose=0 Verbose output | 
 ||| 
 | **Input** || 
 | --srcMesh="" | Input mesh | 
@@ -913,7 +913,7 @@ The following subsections contain input parameters for encoding, decoding, and m
 | **Common** || 
 | --help=0 | This help text | 
 | -c, --config=... | --config=... Configuration file name | 
-| -v, --verbose=1 | --verbose=1 Verbose output | 
+| -v, --verbose=0 | --verbose=0 Verbose output | 
 ||| 
 | **Input** || 
 | --compressed="" | Compressed bitstream | 
@@ -968,6 +968,8 @@ The following subsections contain input parameters for encoding, decoding, and m
 
 | **--key=value** | **Usage** | 
 |---|---| 
+||| 
+| **Common** || 
 | --help=0 | This help text | 
 | -c, --config=... | --config=... Configuration file name | 
 | -v, --verbose=0 | --verbose=0 Verbose output | 
@@ -1046,7 +1048,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ## Documentation
 
-A pdf version of the user manual of the TMM can be found in the mpeg-vmesh-tm repository: [./doc/mpeg-vmesh-sw-manual.pdf](http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/tree/main/doc/mpeg-vmesh-sw-manual.pdf).
+A pdf version of the user manual of the TMM can be found in the mpeg-vmesh-tm repository: (http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/tree/main/doc/mpeg-vmesh-sw-manual.pdf).
 
 
 ## Issue reporting 
@@ -1056,4 +1058,4 @@ For any issues or questions don't hesitate to open issues in V-Mesh git reposito
 - Julien Ricard (julien.ricard@interdigital.com)
 - Wenjie Zou (wjzou@xidian.edu.cn)
 
-Bugs should be reported on the issue tracker at <http://mpegx.int-evry.fr/software/MPEG/vmesh/TM/mpeg-vmesh-tmc/issues>.
+Bugs should be reported on the issue tracker at: (http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/issues).

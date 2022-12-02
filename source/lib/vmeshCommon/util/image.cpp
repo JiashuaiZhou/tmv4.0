@@ -85,7 +85,7 @@ Frame<T>::loadImage(const std::string& fileName) {
 
 template<typename T>
 bool
-Frame<T>::load(const std::string& fileName, const int32_t frameIndex) {  
+Frame<T>::load(const std::string& fileName, const int32_t frameIndex) {
   return load(expandNum(fileName, frameIndex));
 }
 
@@ -95,7 +95,7 @@ template<typename T>
 bool
 Frame<T>::load(const std::string& fileName) {
   auto ext = extension(fileName);
-  if (ext == "png" || ext == "jpg" || ext == "bmp" || ext == "tga" ) {
+  if (ext == "png" || ext == "jpg" || ext == "bmp" || ext == "tga") {
     return loadImage(fileName);
   } else if (ext == "yuv" || ext == "rgb" || ext == "bgr") {
     std::ifstream is(fileName, std::ios::binary);

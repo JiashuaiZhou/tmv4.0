@@ -734,7 +734,7 @@ public:
     }
   }
 
-  inline void print(std::string str, const int32_t logFaces = 0 ) const {
+  inline void print(std::string str, const int32_t logFaces = 0) const {
     printf("#####\n");
     printf("## %s \n", str.c_str());
     printf("## Coord:        %-6d \n", pointCount());
@@ -746,13 +746,14 @@ public:
     printf("## TexTriangles: %-6d \n", texCoordTriangleCount());
     printf("## NrmTriangles: %-6d \n", normalTriangleCount());
     printf("## MTL:          %s \n", _mtllib.c_str());
-    if( logFaces > 0 ){
+    if (logFaces > 0) {
       printf("## Faces: \n");
       for (size_t i = 0; i < triangleCount(); i += logFaces) {
         printf(
           "## Tri %6zu: "
           "XYZ: (%9.5f %9.5f %9.5f)(%9.5f %9.5f %9.5f)(%9.5f %9.5f %9.5f) "
-          "UV: (%9.5f %9.5f)(%9.5f %9.5f)(%9.5f %9.5f)\n", i,
+          "UV: (%9.5f %9.5f)(%9.5f %9.5f)(%9.5f %9.5f)\n",
+          i,
           _coord[_coordIndex[i][0]][0],
           _coord[_coordIndex[i][0]][1],
           _coord[_coordIndex[i][0]][2],

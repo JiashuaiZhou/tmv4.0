@@ -336,13 +336,13 @@ public:
   }
 
   Vec3& operator=(const Vec3& rhs) = default;
-  
+
   template<typename D>
   Vec3& operator=(const Vec3<D>& rhs) {
     _vec[0] = rhs[0];
     _vec[1] = rhs[1];
     _vec[2] = rhs[2];
-    return *this;    
+    return *this;
   }
 
   Vec3& operator+=(const Vec3& rhs) {

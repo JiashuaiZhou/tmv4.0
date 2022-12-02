@@ -99,7 +99,7 @@ struct VMCSequenceParameterSet {
   int32_t qpPosition                          = 0;
   int32_t qpTexCoord                          = 0;
   int32_t subdivisionIterationCount           = 0;
-  int32_t liftingQP[3]    = {0, 0, 0};
+  int32_t liftingQP[3]                        = {0, 0, 0};
   double  liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
   double  liftingUpdateWeight                 = 0.125;
   double  liftingPredictionWeight             = 0.5;
@@ -263,11 +263,11 @@ public:
         _meshes[f].setMaterialLibrary(vmesh::basename(strMat));
         if (!material.save(strMat)) return false;
       }
-    } else { 
+    } else {
       for (int f = 0; f < _meshes.frameCount(); ++f) {
         const auto n      = frameStart + f;
         auto       strTex = vmesh::expandNum(texturePath, n);
-        _meshes[f].setMaterialLibrary( vmesh::basename(strTex) );
+        _meshes[f].setMaterialLibrary(vmesh::basename(strTex));
       }
     }
     if (!_meshes.save(meshPath, frameStart)
@@ -291,11 +291,11 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
   fflush(stdout);
   const auto geometryVideoWidthInBlocks =
     dispVideoFrame.width() / geometryVideoBlockSize;
-  const auto  pixelsPerBlock = geometryVideoBlockSize * geometryVideoBlockSize;
-  const auto  shift          = uint16_t((1 << geometryVideoBitDepth) >> 1);
-  const auto  planeCount     = dispVideoFrame.planeCount();
-  const auto  pointCount     = rec.pointCount();
-  auto&       disp           = frame.disp;
+  const auto pixelsPerBlock = geometryVideoBlockSize * geometryVideoBlockSize;
+  const auto shift          = uint16_t((1 << geometryVideoBitDepth) >> 1);
+  const auto planeCount     = dispVideoFrame.planeCount();
+  const auto pointCount     = rec.pointCount();
+  auto&      disp           = frame.disp;
   disp.assign(pointCount, Vec3<double>(0));
   for (int32_t v = 0; v < pointCount; ++v) {
     // to do: optimize power of 2
@@ -315,7 +315,7 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
     auto&      d  = disp[v];
     for (int32_t p = 0; p < planeCount; ++p) {
       const auto& plane = dispVideoFrame.plane(p);
-      d[p] = double(plane.get(y1, x1)) - shift;
+      d[p]              = double(plane.get(y1, x1)) - shift;
     }
   }
   return 0;

@@ -166,7 +166,7 @@ VMCMetrics::compute(const TriangleMesh<T>&      srcMesh,
   convert(srcMap, srcImage);
   convert(recMap, recImage);
   compute(srcModel, recModel, srcImage, recImage, "", "", params);
-  print( compare->size() - 1);
+  print(compare->size() - 1);
 }
 
 //============================================================================

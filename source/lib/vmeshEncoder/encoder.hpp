@@ -203,9 +203,9 @@ struct VMCEncoderParameters {
   double  liftingUpdateWeight                 = 0.125;
   double  liftingPredictionWeight             = 0.5;
   bool    liftingSkipUpdate                   = false;
-  double  liftingBias[3]          = {1. / 3., 1. / 3., 1. / 3};
+  double  liftingBias[3]                      = {1. / 3., 1. / 3., 1. / 3};
   double  liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
-  int32_t liftingQP[3]    = {16, 28, 28};
+  int32_t liftingQP[3]                        = {16, 28, 28};
 
   // texture transfer
   int32_t       textureWidth                                     = 2048;
@@ -251,9 +251,8 @@ struct VMCEncoderParameters {
   GeometryParametrizationParameters interGeoParams;
 
   // Caching
-  CachingPoint cachingPoint          = CachingPoint::NONE;
-  std::string  cachingDirectory      = {};
-  
+  CachingPoint cachingPoint     = CachingPoint::NONE;
+  std::string  cachingDirectory = {};
 };
 
 //============================================================================
@@ -286,9 +285,9 @@ private:
   void removeDegeneratedTrianglesCrossProduct(TriangleMesh<MeshType>& mesh,
                                               const int32_t& frameIndex);
 
-  void textureParametrization(VMCFrame&                     frame,
-                              TriangleMesh<MeshType>&       decimate,
-                              const VMCEncoderParameters&   params);
+  void textureParametrization(VMCFrame&                   frame,
+                              TriangleMesh<MeshType>&     decimate,
+                              const VMCEncoderParameters& params);
 
   void geometryParametrization(VMCGroupOfFrames&             gof,
                                VMCGroupOfFramesInfo&         gofInfo,
@@ -344,12 +343,12 @@ private:
                               Frame<uint8_t>&               outputTexture,
                               const VMCEncoderParameters&   params);
 
-  static bool transferTexture(TriangleMesh<MeshType>&       targetMesh,
-                              TriangleMesh<MeshType>&       sourceMesh,
-                              const Frame<uint8_t>&         targetTexture,
-                              Frame<uint8_t>&               outputTexture,
-                              const std::vector<int32_t>&   srcTri2tgtTri,
-                              const VMCEncoderParameters&   params);
+  static bool transferTexture(TriangleMesh<MeshType>&     targetMesh,
+                              TriangleMesh<MeshType>&     sourceMesh,
+                              const Frame<uint8_t>&       targetTexture,
+                              Frame<uint8_t>&             outputTexture,
+                              const std::vector<int32_t>& srcTri2tgtTri,
+                              const VMCEncoderParameters& params);
 
   std::string _keepFilesPathPrefix = {};
   int32_t     _gofIndex            = 0;

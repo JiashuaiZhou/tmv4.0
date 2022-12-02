@@ -72,7 +72,7 @@ TEST(metrics, compare) {
   params.dequantizeUV                    = false;
   params.verbose                         = true;
 
- // Compute metric with VMCMetrics:
+  // Compute metric with VMCMetrics:
   vmesh::Sequence source, reconstruct;
   if (!source.load(srcObjPath, srcTexPath, startFrame, frameCount)) {
     std::cerr << "Error: can't load source sequence\n";
@@ -238,4 +238,4 @@ TEST(metrics, compare) {
 
   // Remove tmp files
   remove("metric_pcc.log");
-  }
+}

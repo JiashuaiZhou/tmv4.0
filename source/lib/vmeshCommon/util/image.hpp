@@ -215,9 +215,9 @@ struct Plane {
 
   int size() const { return (int)_buffer.size(); }
   T   get(int i, int j) const {
-      assert(i >= 0 && i < _height);
-      assert(j >= 0 && j < _width);
-      return _buffer[i * _width + j];
+    assert(i >= 0 && i < _height);
+    assert(j >= 0 && j < _width);
+    return _buffer[i * _width + j];
   }
   T& get(int i, int j) {
     assert(i >= 0 && i < _height);
@@ -600,7 +600,7 @@ public:
   typename std::vector<Frame<T>>::iterator begin() { return _frames.begin(); }
   typename std::vector<Frame<T>>::iterator end() { return _frames.end(); }
 
-  void resize(int w, int h, ColourSpace colourSpace, int f) {    
+  void resize(int w, int h, ColourSpace colourSpace, int f) {
     _width       = w;
     _height      = h;
     _colourSpace = colourSpace;
@@ -766,9 +766,9 @@ PullPushPadding(Frame<T1>& input, const Plane<T2>& occupancy) {
   const int32_t K            = 3;
   const int32_t K2           = 1;
   const float   kernel[K][K] = {
-      {0.0625, 0.1250, 0.0625},
-      {0.1250, 0.2500, 0.1250},
-      {0.0625, 0.1250, 0.0625},
+    {0.0625, 0.1250, 0.0625},
+    {0.1250, 0.2500, 0.1250},
+    {0.0625, 0.1250, 0.0625},
   };
 
   std::vector<float> v(planeCount);

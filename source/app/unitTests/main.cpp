@@ -80,7 +80,7 @@ parseParameters(int argc, char* argv[]) try {
 
   if (err.is_errored) { return false; }
 
-  // Dump the complete derived configuration  
+  // Dump the complete derived configuration
   po::dumpCfgBySection(std::cout, opts);
 
   return true;

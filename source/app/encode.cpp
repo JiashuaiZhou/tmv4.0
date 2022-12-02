@@ -573,7 +573,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   po::dumpCfgBySection(std::cout, opts);
 
   // Copy duplicate parameters
-  for (int k = 0; k < 3; k++){
+  for (int k = 0; k < 3; k++) {
     metParams.minPosition[k] = encParams.minPosition[k];
     metParams.maxPosition[k] = encParams.maxPosition[k];
   }
@@ -634,8 +634,8 @@ compress(const Parameters& params) {
     printf("source count =  %d \n", source.frameCount());
     fflush(stdout);
     printf("source.texture(frameIndex) = %d %d \n",
-            source.texture(0).width(),
-            source.texture(0).height());
+           source.texture(0).width(),
+           source.texture(0).height());
     fflush(stdout);
 
     // Compress group of frame

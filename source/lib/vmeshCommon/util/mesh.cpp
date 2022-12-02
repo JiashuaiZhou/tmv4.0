@@ -44,8 +44,8 @@ namespace vmesh {
 //============================================================================
 
 template<typename T, typename D>
-void templateConvert( std::shared_ptr<tinyply::PlyData> src,
-                      std::vector<T>&                   dst ) {
+void
+templateConvert(std::shared_ptr<tinyply::PlyData> src, std::vector<T>& dst) {
   const size_t   numBytes = src->buffer.size_bytes();
   std::vector<D> data;
   dst.resize(src->count);
@@ -72,9 +72,9 @@ set(std::shared_ptr<tinyply::PlyData> src,
     case tinyply::Type::FLOAT32: templateConvert<T, float>(src, dst); break;
     case tinyply::Type::FLOAT64: templateConvert<T, double>(src, dst); break;
     default:
-      printf( "ERROR: PLY type not supported: %s \n", name.c_str() );
-      fflush( stdout );
-      exit( -1 );
+      printf("ERROR: PLY type not supported: %s \n", name.c_str());
+      fflush(stdout);
+      exit(-1);
       break;
     }
   }

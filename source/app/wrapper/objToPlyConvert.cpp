@@ -155,7 +155,7 @@ main(int argc, char* argv[]) {
     return -1;
   }
   // Load PNG
-  if (!srcTex.load(params.srcTexturePath )) {
+  if (!srcTex.load(params.srcTexturePath)) {
     printf("Error loading src texture: %s \n", params.srcTexturePath.c_str());
     return -1;
   }

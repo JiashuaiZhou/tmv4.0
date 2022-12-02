@@ -201,7 +201,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   }
   if (err.is_errored) { return false; }
 
-  // Dump the complete derived configuration  
+  // Dump the complete derived configuration
   po::dumpCfgBySection(std::cout, opts);
   return true;
 } catch (df::program_options_lite::ParseFailure& e) {
@@ -216,7 +216,7 @@ int32_t
 metrics(const Parameters& params) {
   vmesh::VMCMetrics metrics;
   for (int i = 0; i < params.frameCount; ++i) {
-    const auto                    f = params.startFrame + i;
+    const auto f = params.startFrame + i;
 #if 0
     vmesh::TriangleMesh<MeshType> srcMesh;
     vmesh::TriangleMesh<MeshType> recMesh;

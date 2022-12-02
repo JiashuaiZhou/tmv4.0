@@ -603,8 +603,9 @@ compress(const Parameters& params) {
                         params.inputMeshPath);
   std::string keepFilesPathPrefix = "";
   if (params.encParams.keepIntermediateFiles) {
-    keepFilesPathPrefix = vmesh::dirname(params.compressedStreamPath);
-    auto gofPath        = keepFilesPathPrefix + "gof.txt";
+    keepFilesPathPrefix =
+      vmesh::removeExtension(params.compressedStreamPath) + "_";
+    auto gofPath = keepFilesPathPrefix + "gof.txt";
     sequenceInfo.save(gofPath);
   }
 

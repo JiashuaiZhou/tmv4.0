@@ -3,36 +3,53 @@
 # Generate a configuration tree in $PWD from YAML files in the same
 # directory.
 
-set -e
-shopt -s nullglob
+CURDIR=$( cd "$( dirname "$0" )" && pwd ); 
+MAINDIR=$( dirname ${CURDIR} )
 
-script_dir="$(dirname $0)"
-src_cfg_dir="$script_dir/../cfg"
-outdir="."
+function formatCmd(){ 
+  local f=${1}; 
+  for s in ${2} ; do 
+    if [ $s == "--" ] ; then f=${f//${s}/ \\\\\\n    ${s}};  else f=${f// ${s}/ \\\\\\n   ${s}};  fi
+  done
+  echo -e "$f" | sed 's/ *\\$/ \\/' 
+}
 
-while (( $# )); do
-	case $1 in
-	--outdir=*) outdir="${1#--outdir=}" ;;
-	--cfgdir=*) src_cfg_dir="${1#--cfgdir=}" ;;
-	--) shift; break ;;
-	--help|*)
-		echo -e "usage:\n $0\n" \
-			"    [--outdir=<dir>] [--cfgdir=<dir>]"
-		exit 1
-	esac
-	shift;
+OUTDIR="generatedConfigFiles"
+CFGDIR=${MAINDIR}/cfg/
+EXTRA_ARGS=()
+
+function print_usage() {
+  echo "$0 Generate configurations files "
+  echo "";
+  echo "  Usage:"   
+  echo "    -h|--help   : print help ";
+  echo "    -c|--cfgdir : configured directory    (default: \"$CFGDIR\" )";
+  echo "    -o|--outdir : output directory        (default: \"$OUTDIR\" )";
+  echo "    -- A B C    : extra arguments         (default: \"$OUTDIR\" )";
+  echo "";
+  echo "  Examples:";
+  echo "    $0 -h"; 
+  echo "    $0 --outdir=generatedConfigFiles --cfgdir=./cfg/ ";
+  echo "    $0 --outdir=generatedConfigFiles --cfgdir=./cfg/ -- arg1 arg2 arg3";
+  echo "    ";
+  if [ "$#" != 0 ] ; then echo -e "ERROR: $1 \n"; fi
+  exit 0;
+}
+
+# Parse input parameters
+while [[ $# -gt 0 ]] ; do  
+  C=$1; if [[ "$C" =~ [=] ]] ; then V=${C#*=}; elif [[ $2 == -* ]] ; then  V=""; else V=$2; shift; fi;
+  case "$C" in    
+    -h|--help    ) print_usage;;
+    -o|--outdir* ) OUTDIR=$V;; 
+    -c|--cfgdir* ) CFGDIR=$V;; 
+		--           ) EXTRA_ARGS=$@; break;;
+    *            ) print_usage "unsupported arguments: $C ";;
+  esac
+  shift;
 done
 
-extra_args=("$@")
-
-# add trailing slash to src_cfg_dir if not empty
-src_cfg_dir="${src_cfg_dir}${src_cfg_dir:+/}"
-
-# load site configuration if present
-sitecfg="${src_cfg_dir:-}cfg-site.yaml"
-[[ -f $sitecfg ]] || sitecfg=
-
-##
+##	
 # NB: it is important that the configs in each config set are
 # capable of being merged together by gen-cfg.pl.  Ie, no two
 # configs may have different definitions of one category.
@@ -41,30 +58,35 @@ cfg_all=(
 	cfg-cond-ld.yaml
 )
 
+# Check parameters
+if [ ! -d $CFGDIR  ] ; then print_usage "Config directory is not valid (${CFGDIR}) "; fi
+if [ $OUTDIR == "" ] ; then print_usage "Output directory is not valid (${OUTDIR}) "; fi
+[[ ${CFGDIR:${#CFGDIR}-1:1} != "/" ]] && CFGDIR+="/"; 
+for FILE in ${cfg_all[@]} cfg-site-default.yaml cfg-tools.yaml sequences.yaml cfg-site.yaml
+do
+	if [ ! -f ${CFGDIR}${FILE} ] ; then print_usage "Yaml config is not valid (${CFGDIR}${FILE}) "; fi
+done 
+
 do_one_cfgset() {
 	local what=$1
-
-	mkdir -p "${outdir}"
-
-	cfgset="cfg_${what}[@]"
-
-	for f in ${!cfgset}
-	do
-		echo "${src_cfg_dir}$f -> $outdir" ...
-	done
+	mkdir -p "${OUTDIR}"
+	CFGSET="cfg_${what}[@]"
+	CONDCFG=(); for file in ${!CFGSET} ; do CONDCFG+=(${CFGDIR}$file); done
 
 	# NB: specifying extra_args at the end does not affect option
 	# processing since gen-cfg.pl is flexible in argument positions
-	$script_dir/gen-cfg.pl \
-		--prefix="$outdir" --no-skip-sequences-without-src \
-		"${src_cfg_dir}cfg-site-default.yaml" \
-		"${src_cfg_dir}cfg-tools.yaml" \
-		"${!cfgset/#/${src_cfg_dir}}" \
-		"${src_cfg_dir}sequences.yaml" \
-		${sitecfg:+"${sitecfg}"} \
-		"${extra_args[@]}"
-
-	rm -f "$outdir/config-merged.yaml"
+	CMD="${CURDIR}/gen-cfg.pl \
+		--prefix=${OUTDIR} \
+		--no-skip-sequences-without-src \
+		${CFGDIR}cfg-site-default.yaml \
+		${CFGDIR}cfg-tools.yaml \
+		${CONDCFG[@]} \
+		${CFGDIR}sequences.yaml \
+		${CFGDIR}cfg-site.yaml \
+		${EXTRA_ARGS[@]}"
+	if ! eval $CMD ; then echo "ERROR: ${MAINDIR}/scripts/gen-cfg.pl return !0"; exit; fi
+  
+	rm -f "${OUTDIR}/config-merged.yaml"
 }
 
 do_one_cfgset "all"

@@ -93,6 +93,8 @@ convert(const TriangleMesh<T>& src, mm::Model& dst) {
   }
 }
 
+//============================================================================
+
 void
 convert(const Frame<uint8_t>& src, mm::Image& dst) {
   const int32_t width  = src.width();
@@ -104,6 +106,39 @@ convert(const Frame<uint8_t>& src, mm::Image& dst) {
       dst.data[(v * width + u) * 3 + 1] = src.plane(1).get(v, u);
       dst.data[(v * width + u) * 3 + 0] = src.plane(2).get(v, u);
     }
+  }
+}
+
+//============================================================================
+
+void
+convert(const mm::Image& src, Frame<uint8_t>& dst) {
+  const int32_t width  = src.width;
+  const int32_t height = src.height;
+  dst.resize(width, height, ColourSpace::BGR444p);
+  for (int32_t v = 0; v < height; v++) {
+    for (int32_t u = 0; u < width; u++) {
+      dst.plane(0).set(v, u, src.data[(v * width + u) * 3 + 2]);
+      dst.plane(1).set(v, u, src.data[(v * width + u) * 3 + 1]);
+      dst.plane(2).set(v, u, src.data[(v * width + u) * 3 + 0]);
+    }
+  }
+}
+
+//============================================================================
+
+void log(const std::string& str, const mm::Image& image) {
+  printf("%s: %dx%d nbc = %d \n", str.c_str(), image.width, image.height, image.nbc);
+  fflush(stdout);
+  for (int c = 2; c >= 0; c--) {
+    for (int v = 0; v < std::min(image.height, 4096); v++) {    
+      printf("%4d: ",v);
+      for (int u = 0; u < std::min(image.width, 4096); u++) {
+        printf("%2x ", image.data[( v * image.width + u ) * image.nbc + c]);
+      }
+      printf("\n");
+    }
+    printf("\n");
   }
 }
 

@@ -424,12 +424,13 @@ public:
   void log(const std::string& str) const {
     printf("%s: %dx%d \n", str.c_str(), _width, _height);
     fflush(stdout);
-    for (int v = 0; v < std::min(_height, 1); v++) {
-      for (int c = 0; c < 3; c++) {
+    for (int c = 0; c < 3; c++) {
+      for (int v = 0; v < std::min(_height, 16); v++) {
+        printf("%4d: ", v);
         for (int u = 0; u < std::min(_width, 16); u++) {
           printf("%2x ", _planes[c].get(v, u));
         }
-        printf("    ");
+        printf("\n");
       }
       printf("\n");
     }

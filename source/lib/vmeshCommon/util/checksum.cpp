@@ -37,6 +37,9 @@
 #include "checksum.hpp"
 #include "MD5.h"
 
+#include "mmModel.h"
+#include "mmImage.h"
+
 namespace vmesh {
 
 //============================================================================
@@ -84,15 +87,15 @@ std::vector<uint8_t>
 Checksum::compute(const Frame<uint8_t>& texture) {
   std::vector<uint8_t> digest;
   md5::MD5             md5;
-  auto texturesize0 = texture.plane(0).width() * texture.plane(0).height();
-  auto texturesize1 = texture.plane(1).width() * texture.plane(1).height();
-  auto texturesize2 = texture.plane(2).width() * texture.plane(2).height();
+  auto size0 = texture.plane(0).width() * texture.plane(0).height();
+  auto size1 = texture.plane(1).width() * texture.plane(1).height();
+  auto size2 = texture.plane(2).width() * texture.plane(2).height();
   md5.update(reinterpret_cast<const uint8_t*>(texture.plane(0).data()),
-             texturesize0 * sizeof(uint8_t));
+             size0 * sizeof(uint8_t));
   md5.update(reinterpret_cast<const uint8_t*>(texture.plane(1).data()),
-             texturesize1 * sizeof(uint8_t));
+             size1 * sizeof(uint8_t));
   md5.update(reinterpret_cast<const uint8_t*>(texture.plane(2).data()),
-             texturesize2 * sizeof(uint8_t));
+             size2 * sizeof(uint8_t));
   digest.resize(MD5_DIGEST_STRING_LENGTH);
   md5.finalize(digest.data());
   return digest;
@@ -100,6 +103,50 @@ Checksum::compute(const Frame<uint8_t>& texture) {
 
 //============================================================================
 
+std::vector<uint8_t>
+Checksum::compute(const mm::Model& mesh) {
+  std::vector<uint8_t> digest;
+  md5::MD5             md5;
+  md5.update(reinterpret_cast<const uint8_t*>(mesh.vertices.data()),
+             mesh.vertices.size() * sizeof(float));
+  if (mesh.hasColors())
+    md5.update(reinterpret_cast<const uint8_t*>(mesh.colors.data()),
+               mesh.colors.size() * sizeof(float));
+  if (mesh.hasUvCoords())
+    md5.update(reinterpret_cast<const uint8_t*>(mesh.uvcoords.data()),
+               mesh.uvcoords.size() * sizeof(float));
+  if (mesh.hasNormals())
+    md5.update(reinterpret_cast<const uint8_t*>(mesh.normals.data()),
+               mesh.normals.size() * sizeof(float));
+  if (mesh.hasTriangleNormals())
+    md5.update(reinterpret_cast<const uint8_t*>(mesh.faceNormals.data()),
+               mesh.faceNormals.size() * sizeof(float));
+  if (mesh.hasTriangles())
+    md5.update(reinterpret_cast<const uint8_t*>(mesh.triangles.data()),
+               mesh.triangles.size() * sizeof(int));
+  if (mesh.hasUvCoords())
+    md5.update(reinterpret_cast<const uint8_t*>(mesh.trianglesuv.data()),
+               mesh.trianglesuv.size() * sizeof(int));
+  digest.resize(MD5_DIGEST_STRING_LENGTH);
+  md5.finalize(digest.data());
+  return digest;
+}
+
+//============================================================================
+
+std::vector<uint8_t>
+Checksum::compute(const mm::Image& texture) {
+  std::vector<uint8_t> digest;
+  md5::MD5             md5;
+  auto                 size = texture.width * texture.height * texture.nbc;
+  md5.update(reinterpret_cast<const uint8_t*>(texture.data),
+             size * sizeof(uint8_t));
+  digest.resize(MD5_DIGEST_STRING_LENGTH);
+  md5.finalize(digest.data());
+  return digest;
+}
+
+//============================================================================
 template<typename T>
 void
 Checksum::add(const TriangleMesh<T>& mesh) {
@@ -127,11 +174,9 @@ Checksum::add(const Sequence& sequence) {
 
 //============================================================================
 
-template<typename T>
 std::string
-Checksum::getChecksum(const TriangleMesh<T>& mesh) {
-  std::string str      = "";
-  auto        checksum = compute(mesh);
+toString(const std::vector<uint8_t>& checksum) {
+  std::string str;
   for (auto& c : checksum) {
     char data[8];
     snprintf(data, sizeof(data), "%02x", c);
@@ -141,16 +186,32 @@ Checksum::getChecksum(const TriangleMesh<T>& mesh) {
 }
 
 //============================================================================
+
+template<typename T>
+std::string
+Checksum::getChecksum(const TriangleMesh<T>& mesh) {
+  return toString(compute(mesh));
+}
+
+//============================================================================
+
 std::string
 Checksum::getChecksum(const Frame<uint8_t>& texture) {
-  std::string str      = "";
-  auto        checksum = compute(texture);
-  for (auto& c : checksum) {
-    char data[8];
-    snprintf(data, sizeof(data), "%02x", c);
-    str += data;
-  }
-  return str;
+  return toString(compute(texture));
+}
+
+//============================================================================
+
+std::string
+Checksum::getChecksum(const mm::Model& mesh) {
+  return toString(compute(mesh));
+}
+
+//============================================================================
+
+std::string
+Checksum::getChecksum(const mm::Image& texture) {
+  return toString(compute(texture));
 }
 
 //============================================================================

@@ -34,6 +34,12 @@
  */
 #include <stdio.h>
 #include "vmc.hpp"
+#include "vmc.hpp"
+
+namespace mm {
+class Image;
+class Model;
+}
 
 namespace vmesh {
 
@@ -55,6 +61,8 @@ public:
   template<typename T>
   std::string getChecksum(const TriangleMesh<T>& mesh);
   std::string getChecksum(const Frame<uint8_t>& texture);
+  std::string getChecksum(const mm::Model& mesh);
+  std::string getChecksum(const mm::Image& texture);
 
   bool operator!=(const Checksum& rhs) const { return !(*this == rhs); }
 
@@ -89,6 +97,8 @@ private:
   template<typename T>
   std::vector<uint8_t> compute(const TriangleMesh<T>& mesh);
   std::vector<uint8_t> compute(const Frame<uint8_t>& texture);
+  std::vector<uint8_t> compute(const mm::Model& mesh);
+  std::vector<uint8_t> compute(const mm::Image& texture);
 
   std::vector<std::vector<uint8_t>> mesh_;
   std::vector<std::vector<uint8_t>> texture_;

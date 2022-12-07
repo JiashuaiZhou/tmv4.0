@@ -49,9 +49,12 @@ if [ "$MACHINE" == "Linux" ] ; then NUMBER_OF_PROCESSORS=$( grep -c ^processor /
 MMETRIC=${DEPDIR}/mpeg-pcc-mmetric
 if [ ! -d ${MMETRIC} ] 
 then 
-  echo -e "\033[0;32mClone: ${MMETRIC} \033[0m";
-  git clone http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-mmetric.git -b 1_1_0 ${MMETRIC} 
-fi    
+  FILE=${MAINDIR}/dependencies/cmake/geometry/mmetric.cmake
+  URL=$( cat ${FILE} | grep GIT_REPOSITORY | awk '{print $2}' ) 
+  TAG=$( cat ${FILE} | grep GIT_TAG        | awk '{print $2}' )
+  echo -e "\033[0;32mClone: ${MMETRIC} url = ${URL} tag = ${TAG} \033[0m";
+  git clone ${URL} -b ${TAG} ${MMETRIC} 
+fi
 echo -e "\033[0;32mBuild: ${MMETRIC} \033[0m";
 ${MMETRIC}/build.sh
 echo "ALL = ${ALL}"

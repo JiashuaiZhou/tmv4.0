@@ -26,19 +26,19 @@ strCond = [{'name': 'C0 lossless AI', 'dataColumn': [10, 16], 'frameColumn': 5},
            {'name': 'C1 lossy AI',    'dataColumn': [12, 26], 'frameColumn': 6},
            {'name': 'C2 lossy RA',    'dataColumn': [12, 26], 'frameColumn': 6}]
 losslessColumn = ['TotalBitstreamBits', 'UserEncoderRuntime', 'UserDecoderRuntime']
-lossyColumn = ['NbOutputFaces', 'TotalBitstreamBits', 'GridD1', 'GridD2', 'GridLuma', \
-               'GridChromaCb', 'GridChromaCr', 'IbsmGeom', 'IbsmLuma', 'UserEncoderRuntime', 'UserDecoderRuntime']
+lossyColumn = ['NbOutputFaces', 'TotalBitstreamBits', 'GridD1', 'GridD2', 'GridLuma', 'GridChromaCb', \
+               'GridChromaCr', 'IbsmGeom', 'IbsmLuma', 'UserEncoderRuntime', 'UserDecoderRuntime']
 
 def parseArgs():
   global parser
   source = getCurrentDir() + "/results/empty.xlsm"
   parser = argparse.ArgumentParser(description="Fill CTC .xlsm file")
   # clang-format off  
-  parser.add_argument("--anchor",        help="Anchor .csv path (csv)",            default="anchor.cvs", type=str)
-  parser.add_argument("--tested",        help="Test.csv path (csv)",               default="test.csv",   type=str)
-  parser.add_argument("--source",        help="VMesh CFP spreadsheet path (xlsm)", default=source,       type=str)
-  parser.add_argument("--frame",         help="Number of frames",                  default=-1,           type=int)
-  parser.add_argument("--save",          help="Create spreadsheet path (xlsm)",    default="test.xlsm",  type=str)
+  parser.add_argument("--anchor", help="Anchor .csv path (csv)",            default="anchor.cvs", type=str)
+  parser.add_argument("--tested", help="Test.csv path (csv)",               default="test.csv",   type=str)
+  parser.add_argument("--source", help="VMesh CFP spreadsheet path (xlsm)", default=source,       type=str)
+  parser.add_argument("--frame",  help="Number of frames",                  default=-1,           type=int)
+  parser.add_argument("--save",   help="Create spreadsheet path (xlsm)",    default="test.xlsm",  type=str)
   # clang-format one
   return parser.parse_args()
 

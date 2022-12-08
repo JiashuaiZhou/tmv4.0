@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17)
 project(vmesh CXX C )
 
 # Options:
-set(VDMC_VERSION_MAJOR 1 )
+set(VDMC_VERSION_MAJOR 2 )
 set(VDMC_VERSION_MINOR 0 )
 
 # Video encoder and decoder:
@@ -11,7 +11,7 @@ OPTION( USE_VTM_VIDEO_CODEC      "Use VTM video encoder and decoder"      TRUE  
 OPTION( USE_FFMPEG_VIDEO_CODEC   "Use FFMPEG video encoder and decoder"   FALSE )  # 2
 
 # Geometry encoder and decoder:
-OPTION( USE_DRACO_GEOMETRY_CODEC "Use draco geometry encoder and decoder" TRUE )  # 0
+OPTION( USE_DRACO_GEOMETRY_CODEC "Use draco geometry encoder and decoder" TRUE  )  # 0
 
 # Color conversion library:
 OPTION( USE_HDRTOOLS             "Use HDRTools for color conversions"     FALSE )
@@ -31,10 +31,10 @@ SET( MESH_TYPE "double" CACHE STRING "Mesh coordinate type: float or double" )
 OPTION( CODE_CODEC_ID            "Code codec id in bitstreams"            FALSE )
 
 # turn off/on the postion compression enhancement tool for draco
-OPTION( USE_POSITION_PATCH "postion compression enhancement tool for draco" FALSE )
+OPTION( USE_POSITION_PATCH "Postion compression enhancement tool for draco" FALSE )
 
 # turn off/on the uv coordinates compression enhancement tool for draco
-OPTION( USE_UV_PATCH "uv coordinates compression enhancement tool for draco" FALSE )
+OPTION( USE_UV_PATCH "UV coordinates compression enhancement tool for draco" FALSE )
 
 # Building options
 set(CMAKE_CXX_STANDARD             14)

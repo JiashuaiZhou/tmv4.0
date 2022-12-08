@@ -198,17 +198,17 @@ function render() {
     RENDERWIDTH=960
     RENDERHEIGHT=1920
     INDEXFRAME=4
-    START=$(       cat ${CFGSUBDIR}/mmetric.cfg | grep "startFrameIndex:"  | awk '{print $2}' )
-    SRCMESH=$(     cat ${CFGSUBDIR}/mmetric.cfg | grep "srcMesh:"          | awk '{print $2}' )
-    SRCTEX=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "srcTex:"           | awk '{print $2}' )
-    QP=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "positionBitDepth:" | awk '{print $2}' )
-	if [[ "$1" == "dec" ]]; then
-	  QT=0
-	else
-      QT=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "texCoordBitDepth:" | awk '{print $2}' )
+    START=$(   cat ${CFGSUBDIR}/mmetric.cfg | grep "startFrameIndex:"  | awk '{print $2}' )
+    SRCMESH=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "srcMesh:"          | awk '{print $2}' )
+    SRCTEX=$(  cat ${CFGSUBDIR}/mmetric.cfg | grep "srcTex:"           | awk '{print $2}' )
+    QP=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "positionBitDepth:" | awk '{print $2}' )
+    if [[ "$1" == "dec" ]]; then
+      QT=0
+    else
+      QT=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "texCoordBitDepth:" | awk '{print $2}' )
     fi
-	MINPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "minPosition:"      | awk '{print $2" "$3" "$4}' )
-    MAXPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "maxPosition:"      | awk '{print $2" "$3" "$4}' )
+    MINPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "minPosition:" | awk '{print $2" "$3" "$4}' )
+    MAXPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "maxPosition:" | awk '{print $2" "$3" "$4}' )
     LAST=$(( START + FRAMECOUNT - 1 ))  
     INDEXFRAME=$(( $START + $INDEXFRAME ))
     INDEXFRAME=$(( $INDEXFRAME < $LAST ? $INDEXFRAME : $LAST )) 

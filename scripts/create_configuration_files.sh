@@ -34,12 +34,12 @@ print_usage()
 while [[ $# -gt 0 ]] ; do  
   C=$1; if [[ "$C" =~ [=] ]] ; then V=${C#*=}; elif [[ $2 == -* ]] ; then  V=""; else V=$2; shift; fi;
   case "$C" in    
-    -o|--outdir=*   ) OUTDIR=$V;;
-    -s|--seqdir=*   ) SEQDIR=$V;;
-    -c|--codec=*    ) CODEC=$V;;
-    --update        ) UPDATE=1;;
-    -h|--help       ) print_usage ;;
-    *               ) print_usage "unsupported arguments: $C ";;
+    -o|--outdir=* ) OUTDIR=$V;;
+    -s|--seqdir=* ) SEQDIR=$V;;
+    -c|--codec=*  ) CODEC=$V;;
+    --update      ) UPDATE=1;;
+    -h|--help     ) print_usage ;;
+    *             ) print_usage "unsupported arguments: $C ";;
   esac
   shift;
 done
@@ -52,8 +52,6 @@ then
   OUTDIR=${CFGDIR}/vmesh/
   MAINDIR=/path/to/mpeg-vmesh-tm
   SEQDIR=/path/to/contents
-  echo "SEQDIR  = $SEQDIR"
-  echo "MAINDIR = $MAINDIR"
 else 
   if [ "$SEQDIR" == "" ] || [ ! -d ${SEQDIR} ] ; then print_usage "SEQDIR = \"${SEQDIR}\" not exists"; fi
   OUTDIR=$( cd "$OUTDIR" && pwd )
@@ -63,7 +61,7 @@ else
   SEQDIR=${SEQDIR/\/c\//C:\/}
   CFGDIR=${MAINDIR}/cfg
 fi
-case ${CODEC} in  
+case ${CODEC} in
   hm)
     DISP_AI=hm/ctc-hm-displacements-map-ai-main10.cfg
     DISP_LD=hm/ctc-hm-displacements-map-ld-main10.cfg

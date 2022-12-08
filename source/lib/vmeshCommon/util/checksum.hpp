@@ -39,7 +39,7 @@
 namespace mm {
 class Image;
 class Model;
-}
+}  // namespace mm
 
 namespace vmesh {
 

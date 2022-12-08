@@ -1264,7 +1264,7 @@ VMCEncoder::transferTexture(const TriangleMesh<MeshType>& input,
   for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
     targetMesh.setTexCoord(uvIndex, targetMesh.texCoord(uvIndex) * uvScale);
   }
-  
+
   if (params.invertOrientation) { rec.invertOrientation(); }
 
   std::vector<int32_t> srcTri2tgtTri;
@@ -1274,10 +1274,10 @@ VMCEncoder::transferTexture(const TriangleMesh<MeshType>& input,
     targetMesh.subdivideMidPoint(
       params.textureTransferSamplingSubdivisionIterationCount);
   }
-  
+
   bool ret = transferTexture(
     targetMesh, rec, inputTexture, outputTexture, srcTri2tgtTri, params);
-  
+
   if (params.invertOrientation) { rec.invertOrientation(); }
   return ret;
 }

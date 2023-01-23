@@ -41,7 +41,7 @@
 #include "version.hpp"
 #include "util/bitstream.hpp"
 
-#include "virtualVideoEncoder.hpp"
+#include "videoEncoder.hpp"
 
 //============================================================================
 
@@ -86,7 +86,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     
   (po::Section("Encoder configurations"))
   ("codecId",          params.codecId,                  
-    vmesh::VideoCodecId::HM, "Video codec Id: HM, VTM, FFMPEG")  
+    vmesh::VideoCodecId::HM, "Video codec Id: HM, VTM, VV")  
   ("configPath",       params.params.encoderConfig_,    {}, "Configuration file")
   ("qp",               params.params.qp_,               -8, "qp")
   ("inputBitDepth",    params.params.inputBitDepth_,    10, "Input bit depth")
@@ -152,7 +152,7 @@ main(int argc, char* argv[]) {
   // Encode
   vmesh::FrameSequence<uint16_t> rec;
   vmesh::Bitstream               bitstream;
-  auto encoder = vmesh::VirtualVideoEncoder<uint16_t>::create(params.codecId);
+  auto encoder = vmesh::VideoEncoder<uint16_t>::create(params.codecId);
   encoder->encode(src, params.params, bitstream.vector(), rec);
 
   // Save reconstructed mesh

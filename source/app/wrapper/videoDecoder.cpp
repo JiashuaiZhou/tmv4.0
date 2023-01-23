@@ -40,7 +40,7 @@
 #include "version.hpp"
 #include "util/bitstream.hpp"
 
-#include "virtualVideoDecoder.hpp"
+#include "videoDecoder.hpp"
 
 //============================================================================
 
@@ -69,7 +69,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   (po::Section("Input/Output"))
   ("bitstreamPath", params.bitstreamPath, {}, "Generated bitstream path")
   ("decPath",       params.outputPath,    {}, "Decoded mesh path")  
-  ("codecId",       params.codecId,       {}, "Video codec Id: HM, VTM, FFMPEG")  
+  ("codecId",       params.codecId,       {}, "Video codec Id: HM, VTM, VV")  
   ;
 
   /* clang-format on */
@@ -120,7 +120,7 @@ main(int argc, char* argv[]) {
 
   // decode
   vmesh::FrameSequence<uint16_t> dec;
-  auto encoder = vmesh::VirtualVideoDecoder<uint16_t>::create(params.codecId);
+  auto encoder = vmesh::VideoDecoder<uint16_t>::create(params.codecId);
   encoder->decode(bitstream.vector(), dec, 10);
 
   // Save reconstructed video

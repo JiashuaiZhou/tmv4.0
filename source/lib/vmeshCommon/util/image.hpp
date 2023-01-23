@@ -61,8 +61,8 @@ enum VideoCodecId {
 #if defined(USE_VTM_VIDEO_CODEC)
   VTM = 1,
 #endif
-#if defined(USE_FFMPEG_VIDEO_CODEC)
-  FFMPEG = 2,
+#if defined(USE_VV_VIDEO_CODEC)
+  VV = 2,
 #endif
   UNKNOWN_VIDEO_CODEC = 255
 };
@@ -80,8 +80,8 @@ operator>>(std::istream& in, VideoCodecId& val) {
 #if defined(USE_VTM_VIDEO_CODEC)
   if (str == "vtm" || str == "VTM") val = VideoCodecId::VTM;
 #endif
-#if defined(USE_FFMPEG_VIDEO_CODEC)
-  if (str == "ffmpeg" || str == "FFMPEG") val = VideoCodecId::FFMPEG;
+#if defined(USE_VV_VIDEO_CODEC)
+  if (str == "vv" || str == "VV") val = VideoCodecId::VV;
 #endif
   if (val == VideoCodecId::UNKNOWN_VIDEO_CODEC) {
     in.setstate(std::ios::failbit);
@@ -100,8 +100,8 @@ operator<<(std::ostream& out, VideoCodecId val) {
 #if defined(USE_VTM_VIDEO_CODEC)
   case VideoCodecId::VTM: out << "VTM"; break;
 #endif
-#if defined(USE_FFMPEG_VIDEO_CODEC)
-  case VideoCodecId::FFMPEG: out << "FFMPEG"; break;
+#if defined(USE_VV_VIDEO_CODEC)
+  case VideoCodecId::VV: out << "VV"; break;
 #endif
   case VideoCodecId::UNKNOWN_VIDEO_CODEC: out << "UNKNOWN"; break;
   }
@@ -116,7 +116,7 @@ enum class ColourSpace {
   YUV444p,
   RGB444p,
   BGR444p,
-  GBR444p,
+  GBR444p, 
   UNKNOW
 };
 
@@ -527,7 +527,7 @@ public:
     const size_t heightDst[3] = {heightY, heightC, heightC};
     const size_t stride[3]    = {strideY, strideC, strideC};
     printf("copy image: Shift = %d (%4dx%4d => %4zux%4zu S=%4zu C: "
-           "%4zux%4zu rgb2bgr = %d ) \n",
+           "%4zux%4zu rgb2bgr = %d ) sizeof( Pel ) = %zu \n",
            shiftbits,
            _width,
            _height,
@@ -536,7 +536,8 @@ public:
            strideY,
            widthC,
            heightC,
-           rgb2bgr);
+           rgb2bgr,
+           sizeof(Pel));
     for (size_t c = 0; c < 3; c++) {
       auto* src = _planes[c].data();
       auto* dst = ptr[rgb2bgr][c];
@@ -553,14 +554,34 @@ public:
           for (size_t u = 0; u < width[c]; ++u) { dst[u] = (Pel)src[u]; }
         }
       }
+      const T value = sizeof( T ) == 1 ? 128: 512;
       for (size_t v = heightSrc[c]; v < heightDst[c]; ++v, dst += stride[c]) {
-        for (size_t u = 0; u < width[c]; ++u) { dst[u] = 0; }
+        for (size_t u = 0; u < width[c]; ++u) { dst[u] = value; }
       }
     }
   }
 
-private:
-  int                   _width{};
+  void convert444To400(Frame<T>& dst) const {
+    dst.resize(_width, _height * 3, ColourSpace::YUV400p);
+    const size_t size     = _width * _height;
+    auto*        dstPlane = dst._planes[0].data();
+    for (size_t c = 0; c < 3; c++) {
+      const auto* srcPlane = _planes[c].data();
+      for (size_t i = 0; i < size; i++) dstPlane[c * size + i] = srcPlane[i];
+    }
+  }
+
+  void convert400To444(Frame<T>& dst) const {
+    dst.resize(_width, _height / 3, ColourSpace::YUV444p);
+    const size_t size     = _width * _height / 3;
+    const auto*  srcPlane = _planes[0].data();
+    for (size_t c = 0; c < 3; c++) {
+      auto* dstPlane = dst._planes[c].data();
+      for (size_t i = 0; i < size; i++) dstPlane[i] = srcPlane[c * size + i];
+    }
+  }
+
+private : int           _width{};
   int                   _height{};
   ColourSpace           _colourSpace;
   std::vector<Plane<T>> _planes;
@@ -652,6 +673,26 @@ public:
             const int32_t      frameCount);
 
   bool save(const std::string& path, const int32_t frameStart);
+
+  void trace(const std::string& name) const {
+    printf("Seq %s: %4d x %4d frame = %2zu ", name.c_str(), _width, _height, _frames.size());
+    std::cout << " color = " << _colourSpace << std::endl;
+    fflush(stdout);
+  }
+
+  void convert444To400(FrameSequence<T>& dst) {
+    dst.resize(_width, _height * 3, ColourSpace::YUV400p, _frames.size());
+    for (size_t i = 0; i < _frames.size(); i++) {
+      _frames[i].convert444To400(dst[i]);
+    }
+  }
+
+  void convert400To444(FrameSequence<T>& dst) {
+    dst.resize(_width, _height / 3, ColourSpace::YUV444p, _frames.size());
+    for (size_t i = 0; i < _frames.size(); i++) {
+      _frames[i].convert400To444(dst[i]);
+    }
+  }
 
 private:
   int                   _width       = 0;

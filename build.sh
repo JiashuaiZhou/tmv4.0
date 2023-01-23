@@ -14,7 +14,7 @@ print_usage()
   echo "";
   echo "    Usage:" 
   echo "       -h|--help    : Display this information."  
-  echo "       -o|--ouptut  : Output build directory."
+  echo "       -o|--output  : Output build directory."
   echo "       -n|--ninja   : Use Ninja."
   echo "       --debug      : Build in debug mode."
   echo "       --release    : Build in release mode."

@@ -40,7 +40,7 @@
 #include "version.hpp"
 #include "util/bitstream.hpp"
 
-#include "virtualGeometryDecoder.hpp"
+#include "geometryDecoder.hpp"
 
 //============================================================================
 
@@ -121,7 +121,7 @@ main(int argc, char* argv[]) {
 
   // Encode
   vmesh::TriangleMesh<double> dec;
-  auto encoder = vmesh::VirtualGeometryDecoder<double>::create(params.codecId);
+  auto encoder = vmesh::GeometryDecoder<double>::create(params.codecId);
   encoder->decode(bitstream.vector(), dec);
 
   // Save reconstructed mesh

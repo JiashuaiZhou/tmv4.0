@@ -15,7 +15,8 @@ print_usage()
   echo "  Usage:" 
   echo "    -o|--outdir=: configured directory      (default: $OUTDIR )"  
   echo "    -s|--seqdir=: source sequence directory (default: $SEQDIR )"
-  echo "    -c|--codec=:  video codec: hm, vtm      (default: $CODEC )"
+  echo "    -c|--codec=:  video codec: hm, vtm, vvf "
+  echo "                      vvm, vvs              (default: $CODEC )"
   echo "";
   echo "  Examples:";
   echo "    $0  "; 
@@ -63,10 +64,10 @@ else
 fi
 case ${CODEC} in
   hm)
-    DISP_AI=hm/ctc-hm-displacements-map-ai-main10.cfg
-    DISP_LD=hm/ctc-hm-displacements-map-ld-main10.cfg
-    TEXT_AI=hm/ctc-hm-texture-ai.cfg
-    TEXT_LD=hm/ctc-hm-texture-ld.cfg
+    DISP_AI=hm/displacements-ai.cfg
+    DISP_LD=hm/displacements-ld.cfg
+    TEXT_AI=hm/texture-ai.cfg
+    TEXT_LD=hm/texture-ld.cfg
     ;; 
   vtm)
     DISP_AI=vtm/displacements-ai.cfg
@@ -74,7 +75,25 @@ case ${CODEC} in
     TEXT_AI=vtm/texture-ai.cfg
     TEXT_LD=vtm/texture-ld.cfg
     ;;
-  *) print_usage "CODEC = \"${SEQDIR}\" not corrects";;
+  vvf)
+    DISP_AI=vtm/displacements-ai.cfg
+    DISP_LD=vtm/displacements-ld.cfg
+    TEXT_AI=vvenc/texture-ai-faster.cfg
+    TEXT_LD=vvenc/texture-ra-faster.cfg
+    ;;
+  vvm)
+    DISP_AI=vtm/displacements-ai.cfg
+    DISP_LD=vtm/displacements-ld.cfg
+    TEXT_AI=vvenc/texture-ai-medium.cfg
+    TEXT_LD=vvenc/texture-ra-medium.cfg
+    ;;
+  vvs)
+    DISP_AI=vtm/displacements-ai.cfg
+    DISP_LD=vtm/displacements-ld.cfg
+    TEXT_AI=vvenc/texture-ai-slower.cfg
+    TEXT_LD=vvenc/texture-ra-slower.cfg
+    ;;
+  *) print_usage "CODEC = \"${CODEC}\" not corrects";;
 esac 
 
 # Update cfg-site.yaml file

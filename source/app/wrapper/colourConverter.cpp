@@ -41,7 +41,7 @@
 #include "version.hpp"
 #include "util/bitstream.hpp"
 
-#include "virtualColourConverter.hpp"
+#include "colourConverter.hpp"
 
 //============================================================================
 
@@ -158,7 +158,7 @@ main(int argc, char* argv[]) {
   printf("Src frame count = %d \n", src.frameCount());
 
   // convert
-  auto convert = vmesh::VirtualColourConverter<uint16_t>::create(params.mode);
+  auto convert = vmesh::ColourConverter<uint16_t>::create(params.mode);
   if (params.mode == 0) {
     std::stringstream format;
     format << params.inputColorSpace << "_" << params.outputColorSpace << "_"

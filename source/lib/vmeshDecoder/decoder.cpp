@@ -42,9 +42,9 @@
 #include "contexts.hpp"
 #include "entropy.hpp"
 
-#include "virtualGeometryDecoder.hpp"
-#include "virtualVideoDecoder.hpp"
-#include "virtualColourConverter.hpp"
+#include "geometryDecoder.hpp"
+#include "videoDecoder.hpp"
+#include "colourConverter.hpp"
 
 namespace vmesh {
 
@@ -156,8 +156,7 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
 
     // Decode base mesh
     printf("Decode base mesh \n");
-    auto decoder =
-      VirtualGeometryDecoder<MeshType>::create(GeometryCodecId::DRACO);
+    auto decoder = GeometryDecoder<MeshType>::create(GeometryCodecId::DRACO);
     decoder->decode(geometryBitstream, base);
 
     // Save intermediate files
@@ -231,7 +230,7 @@ VMCDecoder::decompressDisplacementsVideo(const Bitstream&            bitstream,
   _byteCounter += byteCountDispVideo;
 
   // Decode video
-  auto decoder = VirtualVideoDecoder<uint16_t>::create(
+  auto decoder = VideoDecoder<uint16_t>::create(
     VideoCodecId(_sps.geometryVideoCodecId));
   decoder->decode(videoBitstream, dispVideo, 10);
 
@@ -273,7 +272,7 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
     printf("Decode video \n");
     fflush(stdout);
     FrameSequence<uint16_t> dec;
-    auto                    decoder = VirtualVideoDecoder<uint16_t>::create(
+    auto                    decoder = VideoDecoder<uint16_t>::create(
       VideoCodecId(_sps.textureVideoCodecId));
     decoder->decode(videoBitstream, dec, 10);
 
@@ -281,10 +280,10 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
     printf("Convert video \n");
     fflush(stdout);
 #if USE_HDRTOOLS
-    auto convert = VirtualColourConverter<uint16_t>::create(1);
+    auto convert = ColourConverter<uint16_t>::create(1);
     convert->initialize(params.textureVideoHDRToolDecConfig);
 #else
-    auto convert = VirtualColourConverter<uint16_t>::create(0);
+    auto convert = ColourConverter<uint16_t>::create(0);
     auto mode    = "YUV420p_BGR444p_10_8_"
                 + std::to_string(params.textureVideoUpsampleFilter) + "_"
                 + std::to_string(params.textureVideoFullRange);

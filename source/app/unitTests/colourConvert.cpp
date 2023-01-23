@@ -41,7 +41,7 @@
 #include "version.hpp"
 #include "util/bitstream.hpp"
 
-#include "virtualColourConverter.hpp"
+#include "colourConverter.hpp"
 
 #include <gtest/gtest.h>
 #include "common.hpp"
@@ -89,7 +89,7 @@ hdrtoolsConvertion(const std::string        mode,
 
   // Convert with lib
   vmesh::FrameSequence<uint16_t> rec;
-  auto convert = vmesh::VirtualColourConverter<uint16_t>::create(0);
+  auto convert = vmesh::ColourConverter<uint16_t>::create(0);
   convert->initialize(mode);
   convert->convert(src, rec);
   if (outputBitDepth == 8) {

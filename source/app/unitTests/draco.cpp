@@ -40,8 +40,8 @@
 #include "version.hpp"
 #include "util/bitstream.hpp"
 
-#include "virtualGeometryEncoder.hpp"
-#include "virtualGeometryDecoder.hpp"
+#include "geometryEncoder.hpp"
+#include "geometryDecoder.hpp"
 
 #include <gtest/gtest.h>
 #include "common.hpp"
@@ -72,18 +72,18 @@ TEST(draco, encode) {
     return;
   }
 
-  // Encode with VirtualGeometryEncoder
+  // Encode with GeometryEncoder
   vmesh::TriangleMesh<double> src;
   vmesh::TriangleMesh<double> rec;
   vmesh::TriangleMesh<double> dec;
   vmesh::Bitstream            bitstream;
   src.load(inputMesh);
-  auto encoder = vmesh::VirtualGeometryEncoder<double>::create(codecId);
+  auto encoder = vmesh::GeometryEncoder<double>::create(codecId);
   encoder->encode(src, params, bitstream.vector(), rec);
   bitstream.save(binNew);
 
-  // Decode with VirtualGeometryDecoder
-  auto decoder = vmesh::VirtualGeometryDecoder<double>::create(codecId);
+  // Decode with GeometryDecoder
+  auto decoder = vmesh::GeometryDecoder<double>::create(codecId);
   decoder->decode(bitstream.vector(), dec);
 
   // Encode with original draco application
@@ -149,11 +149,11 @@ TEST(draco, decode) {
   decApp.load(decAppPath);
   decApp.save(decAppPath);
 
-  // Decode with VirtualGeometryEncoder
+  // Decode with GeometryEncoder
   vmesh::Bitstream            bitstream;
   vmesh::TriangleMesh<double> decLib;
   bitstream.load(binPath);
-  auto decoder = vmesh::VirtualGeometryDecoder<double>::create(codecId);
+  auto decoder = vmesh::GeometryDecoder<double>::create(codecId);
   decoder->decode(bitstream.vector(), decLib);
   decLib.save(decLibPath);
 

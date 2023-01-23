@@ -1,33 +1,49 @@
-include(FetchContent)
-set( FETCHCONTENT_QUIET off )
+if ( USE_VV_VIDEO_CODEC )
+  add_compile_definitions(USE_VV_VIDEO_CODEC)
+  # Load threads
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+  find_package(Threads REQUIRED)
 
-# VVENC
-set( vvenc_SOURCE_DIR  ${CMAKE_SOURCE_DIR}/dependencies/vvenc )
-message("Fetch VVENC libraries: ${vvenc_SOURCE_DIR}") 
-FetchContent_Declare( VVENC 
-                      GIT_REPOSITORY https://github.com/fraunhoferhhi/vvenc.git 
-                      GIT_TAG        v1.4.0
-                      SOURCE_DIR     ${vvenc_SOURCE_DIR}
-                      GIT_PROGRESS   TRUE )              
-set(vvenc_ADD_SUBDIRECTORIES "source/Lib/apputils;source/App/vvencFFapp")
+  # Update GCC 
+  message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
+  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=implicit-fallthrough= -Wno-error=type-limits -Wno-error=shift-negative-value") 
+  endif()
 
-# VVDEC
-set( vvdec_SOURCE_DIR ${CMAKE_SOURCE_DIR}/dependencies/vvdec )
-message("Fetch VVDEC libraries: ${vvdec_SOURCE_DIR}") 
-FetchContent_Declare( VVDEC 
-                      GIT_REPOSITORY https://github.com/fraunhoferhhi/vvdec.git
-                      GIT_TAG        v1.5.0
-                      SOURCE_DIR     ${vvdec_SOURCE_DIR}
-                      GIT_PROGRESS   TRUE )
-set(vvdec_ADD_SUBDIRECTORIES "source/App/vvdecapp")
+  # VVENC
+  set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/vvenc )
+  if( NOT EXISTS ${DIR} )
+    CPMAddPackage( NAME             vvenc
+                  GIT_REPOSITORY    https://github.com/fraunhoferhhi/vvenc.git 
+                  GIT_TAG           v1.7.0
+                  SOURCE_DIR        ${DIR}
+                  DOWNLOAD_ONLY     YES )
+    # execute_process( COMMAND sed -i "s/{CMAKE_SOURCE_DIR}/{CMAKE_CURRENT_SOURCE_DIR}/g" ${DIR}/CMakeLists.txt )          
+  endif()
+  if( EXISTS ${DIR}/CMakeLists.txt )
+      if( NOT EXISTS ${DIR}/PATCHED )  
+        file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/patches/vvenc/*")
+        foreach(file ${files})
+          message("git am ${file}")
+          execute_process( COMMAND git am ${file} WORKING_DIRECTORY ${DIR} RESULT_VARIABLE ret )
+          if(NOT ${ret} EQUAL "0")
+            message(FATAL_ERROR "Error during the draco patch process. ")
+          endif()
+        endforeach()
+        file(WRITE ${DIR}/PATCHED "patched")
+      endif()
+    endif()
+  add_subdirectory(${DIR})
 
-# MAKE AVAILABLE
-fetchcontent_makeavailable( VVENC VVDEC )
-if (NOT MSVC)
-  target_compile_options(vvenc PUBLIC "-w")   
-  target_compile_options(vvdec PUBLIC "-w")        
+  # VVDEC
+  set( DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/vvdec )
+  if( NOT EXISTS ${DIR} )
+    CPMAddPackage( NAME             vvdec
+                  GIT_REPOSITORY    https://github.com/fraunhoferhhi/vvdec.git 
+                  GIT_TAG           v1.6.0
+                  SOURCE_DIR        ${DIR}
+                  DOWNLOAD_ONLY     YES )
+  endif()
+  add_subdirectory(${DIR})
 endif()
-set_property(TARGET vvenc apputils vvencFFapp PROPERTY FOLDER "VVenC")
-set_property(TARGET vvdec vvdecapp            PROPERTY FOLDER "VVdeC")
-target_compile_features( vvenc PUBLIC cxx_std_14 )
-target_compile_features( vvdec PUBLIC cxx_std_14 )
+

@@ -53,9 +53,9 @@
 #include "geometryParametrization.hpp"
 #include "util/checksum.hpp"
 
-#include "virtualGeometryEncoder.hpp"
-#include "virtualVideoEncoder.hpp"
-#include "virtualColourConverter.hpp"
+#include "geometryEncoder.hpp"
+#include "videoEncoder.hpp"
+#include "colourConverter.hpp"
 
 namespace vmesh {
 
@@ -665,9 +665,11 @@ VMCEncoder::compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
   videoEncoderParams.qp_               = 8;
   FrameSequence<uint16_t> rec;
   std::vector<uint8_t>    videoBitstream;
+  printf("geometryVideoCodecId = %d \n",(int)params.geometryVideoCodecId);
+  fflush(stdout);
   auto                    encoder =
-    VirtualVideoEncoder<uint16_t>::create(params.geometryVideoCodecId);
-  encoder->encode(dispVideo, videoEncoderParams, videoBitstream, rec);
+    VideoEncoder<uint16_t>::create(params.geometryVideoCodecId);
+  encoder->encode(dispVideo, videoEncoderParams, videoBitstream, rec);  
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
@@ -717,10 +719,10 @@ VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
     printf("src size = %d %d \n", src.width(), src.height());
     // convert BGR444 to YUV420
 #if USE_HDRTOOLS
-    auto convert = VirtualColourConverter<uint16_t>::create(1);
+    auto convert = ColourConverter<uint16_t>::create(1);
     convert->initialize(params.textureVideoHDRToolEncConfig);
 #else
-    auto convert = VirtualColourConverter<uint16_t>::create(0);
+    auto convert = ColourConverter<uint16_t>::create(0);
     auto mode    = "BGR444p_YUV420p_8_10_"
                 + std::to_string(params.textureVideoDownsampleFilter) + "_"
                 + std::to_string(params.textureVideoFullRange);
@@ -743,7 +745,7 @@ VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
     FrameSequence<uint16_t> rec;
     std::vector<uint8_t>    videoBitstream;
     auto                    encoder =
-      VirtualVideoEncoder<uint16_t>::create(params.textureVideoCodecId);
+      VideoEncoder<uint16_t>::create(params.textureVideoCodecId);
     encoder->encode(src, videoEncoderParams, videoBitstream, rec);
     bitstream.write((uint32_t)videoBitstream.size());
     bitstream.append(videoBitstream);
@@ -816,7 +818,7 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
   TriangleMesh<MeshType> rec;
   std::vector<uint8_t>   geometryBitstream;
   auto                   encoder =
-    VirtualGeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
+    GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
   encoder->encode(base, dracoParams, geometryBitstream, rec);
 
   // Save intermediate files
@@ -1028,7 +1030,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     TriangleMesh<MeshType> rec;
     std::vector<uint8_t>   geometryBitstream;
     auto                   encoder =
-      VirtualGeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
+      GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
     encoder->encode(base, dracoParams, geometryBitstream, rec);
 
     // Save intermediate files

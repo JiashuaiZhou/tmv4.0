@@ -16,7 +16,8 @@ then
               mmetric \
               hm \
               vtm \
-              ffmpeg
+              vvenc \
+              vvdec
   do
     if [ "$1" == "${name}" ] || [ "$1" == "all" ]
     then 

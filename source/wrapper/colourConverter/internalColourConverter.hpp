@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "virtualColourConverter.hpp"
+#include "colourConverter.hpp"
 #include "util/image.hpp"
 
 namespace vmesh {
@@ -53,7 +53,7 @@ struct Filter420to444 {
 };
 
 template<class T>
-class InternalColourConverter final : public VirtualColourConverter<T> {
+class InternalColourConverter final : public ColourConverter<T> {
 public:
   InternalColourConverter();
   ~InternalColourConverter();

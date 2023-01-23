@@ -36,7 +36,8 @@ dependencies/tinyply
 dependencies/hdrtools
 dependencies/hm
 dependencies/vtm
-dependencies/ffmpeg
+dependencies/vvenc
+dependencies/vvdec
 
 # External tools
 /externaltools/
@@ -50,7 +51,7 @@ dependencies/ffmpeg
 # Temp files
 /*.yuv
 /*.bgr
-/*.h254
+/*.h264
 
 # HDRTools 
 /test_1920x1080_24p_420.yuv

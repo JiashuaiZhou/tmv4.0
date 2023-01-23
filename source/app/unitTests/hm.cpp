@@ -40,8 +40,8 @@
 #include "version.hpp"
 #include "util/bitstream.hpp"
 
-#include "virtualVideoEncoder.hpp"
-#include "virtualVideoDecoder.hpp"
+#include "videoEncoder.hpp"
+#include "videoDecoder.hpp"
 
 #include <gtest/gtest.h>
 #include "common.hpp"
@@ -104,12 +104,12 @@ encodeDecodeHM(const std::string&       prefix,
   // Encode lib
   vmesh::FrameSequence<uint16_t> rec;
   vmesh::Bitstream               bitstream;
-  auto encoder = vmesh::VirtualVideoEncoder<uint16_t>::create(codecId);
+  auto encoder = vmesh::VideoEncoder<uint16_t>::create(codecId);
   encoder->encode(src, params, bitstream.vector(), rec);
 
   // Decode lib
   vmesh::FrameSequence<uint16_t> dec;
-  auto decoder = vmesh::VirtualVideoDecoder<uint16_t>::create(codecId);
+  auto decoder = vmesh::VideoDecoder<uint16_t>::create(codecId);
   decoder->decode(bitstream.vector(), dec, 10);
 
   // Save bitstream, reconstructed and decoded
@@ -203,7 +203,7 @@ TEST(hm, disp) {
                  10,
                  vmesh::ColourSpace::BGR444p,
                  2,
-                 "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
+                 "cfg/hm/displacements-ai.cfg");
 }
 
 TEST(hm, disp2) {
@@ -214,7 +214,7 @@ TEST(hm, disp2) {
                  10,
                  vmesh::ColourSpace::BGR444p,
                  1,
-                 "cfg/hm/ctc-hm-displacements-map-ai-main10.cfg");
+                 "cfg/hm/displacements-ai.cfg");
 }
 
 TEST(hm, texture) {
@@ -225,5 +225,5 @@ TEST(hm, texture) {
                  10,
                  vmesh::ColourSpace::YUV420p,
                  2,
-                 "cfg/hm/ctc-hm-texture-ai.cfg");
+                 "cfg/hm/texture-ai.cfg");
 }

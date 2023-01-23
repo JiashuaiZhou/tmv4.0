@@ -27,13 +27,10 @@ if( USE_VTM_VIDEO_CODEC )
   set( LIBS ${LIBS} CommonLib DecoderLib_vtm )
 endif()
 
-# FFMPEG
-if( USE_FFMPEG_VIDEO_CODEC )  
-  include_directories( ${FFMPEG_INCLUDE} )
-  if( WIN32 OR MSVC OR MSYS OR MINGW )
-    link_directories( ${FFMPEG_DEV_DIR}/lib ) 
-  endif()  
-  set( LIBS ${LIBS} ${AVCODEC_LIBRARY} ${AVUTIL_LIBRARY} ${AVFORMAT_LIBRARY} )
+# VVLIB
+if( USE_VV_VIDEO_CODEC )
+  include_directories( ${CMAKE_SOURCE_DIR}/dependencies/vvdec )
+  SET( LIBS ${LIBS} vvdec )
 endif()
 
 add_library( ${MYNAME}  ${SRC} )

@@ -526,8 +526,8 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Caching points: \n"
       "  - 0/none    : off \n"
       "  - 1/simplify: symplify\n"
-      "  - 1/uvatlas : symplify\n"
-      "  - 2/subdiv  : subdiv \n"
+      "  - 2/uvatlas : uvatlas\n"
+      "  - 3/subdiv  : subdiv \n"
       "  - 255/create: create caching files")
   ;
   /* clang-format on */

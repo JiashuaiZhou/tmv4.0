@@ -46,14 +46,15 @@
 TEST(vmesh, all) {
   disableSubProcessLog.disable();
   // Set parameters
-  std::string meshPath   = "data/levi_fr0000_qp12_qt13.obj";
-  std::string texPath    = "data/levi_fr0000.png";
-  std::string cfgPath    = "data/encoder.cfg";
-  std::string binPath    = "bin.bin";
-  std::string recObjPath = "rec.ply";
-  std::string recPngPath = "rec.png";
-  std::string decObjPath = "dec.ply";
-  std::string decPngPath = "rec.png";
+  const std::string meshPath    = "data/levi_fr0000_qp12_qt13.obj";
+  const std::string texPath     = "data/levi_fr0000.png";
+  const std::string cfgPath     = "data/encoder.cfg";
+  const std::string binPath     = "bin.bin";
+  const std::string recObjPath  = "rec.ply";
+  const std::string recPngPath  = "rec.png";
+  const std::string decObjPath  = "dec.ply";
+  const std::string decPngPath  = "rec.png";
+  const std::string checsumPath = "bin.checksum";
 
   if (!checkSoftwarePath()) {
     FAIL() << "All software paths not exist: ";
@@ -120,5 +121,6 @@ TEST(vmesh, all) {
   remove(decObjPath.c_str());
   remove(recPngPath.c_str());
   remove(decPngPath.c_str());
+  remove(checsumPath.c_str());
   remove("mat.mtl");
 }

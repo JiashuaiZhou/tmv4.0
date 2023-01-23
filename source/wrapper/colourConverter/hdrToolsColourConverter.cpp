@@ -72,7 +72,7 @@ HdrToolsColourConverter<T>::convert(Frame<T>& src) {
 template<typename T>
 void
 HdrToolsColourConverter<T>::convert(FrameSequence<T>& src,
-                                       FrameSequence<T>& dst) {
+                                    FrameSequence<T>& dst) {
   converter->convert(src, dst);
 }
 

@@ -120,7 +120,7 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst) {
 template<typename T>
 void
 DracoGeometryDecoder<T>::decode(std::vector<uint8_t>& bitstream,
-                                   TriangleMesh<T>&      dec) {
+                                TriangleMesh<T>&      dec) {
   draco::DecoderBuffer decBuffer;
   printf("bitstream.size() = %zu \n", bitstream.size());
   decBuffer.Init((const char*)bitstream.data(), bitstream.size());

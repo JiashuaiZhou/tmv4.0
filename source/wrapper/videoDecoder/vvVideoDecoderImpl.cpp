@@ -192,8 +192,8 @@ vvVideoDecoderImpl<T>::~vvVideoDecoderImpl() {}
 template<typename T>
 void
 vvVideoDecoderImpl<T>::decode(std::vector<uint8_t>& bitstream,
-                                 size_t                outputBitDepth,
-                                 FrameSequence<T>&     video) {
+                              size_t                outputBitDepth,
+                              FrameSequence<T>&     video) {
   std::string s(reinterpret_cast<char*>(bitstream.data()), bitstream.size());
   std::istringstream iss(s);
   std::istream&      cInFile          = iss;
@@ -444,8 +444,8 @@ vvVideoDecoderImpl<T>::decode(std::vector<uint8_t>& bitstream,
 template<typename T>
 int
 vvVideoDecoderImpl<T>::storeDecodedFrame(const vvdecFrame* pcFrame,
-                                            size_t            outputBitDepth,
-                                            FrameSequence<T>& video) {
+                                         size_t            outputBitDepth,
+                                         FrameSequence<T>& video) {
   int chromaSubsample = pcFrame->colorFormat == VVDEC_CF_YUV420_PLANAR ? 2 : 1;
   // printf(
   //     "storeDecodedFrame: write output frame %zu size = %d %d ( %d %d %d / %d %d %d) bit depth = %d - %zu = %zu in %zd "

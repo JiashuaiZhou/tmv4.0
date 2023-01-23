@@ -241,9 +241,9 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst) {
 template<typename T>
 void
 DracoGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
-                                   GeometryEncoderParameters& params,
-                                   std::vector<uint8_t>&      bitstream,
-                                   TriangleMesh<T>&           rec)
+                                GeometryEncoderParameters& params,
+                                std::vector<uint8_t>&      bitstream,
+                                TriangleMesh<T>&           rec)
 
 {
   // Load draco mesh

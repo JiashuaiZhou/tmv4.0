@@ -45,10 +45,10 @@ hmVideoDecoder<T>::~hmVideoDecoder() = default;
 template<typename T>
 void
 hmVideoDecoder<T>::decode(std::vector<uint8_t>& bitstream,
-                             FrameSequence<T>&     video,
-                             size_t                outputBitDepth,
-                             const std::string& /*decoderPath*/,
-                             const std::string& /*fileName*/) {
+                          FrameSequence<T>&     video,
+                          size_t                outputBitDepth,
+                          const std::string& /*decoderPath*/,
+                          const std::string& /*fileName*/) {
   hmVideoDecoderImpl<T> decoder;
   decoder.decode(bitstream, outputBitDepth, video);
 }

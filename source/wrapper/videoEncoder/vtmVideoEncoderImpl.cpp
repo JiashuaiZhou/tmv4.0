@@ -41,7 +41,7 @@ namespace vmesh {
 
 template<typename T>
 vtmVideoEncoderImpl<T>::vtmVideoEncoderImpl(ostream&      bitStream,
-                                                  EncLibCommon* encLibCommon)
+                                            EncLibCommon* encLibCommon)
   : m_cEncLib(encLibCommon), m_bitstream(bitStream) {
   m_iFrameRcvd     = 0;
   m_totalBytes     = 0;
@@ -59,9 +59,9 @@ vtmVideoEncoderImpl<T>::~vtmVideoEncoderImpl() {}
 template<typename T>
 bool
 vtmVideoEncoderImpl<T>::encode(FrameSequence<T>&     videoSrc,
-                                  std::string           arguments,
-                                  std::vector<uint8_t>& bitstream,
-                                  FrameSequence<T>&     videoRec) {
+                               std::string           arguments,
+                               std::vector<uint8_t>& bitstream,
+                               FrameSequence<T>&     videoRec) {
   const InputColourSpaceConversion snrCSC = (!m_snrInternalColourSpace)
                                               ? m_inputColourSpaceConvert
                                               : IPCOLOURSPACE_UNCHANGED;
@@ -93,9 +93,9 @@ vtmVideoEncoderImpl<T>::encode(FrameSequence<T>&     videoSrc,
 template<typename T>
 bool
 vtmVideoEncoderImpl<T>::encodePrep(bool&             eos,
-                                      FrameSequence<T>& videoSrc,
-                                      std::string       arguments,
-                                      FrameSequence<T>& videoRec) {
+                                   FrameSequence<T>& videoSrc,
+                                   std::string       arguments,
+                                   FrameSequence<T>& videoRec) {
   const InputColourSpaceConversion ipCSC  = m_inputColourSpaceConvert;
   const InputColourSpaceConversion snrCSC = (!m_snrInternalColourSpace)
                                               ? m_inputColourSpaceConvert
@@ -1464,9 +1464,9 @@ vtmVideoEncoderImpl<T>::xInitLib() {
 template<typename T>
 void
 vtmVideoEncoderImpl<T>::xWriteOutput(std::ostream&           bitstreamFile,
-                                        int                     iNumEncoded,
-                                        std::list<PelUnitBuf*>& recBufList,
-                                        FrameSequence<T>&       videoRec) {
+                                     int                     iNumEncoded,
+                                     std::list<PelUnitBuf*>& recBufList,
+                                     FrameSequence<T>&       videoRec) {
   const InputColourSpaceConversion ipCSC = (!m_outputInternalColourSpace)
                                              ? m_inputColourSpaceConvert
                                              : IPCOLOURSPACE_UNCHANGED;
@@ -1581,7 +1581,7 @@ vtmVideoEncoderImpl<T>::printChromaFormat() {
 template<typename T>
 void
 vtmVideoEncoderImpl<T>::xWritePicture(const PelUnitBuf* pic,
-                                         FrameSequence<T>& video) {
+                                      FrameSequence<T>& video) {
   int chromaSubsample =
     pic->chromaFormat == CHROMA_400
       ? std::numeric_limits<int>::max()
@@ -1612,8 +1612,8 @@ vtmVideoEncoderImpl<T>::xWritePicture(const PelUnitBuf* pic,
 template<typename T>
 void
 vtmVideoEncoderImpl<T>::xReadPicture(PelUnitBuf*       pic,
-                                        FrameSequence<T>& video,
-                                        int               frameIndex) {
+                                     FrameSequence<T>& video,
+                                     int               frameIndex) {
   auto& image = video.frame(frameIndex);
   image.get(pic->get(COMPONENT_Y).bufAt(0, 0),
             pic->get(COMPONENT_Cb).bufAt(0, 0),

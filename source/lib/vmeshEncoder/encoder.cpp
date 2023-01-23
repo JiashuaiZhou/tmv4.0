@@ -665,11 +665,10 @@ VMCEncoder::compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
   videoEncoderParams.qp_               = 8;
   FrameSequence<uint16_t> rec;
   std::vector<uint8_t>    videoBitstream;
-  printf("geometryVideoCodecId = %d \n",(int)params.geometryVideoCodecId);
+  printf("geometryVideoCodecId = %d \n", (int)params.geometryVideoCodecId);
   fflush(stdout);
-  auto                    encoder =
-    VideoEncoder<uint16_t>::create(params.geometryVideoCodecId);
-  encoder->encode(dispVideo, videoEncoderParams, videoBitstream, rec);  
+  auto encoder = VideoEncoder<uint16_t>::create(params.geometryVideoCodecId);
+  encoder->encode(dispVideo, videoEncoderParams, videoBitstream, rec);
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
@@ -744,8 +743,7 @@ VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
     videoEncoderParams.qp_               = params.textureVideoQP;
     FrameSequence<uint16_t> rec;
     std::vector<uint8_t>    videoBitstream;
-    auto                    encoder =
-      VideoEncoder<uint16_t>::create(params.textureVideoCodecId);
+    auto encoder = VideoEncoder<uint16_t>::create(params.textureVideoCodecId);
     encoder->encode(src, videoEncoderParams, videoBitstream, rec);
     bitstream.write((uint32_t)videoBitstream.size());
     bitstream.append(videoBitstream);
@@ -817,8 +815,7 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
   dracoParams.cl_ = 10;
   TriangleMesh<MeshType> rec;
   std::vector<uint8_t>   geometryBitstream;
-  auto                   encoder =
-    GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
+  auto encoder = GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
   encoder->encode(base, dracoParams, geometryBitstream, rec);
 
   // Save intermediate files
@@ -1029,8 +1026,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     dracoParams.qt_ = params.qpTexCoord;
     TriangleMesh<MeshType> rec;
     std::vector<uint8_t>   geometryBitstream;
-    auto                   encoder =
-      GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
+    auto encoder = GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
     encoder->encode(base, dracoParams, geometryBitstream, rec);
 
     // Save intermediate files

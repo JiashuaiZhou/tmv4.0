@@ -230,8 +230,8 @@ VMCDecoder::decompressDisplacementsVideo(const Bitstream&            bitstream,
   _byteCounter += byteCountDispVideo;
 
   // Decode video
-  auto decoder = VideoDecoder<uint16_t>::create(
-    VideoCodecId(_sps.geometryVideoCodecId));
+  auto decoder =
+    VideoDecoder<uint16_t>::create(VideoCodecId(_sps.geometryVideoCodecId));
   decoder->decode(videoBitstream, dispVideo, 10);
 
   // Save intermediate files
@@ -272,8 +272,8 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
     printf("Decode video \n");
     fflush(stdout);
     FrameSequence<uint16_t> dec;
-    auto                    decoder = VideoDecoder<uint16_t>::create(
-      VideoCodecId(_sps.textureVideoCodecId));
+    auto                    decoder =
+      VideoDecoder<uint16_t>::create(VideoCodecId(_sps.textureVideoCodecId));
     decoder->decode(videoBitstream, dec, 10);
 
     // Convert video

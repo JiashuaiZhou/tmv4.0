@@ -128,7 +128,7 @@ vvVideoEncoderImpl<T>::encode(FrameSequence<T>&     videoSrc,
   auto buffer = oss.str();
   bitstream.resize(buffer.size());
   std::copy(buffer.data(), buffer.data() + buffer.size(), bitstream.begin());
-  
+
   printf("vv encoder: encode done bitstream size = %zu \n", bitstream.size());
   fflush(stdout);
 }
@@ -382,7 +382,7 @@ vvVideoEncoderImpl<T>::encode(FrameSequence<T>& videoSrc,
   vvenc_encoder_close(m_encCtx);
   vvenc_YUVBuffer_free_buffer(&yuvInBuf);
   vvenc_accessUnit_free_payload(&au);
-  
+
   return iRet;
 }
 

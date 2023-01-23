@@ -58,10 +58,9 @@ public:
   GeometryEncoder()  = default;
   ~GeometryEncoder() = default;
 
-  static std::shared_ptr<GeometryEncoder<T>>
-                         create(GeometryCodecId codecId);
-  static GeometryCodecId getDefaultCodecId();
-  static bool            checkCodecId(GeometryCodecId codecId);
+  static std::shared_ptr<GeometryEncoder<T>> create(GeometryCodecId codecId);
+  static GeometryCodecId                     getDefaultCodecId();
+  static bool checkCodecId(GeometryCodecId codecId);
 
   virtual void encode(TriangleMesh<T>&           src,
                       GeometryEncoderParameters& params,

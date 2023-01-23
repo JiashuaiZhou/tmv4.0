@@ -42,8 +42,7 @@ public:
   GeometryDecoder()  = default;
   ~GeometryDecoder() = default;
 
-  static std::shared_ptr<GeometryDecoder<T>>
-  create(GeometryCodecId codecId);
+  static std::shared_ptr<GeometryDecoder<T>> create(GeometryCodecId codecId);
 
   virtual void decode(std::vector<uint8_t>& bitstream,
                       TriangleMesh<T>&      dec) = 0;

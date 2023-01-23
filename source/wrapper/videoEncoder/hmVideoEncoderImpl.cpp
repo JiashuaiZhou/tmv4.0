@@ -53,9 +53,9 @@ hmVideoEncoderImpl<T>::~hmVideoEncoderImpl() = default;
 template<typename T>
 Void
 hmVideoEncoderImpl<T>::encode(FrameSequence<T>&     videoSrc,
-                                 const std::string&    arguments,
-                                 std::vector<uint8_t>& bitstream,
-                                 FrameSequence<T>&     videoRec) {
+                              const std::string&    arguments,
+                              std::vector<uint8_t>& bitstream,
+                              FrameSequence<T>&     videoRec) {
   std::ostringstream oss(ostringstream::binary | ostringstream::out);
   std::ostream&      bitstreamFile = oss;
   std::istringstream iss(arguments);
@@ -781,11 +781,10 @@ hmVideoEncoderImpl<T>::xDeleteBuffer() {
 
 template<typename T>
 Void
-hmVideoEncoderImpl<T>::xWriteOutput(
-  std::ostream&                bitstreamFile,
-  Int                          iNumEncoded,
-  const std::list<AccessUnit>& accessUnits,
-  FrameSequence<T>&            videoRec) {
+hmVideoEncoderImpl<T>::xWriteOutput(std::ostream&                bitstreamFile,
+                                    Int                          iNumEncoded,
+                                    const std::list<AccessUnit>& accessUnits,
+                                    FrameSequence<T>&            videoRec) {
   const InputColourSpaceConversion ipCSC = (!m_outputInternalColourSpace)
                                              ? m_inputColourSpaceConvert
                                              : IPCOLOURSPACE_UNCHANGED;
@@ -823,9 +822,8 @@ hmVideoEncoderImpl<T>::xWriteOutput(
 
 template<typename T>
 Void
-hmVideoEncoderImpl<T>::rateStatsAccum(
-  const AccessUnit&        au,
-  const std::vector<UInt>& annexBsizes) {
+hmVideoEncoderImpl<T>::rateStatsAccum(const AccessUnit&        au,
+                                      const std::vector<UInt>& annexBsizes) {
   auto it_au    = au.begin();
   auto it_stats = annexBsizes.begin();
   for (; it_au != au.end(); it_au++, it_stats++) {
@@ -896,7 +894,7 @@ hmVideoEncoderImpl<T>::printChromaFormat() {
 template<typename T>
 Void
 hmVideoEncoderImpl<T>::xWritePicture(const TComPicYuv* pic,
-                                        FrameSequence<T>& video) {
+                                     FrameSequence<T>& video) {
   int chromaSubsample =
     pic->getChromaFormat() == CHROMA_400
       ? std::numeric_limits<int>::max()
@@ -928,8 +926,8 @@ hmVideoEncoderImpl<T>::xWritePicture(const TComPicYuv* pic,
 template<typename T>
 Void
 hmVideoEncoderImpl<T>::xReadPicture(TComPicYuv*       pic,
-                                       FrameSequence<T>& video,
-                                       int               frameIndex) {
+                                    FrameSequence<T>& video,
+                                    int               frameIndex) {
   auto& image = video.frame(frameIndex);
   printf("video colourSpace = %d \n", (int)video.colourSpace());
   printf("image colourSpace = %d \n", (int)image.colourSpace());

@@ -38,8 +38,7 @@ namespace vmesh {
 using namespace pcc_hm;
 
 template<typename T>
-hmVideoDecoderImpl<T>::hmVideoDecoderImpl()
-  : m_iPOCLastDisplay(-MAX_INT) {
+hmVideoDecoderImpl<T>::hmVideoDecoderImpl() : m_iPOCLastDisplay(-MAX_INT) {
   m_pTDecTop = new pcc_hm::TDecTop();
 }
 
@@ -51,8 +50,8 @@ hmVideoDecoderImpl<T>::~hmVideoDecoderImpl() {
 template<typename T>
 void
 hmVideoDecoderImpl<T>::decode(std::vector<uint8_t>& bitstream,
-                                 size_t                outputBitDepth,
-                                 FrameSequence<T>&     video) {
+                              size_t                outputBitDepth,
+                              FrameSequence<T>&     video) {
   std::string s(reinterpret_cast<char*>(bitstream.data()), bitstream.size());
   std::istringstream                  iss(s);
   std::istream&                       bitstreamFile = iss;
@@ -375,7 +374,7 @@ hmVideoDecoderImpl<T>::xFlushOutput(
 template<typename T>
 void
 hmVideoDecoderImpl<T>::xWritePicture(const pcc_hm::TComPicYuv* pic,
-                                        FrameSequence<T>&         video) {
+                                     FrameSequence<T>&         video) {
   int chromaSubsample =
     pic->getChromaFormat() == CHROMA_400
       ? std::numeric_limits<int>::max()

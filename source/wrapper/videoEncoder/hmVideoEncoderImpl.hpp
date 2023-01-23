@@ -34,7 +34,7 @@
 #ifndef __hmVideoEncoderImpl_H__
 #  define hmVideoEncoderImpl_H_
 
-#if defined(USE_HM_VIDEO_CODEC)
+#  if defined(USE_HM_VIDEO_CODEC)
 #    include "util/image.hpp"
 
 #    include <list>

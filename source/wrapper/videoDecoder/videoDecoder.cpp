@@ -46,19 +46,13 @@ VideoDecoder<T>::create(VideoCodecId codecId) {
   fflush(stdout);
   switch (codecId) {
 #if defined(USE_HM_VIDEO_CODEC)
-  case VideoCodecId::HM:
-    return std::make_shared<hmVideoDecoder<T>>();
-    break;
+  case VideoCodecId::HM: return std::make_shared<hmVideoDecoder<T>>(); break;
 #endif
-#if defined(USE_VTM_VIDEO_CODEC) 
-  case VideoCodecId::VTM:
-    return std::make_shared<vtmVideoDecoder<T>>();
-    break;
+#if defined(USE_VTM_VIDEO_CODEC)
+  case VideoCodecId::VTM: return std::make_shared<vtmVideoDecoder<T>>(); break;
 #endif
 #if defined(USE_VV_VIDEO_CODEC)
-  case VideoCodecId::VV:
-    return std::make_shared<vvVideoDecoder<T>>();
-    break;
+  case VideoCodecId::VV: return std::make_shared<vvVideoDecoder<T>>(); break;
 #endif
   default:
     printf("Error: codec id not supported \n");

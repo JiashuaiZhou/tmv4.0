@@ -63,8 +63,8 @@ public:
   ~VideoEncoder() = default;
 
   static std::shared_ptr<VideoEncoder<T>> create(VideoCodecId codecId);
-  static VideoCodecId                            getDefaultCodecId();
-  static bool checkCodecId(VideoCodecId codecId);
+  static VideoCodecId                     getDefaultCodecId();
+  static bool                             checkCodecId(VideoCodecId codecId);
 
   virtual void encode(FrameSequence<T>&       videoSrc,
                       VideoEncoderParameters& params,

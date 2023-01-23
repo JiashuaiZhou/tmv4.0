@@ -37,8 +37,7 @@
 namespace vmesh {
 
 template<typename T>
-vtmVideoDecoderImpl<T>::vtmVideoDecoderImpl()
-  : m_iPOCLastDisplay(-MAX_INT) {
+vtmVideoDecoderImpl<T>::vtmVideoDecoderImpl() : m_iPOCLastDisplay(-MAX_INT) {
   for (int i = 0; i < MAX_NUM_LAYER_IDS; i++) { m_newCLVS[i] = true; }
 }
 
@@ -48,8 +47,8 @@ vtmVideoDecoderImpl<T>::~vtmVideoDecoderImpl() {}
 template<typename T>
 uint32_t
 vtmVideoDecoderImpl<T>::decode(std::vector<uint8_t>& bitstream,
-                                  size_t                outputBitDepth,
-                                  FrameSequence<T>&     video) {
+                               size_t                outputBitDepth,
+                               FrameSequence<T>&     video) {
   std::string s(reinterpret_cast<char*>(bitstream.data()), bitstream.size());
   std::istringstream iss(s);
   std::istream&      bitstreamFile = iss;
@@ -479,8 +478,8 @@ vtmVideoDecoderImpl<T>::setVideoSize(const SPS* sps) {
 template<typename T>
 void
 vtmVideoDecoderImpl<T>::xWriteOutput(PicList*          pcListPic,
-                                        uint32_t          tId,
-                                        FrameSequence<T>& video) {
+                                     uint32_t          tId,
+                                     FrameSequence<T>& video) {
   if (pcListPic->empty()) { return; }
 
   PicList::iterator iterPic                = pcListPic->begin();
@@ -594,15 +593,15 @@ vtmVideoDecoderImpl<T>::xWriteOutput(PicList*          pcListPic,
 template<typename T>
 void
 vtmVideoDecoderImpl<T>::xFlushOutput(PicList*          pcListPic,
-                                        FrameSequence<T>& video,
-                                        const int         layerId,
-                                        bool noOutputOfPriorPicsFlag) {
+                                     FrameSequence<T>& video,
+                                     const int         layerId,
+                                     bool noOutputOfPriorPicsFlag) {
 #  else
 template<typename T>
 void
 vtmVideoDecoderImpl<T>::xFlushOutput(PicList* pcListPic,
-                                        FrameSequence<T>& video,
-                                        const int layerId) {
+                                     FrameSequence<T>& video,
+                                     const int layerId) {
 #  endif
   if (!pcListPic || pcListPic->empty()) { return; }
   PicList::iterator iterPic = pcListPic->begin();
@@ -706,7 +705,7 @@ vtmVideoDecoderImpl<T>::xFlushOutput(PicList* pcListPic,
 template<typename T>
 void
 vtmVideoDecoderImpl<T>::xWritePicture(const Picture*    pic,
-                                         FrameSequence<T>& video) {
+                                      FrameSequence<T>& video) {
   int chromaSubsample =
     pic->chromaFormat == CHROMA_400
       ? std::numeric_limits<int>::max()
@@ -924,7 +923,7 @@ vtmVideoDecoderImpl<T>::xIsNaluWithinTargetOutputLayerIdSet(
 template<typename T>
 bool
 vtmVideoDecoderImpl<T>::isNewPicture(std::istream*          bitstreamFile,
-                                        class InputByteStream* bytestream) {
+                                     class InputByteStream* bytestream) {
   bool ret      = false;
   bool finished = false;
 
@@ -1025,9 +1024,9 @@ vtmVideoDecoderImpl<T>::isNewPicture(std::istream*          bitstreamFile,
 
 template<typename T>
 bool
-vtmVideoDecoderImpl<T>::isNewAccessUnit(bool          newPicture,
-                                           std::istream* bitstreamFile,
-                                           class InputByteStream* bytestream) {
+vtmVideoDecoderImpl<T>::isNewAccessUnit(bool                   newPicture,
+                                        std::istream*          bitstreamFile,
+                                        class InputByteStream* bytestream) {
   bool ret      = false;
   bool finished = false;
 

@@ -74,19 +74,13 @@ std::shared_ptr<VideoEncoder<T>>
 VideoEncoder<T>::create(VideoCodecId codecId) {
   switch (codecId) {
 #if defined(USE_HM_VIDEO_CODEC)
-  case VideoCodecId::HM:
-    return std::make_shared<hmVideoEncoder<T>>();
-    break;
+  case VideoCodecId::HM: return std::make_shared<hmVideoEncoder<T>>(); break;
 #endif
 #if defined(USE_VTM_VIDEO_CODEC)
-  case VideoCodecId::VTM:
-    return std::make_shared<vtmVideoEncoder<T>>();
-    break;
+  case VideoCodecId::VTM: return std::make_shared<vtmVideoEncoder<T>>(); break;
 #endif
 #if defined(USE_VV_VIDEO_CODEC)
-  case VideoCodecId::VV:
-    return std::make_shared<vvVideoEncoder<T>>();
-    break;
+  case VideoCodecId::VV: return std::make_shared<vvVideoEncoder<T>>(); break;
 #endif
   default:
     printf("Error VideoEncoder: codec id not supported ( %d ) \n",

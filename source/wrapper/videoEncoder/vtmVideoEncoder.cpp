@@ -47,9 +47,9 @@ vtmVideoEncoder<T>::~vtmVideoEncoder() {}
 template<typename T>
 void
 vtmVideoEncoder<T>::encode(FrameSequence<T>&       videoSrc,
-                              VideoEncoderParameters& params,
-                              std::vector<uint8_t>&   bitstream,
-                              FrameSequence<T>&       videoRec) {
+                           VideoEncoderParameters& params,
+                           std::vector<uint8_t>&   bitstream,
+                           FrameSequence<T>&       videoRec) {
   const size_t      width      = videoSrc.width();
   const size_t      height     = videoSrc.height();
   const size_t      frameCount = videoSrc.frameCount();

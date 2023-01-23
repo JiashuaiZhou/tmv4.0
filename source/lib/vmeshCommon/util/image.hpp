@@ -116,7 +116,7 @@ enum class ColourSpace {
   YUV444p,
   RGB444p,
   BGR444p,
-  GBR444p, 
+  GBR444p,
   UNKNOW
 };
 
@@ -554,7 +554,7 @@ public:
           for (size_t u = 0; u < width[c]; ++u) { dst[u] = (Pel)src[u]; }
         }
       }
-      const T value = sizeof( T ) == 1 ? 128: 512;
+      const T value = sizeof(T) == 1 ? 128 : 512;
       for (size_t v = heightSrc[c]; v < heightDst[c]; ++v, dst += stride[c]) {
         for (size_t u = 0; u < width[c]; ++u) { dst[u] = value; }
       }
@@ -581,7 +581,8 @@ public:
     }
   }
 
-private : int           _width{};
+private:
+  int                   _width{};
   int                   _height{};
   ColourSpace           _colourSpace;
   std::vector<Plane<T>> _planes;
@@ -675,7 +676,11 @@ public:
   bool save(const std::string& path, const int32_t frameStart);
 
   void trace(const std::string& name) const {
-    printf("Seq %s: %4d x %4d frame = %2zu ", name.c_str(), _width, _height, _frames.size());
+    printf("Seq %s: %4d x %4d frame = %2zu ",
+           name.c_str(),
+           _width,
+           _height,
+           _frames.size());
     std::cout << " color = " << _colourSpace << std::endl;
     fflush(stdout);
   }

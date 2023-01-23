@@ -1012,7 +1012,7 @@ HdrToolsColourConverterImpl<T>::init() {
 template<typename T>
 void
 HdrToolsColourConverterImpl<T>::convert(FrameSequence<T>& src,
-                                           FrameSequence<T>& dst) {
+                                        FrameSequence<T>& dst) {
   if (!m_initDone) {
     m_projectParameters->m_source.m_width[0]  = src.width();
     m_projectParameters->m_source.m_height[0] = src.height();

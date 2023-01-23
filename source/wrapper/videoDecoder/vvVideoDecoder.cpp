@@ -45,10 +45,10 @@ vvVideoDecoder<T>::~vvVideoDecoder() {}
 template<typename T>
 void
 vvVideoDecoder<T>::decode(std::vector<uint8_t>& bitstream,
-                             FrameSequence<T>&     video,
-                             size_t                outputBitDepth,
-                             const std::string&    decoderPath,
-                             const std::string&    parameters) {
+                          FrameSequence<T>&     video,
+                          size_t                outputBitDepth,
+                          const std::string&    decoderPath,
+                          const std::string&    parameters) {
   vvVideoDecoderImpl<T> decoder;
   decoder.decode(bitstream, outputBitDepth, video);
 }

@@ -32,14 +32,14 @@
  */
 #if defined(USE_VV_VIDEO_CODEC)
 
-#include "util/image.hpp"
+#  include "util/image.hpp"
 
-#include "vvdec/vvdec.h"
-#include "vvdec/version.h"
+#  include "vvdec/vvdec.h"
+#  include "vvdec/version.h"
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class vvVideoDecoderImpl {
 public:
   vvVideoDecoderImpl();
@@ -58,4 +58,3 @@ private:
 };  // namespace vmesh
 
 #endif
-

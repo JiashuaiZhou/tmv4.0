@@ -78,12 +78,12 @@ vvVideoEncoder<T>::encode(FrameSequence<T>&       videoSrc,
   } else {
     cmd << " --InputChromaFormat=420";
   }
-  // Disable multithreading 
+  // Disable multithreading
   cmd << " --threads=1 ";
   cmd << " --MaxParallelFrames=1 ";
   cmd << " --TileParallelCtuEnc=0 ";
   // cmd << " --WppBitEqual=0 ";
-  
+
   // if ( params.transquantBypassEnable_ != 0 ) { cmd << " --TransquantBypassEnable=1"; }
   // if ( params.cuTransquantBypassFlagForce_ != 0 ) { cmd << " --CUTransquantBypassFlagForce=1"; }
   // if ( params.inputColourSpaceConvert_ ) { cmd << " --InputColourSpaceConvert=RGBtoGBR"; }

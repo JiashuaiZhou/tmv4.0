@@ -36,9 +36,9 @@
 
 namespace vmesh {
 
-template <class T>
+template<class T>
 class vvVideoDecoder : public VideoDecoder<T> {
- public:
+public:
   vvVideoDecoder();
   ~vvVideoDecoder();
 

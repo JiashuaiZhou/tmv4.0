@@ -79,47 +79,57 @@ VMCDecoder::decompressMotion(const Bitstream&                  bitstream,
   std::vector<int32_t>       tadj;
   std::vector<Vec3<int32_t>> motion(pointCount);
   current.resize(pointCount);
-  for (int vindex0 = 0; vindex0 < pointCount; ++vindex0) {
+  int32_t remainP = pointCount;
+  int32_t vindexS = 0, vindexE = 0, vCount = 0;
+  while (remainP) {
+    vindexS = vindexE;
     const auto    predIndex = arithmeticDecoder.decode(ctx.ctxPred);
-    Vec3<int32_t> res{};
-    for (int32_t k = 0; k < 3; ++k) {
-      int32_t value = 0;
-      if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[0][k]) != 0) {
-        const auto sign = arithmeticDecoder.decode(ctx.ctxSign[k]);
-        ++value;
-        if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[1][k]) != 0) {
-          value += 1
-                   + arithmeticDecoder.decodeExpGolomb(
-                     0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
-        }
-        if (sign != 0) { value = -value; }
-      }
-      res[k] = value;
-    }
-    if (predIndex == 0) {
-      motion[vindex0] = res;
-    } else {
-      ComputeAdjacentVertices(
-        vindex0, triangles, vertexToTriangle, vtags, vadj);
-      Vec3<int32_t> pred(0);
-      int32_t       predCount = 0;
-      for (int vindex1 : vadj) {
-        if (available[vindex1] != 0) {
-          const auto& mv1 = motion[vindex1];
-          for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
-          ++predCount;
-        }
-      }
-      if (predCount > 1) {
-        const auto bias = predCount >> 1;
+    vCount = 0;
+    while ((vCount < _motionGroupSize) && (remainP)) {
+        int vindex0 = vindexE;
+        ++vindexE;
+        --remainP;
+        ++vCount;
+        Vec3<int32_t> res{};
         for (int32_t k = 0; k < 3; ++k) {
-          pred[k] = pred[k] >= 0 ? (pred[k] + bias) / predCount
-                                 : -(-pred[k] + bias) / predCount;
+            int32_t value = 0;
+            if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[0][k]) != 0) {
+                const auto sign = arithmeticDecoder.decode(ctx.ctxSign[k]);
+                ++value;
+                if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[1][k]) != 0) {
+                    value += 1
+                        + arithmeticDecoder.decodeExpGolomb(
+                        0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
+                }
+                if (sign != 0) { value = -value; }
+            }
+            res[k] = value;
         }
-      }
-      motion[vindex0] = res + pred;
+        if (predIndex == 0) {
+            motion[vindex0] = res;
+        } else {
+            ComputeAdjacentVertices(
+                vindex0, triangles, vertexToTriangle, vtags, vadj);
+            Vec3<int32_t> pred(0);
+            int32_t       predCount = 0;
+            for (int vindex1 : vadj) {
+                if (available[vindex1] != 0) {
+                    const auto& mv1 = motion[vindex1];
+                    for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
+                    ++predCount;
+                }
+            }
+            if (predCount > 1) {
+                const auto bias = predCount >> 1;
+                for (int32_t k = 0; k < 3; ++k) {
+                    pred[k] = pred[k] >= 0 ? (pred[k] + bias) / predCount
+                                 : -(-pred[k] + bias) / predCount;
+                }
+            }
+            motion[vindex0] = res + pred;
+        }
+        available[vindex0] = 1;
     }
-    available[vindex0] = 1;
   }
   for (int vindex = 0; vindex < pointCount; ++vindex) {
     current[vindex] = reference[vindex] + motion[vindex];
@@ -339,6 +349,7 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   gof.resize(_sps.frameCount);
   reconstruct.resize(_sps.frameCount);
   _stats.frameCount = _sps.frameCount;
+  _motionGroupSize = _sps.motionGroupSize;
   for (int32_t frameIndex = 0; frameIndex < _sps.frameCount; ++frameIndex) {
     auto& frameInfo      = gofInfo.framesInfo_[frameIndex];
     auto& frame          = gof.frame(frameIndex);
@@ -412,6 +423,7 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   uint8_t  bitDepth               = 0;
   uint8_t  qpBaseMesh             = 0;
   uint8_t  subdivInfo             = 0;
+  uint8_t  motionGroupSize        = 16;
   uint8_t  liftingQPs[3]          = {};
   uint8_t  meshCodecId = uint8_t(GeometryCodecId::UNKNOWN_GEOMETRY_CODEC);
   uint8_t  geometryVideoCodecId = uint8_t(VideoCodecId::UNKNOWN_VIDEO_CODEC);
@@ -421,6 +433,7 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   bitstream.read(bitField, _byteCounter);
   bitstream.read(bitDepth, _byteCounter);
   bitstream.read(subdivInfo, _byteCounter);
+  bitstream.read(motionGroupSize, _byteCounter);
 #if defined(CODE_CODEC_ID)
   bitstream.read(meshCodecId, _byteCounter);
 #else
@@ -472,6 +485,7 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   _sps.meshCodecId               = GeometryCodecId(meshCodecId);
   _sps.geometryVideoCodecId      = VideoCodecId(geometryVideoCodecId);
   _sps.textureVideoCodecId       = VideoCodecId(textureVideoCodecId);
+  _sps.motionGroupSize           = motionGroupSize;
   return true;
 }
 

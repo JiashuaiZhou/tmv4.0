@@ -164,6 +164,7 @@ struct VMCEncoderParameters {
   int32_t qpTexCoord       = 8;
   int32_t bitDepthPosition = 12;
   int32_t bitDepthTexCoord = 12;
+  int32_t motionGroupSize  = 16;
   double  minPosition[3]   = {0, 0, 0};
   double  maxPosition[3]   = {0, 0, 0};
 

@@ -904,50 +904,73 @@ VMCEncoder::compressMotion(const std::vector<Vec3<int32_t>>& triangles,
   for (int vindex = 0; vindex < pointCount; ++vindex) {
     motion[vindex] = current[vindex] - reference[vindex];
   }
-  for (int vindex0 = 0; vindex0 < pointCount; ++vindex0) {
-    ComputeAdjacentVertices(vindex0, triangles, vertexToTriangle, vtags, vadj);
-    Vec3<int32_t> pred(0);
-    int32_t       predCount = 0;
-    for (int vindex1 : vadj) {
-      if (available[vindex1] != 0) {
-        const auto& mv1 = motion[vindex1];
-        for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
-        ++predCount;
-      }
-    }
-    if (predCount > 1) {
-      const auto bias = predCount >> 1;
-      for (int32_t k = 0; k < 3; ++k) {
-        pred[k] = pred[k] >= 0 ? (pred[k] + bias) / predCount
+  int32_t remainP = pointCount;
+  int32_t vindexS = 0, vindexE = 0, vCount = 0;
+  while (remainP) {
+    vindexS = vindexE;
+    std::vector<Vec3<int32_t>> resV0, resV1;
+    resV0.resize(0);
+    resV1.resize(0);
+    auto bits0 = ctx.estimatePred(0);
+    auto bits1 = ctx.estimatePred(1);
+    vCount = 0;
+    while ((vCount < _motionGroupSize) && (remainP)) {
+        int32_t vindex0 = vindexE;
+        ++vindexE;
+        --remainP;
+        ComputeAdjacentVertices(vindex0, triangles, vertexToTriangle, vtags, vadj);
+        Vec3<int32_t> pred(0);
+        int32_t       predCount = 0;
+        for (int vindex1 : vadj) {
+            if (available[vindex1] != 0) {
+                const auto& mv1 = motion[vindex1];
+                for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
+                ++predCount;
+            }
+        }
+        if (predCount > 1) {
+            const auto bias = predCount >> 1;
+            for (int32_t k = 0; k < 3; ++k) {
+                pred[k] = pred[k] >= 0 ? (pred[k] + bias) / predCount
                                : -(-pred[k] + bias) / predCount;
-      }
-    }
-    available[vindex0]  = 1;
-    const auto    res0  = motion[vindex0];
-    const auto    res1  = motion[vindex0] - pred;
-    const auto    bits0 = ctx.estimateBits(res0, 0);
-    const auto    bits1 = ctx.estimateBits(res1, 1);
+            }
+        }
+        available[vindex0]  = 1;
+        const auto    res0  = motion[vindex0];
+        const auto    res1  = motion[vindex0] - pred;
+        ++vCount;
+	    resV0.push_back(res0);
+	    resV1.push_back(res1);
+	    bits0 += ctx.estimateRes(res0);
+	    bits1 += ctx.estimateRes(res1);
+	}
+    std::vector<Vec3<int32_t>> resV;
     Vec3<int32_t> res{};
     if (bits0 <= bits1) {
-      res = res0;
+      resV = resV0;
       arithmeticEncoder.encode(0, ctx.ctxPred);
     } else {
-      res = res1;
+      resV = resV1;
       arithmeticEncoder.encode(1, ctx.ctxPred);
     }
-    for (int32_t k = 0; k < 3; ++k) {
-      auto value = res[k];
-      arithmeticEncoder.encode(static_cast<int>(value != 0),
+    vCount = -1;
+    for (int vindex0 = vindexS; vindex0 < vindexE; ++vindex0) {
+        ++vCount;
+		res = resV[vCount];
+        for (int32_t k = 0; k < 3; ++k) {
+            auto value = res[k];
+            arithmeticEncoder.encode(static_cast<int>(value != 0),
                                ctx.ctxCoeffGtN[0][k]);
-      if (value == 0) { continue; }
-      arithmeticEncoder.encode(static_cast<int>(value < 0), ctx.ctxSign[k]);
-      value = std::abs(value) - 1;
-      arithmeticEncoder.encode(static_cast<int>(value != 0),
+            if (value == 0) { continue; }
+            arithmeticEncoder.encode(static_cast<int>(value < 0), ctx.ctxSign[k]);
+            value = std::abs(value) - 1;
+            arithmeticEncoder.encode(static_cast<int>(value != 0),
                                ctx.ctxCoeffGtN[1][k]);
-      if (value == 0) { continue; }
-      assert(value > 0);
-      arithmeticEncoder.encodeExpGolomb(
-        --value, 0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
+            if (value == 0) { continue; }
+            assert(value > 0);
+            arithmeticEncoder.encodeExpGolomb(
+                --value, 0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
+        }
     }
   }
 
@@ -1514,6 +1537,7 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
   const uint16_t widthTexVideo          = uint32_t(params.textureWidth);
   const uint16_t heightTexVideo         = uint32_t(params.textureHeight);
   const uint8_t  geometryVideoBlockSize = params.geometryVideoBlockSize;
+  const uint8_t  motionGroupSize        = uint8_t(params.motionGroupSize);
   const auto     bitDepth               = uint8_t((params.bitDepthPosition - 1)
                                 + ((params.bitDepthTexCoord - 1) << 4));
   const uint8_t  subdivInfo =
@@ -1532,6 +1556,7 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
   bitstream.write(bitField);
   bitstream.write(bitDepth);
   bitstream.write(subdivInfo);
+  bitstream.write(motionGroupSize);
 #if defined(CODE_CODEC_ID)
   bitstream.write(uint8_t(params.meshCodecId));
 #endif
@@ -1658,6 +1683,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                       : ColourSpace::YUV444p;
   FrameSequence<uint16_t> dispVideo;
   dispVideo.resize(0, 0, colourSpaceDispVideo, frameCount);
+  _motionGroupSize = params.motionGroupSize;
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frameInfo      = gofInfo.frameInfo(frameIndex);
     auto&       frame          = gof.frame(frameIndex);

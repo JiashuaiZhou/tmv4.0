@@ -414,6 +414,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.meshCodecId, 
       encParams.meshCodecId, 
       "Mesh codec id")
+    ("motionGroupSize",
+      encParams.motionGroupSize,
+      encParams.motionGroupSize,
+      "Motion field coding vertices group size")
 
   (po::Section("Geometry video"))
     ("encodeGeometryVideo", 

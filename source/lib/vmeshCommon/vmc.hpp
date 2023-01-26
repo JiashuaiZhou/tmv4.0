@@ -116,6 +116,8 @@ struct VMCSequenceParameterSet {
   GeometryCodecId meshCodecId          = GeometryCodecId::DRACO;
   VideoCodecId    geometryVideoCodecId = VideoCodecId::HM;
   VideoCodecId    textureVideoCodecId  = VideoCodecId::HM;
+  bool            dracoUsePosition     = false;
+  bool            dracoUseUV           = false;
 };
 
 //============================================================================

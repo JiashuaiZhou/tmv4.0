@@ -812,12 +812,16 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
   }
 
   // Encode
-  GeometryEncoderParameters dracoParams;
-  dracoParams.cl_ = 10;
+  GeometryEncoderParameters encoderParams;
+  encoderParams.dracoUsePosition_ = params.dracoUsePosition_;
+  encoderParams.dracoUseUV_       = params.dracoUseUV_;
   TriangleMesh<MeshType> rec;
   std::vector<uint8_t>   geometryBitstream;
-  auto encoder = GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
-  encoder->encode(base, dracoParams, geometryBitstream, rec);
+  auto encoder = GeometryEncoder<MeshType>::create(params.meshCodecId);
+  printf("DracoMapping: use_position = %d use_uv = %d \n",
+         encoderParams.dracoUsePosition_,
+         encoderParams.dracoUseUV_);
+  encoder->encode(base, encoderParams, geometryBitstream, rec);
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
@@ -1045,13 +1049,18 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     }
 
     // Encode
-    GeometryEncoderParameters dracoParams;
-    dracoParams.qp_ = params.qpPosition;
-    dracoParams.qt_ = params.qpTexCoord;
+    GeometryEncoderParameters encoderParams;
+    encoderParams.qp_               = params.qpPosition;
+    encoderParams.qt_               = params.qpTexCoord;
+    encoderParams.dracoUsePosition_ = params.dracoUsePosition_;
+    encoderParams.dracoUseUV_       = params.dracoUseUV_;
     TriangleMesh<MeshType> rec;
     std::vector<uint8_t>   geometryBitstream;
     auto encoder = GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
-    encoder->encode(base, dracoParams, geometryBitstream, rec);
+    printf("BaseMeshEnco: use_position = %d use_uv = %d \n",
+           encoderParams.dracoUsePosition_,
+           encoderParams.dracoUseUV_);
+    encoder->encode(base, encoderParams, geometryBitstream, rec);
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -1561,6 +1570,8 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
 #if defined(CODE_CODEC_ID)
   bitstream.write(uint8_t(params.meshCodecId));
 #endif
+  bitstream.write(uint8_t(params.dracoUsePosition_));
+  bitstream.write(uint8_t(params.dracoUseUV_));
   bitstream.write(qpBaseMesh);
   if (params.encodeDisplacementsVideo) {
 #if defined(CODE_CODEC_ID)

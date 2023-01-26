@@ -121,8 +121,11 @@ main(int argc, char* argv[]) {
 
   // Encode
   vmesh::TriangleMesh<double> dec;
-  auto encoder = vmesh::GeometryDecoder<double>::create(params.codecId);
-  encoder->decode(bitstream.vector(), dec);
+  auto encoder = vmesh::GeometryDecoder<double>::create(params.codecId);  
+  vmesh::GeometryDecoderParameters decoderParams;
+  decoderParams.dracoUsePosition_ = false;
+  decoderParams.dracoUseUV_       = false;
+  encoder->decode(bitstream.vector(), decoderParams, dec);
 
   // Save reconstructed mesh
   dec.save(params.outputPath);

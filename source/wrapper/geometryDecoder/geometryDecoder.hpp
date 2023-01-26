@@ -36,6 +36,11 @@
 
 namespace vmesh {
 
+struct GeometryDecoderParameters {
+  bool dracoUsePosition_ = false;  // draco use position mode (m60340)
+  bool dracoUseUV_       = false;  // draco use uv mode (m60293)
+};
+
 template<class T>
 class GeometryDecoder {
 public:
@@ -44,8 +49,9 @@ public:
 
   static std::shared_ptr<GeometryDecoder<T>> create(GeometryCodecId codecId);
 
-  virtual void decode(std::vector<uint8_t>& bitstream,
-                      TriangleMesh<T>&      dec) = 0;
+  virtual void decode(std::vector<uint8_t>&      bitstream,
+                      GeometryDecoderParameters& params,
+                      TriangleMesh<T>&           dec) = 0;
 };
 
 }  // namespace vmesh

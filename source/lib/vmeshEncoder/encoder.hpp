@@ -190,8 +190,10 @@ struct VMCEncoderParameters {
   VideoCodecId textureVideoCodecId          = VideoCodecId::HM;
 
   // Base mesh
-  GeometryCodecId meshCodecId     = GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
-  int32_t         motionGroupSize = 16;
+  GeometryCodecId meshCodecId       = GeometryCodecId::DRACO;
+  bool            dracoUsePosition_ = false;
+  bool            dracoUseUV_       = false;
+  int32_t         motionGroupSize   = 16;
 
   // Displacements
   DisplacementCoordinateSystem displacementCoordinateSystem =

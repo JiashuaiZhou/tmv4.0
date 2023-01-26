@@ -42,7 +42,9 @@ public:
   DracoGeometryDecoder();
   ~DracoGeometryDecoder();
 
-  void decode(std::vector<uint8_t>& bitstream, TriangleMesh<T>& dec);
+  void decode(std::vector<uint8_t>&      bitstream,
+              GeometryDecoderParameters& params,
+              TriangleMesh<T>&           dec);
 };
 
 }  // namespace vmesh

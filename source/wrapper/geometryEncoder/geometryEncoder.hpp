@@ -50,6 +50,8 @@ struct GeometryEncoderParameters {
     -1;  // quantization bits for the normal vector attribute, default=8.
   int32_t qg_ = -1;  // quantization bits for any generic attribute, default=8.
   int32_t cl_ = 10;  // compression level [0-10], most=10, least=0, default=7.
+  bool    dracoUsePosition_ = false;  // draco use position mode (m60340)
+  bool    dracoUseUV_       = false;  // draco use uv mode (m60293)
 };
 
 template<class T>

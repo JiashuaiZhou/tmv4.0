@@ -26,13 +26,6 @@ if ( USE_DRACO_GEOMETRY_CODEC )
     endif()
   endif()
 
-  if (USE_POSITION_PATCH)
-    add_definitions(-DDRACO_USE_POSITION)
-  endif()
-  if (USE_UV_PATCH)
-    add_definitions(-DDRACO_USE_UV)
-  endif()
-
   # disable submodule warnings
   if(MSVC)
     add_definitions("/wd4661 /wd4018 /wd4804")

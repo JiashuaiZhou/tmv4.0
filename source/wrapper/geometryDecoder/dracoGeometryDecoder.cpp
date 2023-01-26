@@ -119,8 +119,9 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst) {
 
 template<typename T>
 void
-DracoGeometryDecoder<T>::decode(std::vector<uint8_t>& bitstream,
-                                TriangleMesh<T>&      dec) {
+DracoGeometryDecoder<T>::decode(std::vector<uint8_t>&      bitstream,
+                                GeometryDecoderParameters& params,
+                                TriangleMesh<T>&           dec) {
   draco::DecoderBuffer decBuffer;
   printf("bitstream.size() = %zu \n", bitstream.size());
   decBuffer.Init((const char*)bitstream.data(), bitstream.size());
@@ -131,7 +132,9 @@ DracoGeometryDecoder<T>::decode(std::vector<uint8_t>& bitstream,
   }
   if (type.value() == draco::TRIANGULAR_MESH) {
     draco::Decoder decoder;
-    auto           status = decoder.DecodeMeshFromBuffer(&decBuffer);
+    decoder.options()->SetGlobalBool("use_position", params.dracoUsePosition_);
+    decoder.options()->SetGlobalBool("use_uv", params.dracoUseUV_);
+    auto status = decoder.DecodeMeshFromBuffer(&decBuffer);
     if (!status.ok()) {
       printf("Failed DecodeMeshFromBuffer: %s.\n",
              status.status().error_msg());

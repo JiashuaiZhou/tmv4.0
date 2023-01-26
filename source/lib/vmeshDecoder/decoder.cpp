@@ -166,8 +166,17 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
 
     // Decode base mesh
     printf("Decode base mesh \n");
-    auto decoder = GeometryDecoder<MeshType>::create(GeometryCodecId::DRACO);
-    decoder->decode(geometryBitstream, base);
+    auto decoder = GeometryDecoder<MeshType>::create(_sps.meshCodecId);
+    GeometryDecoderParameters decoderParams;
+    decoderParams.dracoUsePosition_ = _sps.dracoUsePosition;
+    decoderParams.dracoUseUV_       = _sps.dracoUseUV;
+    printf("BaseMeshDeco: use_position = %d use_uv = %d \n",
+           decoderParams.dracoUsePosition_,
+           decoderParams.dracoUseUV_);
+    fflush(stdout);
+    decoder->decode(geometryBitstream, decoderParams, base);
+    printf("BaseMeshDeco: done \n");
+    fflush(stdout);
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -427,6 +436,8 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   uint8_t  meshCodecId = uint8_t(GeometryCodecId::UNKNOWN_GEOMETRY_CODEC);
   uint8_t  geometryVideoCodecId = uint8_t(VideoCodecId::UNKNOWN_VIDEO_CODEC);
   uint8_t  textureVideoCodecId  = uint8_t(VideoCodecId::UNKNOWN_VIDEO_CODEC);
+  uint8_t  dracoUsePosition     = 0;
+  uint8_t  dracoUseUV           = 0;
 
   bitstream.read(frameCount, _byteCounter);
   bitstream.read(bitField, _byteCounter);
@@ -436,8 +447,10 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
 #if defined(CODE_CODEC_ID)
   bitstream.read(meshCodecId, _byteCounter);
 #else
-  geometryVideoCodecId = uint8_t(GeometryCodecId::DRACO);
+  meshCodecId = uint8_t(GeometryCodecId::DRACO);
 #endif
+  bitstream.read(dracoUsePosition, _byteCounter);
+  bitstream.read(dracoUseUV, _byteCounter);
   bitstream.read(qpBaseMesh, _byteCounter);
   _sps.frameCount                      = frameCount;
   _sps.encodeDisplacementsVideo        = ((bitField & 1) != 0);
@@ -484,6 +497,8 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   _sps.meshCodecId               = GeometryCodecId(meshCodecId);
   _sps.geometryVideoCodecId      = VideoCodecId(geometryVideoCodecId);
   _sps.textureVideoCodecId       = VideoCodecId(textureVideoCodecId);
+  _sps.dracoUsePosition          = dracoUsePosition;
+  _sps.dracoUseUV                = dracoUseUV;
   _sps.motionGroupSize           = motionGroupSize;
   return true;
 }

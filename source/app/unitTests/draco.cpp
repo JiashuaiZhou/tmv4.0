@@ -50,17 +50,22 @@ TEST(draco, encode) {
   disableSubProcessLog.disable();
   // Set parameters
   vmesh::GeometryCodecId           codecId = vmesh::GeometryCodecId::DRACO;
-  vmesh::GeometryEncoderParameters params;
+  vmesh::GeometryEncoderParameters encoderParams;
+  vmesh::GeometryDecoderParameters decoderParams;
   std::string                      inputMesh = "data/gof_0_fr_0_qbase.obj";
   std::string                      recOrg    = "rec_org.obj";
   std::string                      binOrg    = "bin_org.drc";
   std::string                      recNew    = "rec_new.obj";
   std::string                      binNew    = "bin_new.drc";
-  params.qp_                                 = 11;
-  params.qt_                                 = 10;
-  params.qn_                                 = -1;
-  params.qg_                                 = -1;
-  params.cl_                                 = 10;
+  encoderParams.qp_                          = 11;
+  encoderParams.qt_                          = 10;
+  encoderParams.qn_                          = -1;
+  encoderParams.qg_                          = -1;
+  encoderParams.cl_                          = 10;
+  encoderParams.dracoUsePosition_            = false;
+  encoderParams.dracoUseUV_                  = false;
+  decoderParams.dracoUsePosition_            = false;
+  decoderParams.dracoUseUV_                  = false;
 
   if (!checkSoftwarePath()) {
     FAIL() << "All software paths not exist: ";
@@ -79,19 +84,20 @@ TEST(draco, encode) {
   vmesh::Bitstream            bitstream;
   src.load(inputMesh);
   auto encoder = vmesh::GeometryEncoder<double>::create(codecId);
-  encoder->encode(src, params, bitstream.vector(), rec);
+  encoder->encode(src, encoderParams, bitstream.vector(), rec);
   bitstream.save(binNew);
 
   // Decode with GeometryDecoder
   auto decoder = vmesh::GeometryDecoder<double>::create(codecId);
-  decoder->decode(bitstream.vector(), dec);
+  decoder->decode(bitstream.vector(), decoderParams, dec);
 
   // Encode with original draco application
   std::stringstream cmd;
   cmd << g_dracoEncoderPath << "  "
-      << " -i " << inputMesh << " -o " << binOrg << " -qp " << params.qp_
-      << " -qt " << params.qt_ << " -qn " << params.qn_ << " -qg "
-      << params.qg_ << " -cl " << params.cl_;
+      << " -i " << inputMesh << " -o " << binOrg << " -qp "
+      << encoderParams.qp_ << " -qt " << encoderParams.qt_ << " -qn "
+      << encoderParams.qn_ << " -qg " << encoderParams.qg_ << " -cl "
+      << encoderParams.cl_;
   if (disableSubProcessLog.disableLog()) { cmd << " > /dev/null"; }
   printf("cmd = %s \n", cmd.str().c_str());
   system(cmd.str().c_str());
@@ -123,10 +129,13 @@ TEST(draco, encode) {
 TEST(draco, decode) {
   disableSubProcessLog.disable();
   // Set parameters
-  vmesh::GeometryCodecId codecId    = vmesh::GeometryCodecId::DRACO;
-  std::string            binPath    = "data/gof_0_fr_0_cbase.drc";
-  std::string            decAppPath = "dec_app.obj";
-  std::string            decLibPath = "dec_lib.obj";
+  vmesh::GeometryDecoderParameters decoderParams;
+  vmesh::GeometryCodecId           codecId    = vmesh::GeometryCodecId::DRACO;
+  std::string                      binPath    = "data/gof_0_fr_0_cbase.drc";
+  std::string                      decAppPath = "dec_app.obj";
+  std::string                      decLibPath = "dec_lib.obj";
+  decoderParams.dracoUsePosition_             = false;
+  decoderParams.dracoUseUV_                   = false;
 
   if (!checkSoftwarePath()) {
     FAIL() << "All software paths not exist: ";
@@ -154,7 +163,7 @@ TEST(draco, decode) {
   vmesh::TriangleMesh<double> decLib;
   bitstream.load(binPath);
   auto decoder = vmesh::GeometryDecoder<double>::create(codecId);
-  decoder->decode(bitstream.vector(), decLib);
+  decoder->decode(bitstream.vector(), decoderParams, decLib);
   decLib.save(decLibPath);
 
   // Compare bitstreams

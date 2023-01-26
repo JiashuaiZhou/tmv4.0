@@ -266,6 +266,8 @@ DracoGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
     encoder.SetAttributeQuantization(draco::GeometryAttribute::COLOR,
                                      params.qg_);
   }
+  encoder.options().SetGlobalBool("use_position", params.dracoUsePosition_);
+  encoder.options().SetGlobalBool("use_uv", params.dracoUseUV_);
   draco::EncoderBuffer buffer;
   const draco::Status  status =
     encoder.EncodeMeshToBuffer(*(mesh.get()), &buffer);
@@ -290,6 +292,8 @@ DracoGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
   }
   if (type.value() == draco::TRIANGULAR_MESH) {
     draco::Decoder decoder;
+    decoder.options()->SetGlobalBool("use_position", params.dracoUsePosition_);
+    decoder.options()->SetGlobalBool("use_uv", params.dracoUseUV_);
     auto           status = decoder.DecodeMeshFromBuffer(&decBuffer);
     if (!status.ok()) {
       printf("Failed DecodeMeshFromBuffer: %s.\n",

@@ -418,6 +418,14 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.meshCodecId, 
       encParams.meshCodecId, 
       "Mesh codec id")
+    ("dracoUsePosition", 
+      encParams.dracoUsePosition_, 
+      encParams.dracoUsePosition_, 
+      "Draco use position")
+    ("dracoUseUV", 
+      encParams.dracoUseUV_, 
+      encParams.dracoUseUV_, 
+      "Draco use UV")
     ("motionGroupSize",
       encParams.motionGroupSize,
       encParams.motionGroupSize,

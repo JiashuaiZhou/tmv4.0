@@ -62,8 +62,6 @@ while [[ $# -gt 0 ]] ; do
     --format      ) TARGETS+=( "clang-format" );;
     --tidy        ) TARGETS+=( "clang-tidy" );;
     --cppcheck    ) TARGETS+=( "cppcheck" );;       
-    --position    ) CMAKE_FLAGS+=( "-DUSE_POSITION_PATCH=TRUE" ) ;;    
-    --uv          ) CMAKE_FLAGS+=( "-DUSE_UV_PATCH=TRUE" ) ;;
     --test        ) CMAKE_FLAGS+=( "-DBUILD_UNIT_TEST_APPS=TRUE" ) ;;
     --codeCodecId ) CMAKE_FLAGS+=( "-DCODE_CODEC_ID=TRUE" ) ;;
     *             ) print_usage "unsupported arguments: $C ";;

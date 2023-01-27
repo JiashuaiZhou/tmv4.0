@@ -76,6 +76,9 @@ struct VMCMetricsParameters {
   int         frameCount     = 0;
   int         frameStart     = 0;
   bool        verbose        = false;
+
+  bool   normalCalcModificationEnable = false;
+
 };
 
 //============================================================================

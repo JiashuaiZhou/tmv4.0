@@ -452,6 +452,7 @@ VMCEncoder::geometryParametrization(VMCGroupOfFrames&             gof,
         metricParams.minPosition[c] = params.minPosition[c];
         metricParams.maxPosition[c] = params.maxPosition[c];
       }
+      metricParams.normalCalcModificationEnable = params.normalCalcModificationEnable;
       metricsIntra.compute(input, subdivIntra, metricParams);
       metricsInter.compute(input, subdivInter, metricParams);
       auto metIntra = metricsIntra.getPccResults();

@@ -254,6 +254,10 @@ struct VMCEncoderParameters {
   // Caching
   CachingPoint cachingPoint     = CachingPoint::NONE;
   std::string  cachingDirectory = {};
+
+  // Metrics
+  bool    normalCalcModificationEnable = false;
+
 };
 
 //============================================================================

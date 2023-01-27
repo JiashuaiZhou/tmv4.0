@@ -222,7 +222,11 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.maxAllowedD2PSNRLoss, 
       encParams.maxAllowedD2PSNRLoss, 
       "Maximum allowed D2 PSNR Loss")
-            
+    ("normalCalcModificationEnable",
+      encParams.normalCalcModificationEnable,
+      encParams.normalCalcModificationEnable,
+      "0: Calculate normal of cloudB from cloudA, 1: Use normal of cloudB(default)")
+
   (po::Section("Intra geometry parametrization"))
     ("ai_sdeform", 
       intraGeoParams.applySmoothingDeform, 

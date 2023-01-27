@@ -349,6 +349,7 @@ VMCMetrics::compute(const mm::Model&            srcModel,
   pccParams.neighborsProc   = 1;
   pccParams.dropDuplicates  = 2;
   pccParams.bAverageNormals = true;
+  pccParams.normalCalcModificationEnable  = params.normalCalcModificationEnable;
 
   if (params.computePcc) {
     if (verbose) {

@@ -128,10 +128,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       metParams.gridSize,
       metParams.gridSize,
       "Grid size")
-    ("resolution",
-      metParams.resolution,
-      metParams.resolution,
-      "Resolution")
       
   (po::Section("IBSM metric"))
     ("ibsm",
@@ -186,7 +182,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   if (params.decTexturePath.empty()) {
     err.error() << "Rec/dec texture not specified\n";
   }
-  if (params.metParams.computePcc && params.metParams.resolution == 0) {
+  if (params.metParams.computePcc) {
     err.error() << "PCC resolution must be set\n";
   }
   if (params.metParams.minPosition[0] == 0.0

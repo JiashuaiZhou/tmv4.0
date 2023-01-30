@@ -506,10 +506,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       metParams.gridSize,
       metParams.gridSize,
       "Grid size")
-    ("resolution",
-      metParams.resolution,
-      metParams.resolution,
-      "Resolution")  
     ("pcqmRadiusCurvature",
       metParams.pcqmRadiusCurvature,
       metParams.pcqmRadiusCurvature,
@@ -587,8 +583,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   }
   metParams.qp           = encParams.bitDepthPosition;
   metParams.qt           = encParams.bitDepthTexCoord;
-  metParams.frameCount   = params.frameCount;
-  metParams.frameStart   = params.startFrame;
   metParams.dequantizeUV = encParams.dequantizeUV;
   metParams.verbose      = params.verbose;
   return true;

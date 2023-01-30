@@ -54,31 +54,29 @@ class Frame;
 //============================================================================
 
 struct VMCMetricsParameters {
-  bool   computePcc     = false;
-  bool   computeIbsm    = false;
-  bool   computePcqm    = false;
-  int    gridSize       = 1024;
+  // Dequantize and sampling  and
+  bool   dequantizeUV   = true;
   int    qp             = 12;
   int    qt             = 13;
-  bool   dequantizeUV   = true;
+  int    gridSize       = 1024;
   double minPosition[3] = {0.0, 0.0, 0.0};
   double maxPosition[3] = {0.0, 0.0, 0.0};
-  double resolution     = 0;
+
+  // PCC
+  bool computePcc                   = false;
+  bool normalCalcModificationEnable = true;
+
+  // IBSM
+  bool computeIbsm = false;
 
   // PCQM
+  bool   computePcqm            = false;
   double pcqmRadiusCurvature    = 0.001;
   int    pcqmThresholdKnnSearch = 20;
   double pcqmRadiusFactor       = 2.0;
 
   // Optionals
-  std::string srcMeshPath    = {};
-  std::string srcTexturePath = {};
-  int         frameCount     = 0;
-  int         frameStart     = 0;
   bool        verbose        = false;
-
-  bool   normalCalcModificationEnable = false;
-
 };
 
 //============================================================================

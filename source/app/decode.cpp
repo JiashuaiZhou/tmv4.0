@@ -55,6 +55,8 @@ struct Parameters {
   std::string                 decodedMeshPath        = {};
   std::string                 decodedTexturePath     = {};
   std::string                 decodedMaterialLibPath = {};
+  std::string                 sourceMeshPath         = {};
+  std::string                 sourceTexturePath      = {};
   int32_t                     startFrame             = 0;
   double                      framerate              = 30.;
   bool                        verbose                = false;
@@ -180,26 +182,14 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("pcqmRadiusFactor",
       metParams.pcqmRadiusFactor,
       metParams.pcqmRadiusFactor,
-      "PCQM radius factor")      
-    ("resolution",
-      metParams.resolution,
-      metParams.resolution,
-      "resolution")      
-    ("startFrameIndex",
-      metParams.frameStart, 
-      metParams.frameStart, 
-      "Metric frame start")
-    ("frameCount",
-      metParams.frameCount, 
-      metParams.frameCount, 
-      "Metric frame count")
+      "PCQM radius factor")
     ("srcMesh",
-      metParams.srcMeshPath,
-      metParams.srcMeshPath,
+      params.sourceMeshPath,
+      params.sourceMeshPath,
       "Metric Source mesh path")
     ("srcTex", 
-      metParams.srcTexturePath, 
-      metParams.srcTexturePath,
+      params.sourceTexturePath, 
+      params.sourceTexturePath,
       "Source texture path")
   ;
   /* clang-format on */
@@ -223,7 +213,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     err.error() << "compressed input/output not specified\n";
   }
   if ((metParams.computePcc || metParams.computeIbsm || metParams.computePcqm)
-      && (metParams.srcMeshPath.empty() || metParams.srcTexturePath.empty())) {
+      && (params.sourceMeshPath.empty() || params.sourceTexturePath.empty())) {
     err.error() << "Source mesh/texture must be define to compute metrics\n";
   }
   metParams.dequantizeUV = decParams.dequantizeUV;
@@ -295,8 +285,8 @@ decompress(const Parameters& params) {
     if (metParams.computePcc || metParams.computeIbsm
         || metParams.computePcqm) {
       vmesh::Sequence source;
-      if (!source.load(metParams.srcMeshPath,
-                       metParams.srcTexturePath,
+      if (!source.load(params.sourceMeshPath,
+                       params.sourceTexturePath,
                        gofInfo.startFrameIndex_,
                        gofInfo.frameCount_)) {
         std::cerr << "Error: can't load source sequence\n";

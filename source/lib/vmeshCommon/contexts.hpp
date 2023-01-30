@@ -40,8 +40,6 @@
 #include "util/vector.hpp"
 #include <schroedinger/schroarith.h>
 
-uint8_t _motionGroupSize = 16;
-
 namespace vmesh {
 
 //============================================================================
@@ -70,29 +68,21 @@ struct VMCMotionACContext {
     return bits;
   }
 
-  int32_t
-  estimatePred(const int32_t predIndex) const
-  {
+  int32_t estimatePred(const int32_t predIndex) const {
     int32_t bits = ctxPred.estimateBits(predIndex);
     return bits;
   }
 
-  int32_t
-  estimateRes(const Vec3<int32_t>& residual) const
-  {
+  int32_t estimateRes(const Vec3<int32_t>& residual) const {
     int32_t bits = 0;
     for (int32_t k = 0; k < 3; ++k) {
       auto value = residual[k];
       bits += ctxCoeffGtN[0][k].estimateBits(value != 0);
-      if (!value) {
-        continue;
-      }
+      if (!value) { continue; }
       bits += ctxSign[k].estimateBits(value < 0);
       value = std::abs(value) - 1;
       bits += ctxCoeffGtN[1][k].estimateBits(value != 0);
-      if (!value) {
-        continue;
-      }
+      if (!value) { continue; }
       const auto log2Delta = 1 + ilog2(uint32_t(value));
       bits += ((log2Delta << 1) + 1) << 10;
     }

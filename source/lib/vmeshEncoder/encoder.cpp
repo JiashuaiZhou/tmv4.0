@@ -887,7 +887,7 @@ VMCEncoder::compressMotion(const std::vector<Vec3<int32_t>>& triangles,
                            const std::vector<Vec3<int32_t>>& current,
                            const std::vector<Vec3<int32_t>>& reference,
                            Bitstream&                        bitstream,
-                           const VMCEncoderParameters& /*params*/) {
+                           const VMCEncoderParameters&       params) {
   const auto         pointCount  = int32_t(current.size());
   const auto         maxAcBufLen = pointCount * 3 * 4 + 1024;
   VMCMotionACContext ctx;
@@ -914,7 +914,7 @@ VMCEncoder::compressMotion(const std::vector<Vec3<int32_t>>& triangles,
     auto bits0 = ctx.estimatePred(0);
     auto bits1 = ctx.estimatePred(1);
     vCount = 0;
-    while ((vCount < _motionGroupSize) && (remainP)) {
+    while ((vCount < params.motionGroupSize) && (remainP)) {
         int32_t vindex0 = vindexE;
         ++vindexE;
         --remainP;
@@ -1683,7 +1683,6 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                       : ColourSpace::YUV444p;
   FrameSequence<uint16_t> dispVideo;
   dispVideo.resize(0, 0, colourSpaceDispVideo, frameCount);
-  _motionGroupSize = params.motionGroupSize;
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frameInfo      = gofInfo.frameInfo(frameIndex);
     auto&       frame          = gof.frame(frameIndex);

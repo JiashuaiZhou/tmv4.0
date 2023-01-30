@@ -85,7 +85,7 @@ VMCDecoder::decompressMotion(const Bitstream&                  bitstream,
     vindexS = vindexE;
     const auto    predIndex = arithmeticDecoder.decode(ctx.ctxPred);
     vCount = 0;
-    while ((vCount < _motionGroupSize) && (remainP)) {
+    while ((vCount < _sps.motionGroupSize) && (remainP)) {
         int vindex0 = vindexE;
         ++vindexE;
         --remainP;
@@ -349,7 +349,6 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   gof.resize(_sps.frameCount);
   reconstruct.resize(_sps.frameCount);
   _stats.frameCount = _sps.frameCount;
-  _motionGroupSize = _sps.motionGroupSize;
   for (int32_t frameIndex = 0; frameIndex < _sps.frameCount; ++frameIndex) {
     auto& frameInfo      = gofInfo.framesInfo_[frameIndex];
     auto& frame          = gof.frame(frameIndex);
@@ -423,7 +422,7 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   uint8_t  bitDepth               = 0;
   uint8_t  qpBaseMesh             = 0;
   uint8_t  subdivInfo             = 0;
-  uint8_t  motionGroupSize        = 16;
+  uint8_t  motionGroupSize        = 0;
   uint8_t  liftingQPs[3]          = {};
   uint8_t  meshCodecId = uint8_t(GeometryCodecId::UNKNOWN_GEOMETRY_CODEC);
   uint8_t  geometryVideoCodecId = uint8_t(VideoCodecId::UNKNOWN_VIDEO_CODEC);

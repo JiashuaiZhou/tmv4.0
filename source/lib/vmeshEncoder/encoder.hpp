@@ -159,12 +159,11 @@ struct GeometryParametrizationParameters {
 };
 
 struct VMCEncoderParameters {
-  // mesh
+  // Mesh
   int32_t qpPosition       = 10;
   int32_t qpTexCoord       = 8;
   int32_t bitDepthPosition = 12;
   int32_t bitDepthTexCoord = 12;
-  int32_t motionGroupSize  = 16;
   double  minPosition[3]   = {0, 0, 0};
   double  maxPosition[3]   = {0, 0, 0};
 
@@ -172,14 +171,14 @@ struct VMCEncoderParameters {
   int32_t groupOfFramesMaxSize = 32;
   bool    analyzeGof           = false;
 
-  // geometry video
+  // Geometry video
   int32_t      geometryVideoBlockSize     = 16;
   int32_t      geometryVideoWidthInBlocks = 16;
   int32_t      geometryVideoBitDepth      = 10;
   std::string  geometryVideoEncoderConfig = {};
   VideoCodecId geometryVideoCodecId       = VideoCodecId::HM;
 
-  // texture video
+  // Texture video
   int32_t      textureVideoBitDepth         = 10;
   int32_t      textureVideoQP               = 8;
   std::string  textureVideoEncoderConfig    = {};
@@ -190,17 +189,18 @@ struct VMCEncoderParameters {
   bool         textureVideoFullRange        = false;
   VideoCodecId textureVideoCodecId          = VideoCodecId::HM;
 
-  // Mesh
-  GeometryCodecId meshCodecId = GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
+  // Base mesh
+  GeometryCodecId meshCodecId     = GeometryCodecId::UNKNOWN_GEOMETRY_CODEC;
+  int32_t         motionGroupSize = 16;
 
-  // displacements
+  // Displacements
   DisplacementCoordinateSystem displacementCoordinateSystem =
     DisplacementCoordinateSystem::LOCAL;
   bool encodeDisplacementsVideo        = true;
   bool encodeTextureVideo              = true;
   bool applyOneDimensionalDisplacement = false;
 
-  // lifting
+  // Lifting
   double  liftingUpdateWeight                 = 0.125;
   double  liftingPredictionWeight             = 0.5;
   bool    liftingSkipUpdate                   = false;
@@ -208,7 +208,7 @@ struct VMCEncoderParameters {
   double  liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
   int32_t liftingQP[3]                        = {16, 28, 28};
 
-  // texture transfer
+  // Texture transfer
   int32_t       textureWidth                                     = 2048;
   int32_t       textureHeight                                    = 2048;
   int32_t       liftingSubdivisionIterationCount                 = 2;
@@ -218,11 +218,11 @@ struct VMCEncoderParameters {
   PaddingMethod textureTransferPaddingMethod = PaddingMethod::SPARSE_LINEAR;
   double        textureTransferPaddingSparseLinearThreshold = 0.05;  //0.005
 
-  // input
+  // Input
   bool unifyVertices     = false;
   bool invertOrientation = false;
 
-  // output
+  // Output
   bool dequantizeUV          = true;
   bool keepIntermediateFiles = false;
 

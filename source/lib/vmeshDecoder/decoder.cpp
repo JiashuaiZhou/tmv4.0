@@ -54,12 +54,58 @@ namespace vmesh {
 
 bool
 VMCDecoder::decompressMotion(const Bitstream&                  bitstream,
-                             const std::vector<Vec3<int32_t>>& triangles,
-                             const std::vector<Vec3<int32_t>>& reference,
+                             const std::vector<Vec3<int32_t>>& trianglesReference,
+                             const std::vector<Vec3<int32_t>>& referenceReference,
+                             const std::vector<Vec2<int32_t>>& baseIntegrateIndicesReference,
+                             const std::vector<Vec3<int32_t>>& trianglesBase,
+                             const std::vector<Vec3<int32_t>>& referenceBase,
                              std::vector<Vec3<int32_t>>&       current,
                              const VMCDecoderParameters& /*params*/) {
   printf("decompressMotion \n");
   fflush(stdout);
+  // here we should decode all_skip_mode from bitstream before starting to decode the MVs
+  bool all_skip_mode = true;
+  int no_skip_num = 0;
+  std::vector<uint8_t> no_skip_vindices;
+  uint8_t skip_mode_bits;  // 1 bit for all_skip_mode, 7 bits for no_skip_num
+  bitstream.read(skip_mode_bits, _byteCounter);
+  int skip_mode_size = sizeof(skip_mode_bits);
+  std::vector<Vec3<int32_t>> triangles;
+  std::vector<Vec3<int32_t>> reference;
+  std::vector<Vec2<int32_t>> baseIntegrateIndices;
+  if (skip_mode_bits == 255) {
+    triangles = trianglesBase;
+    reference = referenceBase;
+  } else if (skip_mode_bits == 128) {
+    triangles            = trianglesReference;
+    reference            = referenceReference;
+    baseIntegrateIndices = baseIntegrateIndicesReference;
+  } else {
+    all_skip_mode = false;
+    no_skip_num   = static_cast<decltype(no_skip_num)>(skip_mode_bits);
+    triangles            = trianglesReference;
+    reference            = referenceReference;
+    baseIntegrateIndices = baseIntegrateIndicesReference;
+  }
+  if (!all_skip_mode){
+    no_skip_vindices.resize(no_skip_num);
+    const auto byteCount = no_skip_num * sizeof(decltype(no_skip_vindices)::value_type);
+    std::copy(bitstream.buffer.begin() + _byteCounter,
+              bitstream.buffer.begin() + _byteCounter + byteCount,
+              reinterpret_cast<uint8_t*>(no_skip_vindices.data()));
+    _byteCounter += byteCount;
+    skip_mode_size += byteCount;
+    for (int i = 0; i < no_skip_num; ++i) {
+      std::cout << "[DEBUG][stat] non-skippable MV " << static_cast<int32_t>(no_skip_vindices[i])
+                << " , index: " << i
+                << ". Total non-skippable MVs: " << no_skip_num
+                << "\n";
+    }
+  }
+  printf("skip_mode_bits = %u \n",skip_mode_bits);
+  std::cout << "[DEBUG][stat]skip mode bits: " << skip_mode_bits << std::endl;
+  std::cout << "[DEBUG][stat]skip mode bytes: " << skip_mode_size << std::endl;
+
   uint32_t byteCount = 0;
   bitstream.read(byteCount, _byteCounter);
   std::cout << "Motion byte count = " << byteCount << '\n';
@@ -70,16 +116,21 @@ VMCDecoder::decompressMotion(const Bitstream&                  bitstream,
   _byteCounter += byteCount;
   arithmeticDecoder.setBuffer(byteCount, bufferPtr);
   arithmeticDecoder.start();
-  const auto                          pointCount = int32_t(reference.size());
+  const auto refPointCount = static_cast<int32_t>(reference.size());
+  const auto motionCount   = refPointCount + no_skip_num;
+  const auto pointCount = refPointCount + static_cast<int32_t>(baseIntegrateIndices.size());
   StaticAdjacencyInformation<int32_t> vertexToTriangle;
-  ComputeVertexToTriangle(triangles, pointCount, vertexToTriangle);
-  std::vector<int8_t>        available(pointCount, 0);
-  std::vector<int8_t>        vtags(pointCount);
+  ComputeVertexToTriangle(triangles, motionCount, vertexToTriangle);
+  std::vector<int8_t>        available(motionCount, 0);
+  std::vector<int8_t>        vtags(motionCount);
   std::vector<int32_t>       vadj;
   std::vector<int32_t>       tadj;
-  std::vector<Vec3<int32_t>> motion(pointCount);
+  std::vector<Vec3<int32_t>> motion(motionCount);
   current.resize(pointCount);
-  int32_t remainP = pointCount;
+  std::cout << "[DEBUG][stat] total vertex num: " << pointCount
+            << " duplicated vertex num: " << baseIntegrateIndices.size()
+            << " non-skippable MV num: " << no_skip_num << std::endl;
+  int32_t remainP = motionCount;
   int32_t vindexS = 0, vindexE = 0, vCount = 0;
   while (remainP) {
     vindexS = vindexE;
@@ -108,8 +159,20 @@ VMCDecoder::decompressMotion(const Bitstream&                  bitstream,
         if (predIndex == 0) {
             motion[vindex0] = res;
         } else {
-            ComputeAdjacentVertices(
-                vindex0, triangles, vertexToTriangle, vtags, vadj);
+	      int vindex = vindex0;
+	      if (vindex0 >= refPointCount) {
+	        auto idx = no_skip_vindices[vindex0 - refPointCount];
+	        auto integrate_to = baseIntegrateIndices[idx][1];
+	        auto it = std::lower_bound(
+	          baseIntegrateIndices.begin(),
+	          baseIntegrateIndices.end(),
+	          Vec2<int32_t>(integrate_to, 0),
+	          [](const Vec2<int32_t>& a, const Vec2<int32_t>& b) { return a[0] < b[0]; });
+	        auto shift = std::distance(baseIntegrateIndices.begin(), it);
+	        vindex = static_cast<int32_t>(integrate_to - shift);
+	      }
+	      ComputeAdjacentVertices(
+	        vindex, triangles, vertexToTriangle, vtags, vadj);
             Vec3<int32_t> pred(0);
             int32_t       predCount = 0;
             for (int vindex1 : vadj) {
@@ -132,7 +195,38 @@ VMCDecoder::decompressMotion(const Bitstream&                  bitstream,
     }
   }
   for (int vindex = 0; vindex < pointCount; ++vindex) {
-    current[vindex] = reference[vindex] + motion[vindex];
+    auto index = vindex;
+    auto it =
+      std::lower_bound(
+        baseIntegrateIndices.begin(),
+        baseIntegrateIndices.end(),
+        Vec2<int32_t>(index, 0),
+        [](const Vec2<int32_t>& a, const Vec2<int32_t>& b) { return a[0] < b[0]; });
+    if (it != baseIntegrateIndices.end() && (*it)[0] == index) {
+      // set integrated index
+      index = (*it)[1];
+      it =
+        std::lower_bound(
+          baseIntegrateIndices.begin(),
+          baseIntegrateIndices.end(),
+          Vec2<int32_t>(index, 0),
+          [](const Vec2<int32_t>& a, const Vec2<int32_t>& b) { return a[0] < b[0]; });
+    }
+    // move up index
+    auto shift       = std::distance(baseIntegrateIndices.begin(), it);
+    auto refindex    = index - shift;
+    auto motionindex = refindex;
+    auto it_no_skip =
+      std::find_if(no_skip_vindices.begin(),
+                   no_skip_vindices.end(),
+                   [&](const decltype(no_skip_vindices)::value_type& a) {
+                     return baseIntegrateIndices[a][0] == vindex;
+                   });
+    if (it_no_skip != no_skip_vindices.end()) {
+      auto no_skip_index = std::distance(no_skip_vindices.begin(), it_no_skip);
+      motionindex        = refPointCount + no_skip_index;
+    }
+    current[vindex] = reference[refindex] + motion[motionindex];
   }
   return true;
 }
@@ -199,6 +293,14 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
     for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
       base.texCoord(tc) *= iscaleTexCoord;
     }
+    // Duplicated Vertex Reduction
+    removeDuplicatedVertices(frame);
+    if (params.keepIntermediateFiles) {
+      auto& baseClean = frame.baseClean;
+      baseClean.save(_keepFilesPathPrefix + "fr_"
+                     + std::to_string(frameInfo.frameIndex)
+                     + "_baseClean.obj");
+    }
   } else {
     printf("Inter index = %d ref = %d \n",
            frameInfo.frameIndex,
@@ -206,12 +308,23 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
     const auto& refFrame     = gof.frame(frameInfo.referenceFrameIndex);
     base                     = refFrame.base;
     auto bitstreamByteCount0 = _byteCounter;
-    decompressMotion(
-      bitstream, base.triangles(), refFrame.qpositions, qpositions, params);
+    decompressMotion(bitstream,
+                     refFrame.baseClean.triangles(),
+                     refFrame.baseClean.points(),
+                     refFrame.baseIntegrateIndices,
+                     base.triangles(),
+                     refFrame.qpositions,
+                     qpositions,
+                     params);
+    // decompressMotion(
+    //     bitstream, base.triangles(), refFrame.qpositions, {}, qpositions, params);
+
     _stats.motionByteCount += _byteCounter - bitstreamByteCount0;
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       base.point(v) = qpositions[v];
     }
+    // Duplicated Vertex Reduction
+    removeDuplicatedVertices(frame);
   }
 
   printf("Scale position: Frame = %d \n", frameInfo.frameIndex);

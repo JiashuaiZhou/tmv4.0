@@ -426,10 +426,16 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.dracoUseUV_, 
       encParams.dracoUseUV_, 
       "Draco use UV")
+  
+  (po::Section("Motion"))
     ("motionGroupSize",
       encParams.motionGroupSize,
       encParams.motionGroupSize,
       "Motion field coding vertices group size")
+    ("motionWithoutDuplicatedVertices",
+      encParams.motionWithoutDuplicatedVertices,
+      encParams.motionWithoutDuplicatedVertices,
+      "Motion field coding by integrating duplicated vertices in reference frames")
 
   (po::Section("Geometry video"))
     ("encodeGeometryVideo", 

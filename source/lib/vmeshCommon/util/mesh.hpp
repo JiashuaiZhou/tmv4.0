@@ -754,21 +754,21 @@ public:
           "XYZ: (%9.5f %9.5f %9.5f)(%9.5f %9.5f %9.5f)(%9.5f %9.5f %9.5f) "
           "UV: (%9.5f %9.5f)(%9.5f %9.5f)(%9.5f %9.5f)\n",
           i,
-          _coord[_coordIndex[i][0]][0],
-          _coord[_coordIndex[i][0]][1],
-          _coord[_coordIndex[i][0]][2],
-          _coord[_coordIndex[i][1]][0],
-          _coord[_coordIndex[i][1]][1],
-          _coord[_coordIndex[i][1]][2],
-          _coord[_coordIndex[i][2]][0],
-          _coord[_coordIndex[i][2]][1],
-          _coord[_coordIndex[i][2]][2],
-          _texCoord[_texCoordIndex[i][0]][0],
-          _texCoord[_texCoordIndex[i][0]][1],
-          _texCoord[_texCoordIndex[i][1]][0],
-          _texCoord[_texCoordIndex[i][1]][1],
-          _texCoord[_texCoordIndex[i][2]][0],
-          _texCoord[_texCoordIndex[i][2]][1]);
+          (float)_coord[_coordIndex[i][0]][0],
+          (float)_coord[_coordIndex[i][0]][1],
+          (float)_coord[_coordIndex[i][0]][2],
+          (float)_coord[_coordIndex[i][1]][0],
+          (float)_coord[_coordIndex[i][1]][1],
+          (float)_coord[_coordIndex[i][1]][2],
+          (float)_coord[_coordIndex[i][2]][0],
+          (float)_coord[_coordIndex[i][2]][1],
+          (float)_coord[_coordIndex[i][2]][2],
+          (float)_texCoord[_texCoordIndex[i][0]][0],
+          (float)_texCoord[_texCoordIndex[i][0]][1],
+          (float)_texCoord[_texCoordIndex[i][1]][0],
+          (float)_texCoord[_texCoordIndex[i][1]][1],
+          (float)_texCoord[_texCoordIndex[i][2]][0],
+          (float)_texCoord[_texCoordIndex[i][2]][1]);
       }
     }
     printf("#####\n");

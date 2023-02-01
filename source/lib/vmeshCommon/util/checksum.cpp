@@ -284,12 +284,37 @@ Checksum::print(const Frame<uint8_t>& texture, std::string eString) {
 void
 Checksum::print() {
   for (size_t i = 0; i < mesh_.size(); i++) {
-    printf("Frame %4zu: [MD5GEO:", i);
-    for (auto& c : mesh_[i]) { printf("%02x", c); }
-    printf("][MD5TEX:");
-    for (auto& c : texture_[i]) { printf("%02x", c); }
-    printf("] \n");
+    printf("Frame %4zu: [MD5GEO:%32s][MD5TEX:%32s] \n",
+           i,
+           i < mesh_[i].size() ? toString(mesh_[i]).c_str() : "",
+           i < texture_[i].size() ? toString(texture_[i]).c_str() : "");
   }
+}
+
+//============================================================================
+
+bool
+Checksum::operator==(const Checksum& rhs) const {
+  const size_t numMin = (std::min)(mesh_.size(), rhs.mesh_.size());
+  const size_t numMax = (std::max)(mesh_.size(), rhs.mesh_.size());
+  bool         equal  = true;
+  equal &= mesh_.size() == rhs.mesh_.size();
+  equal &= texture_.size() == rhs.texture_.size();
+  for (size_t i = 0; equal && (i < numMin); i++) {
+    equal &= mesh_[i] == rhs.mesh_[i];
+    equal &= texture_[i] == rhs.texture_[i];
+  }
+  for (size_t i = 0; i < numMax; i++) {
+    printf("Frame %4zu: [MD5GEO:%32s,%32s][MD5TEX:%32s,%32s][%s,%s]\n",
+           i,
+           i < mesh_[i].size() ? toString(mesh_[i]).c_str() : "",
+           i < rhs.mesh_[i].size() ? toString(rhs.mesh_[i]).c_str() : "",
+           i < texture_[i].size() ? toString(texture_[i]).c_str() : "",
+           i < rhs.texture_[i].size() ? toString(rhs.texture_[i]).c_str() : "",
+           mesh_[i] == rhs.mesh_[i] ? "EQUAL" : "DIFF",
+           texture_[i] == rhs.texture_[i] ? "EQUAL" : "DIFF");
+  }
+  return equal;
 }
 
 //============================================================================
@@ -297,19 +322,26 @@ Checksum::print() {
 template void Checksum::print<float>(const TriangleMesh<float>&, std::string);
 template void Checksum::print<double>(const TriangleMesh<double>&,
                                       std::string);
+template void Checksum::print<int32_t>(const TriangleMesh<int32_t>&,
+                                       std::string);
 
 template std::string
 Checksum::getChecksum<float>(const TriangleMesh<float>& mesh);
 template std::string
 Checksum::getChecksum<double>(const TriangleMesh<double>& mesh);
+template std::string
+Checksum::getChecksum<int32_t>(const TriangleMesh<int32_t>& mesh);
 
 template std::vector<uint8_t>
 Checksum::compute<float>(const TriangleMesh<float>&);
 template std::vector<uint8_t>
 Checksum::compute<double>(const TriangleMesh<double>&);
+template std::vector<uint8_t>
+Checksum::compute<int32_t>(const TriangleMesh<int32_t>&);
 
 template void Checksum::add<float>(const TriangleMesh<float>&);
 template void Checksum::add<double>(const TriangleMesh<double>&);
+template void Checksum::add<int32_t>(const TriangleMesh<int32_t>&);
 
 //============================================================================
 

@@ -87,11 +87,15 @@ private:
                           VMCFrame&                   frame,
                           TriangleMesh<MeshType>&     rec,
                           const VMCDecoderParameters& params);
-  bool decompressMotion(const Bitstream&                  bitstream,
-                        const std::vector<Vec3<int32_t>>& triangles,
-                        const std::vector<Vec3<int32_t>>& reference,
-                        std::vector<Vec3<int32_t>>&       current,
-                        const VMCDecoderParameters&       params);
+  bool decompressMotion(
+    const Bitstream&                  bitstream,
+    const std::vector<Vec3<int32_t>>& trianglesReference,
+    const std::vector<Vec3<int32_t>>& referenceReference,
+    const std::vector<Vec2<int32_t>>& baseIntegrateIndicesReference,
+    const std::vector<Vec3<int32_t>>& trianglesBase,
+    const std::vector<Vec3<int32_t>>& referenceBase,
+    std::vector<Vec3<int32_t>>&       current,
+    const VMCDecoderParameters&       params);
   bool decompressDisplacementsVideo(const Bitstream&            bitstream,
                                     FrameSequence<uint16_t>&    dispVideo,
                                     const VMCDecoderParameters& params);

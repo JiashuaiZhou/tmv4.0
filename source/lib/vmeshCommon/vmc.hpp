@@ -181,6 +181,8 @@ struct VMCFrame {
   std::vector<Vec3<MeshType>>       disp;
   std::vector<int64_t>              subdivEdges;
   std::vector<SubdivisionLevelInfo> subdivInfoLevelOfDetails;
+  TriangleMesh<int32_t>             baseClean;
+  std::vector<Vec2<int32_t>>        baseIntegrateIndices;
 };
 
 //============================================================================
@@ -414,6 +416,46 @@ static inline std::string
 removeFileExtension(const std::string string) {
   size_t pos = string.find_last_of(".");
   return pos != std::string::npos ? string.substr(0, pos) : string;
+}
+
+//============================================================================
+
+static int32_t
+removeDuplicatedVertices(VMCFrame& frame) {
+  auto& base                 = frame.base;
+  auto& qpositions           = frame.qpositions;
+  auto& baseClean            = frame.baseClean;
+  auto& baseIntegrateIndices = frame.baseIntegrateIndices;
+  baseClean.clear();
+  std::vector<int32_t> umapping;
+  UnifyVertices(qpositions,
+                base.triangles(),
+                baseClean.points(),
+                baseClean.triangles(),
+                umapping);
+  // generate baseIntegrateIndices
+  baseIntegrateIndices.clear();
+  std::map<int32_t, int32_t> uniqueIndices;
+  const auto                 pointCount0 = int32_t(umapping.size());
+  for (int32_t vindex0 = 0; vindex0 < pointCount0; ++vindex0) {
+    auto vindex1 = umapping[vindex0];
+    auto it = uniqueIndices.find(vindex1);
+    if (it == uniqueIndices.end()) {
+      uniqueIndices[vindex1] = vindex0;
+    } else {
+      baseIntegrateIndices.push_back({vindex0, it->second});
+    }
+  }
+  // copy UV coords and UV indices as is
+  baseClean.texCoords().resize(base.texCoordCount());
+  std::copy(base.texCoords().begin(),
+            base.texCoords().end(),
+            baseClean.texCoords().begin());
+  baseClean.texCoordTriangles().resize(base.texCoordTriangleCount());
+  std::copy(base.texCoordTriangles().begin(),
+            base.texCoordTriangles().end(),
+            baseClean.texCoordTriangles().begin());
+  return 0;
 }
 
 //============================================================================

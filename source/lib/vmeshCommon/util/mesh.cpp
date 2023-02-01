@@ -882,6 +882,7 @@ TriangleMesh<T>::subdivideMidPoint(
 
 template class TriangleMesh<float>;
 template class TriangleMesh<double>;
+template class TriangleMesh<int32_t>;
 
 //============================================================================
 

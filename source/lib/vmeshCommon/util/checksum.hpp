@@ -66,28 +66,7 @@ public:
 
   bool operator!=(const Checksum& rhs) const { return !(*this == rhs); }
 
-  bool operator==(const Checksum& rhs) const {
-    size_t num   = (std::min)(mesh_.size(), rhs.mesh_.size());
-    bool   equal = true;
-    equal &= mesh_.size() == rhs.mesh_.size();
-    equal &= texture_.size() == rhs.texture_.size();
-    for (size_t i = 0; equal && (i < num); i++) {
-      equal &= mesh_[i] == rhs.mesh_[i];
-      equal &= texture_[i] == rhs.texture_[i];
-      printf("Frame %4zu: [MD5GEO:", i);
-      for (auto& c : mesh_[i]) { printf("%02x", c); }
-      printf(",");
-      for (auto& c : rhs.mesh_[i]) { printf("%02x", c); }
-      printf("][MD5TEX:");
-      for (auto& c : texture_[i]) { printf("%02x", c); }
-      printf(",");
-      for (auto& c : rhs.texture_[i]) { printf("%02x", c); }
-      printf("][%s,%s]\n",
-             mesh_[i] == rhs.mesh_[i] ? "EQUAL" : "DIFF",
-             texture_[i] == rhs.texture_[i] ? "EQUAL" : "DIFF");
-    }
-    return equal;
-  }
+  bool operator==(const Checksum& rhs) const ;
 
 private:
   template<typename T>

@@ -190,10 +190,11 @@ struct VMCEncoderParameters {
   VideoCodecId textureVideoCodecId          = VideoCodecId::HM;
 
   // Base mesh
-  GeometryCodecId meshCodecId       = GeometryCodecId::DRACO;
-  bool            dracoUsePosition_ = false;
-  bool            dracoUseUV_       = false;
-  int32_t         motionGroupSize   = 16;
+  GeometryCodecId meshCodecId                     = GeometryCodecId::DRACO;
+  bool            dracoUsePosition_               = false;
+  bool            dracoUseUV_                     = false;
+  int32_t         motionGroupSize                 = 16;
+  bool            motionWithoutDuplicatedVertices = true;
 
   // Displacements
   DisplacementCoordinateSystem displacementCoordinateSystem =
@@ -329,8 +330,9 @@ private:
                                Bitstream&                  bitstream,
                                const VMCEncoderParameters& params);
   static bool compressMotion(const std::vector<Vec3<int32_t>>& triangles,
-                             const std::vector<Vec3<int32_t>>& current,
                              const std::vector<Vec3<int32_t>>& reference,
+                             const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
+                             const std::vector<Vec3<int32_t>>& current,
                              Bitstream&                        bitstream,
                              const VMCEncoderParameters&       params);
   static bool

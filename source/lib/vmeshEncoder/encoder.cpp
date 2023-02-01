@@ -45,12 +45,12 @@
 #include "util/bitstream.hpp"
 #include "contexts.hpp"
 #include "entropy.hpp"
-#include "util/kdtree.hpp"
 #include "vmc.hpp"
 #include "metrics.hpp"
 #include "geometryDecimate.hpp"
 #include "textureParametrization.hpp"
 #include "geometryParametrization.hpp"
+#include "transferColor.hpp"
 #include "util/checksum.hpp"
 
 #include "geometryEncoder.hpp"
@@ -567,88 +567,6 @@ VMCEncoder::unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
       }
     }
   }
-}
-
-//============================================================================
-
-static bool
-computeTriangleMapping(vmesh::TriangleMesh<double>& targetMesh,
-                       vmesh::TriangleMesh<double>& sourceMesh,
-                       std::vector<int32_t>&        mapping) {
-  std::unordered_map<std::string, int32_t> cent2tindex;
-  for (int32_t t = 0; t < targetMesh.triangleCount(); t++) {
-    const auto&  tri  = targetMesh.triangle(t);
-    Vec3<double> cent = 0;
-    for (int32_t k = 0; k < 3; ++k) { cent += targetMesh.point(tri[k]); }
-    std::string cent_str = "";
-    for (int32_t k = 0; k < 3; ++k) {
-      cent_str += std::to_string(int32_t(cent[k]));  // assume quantized mesh
-      cent_str += " ";
-    }
-    cent2tindex[cent_str] = t;
-  }
-
-  mapping.resize(sourceMesh.triangleCount());
-  for (int32_t t = 0; t < sourceMesh.triangleCount(); t++) {
-    const auto&  tri  = sourceMesh.triangle(t);
-    Vec3<double> cent = 0;
-    for (int32_t k = 0; k < 3; ++k) { cent += sourceMesh.point(tri[k]); }
-    std::string cent_str = "";
-    for (int32_t k = 0; k < 3; ++k) {
-      cent_str += std::to_string(int32_t(cent[k]));  // assume quantized mesh
-      cent_str += " ";
-    }
-
-    if (cent2tindex.find(cent_str) == cent2tindex.end()) {
-      mapping.clear();
-      return false;
-    }
-    int32_t tt = cent2tindex[cent_str];
-    mapping[t] = tt;
-
-    auto          ttri   = targetMesh.triangle(tt);
-    auto          ttriUV = targetMesh.texCoordTriangle(tt);
-    Vec3<int32_t> order;
-    bool          reorder = false;
-    if (sourceMesh.point(tri[0]) != targetMesh.point(ttri[0])) {
-      reorder = true;
-      if (sourceMesh.point(tri[0]) == targetMesh.point(ttri[1])) {
-        if (sourceMesh.point(tri[1]) == targetMesh.point(ttri[2])) {
-          order = Vec3<int32_t>(1, 2, 0);
-        } else {
-          order = Vec3<int32_t>(1, 0, 2);
-        }
-      } else if (sourceMesh.point(tri[1]) == targetMesh.point(ttri[1])) {
-        order = Vec3<int32_t>(2, 1, 0);
-      } else {
-        order = Vec3<int32_t>(2, 0, 1);
-      }
-    } else if (sourceMesh.point(tri[1]) != targetMesh.point(ttri[1])) {
-      reorder = true;
-      order   = Vec3<int32_t>(0, 2, 1);
-    }
-
-    if (reorder) {
-      targetMesh.setTriangle(
-        tt, ttri[order[0]], ttri[order[1]], ttri[order[2]]);
-      targetMesh.setTexCoordTriangle(
-        tt, ttriUV[order[0]], ttriUV[order[1]], ttriUV[order[2]]);
-    }
-
-    const auto& tri2 = targetMesh.triangle(tt);
-    if (sourceMesh.point(tri[0]) != targetMesh.point(tri2[0])
-        || sourceMesh.point(tri[1]) != targetMesh.point(tri2[1])
-        || sourceMesh.point(tri[2]) != targetMesh.point(tri2[2])) {
-      if (reorder) {
-        targetMesh.setTriangle(tt, ttri[0], ttri[1], ttri[2]);
-        targetMesh.setTexCoordTriangle(tt, ttriUV[0], ttriUV[1], ttriUV[2]);
-      }
-      mapping.clear();
-      return false;
-    }
-  }
-
-  return true;
 }
 
 //============================================================================
@@ -1359,294 +1277,6 @@ VMCEncoder::computeDisplacementVideoFrame(
 
 //============================================================================
 
-static Vec3<MeshType>
-computeNearestPointColour(
-  const Vec3<MeshType>&                      point0,
-  const Frame<uint8_t>&                      targetTexture,
-  const TriangleMesh<MeshType>&              targetMesh,
-  const KdTree<MeshType>&                    kdtree,
-  const StaticAdjacencyInformation<int32_t>& vertexToTriangleTarget,
-  double&                                    minDist2) {
-  const auto* const neighboursTarget = vertexToTriangleTarget.neighbours();
-  const auto        nnCount          = 1;
-  int32_t           index            = 0;
-  MeshType          sqrDist          = NAN;
-  nanoflann::KNNResultSet<MeshType, int32_t> resultSet(nnCount);
-  resultSet.init(&index, &sqrDist);
-  kdtree.query(point0.data(), resultSet);
-  auto ruv         = targetMesh.texCoord(index);
-  minDist2         = std::numeric_limits<MeshType>::max();
-  const auto start = vertexToTriangleTarget.neighboursStartIndex(index);
-  const auto end   = vertexToTriangleTarget.neighboursEndIndex(index);
-  for (int j = start; j < end; ++j) {
-    const auto tindex = neighboursTarget[j];
-    assert(tindex < targetMesh.triangleCount());
-    const auto&    tri = targetMesh.triangle(tindex);
-    const auto&    pt0 = targetMesh.point(tri[0]);
-    const auto&    pt1 = targetMesh.point(tri[1]);
-    const auto&    pt2 = targetMesh.point(tri[2]);
-    Vec3<MeshType> bcoord{};
-    const auto cpoint = ClosestPointInTriangle(point0, pt0, pt1, pt2, &bcoord);
-    //    assert(bcoord[0] >= 0.0 && bcoord[1] >= 0.0 && bcoord[2] >= 0.0);
-    assert(fabs(1.0 - bcoord[0] - bcoord[1] - bcoord[2]) < 0.000001);
-    const auto d2 = (cpoint - point0).norm2();
-    if (d2 < minDist2) {
-      minDist2          = d2;
-      const auto& triUV = targetMesh.texCoordTriangle(tindex);
-      const auto& uv0   = targetMesh.texCoord(triUV[0]);
-      const auto& uv1   = targetMesh.texCoord(triUV[1]);
-      const auto& uv2   = targetMesh.texCoord(triUV[2]);
-      ruv               = bcoord[0] * uv0 + bcoord[1] * uv1 + bcoord[2] * uv2;
-    }
-  }
-  return targetTexture.bilinear(ruv[1], ruv[0]);
-}
-
-//----------------------------------------------------------------------------
-
-bool
-VMCEncoder::transferTexture(const TriangleMesh<MeshType>& input,
-                            const Frame<uint8_t>&         inputTexture,
-                            TriangleMesh<MeshType>&       rec,
-                            Frame<uint8_t>&               outputTexture,
-                            const VMCEncoderParameters&   params) {
-  auto targetMesh = input;
-  // normalize texcoords so they are between 0.0 and 1.0
-  const auto tcCount = targetMesh.texCoordCount();
-  const auto uvScale = 1.0 / ((1 << params.bitDepthTexCoord) - 1);
-  for (int32_t uvIndex = 0; uvIndex < tcCount; ++uvIndex) {
-    targetMesh.setTexCoord(uvIndex, targetMesh.texCoord(uvIndex) * uvScale);
-  }
-
-  if (params.invertOrientation) { rec.invertOrientation(); }
-
-  std::vector<int32_t> srcTri2tgtTri;
-  computeTriangleMapping(targetMesh, rec, srcTri2tgtTri);
-
-  if (srcTri2tgtTri.empty()) {
-    targetMesh.subdivideMidPoint(
-      params.textureTransferSamplingSubdivisionIterationCount);
-  }
-
-  bool ret = transferTexture(
-    targetMesh, rec, inputTexture, outputTexture, srcTri2tgtTri, params);
-
-  if (params.invertOrientation) { rec.invertOrientation(); }
-  return ret;
-}
-
-//----------------------------------------------------------------------------
-
-bool
-VMCEncoder::transferTexture(TriangleMesh<MeshType>&     targetMesh,
-                            TriangleMesh<MeshType>&     sourceMesh,
-                            const Frame<uint8_t>&       targetTexture,
-                            Frame<uint8_t>&             outputTexture,
-                            const std::vector<int32_t>& srcTri2tgtTri,
-                            const VMCEncoderParameters& params) {
-  if (srcTri2tgtTri.empty()) {
-    printf("transfer texture through 3D\n");
-  } else {
-    printf("transfer texture between UV\n");
-  }
-  fflush(stdout);
-
-  if ((targetMesh.pointCount() == 0)
-      || (sourceMesh.pointCount() == 0)
-      // || targetMesh.triangleCount() != targetMesh.texCoordTriangleCount()
-      // || sourceMesh.triangleCount() != sourceMesh.texCoordTriangleCount()
-      || outputTexture.width() <= 0 || outputTexture.height() <= 0) {
-    return false;
-  }
-
-  StaticAdjacencyInformation<int32_t> vertexToTriangleTarget;
-
-  if (srcTri2tgtTri.empty()) {
-    ComputeVertexToTriangle(
-      targetMesh.triangles(), targetMesh.pointCount(), vertexToTriangleTarget);
-  }
-
-  KdTree<MeshType> kdtree(3, targetMesh.points(), 10);  // dim, cloud, max leaf
-  const auto       oWidth         = outputTexture.width();
-  const auto       oHeight        = outputTexture.height();
-  const auto       oWidthMinus1   = oWidth - 1;
-  const auto       oHeightMinus1  = oHeight - 1;
-  auto&            oB             = outputTexture.plane(0);
-  auto&            oG             = outputTexture.plane(1);
-  auto&            oR             = outputTexture.plane(2);
-  const auto       sTriangleCount = sourceMesh.triangleCount();
-  Plane<int32_t>   triangleMap;
-  triangleMap.resize(oWidth, oHeight);
-  Plane<uint8_t> occupancy;
-  occupancy.resize(oWidth, oHeight);
-  occupancy.fill(uint8_t(0));
-
-  for (int32_t t = 0; t < sTriangleCount; ++t) {
-    const auto&        triUV  = sourceMesh.texCoordTriangle(t);
-    const Vec2<double> uv[3]  = {sourceMesh.texCoord(triUV[0]),
-                                 sourceMesh.texCoord(triUV[1]),
-                                 sourceMesh.texCoord(triUV[2])};
-    const auto&        triPos = sourceMesh.triangle(t);
-    const Vec3<double> pos[3] = {sourceMesh.point(triPos[0]),
-                                 sourceMesh.point(triPos[1]),
-                                 sourceMesh.point(triPos[2])};
-    const auto         area   = (uv[1] - uv[0]) ^ (uv[2] - uv[0]);
-    if (area <= 0.0) { continue; }
-    assert(area > 0.0);
-    const auto iarea = area > 0.0 ? 1.0 / area : 1.0;
-    auto       i0    = oHeightMinus1;
-    auto       i1    = 0;
-    auto       j0    = oWidthMinus1;
-    auto       j1    = 0;
-    for (const auto& k : uv) {
-      auto i = int32_t(std::ceil(k[1] * oHeightMinus1));
-      auto j = int32_t(std::ceil(k[0] * oWidthMinus1));
-      i0     = std::min(i0, i);
-      j0     = std::min(j0, j);
-      i      = int32_t(std::floor(k[1] * oHeightMinus1));
-      j      = int32_t(std::floor(k[0] * oWidthMinus1));
-      i1     = std::max(i1, i);
-      j1     = std::max(j1, j);
-    }
-    i0 = std::max(i0, 0);
-    i1 = std::min(i1, oHeightMinus1);
-    j0 = std::max(j0, 0);
-    j1 = std::min(j1, oWidthMinus1);
-    for (int32_t i = i0; i <= i1; ++i) {
-      const auto y  = double(i) / oHeightMinus1;
-      const auto ii = oHeightMinus1 - i;
-      for (int32_t j = j0; j <= j1; ++j) {
-        //if (!occupancy(ii, j)) {
-        const auto         x = double(j) / oWidthMinus1;
-        const Vec2<double> uvP(x, y);
-        auto               w0 = ((uv[2] - uv[1]) ^ (uvP - uv[1])) * iarea;
-        auto               w1 = ((uv[0] - uv[2]) ^ (uvP - uv[2])) * iarea;
-        auto               w2 = ((uv[1] - uv[0]) ^ (uvP - uv[0])) * iarea;
-        if (w0 >= 0.0 && w1 >= 0.0 && w2 >= 0.0) {
-          Vec3<double> bgr;
-          if (srcTri2tgtTri.empty()) {
-            const auto point0   = w0 * pos[0] + w1 * pos[1] + w2 * pos[2];
-            double     minDist2 = NAN;
-            bgr                 = computeNearestPointColour(point0,
-                                            targetTexture,
-                                            targetMesh,
-                                            kdtree,
-                                            vertexToTriangleTarget,
-                                            minDist2);
-          } else {
-            const auto& tindex   = srcTri2tgtTri[t];
-            const auto& triUVtgt = targetMesh.texCoordTriangle(tindex);
-            const auto& uv0      = targetMesh.texCoord(triUVtgt[0]);
-            const auto& uv1      = targetMesh.texCoord(triUVtgt[1]);
-            const auto& uv2      = targetMesh.texCoord(triUVtgt[2]);
-            const auto  ruv      = w0 * uv0 + w1 * uv1 + w2 * uv2;
-            bgr                  = targetTexture.bilinear(ruv[1], ruv[0]);
-          }
-
-          oB.set(ii, j, uint8_t(std::round(bgr[0])));
-          oG.set(ii, j, uint8_t(std::round(bgr[1])));
-          oR.set(ii, j, uint8_t(std::round(bgr[2])));
-          occupancy.set(ii, j, uint8_t(255));
-          triangleMap.set(ii, j, t);
-        }
-        //}
-      }
-    }
-  }
-  const int32_t shift[4][2] = {{-1, -0}, {0, -1}, {1, 0}, {0, 1}};
-  for (int32_t it = 0;
-       it < params.textureTransferPaddingBoundaryIterationCount;
-       ++it) {
-    const auto checkValue = uint8_t(255 - it);
-    for (int32_t i = 0; i < oHeight; ++i) {
-      for (int32_t j = 0; j < oWidth; ++j) {
-        if (occupancy(i, j) != 0U) { continue; }
-        double       minTriangleDist2 = std::numeric_limits<double>::max();
-        Vec3<double> bgr(0.0);
-        int32_t      count = 0;
-        for (const auto* k : shift) {
-          const auto i1 = i + k[0];
-          const auto j1 = j + k[1];
-          if (i1 < 0 || j1 < 0 || i1 >= oHeight || j1 >= oWidth
-              || occupancy(i1, j1) != checkValue) {
-            continue;
-          }
-          ++count;
-
-          if (!srcTri2tgtTri.empty()) {
-            bgr +=
-              Vec3<double>(oB.get(i1, j1), oG.get(i1, j1), oR.get(i1, j1));
-          } else {
-            const auto y = double(oHeightMinus1 - i) / oHeightMinus1;
-            const auto x = double(j) / oWidthMinus1;
-
-            const Vec2<double> uvP(x, y);
-
-            const auto         t     = triangleMap(i1, j1);
-            const auto&        triUV = sourceMesh.texCoordTriangle(t);
-            const Vec2<double> uv[3] = {sourceMesh.texCoord(triUV[0]),
-                                        sourceMesh.texCoord(triUV[1]),
-                                        sourceMesh.texCoord(triUV[2])};
-
-            const auto&        triPos = sourceMesh.triangle(t);
-            const Vec3<double> pos[3] = {sourceMesh.point(triPos[0]),
-                                         sourceMesh.point(triPos[1]),
-                                         sourceMesh.point(triPos[2])};
-            const auto         area   = (uv[1] - uv[0]) ^ (uv[2] - uv[0]);
-            assert(area > 0.0);
-            const auto iarea    = area > 0.0 ? 1.0 / area : 1.0;
-            const auto w0       = ((uv[2] - uv[1]) ^ (uvP - uv[1])) * iarea;
-            const auto w1       = ((uv[0] - uv[2]) ^ (uvP - uv[2])) * iarea;
-            const auto w2       = ((uv[1] - uv[0]) ^ (uvP - uv[0])) * iarea;
-            const auto point0   = w0 * pos[0] + w1 * pos[1] + w2 * pos[2];
-            double     minDist2 = NAN;
-            bgr += computeNearestPointColour(point0,
-                                             targetTexture,
-                                             targetMesh,
-                                             kdtree,
-                                             vertexToTriangleTarget,
-                                             minDist2);
-            if (minDist2 < minTriangleDist2) {
-              minTriangleDist2 = minDist2;
-              triangleMap.set(i, j, t);
-            }
-          }
-        }
-        if (count != 0) {
-          bgr /= count;
-          oB.set(i, j, uint8_t(std::round(bgr[0])));
-          oG.set(i, j, uint8_t(std::round(bgr[1])));
-          oR.set(i, j, uint8_t(std::round(bgr[2])));
-          occupancy.set(i, j, uint8_t(checkValue - 1));
-        }
-      }
-    }
-  }
-  if (params.textureTransferPaddingDilateIterationCount != 0) {
-    Frame<uint8_t> tmpTexture;
-    Plane<uint8_t> tmpOccupancy;
-    for (int32_t it = 0;
-         it < params.textureTransferPaddingDilateIterationCount;
-         ++it) {
-      DilatePadding(outputTexture, occupancy, tmpTexture, tmpOccupancy);
-      DilatePadding(tmpTexture, tmpOccupancy, outputTexture, occupancy);
-    }
-  }
-  fflush(stdout);
-  if (params.textureTransferPaddingMethod == PaddingMethod::PUSH_PULL) {
-    PullPushPadding(outputTexture, occupancy);
-  } else if (params.textureTransferPaddingMethod
-             == PaddingMethod::SPARSE_LINEAR) {
-    PullPushPadding(outputTexture, occupancy);
-    SparseLinearPadding(outputTexture,
-                        occupancy,
-                        params.textureTransferPaddingSparseLinearThreshold);
-  }
-  return true;
-}
-
-//----------------------------------------------------------------------------
-
 bool
 VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
                                  FrameSequence<uint16_t>&    dispVideo,
@@ -1906,13 +1536,16 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                          params.displacementCoordinateSystem);
     }
     auto start = std::chrono::steady_clock::now();
-    if (params.encodeTextureVideo
-        && !transferTexture(source.mesh(frameIndex),
-                            source.texture(frameIndex),
-                            reconstruct.mesh(frameIndex),
-                            reconstruct.texture(frameIndex),
-                            params)) {
-      return false;
+
+    if (params.encodeTextureVideo) {
+      TransferColor transferColor;
+      if (!transferColor.transfer(source.mesh(frameIndex),
+                                  source.texture(frameIndex),
+                                  reconstruct.mesh(frameIndex),
+                                  reconstruct.texture(frameIndex),
+                                  params)) {
+        return false;
+      }
     }
     _stats.colorTransferTime += std::chrono::steady_clock::now() - start;
   }

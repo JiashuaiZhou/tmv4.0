@@ -457,6 +457,71 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.applyOneDimensionalDisplacement,
       "Apply one dimensional displacement")
 
+  (po::Section("Transfer texture"))    
+    ("textureTransferSamplingSubdivisionIterationCount", 
+      encParams.textureTransferSamplingSubdivisionIterationCount, 
+      encParams.textureTransferSamplingSubdivisionIterationCount, 
+      "Texture transfer sampling subdivision iteration count")
+    ("textureTransferPaddingBoundaryIterationCount", 
+      encParams.textureTransferPaddingBoundaryIterationCount, 
+      encParams.textureTransferPaddingBoundaryIterationCount, 
+      "Texture transfer padding boundary iteration count")
+    ("textureTransferPaddingDilateIterationCount", 
+      encParams.textureTransferPaddingDilateIterationCount, 
+      encParams.textureTransferPaddingDilateIterationCount, 
+      "Texture transfer padding dilate iteration count")
+    ("textureTransferPaddingMethod", 
+      encParams.textureTransferPaddingMethod, 
+      encParams.textureTransferPaddingMethod, 
+      "Texture transfer padding method: ")
+    ("textureTransferPaddingSparseLinearThreshold", 
+      encParams.textureTransferPaddingSparseLinearThreshold, 
+      encParams.textureTransferPaddingSparseLinearThreshold, 
+      "Texture transfer padding sparse linear threshold")
+
+    ("textureTransferBasedPointcloud", 
+      encParams.textureTransferBasedPointcloud, 
+      encParams.textureTransferBasedPointcloud, 
+      "Texture transfer padding sparse linear threshold")
+    ("textureTransferPreferUV", 
+      encParams.textureTransferPreferUV, 
+      encParams.textureTransferPreferUV, 
+      "Texture transfer prefer UV")
+      
+    ("textureTransferWithMap", 
+      encParams.textureTransferWithMap, 
+      encParams.textureTransferWithMap, 
+      "Texture transfer with map for reconstructe sampling" )
+    ("textureTransferWithMapSource", 
+      encParams.textureTransferWithMapSource, 
+      encParams.textureTransferWithMapSource, 
+      "Texture transfer with map for source sampling" )
+    ("textureTransferMapSamplingParam", 
+      encParams.textureTransferMapSamplingParam, 
+      encParams.textureTransferMapSamplingParam, 
+      "Texture transfer map sampling param")
+    ("textureTransferMethod", 
+      encParams.textureTransferMethod, 
+      encParams.textureTransferMethod, 
+      "Texture transfer method: 0: pcc 1: simple 2: simple new, 3: optimized")
+      
+    ("textureTransferGridSize", 
+      encParams.textureTransferGridSize, 
+      encParams.textureTransferGridSize,       
+      "textureTransferGridSize")
+    ("textureTransferMapProjDim", 
+      encParams.textureTransferMapProjDim, 
+      encParams.textureTransferMapProjDim,       
+      "textureTransferMapProjDim")
+    ("textureTransferSigma", 
+      encParams.textureTransferSigma, 
+      encParams.textureTransferSigma,
+      "textureTransferSigma")
+    ("textureTransferMapNumPoints", 
+      encParams.textureTransferMapNumPoints, 
+      encParams.textureTransferMapNumPoints,
+      "textureTransferMapNumPoints")
+
   (po::Section("Texture video"))
     ("encodeTextureVideo", 
       encParams.encodeTextureVideo, 

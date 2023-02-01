@@ -460,4 +460,69 @@ removeDuplicatedVertices(VMCFrame& frame) {
 
 //============================================================================
 
+typedef std::tuple<
+  std::string,
+  std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds>,
+  std::chrono::nanoseconds>
+                    TicToc;
+static std::vector<TicToc> g_ticTocList;
+
+//============================================================================
+
+static void
+tic(const std::string& name) {
+  auto it = std::find_if(
+    g_ticTocList.begin(),
+    g_ticTocList.end(),
+    [&name](const TicToc& element) { return std::get<0>( element )  == name; });
+
+  auto start = std::chrono::steady_clock::now();
+  if (it != g_ticTocList.end()) {
+    std::get<1>(*it) = start;
+  } else {
+    g_ticTocList.push_back(
+      std::make_tuple(name, start, (std::chrono::nanoseconds)0));
+  }
+}
+
+//============================================================================
+
+static void
+toc(const std::string& name) {
+  auto it = std::find_if(
+    g_ticTocList.begin(),
+    g_ticTocList.end(),
+    [&name](const TicToc& element) { return std::get<0>( element )  == name; });
+
+  if (it != g_ticTocList.end()) {
+    auto end      = std::chrono::steady_clock::now();
+    auto duration = end - std::get<1>(*it);
+    std::get<2>(*it) += duration;
+    std::cout << "Duration " << std::left << std::setw(25) << name
+              << ": time = " <<  std::right <<std::setw(15)
+              << std::chrono::duration<double>(duration).count()
+              << " s Total = " << std::setw(15)
+              << std::chrono::duration<double>(std::get<2>(*it)).count()
+              << "\n";
+  } else {
+    std::cout << "Duration " << name << ": can't find clock\n";
+  }
+}
+
+//============================================================================
+
+static void
+traceTime() {
+  std::cout << "Duration: \n";
+  for (auto& el : g_ticTocList) {
+    // auto duration = std::get<2>(el) - std::get<1>(el);
+    std::cout << "  " << std::left << std::setw(25) << std::get<0>(el)
+              << ": time = " << std::right << std::setw(15)
+              << std::chrono::duration<double>(std::get<2>(el)).count()
+              << " s \n";
+  }
+}
+
+//============================================================================
+
 }  // namespace vmesh

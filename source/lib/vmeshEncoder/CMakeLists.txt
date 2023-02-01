@@ -15,6 +15,10 @@ include_directories( ${CMAKE_SOURCE_DIR}/dependencies
                      ${CMAKE_SOURCE_DIR}/source/wrapper/videoEncoder
                      ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder
                      ${CMAKE_SOURCE_DIR}/source/wrapper/colourConverter
+                     ${CMAKE_SOURCE_DIR}/dependencies/mmetric/source/lib/include
+                     ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/
+                     ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/glad/include
+                     ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/glfw/include
                      ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
  
 add_library( ${MYNAME} ${SRC} ${CMAKE_SOURCE_DIR}/dependencies/schroedinger/schroarith.c )

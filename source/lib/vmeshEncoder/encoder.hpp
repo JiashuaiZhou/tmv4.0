@@ -135,6 +135,34 @@ operator<<(std::ostream& out, SmoothingMethod val) {
 
 //============================================================================
 
+static std::istream&
+operator>>(std::istream& in, PaddingMethod& val) {
+  std::string str;
+  in >> str;
+  if (str == "push_pull" || str == "1") {
+    val = PaddingMethod::PUSH_PULL;
+  } else if (str == "sparse_linear" || str == "2") {
+    val = PaddingMethod::SPARSE_LINEAR;
+  } else {
+    val = PaddingMethod::NONE;
+  }
+  return in;
+}
+
+//----------------------------------------------------------------------------
+
+static std::ostream&
+operator<<(std::ostream& out, PaddingMethod val) {
+  switch (val) {
+  case PaddingMethod::NONE: out << "none"; break;
+  case PaddingMethod::PUSH_PULL: out << "push_pull"; break;
+  case PaddingMethod::SPARSE_LINEAR: out << "sparse_linear"; break;
+  }
+  return out;
+}
+
+//============================================================================
+
 struct GeometryParametrizationParameters {
   int               geometrySamplingSubdivisionIterationCount     = 3;
   bool              applyVertexUnification                        = true;
@@ -220,6 +248,16 @@ struct VMCEncoderParameters {
   int32_t       textureTransferPaddingDilateIterationCount       = 2;
   PaddingMethod textureTransferPaddingMethod = PaddingMethod::SPARSE_LINEAR;
   double        textureTransferPaddingSparseLinearThreshold = 0.05;  //0.005
+  double        textureTransferBasedPointcloud              = true;
+  double        textureTransferPreferUV                     = false;
+  bool          textureTransferWithMap                      = false;
+  bool          textureTransferWithMapSource                = false;
+  int32_t       textureTransferMapSamplingParam             = 1;
+  int32_t       textureTransferGridSize                     = 0;
+  int32_t       textureTransferMapProjDim                   = 0;
+  int32_t       textureTransferMapNumPoints                 = 8;
+  int32_t       textureTransferMethod                       = 0;
+  float         textureTransferSigma                        = 0.2f;
 
   // Input
   bool unifyVertices     = false;

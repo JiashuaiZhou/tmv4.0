@@ -230,6 +230,7 @@ struct VMCEncoderParameters {
   bool encodeDisplacementsVideo        = true;
   bool encodeTextureVideo              = true;
   bool applyOneDimensionalDisplacement = false;
+  bool interpolateDisplacementNormals  = false;
 
   // Lifting
   double  liftingUpdateWeight                 = 0.125;
@@ -266,6 +267,7 @@ struct VMCEncoderParameters {
   // Output
   bool dequantizeUV          = true;
   bool keepIntermediateFiles = false;
+  bool reconstructNormals    = false;
 
   // GeometryDecimate
   int32_t texCoordQuantizationBits        = 0;

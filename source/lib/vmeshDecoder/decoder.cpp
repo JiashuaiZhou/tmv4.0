@@ -336,8 +336,11 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
     base.point(v) *= iscalePosition;
   }
 
-  subdivideBaseMesh(
-    frame, rec, _sps.subdivisionMethod, _sps.subdivisionIterationCount);
+  subdivideBaseMesh(frame,
+                    rec,
+                    _sps.subdivisionMethod,
+                    _sps.subdivisionIterationCount,
+                    _sps.interpolateDisplacementNormals);
 
   _stats.baseMeshVertexCount += frame.base.pointCount();
   _stats.vertexCount += rec.pointCount();
@@ -527,6 +530,10 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
       for (int32_t i = 0; i < texCoordCount; ++i) { rec.texCoord(i) *= scale; }
     }
   }
+  // Reconstruct normals
+  if (!params.reconstructNormals) {
+    for (auto& rec : reconstruct.meshes()) { rec.resizeNormals(0); }
+  }
   return true;
 }
 
@@ -569,6 +576,7 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   _sps.encodeDisplacementsVideo        = ((bitField & 1) != 0);
   _sps.encodeTextureVideo              = (((bitField >> 1) & 1) != 0);
   _sps.applyOneDimensionalDisplacement = (((bitField >> 2) & 1) != 0);
+  _sps.interpolateDisplacementNormals  = (((bitField >> 3) & 1) != 0);
   if (_sps.encodeDisplacementsVideo) {
 #if defined(CODE_CODEC_ID)
     bitstream.read(geometryVideoCodecId, _byteCounter);

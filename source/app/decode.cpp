@@ -113,6 +113,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.framerate, 
       params.framerate, 
       "Frame rate")
+    ("reconstructNormals", 
+      decParams.reconstructNormals,
+      decParams.reconstructNormals,
+      "0:No normals 1:local coordinate")
 
   (po::Section("General"))
     ("keep",    

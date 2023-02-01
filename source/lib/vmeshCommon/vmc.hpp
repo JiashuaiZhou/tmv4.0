@@ -108,6 +108,7 @@ struct VMCSequenceParameterSet {
   bool    encodeDisplacementsVideo            = true;
   bool    encodeTextureVideo                  = true;
   bool    applyOneDimensionalDisplacement     = false;
+  bool    interpolateDisplacementNormals      = false;
 
   SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
   DisplacementCoordinateSystem displacementCoordinateSystem =
@@ -332,13 +333,14 @@ static int32_t
 subdivideBaseMesh(VMCFrame&               frame,
                   TriangleMesh<MeshType>& rec,
                   const SubdivisionMethod subdivisionMethod,
-                  const int32_t           subdivisionIterationCount) {
+                  const int32_t           subdivisionIterationCount,
+                  const int32_t           interpolateDisplacementNormals) {
   printf("Subdivide base mesh \n");
   fflush(stdout);
   auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   auto& subdivEdges        = frame.subdivEdges;
   rec                      = frame.base;
-  rec.computeNormals();
+  if (interpolateDisplacementNormals) { rec.computeNormals(); }
   if (subdivisionMethod == SubdivisionMethod::MID_POINT) {
     rec.subdivideMidPoint(
       subdivisionIterationCount, &infoLevelOfDetails, &subdivEdges);
@@ -346,8 +348,12 @@ subdivideBaseMesh(VMCFrame&               frame,
     return -1;
   }
   rec.resizeNormals(rec.pointCount());
-  interpolateSubdivision(
-    rec.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);
+  if (interpolateDisplacementNormals) {
+    interpolateSubdivision(
+      rec.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);
+  } else {
+    rec.computeNormals();
+  }
   return 0;
 }
 

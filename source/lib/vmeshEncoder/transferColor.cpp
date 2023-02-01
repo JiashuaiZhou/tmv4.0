@@ -1894,7 +1894,7 @@ TransferColor::transferColorByMeshes(
   const TriangleMesh<MeshType>& reconstructedMesh,
   Frame<uint8_t>&               reconstructedTexture,
   Plane<uint8_t>&               occupancy,
-  std::vector<int32_t>&         srcTri2tgtTri,
+  const std::vector<int32_t>&   srcTri2tgtTri,
   const VMCEncoderParameters&   params) {
   if (srcTri2tgtTri.empty()) {
     printf("transfer texture through 3D\n");
@@ -2064,6 +2064,7 @@ TransferColor::transferColorByMeshes(
       }
     }
   }
+  return 0;
 }
 
 //----------------------------------------------------------------------------

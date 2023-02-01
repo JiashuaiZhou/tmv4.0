@@ -71,7 +71,7 @@ private:
                              const TriangleMesh<MeshType>& reconstructedMesh,
                              Frame<uint8_t>&               reconstructedTexture,
                              Plane<uint8_t>&               occupancy,
-                             std::vector<int32_t>&         srcTri2tgtTri,
+                             const std::vector<int32_t>&   srcTri2tgtTri,
                              const VMCEncoderParameters&   params);
                              
   void dilateTexture(Frame<uint8_t>&             reconstructedTexture,

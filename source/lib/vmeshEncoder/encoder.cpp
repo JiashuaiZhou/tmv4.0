@@ -1157,7 +1157,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
   subdivideBaseMesh(frame,
                     rec,
                     params.intraGeoParams.subdivisionMethod,
-                    params.liftingSubdivisionIterationCount);
+                    params.liftingSubdivisionIterationCount,
+                    params.interpolateDisplacementNormals);
 
   auto rsubdiv = rec;
   std::swap(rsubdiv, subdiv);
@@ -1313,7 +1314,8 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
   const uint8_t bitField =
     static_cast<int>(params.encodeDisplacementsVideo)
     | (static_cast<int>(params.encodeTextureVideo) << 1)
-    | (static_cast<int>(params.applyOneDimensionalDisplacement) << 2);
+    | (static_cast<int>(params.applyOneDimensionalDisplacement) << 2)
+    | (static_cast<int>(params.interpolateDisplacementNormals) << 3);
   bitstream.write(frameCount);
   bitstream.write(bitField);
   bitstream.write(bitDepth);
@@ -1567,6 +1569,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
       }
     }
   }
+
+  // Reconstruct normals
+  if (!params.reconstructNormals) {
+    for (auto& rec : reconstruct.meshes()) { rec.resizeNormals(0); }
+  }
+
   printf("Compress done \n");
   fflush(stdout);
   return true;

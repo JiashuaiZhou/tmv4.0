@@ -136,6 +136,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.reconstructedMaterialLibPath, 
       params.reconstructedMaterialLibPath, 
       "Reconstructed materials")
+    ("reconstructNormals", 
+      encParams.reconstructNormals,
+      encParams.reconstructNormals,
+      "0:no Normals 1:local coordinate")
 
   (po::Section("General"))
     ("keep", 
@@ -456,7 +460,11 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.applyOneDimensionalDisplacement,
       encParams.applyOneDimensionalDisplacement,
       "Apply one dimensional displacement")
-
+    ("interpolateDisplacementNormals",
+      encParams.interpolateDisplacementNormals,
+      encParams.interpolateDisplacementNormals,
+      "Interpolate displacement normals")
+      
   (po::Section("Transfer texture"))    
     ("textureTransferSamplingSubdivisionIterationCount", 
       encParams.textureTransferSamplingSubdivisionIterationCount, 

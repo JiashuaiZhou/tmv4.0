@@ -56,6 +56,8 @@ done
 cfg_all=(
 	cfg-cond-ai.yaml
 	cfg-cond-ld.yaml
+	cfg-cond-ai-ll.yaml
+	cfg-cond-ld-ll.yaml
 )
 
 # Check parameters

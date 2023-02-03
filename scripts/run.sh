@@ -138,6 +138,7 @@ function mmetric() {
         --inputModelB   ID:deqDis \
         --inputMapA     ${SRCTEX} \
         --inputMapB     ${NAME}_%04d_dec.png \
+        --ibsmOutputPrefix  ${NAME}_ibsm_debug \
       END \
       reindex \
         --inputModel    ID:deqRef \
@@ -292,7 +293,7 @@ function print_usage() {
   echo "    -f|--frames : frame count             (default: $FRAMECOUNT )";
   echo "    -c|--cfgdir : configured directory    (default: \"$CFGDIR\" )";
   echo "    -o|--outdir : output directory        (default: \"$OUTDIR\" )";
-  echo "    --condId=   : condition: 1, 2         (default: $CONDID )";
+  echo "    --condId=   : condition: 1, 2, 3, 4   (default: $CONDID )";
   echo "    --seqId=    : seq: 1,2,3,4,5,6,7,8    (default: $SEQID )";
   echo "    --rateId=   : Rate: 1,2,3,4,5         (default: $RATEID )";
   echo "    --tmmMetric : Use TMM metric software (default: $TMMMETRIC )";
@@ -351,8 +352,10 @@ setSoftwarePath;
 
 # Check parameters
 case $CONDID in
-  1) COND="ai";;
-  2) COND="ld";;
+  1) ;;
+  2) ;;
+  3) RATEID=0;;
+  4) RATEID=0;;
   *) print_usage "condId not valid ($CONDID)";;
 esac
 case $SEQID in
@@ -367,6 +370,7 @@ case $SEQID in
   *) print_usage "seqId not valid ($SEQID)";;
 esac
 case $RATEID in
+  0) RATE="";;
   1) RATE="r1";;
   2) RATE="r2";;
   3) RATE="r3";;
@@ -376,10 +380,10 @@ case $RATEID in
 esac
 
 # Check configuration files
-CFGSUBDIR=$( cd "$CFGDIR" && pwd )/s${SEQID}c${CONDID}r${RATEID}_${SEQ:0:4}/
+CFGSUBDIR=$( cd "$CFGDIR" && pwd )/s${SEQID}c${CONDID}${RATE}_${SEQ:0:4}/
 if [ ! -d $CFGDIR ] || [ ! -f ${CFGSUBDIR}/encoder.cfg ] || [ ! -f ${CFGSUBDIR}/decoder.cfg ] || [ ! -f ${CFGSUBDIR}/mmetric.cfg ]
 then 
-  print_usage "Config directory is not valid (${CFGDIR}) \n please run ./scripts/create_configuration_files.sh"; 
+  print_usage "Config directory is not valid (${CFGSUBDIR}) \n please run ./scripts/create_configuration_files.sh"; 
 fi
 
 # Set output directory

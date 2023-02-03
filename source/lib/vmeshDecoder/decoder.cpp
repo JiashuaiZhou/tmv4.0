@@ -414,20 +414,24 @@ VMCDecoder::decompressTextureVideo(const Bitstream&            bitstream,
       VideoDecoder<uint16_t>::create(VideoCodecId(_sps.textureVideoCodecId));
     decoder->decode(videoBitstream, dec, 10);
 
-    // Convert video
-    printf("Convert video \n");
-    fflush(stdout);
+    if (dec.colourSpace() != ColourSpace::BGR444p
+        && dec.colourSpace() != ColourSpace::GBR444p
+        && dec.colourSpace() != ColourSpace::RGB444p) {
+      // Convert video
+      printf("Convert video \n");
+      fflush(stdout);
 #if USE_HDRTOOLS
-    auto convert = ColourConverter<uint16_t>::create(1);
-    convert->initialize(params.textureVideoHDRToolDecConfig);
+      auto convert = ColourConverter<uint16_t>::create(1);
+      convert->initialize(params.textureVideoHDRToolDecConfig);
 #else
-    auto convert = ColourConverter<uint16_t>::create(0);
-    auto mode    = "YUV420p_BGR444p_10_8_"
-                + std::to_string(params.textureVideoUpsampleFilter) + "_"
-                + std::to_string(params.textureVideoFullRange);
-    convert->initialize(mode);
+      auto convert = ColourConverter<uint16_t>::create(0);
+      auto mode    = "YUV420p_BGR444p_10_8_"
+                  + std::to_string(params.textureVideoUpsampleFilter) + "_"
+                  + std::to_string(params.textureVideoFullRange);
+      convert->initialize(mode);
 #endif
-    convert->convert(dec);
+      convert->convert(dec);
+    }
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {

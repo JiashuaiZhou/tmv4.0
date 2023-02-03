@@ -9,9 +9,9 @@ function print_usage() {
   echo "  Usage:"   
   echo "    -h|--help : print help ";
   echo "    -q|--quiet: disable logs         (default: $VERBOSE )";
-  echo "    --condId= : condition: 1, 2      (default: $CONDID )";
+  echo "    --condId= : condition: 0, 1, 2   (default: $CONDID )";
   echo "    --seqId=  : seq: 1,2,3,4,5,6,7,8 (default: $SEQID )";
-  echo "    --rateId= : Rate: 1,2,3,4,5      (default: $RATEID )";
+  echo "    --rateId= : Rate: 0,1,2,3,4,5    (default: $RATEID )";
   echo "    --vdmc    : vdmc bitstream file  (default: \"$VDMC\" )";
   echo "    --logenc  : encoder log file     (default: \"$LOGENC\" )";
   echo "    --logdec  : decoder log file     (default: \"$LOGDEC\" )";

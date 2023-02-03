@@ -203,7 +203,12 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("textureParametrizationHeight", 
       encParams.height, 
       encParams.height,       
-      "texture height")
+      "texture height")    
+    ("textureBGR444",
+      encParams.textureBGR444,
+      encParams.textureBGR444,
+      "Texture video encoded in BGR444")
+
    
   (po::Section("Geometry parametrization"))
       ("baseIsSrc", 
@@ -474,6 +479,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Displacement reverse packing")
       
   (po::Section("Transfer texture"))    
+    ("textureTransferEnable", 
+      encParams.textureTransferEnable, 
+      encParams.textureTransferEnable, 
+      "Texture transfer enable")
     ("textureTransferSamplingSubdivisionIterationCount", 
       encParams.textureTransferSamplingSubdivisionIterationCount, 
       encParams.textureTransferSamplingSubdivisionIterationCount, 
@@ -494,7 +503,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureTransferPaddingSparseLinearThreshold, 
       encParams.textureTransferPaddingSparseLinearThreshold, 
       "Texture transfer padding sparse linear threshold")
-
     ("textureTransferBasedPointcloud", 
       encParams.textureTransferBasedPointcloud, 
       encParams.textureTransferBasedPointcloud, 
@@ -503,7 +511,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureTransferPreferUV, 
       encParams.textureTransferPreferUV, 
       "Texture transfer prefer UV")
-      
     ("textureTransferWithMap", 
       encParams.textureTransferWithMap, 
       encParams.textureTransferWithMap, 
@@ -520,7 +527,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureTransferMethod, 
       encParams.textureTransferMethod, 
       "Texture transfer method: 0: pcc 1: simple 2: simple new, 3: optimized")
-      
     ("textureTransferGridSize", 
       encParams.textureTransferGridSize, 
       encParams.textureTransferGridSize,       
@@ -601,6 +607,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       metParams.gridSize,
       metParams.gridSize,
       "Grid size")
+    ("resolution",
+      metParams.resolution,
+      metParams.resolution,
+      "Resolution")
     ("pcqmRadiusCurvature",
       metParams.pcqmRadiusCurvature,
       metParams.pcqmRadiusCurvature,
@@ -658,7 +668,8 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     err.error() << "input texture not specified\n";
   }
 
-  if (encParams.geometryVideoEncoderConfig.empty()) {
+  if (encParams.geometryVideoEncoderConfig.empty()
+      && encParams.encodeDisplacementsVideo) {
     err.error() << "geometry video config not specified\n";
   }
 

@@ -20,9 +20,10 @@ set size ratio -1
 unset key
 unset border
 unset tics
-do for [cond=1:2] { 
+do for [cond=0:2] { 
+  if ( cond == 0 ){ ra=0; rb=0; } else { ra=1; rb=5;}
   do for [seq=1:8] {
-    do for [rate=1:5] {
+    do for [rate=ra:rb] {
       unset xlabel
       unset ylabel
       w=320

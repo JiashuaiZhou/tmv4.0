@@ -68,6 +68,8 @@ case ${CODEC} in
     DISP_LD=hm/displacements-ld.cfg
     TEXT_AI=hm/texture-ai.cfg
     TEXT_LD=hm/texture-ld.cfg
+    TEXT_AI_LL=hm/texture-ai-ll.cfg
+    TEXT_LD_LL=hm/texture-ld-ll.cfg
     ;; 
   vtm)
     DISP_AI=vtm/displacements-ai.cfg
@@ -116,6 +118,8 @@ vars:
   video-config-disp-ld: ${DISP_LD}
   video-config-text-ai: ${TEXT_AI}
   video-config-text-ld: ${TEXT_LD}
+  video-config-text-ai-ll: ${TEXT_AI_LL}
+  video-config-text-ld-ll: ${TEXT_LD_LL}
 
 EOF
 

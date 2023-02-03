@@ -58,6 +58,7 @@ struct Parameters {
   std::string                 sourceMeshPath         = {};
   std::string                 sourceTexturePath      = {};
   int32_t                     startFrame             = 0;
+  int32_t                     frameCount             = 0;
   double                      framerate              = 30.;
   bool                        verbose                = false;
   bool                        checksum               = true;
@@ -159,6 +160,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       metParams.gridSize,
       metParams.gridSize,
       "Grid size")
+    ("resolution",
+      metParams.resolution,
+      metParams.resolution,
+      "Resolution")
     ("minPosition",
       metParams.minPosition,
       {0, 0, 0},
@@ -195,6 +200,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       params.sourceTexturePath, 
       params.sourceTexturePath,
       "Source texture path")
+    ("frameCount", 
+      params.frameCount, 
+      params.frameCount,
+      "Frame count ")
   ;
   /* clang-format on */
 

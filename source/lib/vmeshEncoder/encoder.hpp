@@ -215,7 +215,8 @@ struct VMCEncoderParameters {
   int32_t      textureVideoDownsampleFilter = 4;
   int32_t      textureVideoUpsampleFilter   = 0;
   bool         textureVideoFullRange        = false;
-  VideoCodecId textureVideoCodecId          = VideoCodecId::HM;
+  VideoCodecId textureVideoCodecId          = VideoCodecId::HM;  
+  bool         textureBGR444                = false;
 
   // Base mesh
   GeometryCodecId meshCodecId                     = GeometryCodecId::DRACO;
@@ -235,6 +236,7 @@ struct VMCEncoderParameters {
   bool displacementReversePacking      = true;
 
   // Lifting
+  int32_t liftingSubdivisionIterationCount    = 2;
   double  liftingUpdateWeight                 = 0.125;
   double  liftingPredictionWeight             = 0.5;
   bool    liftingSkipUpdate                   = false;
@@ -243,9 +245,9 @@ struct VMCEncoderParameters {
   int32_t liftingQP[3]                        = {16, 28, 28};
 
   // Texture transfer
+  bool          textureTransferEnable                            = true;
   int32_t       textureWidth                                     = 2048;
   int32_t       textureHeight                                    = 2048;
-  int32_t       liftingSubdivisionIterationCount                 = 2;
   int32_t       textureTransferSamplingSubdivisionIterationCount = 3;
   int32_t       textureTransferPaddingBoundaryIterationCount     = 2;
   int32_t       textureTransferPaddingDilateIterationCount       = 2;

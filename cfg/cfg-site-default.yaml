@@ -18,3 +18,5 @@ vars:
   video-config-disp-ld: disp-ld.cfg
   video-config-text-ai: text-ai.cfg
   video-config-text-ld: text-ld.cfg
+  video-config-text-ai-ll: text-ai-ll.cfg
+  video-config-text-ai-ll: text-ai-ll.cfg

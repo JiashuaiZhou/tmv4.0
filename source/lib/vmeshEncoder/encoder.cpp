@@ -630,23 +630,26 @@ VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
 
     // convert BGR444 8bits to BGR444 10bits
     FrameSequence<uint16_t> src(reconstruct.textures());
-
     printf("reconstruct size = %d %d \n",
            reconstruct.textures().width(),
            reconstruct.textures().height());
     printf("src size = %d %d \n", src.width(), src.height());
-    // convert BGR444 to YUV420
+    if (!params.textureBGR444) {
+      // convert BGR444 to YUV420
 #if USE_HDRTOOLS
-    auto convert = ColourConverter<uint16_t>::create(1);
-    convert->initialize(params.textureVideoHDRToolEncConfig);
+      auto convert = ColourConverter<uint16_t>::create(1);
+      convert->initialize(params.textureVideoHDRToolEncConfig);
 #else
-    auto convert = ColourConverter<uint16_t>::create(0);
-    auto mode    = "BGR444p_YUV420p_8_10_"
-                + std::to_string(params.textureVideoDownsampleFilter) + "_"
-                + std::to_string(params.textureVideoFullRange);
-    convert->initialize(mode);
+      auto convert = ColourConverter<uint16_t>::create(0);
+      auto mode    = "BGR444p_YUV420p_8_10_"
+                  + std::to_string(params.textureVideoDownsampleFilter) + "_"
+                  + std::to_string(params.textureVideoFullRange);
+      convert->initialize(mode);
 #endif
-    convert->convert(src);
+      convert->convert(src);
+    } else {
+      src.resize(width, height, ColourSpace::BGR444p, frameCount);
+    }
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -677,15 +680,19 @@ VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
     }
 
     // Convert Rec YUV420 to BGR444
+    if (!params.textureBGR444) {
 #if USE_HDRTOOLS
-    convert->initialize(params.textureVideoHDRToolDecConfig);
+      auto convert = ColourConverter<uint16_t>::create(1);
+      convert->initialize(params.textureVideoHDRToolDecConfig);
 #else
-    mode = "YUV420p_BGR444p_10_8_"
-           + std::to_string(params.textureVideoUpsampleFilter) + "_"
-           + std::to_string(params.textureVideoFullRange);
-    convert->initialize(mode);
+      auto convert = ColourConverter<uint16_t>::create(0);
+      auto mode    = "YUV420p_BGR444p_10_8_"
+                  + std::to_string(params.textureVideoUpsampleFilter) + "_"
+                  + std::to_string(params.textureVideoFullRange);
+      convert->initialize(mode);
 #endif
-    convert->convert(rec);
+      convert->convert(rec);
+    }
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -1551,7 +1558,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     }
     auto start = std::chrono::steady_clock::now();
 
-    if (params.encodeTextureVideo) {
+    if (params.encodeTextureVideo && params.textureTransferEnable) {
       TransferColor transferColor;
       if (!transferColor.transfer(source.mesh(frameIndex),
                                   source.texture(frameIndex),
@@ -1560,6 +1567,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                   params)) {
         return false;
       }
+    } else {
+      reconstruct.texture(frameIndex) = source.texture(frameIndex);
     }
     _stats.colorTransferTime += std::chrono::steady_clock::now() - start;
   }

@@ -2,6 +2,11 @@
 
 CURDIR=$( cd "$( dirname "$0" )" && pwd ); 
 
+# Experiences
+CONDS="3 4 1 2";
+SEQS="1 2 3 4 7 8 5 6";
+RATES=( "1 2 3 4 5" "1 2 3 4 5" "0" "0" );
+
 function formatCmd(){ 
   local f=${1}; 
   for s in ${2} ; do 
@@ -123,9 +128,9 @@ function isNotFinish() {
 
 function isNotFinishAll() {
   if [ ! -f $CSV ] ; then true; return; fi
-  for CONDID in 1 2 ; do 
-    for SEQID in 1 2 3 4 7 8 5 6; do
-      for RATEID in 1 2 3 4 5; do
+  for CONDID in $CONDS ; do 
+    for SEQID in $SEQS; do
+      for RATEID in ${RATES[((${CONDID}-1))]}; do
         if isNotFinish ; then true; return; fi
       done
     done
@@ -146,16 +151,16 @@ if [ $THREADS -gt 1 ] ; then
   for ((i=0;i<NUMTESTS;i++)) ; do    
     CSV=$( getCsvFilename ${EXPERIMENTS[$i,name]} )
     if isNotFinishAll ; then
-      for CONDID in 1 2 ; do 
-        for SEQID in 1 2 3 4 7 8 5 6; do
-          for RATEID in 1 2 3 4 5; do
+      for CONDID in ${CONDS}; do 
+        for SEQID in ${SEQS}; do
+          for RATEID in ${RATES[((${CONDID}-1))]}; do
             if isNotFinish ; then
               # Start encode/decode/metric/renderer without create csv files
               echo "start $CONDID $SEQID $RATEID ${EXPERIMENTS[$i,name]} Thread = $( getRunning ) / ${THREADS}"
               CMD="$( getRunCmd ) &"
-              if (( $VERBOSE )) ; then echo "$CMD"; fi      
+              if (( $VERBOSE )) ; then formatCmd "$CMD"; fi      
               while [ $( getRunning ) -ge $THREADS ] ; do sleep 1; done;             
-              if ! eval $CMD ; then echo "ERROR: gnuplot graphs return !0"; fi        
+              if ! eval $CMD ; then echo "ERROR: gnuplot graphs return !0"; fi      
             fi
           done
         done
@@ -172,12 +177,12 @@ for ((i=0;i<NUMTESTS;i++)) ; do
   CSV=$( getCsvFilename ${EXPERIMENTS[$i,name]} )
   if isNotFinishAll ; then
     rm -f ${CSV}
-    for CONDID in 1 2 ; do 
-      for SEQID in 1 2 3 4 7 8 5 6; do
-        for RATEID in 1 2 3 4 5; do
+    for CONDID in ${CONDS}; do 
+      for SEQID in ${SEQS}; do
+        for RATEID in ${RATES[((${CONDID}-1))]}; do
           CMD="$( getRunCmd ) --csv $CSV "
-          if (( $VERBOSE )) ; then echo "$CMD"; fi          
-          if ! eval $CMD ; then echo "ERROR: gnuplot graphs return !0"; fi
+          if (( $VERBOSE )) ; then formatCmd "$CMD"; fi          
+          if ! eval $CMD ; then echo "ERROR: gnuplot graphs return !0"; fi          
         done
       done
     done

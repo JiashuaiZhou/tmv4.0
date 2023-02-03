@@ -127,8 +127,8 @@ struct Bitstream {
     std::streamsize length = file.gcount();
     file.clear();
     file.seekg(0, std::ios_base::beg);
-    assert(length <= std::numeric_limits<uint32_t>::max());
-    const auto byteCount = uint32_t(length);
+    assert(length <= std::numeric_limits<uint64_t>::max());
+    const auto byteCount = uint64_t(length);
     if (writeByteCountHeader) { write(byteCount); }
     const auto offset = buffer.size();
     buffer.resize(offset + byteCount);

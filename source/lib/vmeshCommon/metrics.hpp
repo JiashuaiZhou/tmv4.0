@@ -61,6 +61,7 @@ struct VMCMetricsParameters {
   int    gridSize       = 1024;
   double minPosition[3] = {0.0, 0.0, 0.0};
   double maxPosition[3] = {0.0, 0.0, 0.0};
+  double resolution     = 0;
 
   // PCC
   bool computePcc                   = false;

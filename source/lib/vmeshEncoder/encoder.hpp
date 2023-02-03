@@ -229,7 +229,7 @@ struct VMCEncoderParameters {
     DisplacementCoordinateSystem::LOCAL;
   bool encodeDisplacementsVideo        = true;
   bool encodeTextureVideo              = true;
-  bool applyOneDimensionalDisplacement = false;
+  bool applyOneDimensionalDisplacement = true;
   bool interpolateDisplacementNormals  = false;
   bool displacementReversePacking      = true;
 

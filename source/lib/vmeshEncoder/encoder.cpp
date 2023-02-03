@@ -1314,9 +1314,8 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
   const uint8_t bitField =
     static_cast<int>(params.encodeDisplacementsVideo)
     | (static_cast<int>(params.encodeTextureVideo) << 1)
-    | (static_cast<int>(params.applyOneDimensionalDisplacement) << 2)
-    | (static_cast<int>(params.interpolateDisplacementNormals) << 3)
-    | (static_cast<int>(params.displacementReversePacking) << 4);
+    | (static_cast<int>(params.interpolateDisplacementNormals) << 2)
+    | (static_cast<int>(params.displacementReversePacking) << 3);
   bitstream.write(frameCount);
   bitstream.write(bitField);
   bitstream.write(bitDepth);

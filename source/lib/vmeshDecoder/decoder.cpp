@@ -461,14 +461,7 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
   printf("Decompress gop: \n");
   fflush(stdout);
   if (!decodeSequenceHeader(bitstream)) return false;
-  const auto colourSpaceDispVideo = _sps.applyOneDimensionalDisplacement
-                                      ? ColourSpace::YUV400p
-                                      : ColourSpace::YUV444p;
   FrameSequence<uint16_t> dispVideo;
-  dispVideo.resize(_sps.widthDispVideo,
-                   _sps.heightDispVideo,
-                   colourSpaceDispVideo,
-                   _sps.frameCount);
   gofInfo.frameCount_ = _sps.frameCount;
   gofInfo.framesInfo_.resize(_sps.frameCount);
   gof.resize(_sps.frameCount);
@@ -576,9 +569,8 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   _sps.frameCount                      = frameCount;
   _sps.encodeDisplacementsVideo        = ((bitField & 1) != 0);
   _sps.encodeTextureVideo              = (((bitField >> 1) & 1) != 0);
-  _sps.applyOneDimensionalDisplacement = (((bitField >> 2) & 1) != 0);
-  _sps.interpolateDisplacementNormals  = (((bitField >> 3) & 1) != 0);
-  _sps.displacementReversePacking      = (((bitField >> 4) & 1) != 0);
+  _sps.interpolateDisplacementNormals  = (((bitField >> 2) & 1) != 0);
+  _sps.displacementReversePacking      = (((bitField >> 3) & 1) != 0);
   if (_sps.encodeDisplacementsVideo) {
 #if defined(CODE_CODEC_ID)
     bitstream.read(geometryVideoCodecId, _byteCounter);

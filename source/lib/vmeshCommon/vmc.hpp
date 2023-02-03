@@ -107,7 +107,6 @@ struct VMCSequenceParameterSet {
   bool    liftingSkipUpdate                   = false;
   bool    encodeDisplacementsVideo            = true;
   bool    encodeTextureVideo                  = true;
-  bool    applyOneDimensionalDisplacement     = false;
   bool    interpolateDisplacementNormals      = false;
   bool    displacementReversePacking          = true;
 

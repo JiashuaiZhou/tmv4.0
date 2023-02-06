@@ -109,6 +109,7 @@ struct VMCSequenceParameterSet {
   bool    encodeTextureVideo                  = true;
   bool    applyOneDimensionalDisplacement     = false;
   bool    interpolateDisplacementNormals      = false;
+  bool    displacementReversePacking          = true;
 
   SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
   DisplacementCoordinateSystem displacementCoordinateSystem =
@@ -292,7 +293,8 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
                                       VMCFrame&              frame,
                                       const TriangleMesh<MeshType>& rec,
                                       const int32_t geometryVideoBlockSize,
-                                      const int32_t geometryVideoBitDepth) {
+                                      const int32_t geometryVideoBitDepth,
+                                      const int32_t displacementReversePacking) {
   printf("Reconstruct displacements from video frame \n");
   fflush(stdout);
   const auto geometryVideoWidthInBlocks =
@@ -302,11 +304,13 @@ reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
   const auto planeCount     = dispVideoFrame.planeCount();
   const auto pointCount     = rec.pointCount();
   auto&      disp           = frame.disp;
+  const int32_t start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
   disp.assign(pointCount, Vec3<double>(0));
   for (int32_t v = 0; v < pointCount; ++v) {
     // to do: optimize power of 2
-    const auto blockIndex       = v / pixelsPerBlock;
-    const auto indexWithinBlock = v % pixelsPerBlock;
+    const auto v0               = displacementReversePacking ? start - v : v;
+    const auto blockIndex       = v0 / pixelsPerBlock;
+    const auto indexWithinBlock = v0 % pixelsPerBlock;
     const auto x0 =
       (blockIndex % geometryVideoWidthInBlocks) * geometryVideoBlockSize;
     const auto y0 =

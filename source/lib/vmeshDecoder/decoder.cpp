@@ -496,7 +496,8 @@ VMCDecoder::decompress(const Bitstream&            bitstream,
                                             frame,
                                             rec,
                                             _sps.geometryVideoBlockSize,
-                                            _sps.geometryVideoBitDepth);
+                                            _sps.geometryVideoBitDepth,
+                                            _sps.displacementReversePacking);
       inverseQuantizeDisplacements(frame,
                                    _sps.bitDepthPosition,
                                    _sps.liftingLevelOfDetailInverseScale,
@@ -577,6 +578,7 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   _sps.encodeTextureVideo              = (((bitField >> 1) & 1) != 0);
   _sps.applyOneDimensionalDisplacement = (((bitField >> 2) & 1) != 0);
   _sps.interpolateDisplacementNormals  = (((bitField >> 3) & 1) != 0);
+  _sps.displacementReversePacking      = (((bitField >> 4) & 1) != 0);
   if (_sps.encodeDisplacementsVideo) {
 #if defined(CODE_CODEC_ID)
     bitstream.read(geometryVideoCodecId, _byteCounter);

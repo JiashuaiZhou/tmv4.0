@@ -1248,17 +1248,17 @@ VMCEncoder::computeDisplacementVideoFrame(
   for (int32_t p = 0; p < planeCount; ++p) {
     dispVideoFrame.plane(p).fill(shift);
   }
+  const int32_t start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
   for (int32_t v = 0, vcount = int32_t(disp.size()); v < vcount; ++v) {
+    // to do: optimize power of 2
     const auto& d          = disp[v];
-    const auto  blockIndex = v / pixelsPerBlock;  // to do: optimize power of 2
-    const auto  indexWithinBlock =
-      v % pixelsPerBlock;  // to do: optimize power of 2
-    const auto x0 =
-      (blockIndex % params.geometryVideoWidthInBlocks)
-      * params.geometryVideoBlockSize;  // to do: optimize power of 2
-    const auto y0 =
-      (blockIndex / params.geometryVideoWidthInBlocks)
-      * params.geometryVideoBlockSize;  // to do: optimize power of 2
+    const auto  v0         = params.displacementReversePacking ? start - v : v;
+    const auto  blockIndex = v0 / pixelsPerBlock;
+    const auto  indexWithinBlock = v0 % pixelsPerBlock;
+    const auto  x0 = (blockIndex % params.geometryVideoWidthInBlocks)
+                    * params.geometryVideoBlockSize;
+    const auto y0 = (blockIndex / params.geometryVideoWidthInBlocks)
+                    * params.geometryVideoBlockSize;
     int32_t x = 0;
     int32_t y = 0;
     computeMorton2D(indexWithinBlock, x, y);
@@ -1315,7 +1315,8 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
     static_cast<int>(params.encodeDisplacementsVideo)
     | (static_cast<int>(params.encodeTextureVideo) << 1)
     | (static_cast<int>(params.applyOneDimensionalDisplacement) << 2)
-    | (static_cast<int>(params.interpolateDisplacementNormals) << 3);
+    | (static_cast<int>(params.interpolateDisplacementNormals) << 3)
+    | (static_cast<int>(params.displacementReversePacking) << 4);
   bitstream.write(frameCount);
   bitstream.write(bitField);
   bitstream.write(bitDepth);
@@ -1465,11 +1466,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
       const auto geometryVideoHeightInBlocks =
         (blockCount + params.geometryVideoWidthInBlocks - 1)
         / params.geometryVideoWidthInBlocks;
-      heightDispVideo =
-        std::max(heightDispVideo,
-                 geometryVideoHeightInBlocks * params.geometryVideoBlockSize);
-      dispVideoFrame.resize(
-        widthDispVideo, heightDispVideo, colourSpaceDispVideo);
+      const auto width =
+        params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
+      const auto height =
+        geometryVideoHeightInBlocks * params.geometryVideoBlockSize;
+      printf("displacemnt video Size = %d x %d \n",width,height);
+      dispVideoFrame.resize(width, height, colourSpaceDispVideo);
       computeDisplacements(frame, rec, params);
       computeForwardLinearLifting(frame.disp,
                                   frame.subdivInfoLevelOfDetails,
@@ -1483,10 +1485,9 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   }
   // resize all the frame to the same resolution
   if (params.encodeDisplacementsVideo) {
-    dispVideo.resize(
-      widthDispVideo, heightDispVideo, colourSpaceDispVideo, frameCount);
-  } else {
-    dispVideo.resize(0, 0, ColourSpace::YUV444p, 0);
+    const auto padding = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
+    dispVideo.standardizeFrameSizes(!params.displacementReversePacking,
+                                    padding);
   }
 
   // write sequence header
@@ -1522,7 +1523,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                             frame,
                                             reconstruct.mesh(frameIndex),
                                             params.geometryVideoBlockSize,
-                                            params.geometryVideoBitDepth);
+                                            params.geometryVideoBitDepth,
+                                            params.displacementReversePacking);
       inverseQuantizeDisplacements(frame,
                                    params.bitDepthPosition,
                                    params.liftingLevelOfDetailInverseScale,

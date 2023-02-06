@@ -204,6 +204,15 @@ struct Plane {
     _height = h;
     _buffer.resize(w * h);
   }
+  void addPadding(size_t width, size_t height, size_t byEnd, T value) {
+    if (_width < width || _height < height) {
+      _buffer.insert(byEnd ? _buffer.end() : _buffer.begin(),
+                     (size_t)(width * height - _width * _height),
+                     value);
+      _width  = width;
+      _height = height;
+    }
+  }
   template<typename D>
   Plane& operator=(const Plane<D>& src) {
     resize(src.width(), src.height());
@@ -362,6 +371,31 @@ public:
       break;
     };
   }
+
+  void addPadding(size_t width, size_t height, size_t byEnd, T value) {
+    switch (_colourSpace) {
+    case ColourSpace::YUV400p:
+      _planes[0].addPadding(width, height, byEnd, value);
+      break;
+    default:
+    case ColourSpace::YUV420p:
+      _planes[0].addPadding(width, height, byEnd, value);
+      _planes[1].addPadding(width / 2, height / 2, byEnd, value);
+      _planes[2].addPadding(width / 2, height / 2, byEnd, value);
+      break;
+    case ColourSpace::YUV444p:
+    case ColourSpace::RGB444p:
+    case ColourSpace::BGR444p:
+    case ColourSpace::GBR444p:
+      _planes[0].addPadding(width, height, byEnd, value);
+      _planes[1].addPadding(width, height, byEnd, value);
+      _planes[2].addPadding(width, height, byEnd, value);
+      break;
+    };
+    _width  = width;
+    _height = height;
+  }
+
   void zero() {
     for (auto& p : _planes) { p.zero(); }
   }
@@ -629,6 +663,20 @@ public:
     _colourSpace = colourSpace;
     _frames.resize(f);
     for (auto& frame : _frames) { frame.resize(w, h, colourSpace); }
+  }
+  void standardizeFrameSizes(bool byEnd, T value) {
+    int maxWidth  = 0;
+    int maxHeight = 0;
+    for (auto& frame : _frames) {
+      maxWidth  = (std::max)(maxWidth, frame.width());
+      maxHeight = (std::max)(maxHeight, frame.height());
+    }
+    printf("standardizeFrameSizes Size = %d x %d \n", maxWidth, maxHeight);
+    for (auto& frame : _frames) {
+      frame.addPadding(maxWidth, maxHeight, byEnd, value);
+    }
+    _width  = maxWidth;
+    _height = maxHeight;
   }
   void clear() {
     for (auto& frame : _frames) { frame.clear(); }

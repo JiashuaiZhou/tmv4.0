@@ -231,6 +231,7 @@ struct VMCEncoderParameters {
   bool encodeTextureVideo              = true;
   bool applyOneDimensionalDisplacement = false;
   bool interpolateDisplacementNormals  = false;
+  bool displacementReversePacking      = true;
 
   // Lifting
   double  liftingUpdateWeight                 = 0.125;

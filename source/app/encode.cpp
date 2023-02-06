@@ -464,6 +464,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.interpolateDisplacementNormals,
       encParams.interpolateDisplacementNormals,
       "Interpolate displacement normals")
+    ("displacementReversePacking",
+      encParams.displacementReversePacking,
+      encParams.displacementReversePacking,
+      "Displacement reverse packing")
       
   (po::Section("Transfer texture"))    
     ("textureTransferSamplingSubdivisionIterationCount", 

@@ -43,6 +43,7 @@
 #include "mmImage.h"
 
 #include <nanoflann/nanoflann.hpp>
+#include <unordered_map>
 
 namespace vmesh {
 

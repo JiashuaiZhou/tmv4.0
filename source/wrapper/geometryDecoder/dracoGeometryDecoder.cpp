@@ -34,7 +34,8 @@
 
 #  include "util/mesh.hpp"
 #  include "dracoGeometryDecoder.hpp"
-
+#  include <unordered_map>
+#  include <set>
 #  include "draco/compression/decode.h"
 #  include "draco/core/data_buffer.h"
 
@@ -47,7 +48,9 @@ DracoGeometryDecoder<T>::~DracoGeometryDecoder() = default;
 
 template<typename T>
 void
-convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst) {
+convert(std::unique_ptr<draco::Mesh>& src,
+        TriangleMesh<T>&              dst,
+        bool                          mesh_lossless) {
   draco::Mesh& mesh = *src;
   const auto*  posAtt =
     mesh.GetNamedAttribute(draco::GeometryAttribute::POSITION);
@@ -58,12 +61,60 @@ convert(std::unique_ptr<draco::Mesh>& src, TriangleMesh<T>& dst) {
     mesh.GetNamedAttribute(draco::GeometryAttribute::TEX_COORD);
   // position
   if (posAtt) {
+    if (!mesh_lossless)
+      for (draco::AttributeValueIndex i(0);
+           i < static_cast<uint32_t>(posAtt->size());
+           ++i) {
+        std::array<int32_t, 3> value{};
+        if (!posAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
+        dst.addPoint(value[0], value[1], value[2]);
+      }
+  } else {
+    typedef std::array<float, 3> AttributeHashableValue;
+    std::unordered_map<AttributeHashableValue,
+                       std::set<int>,
+                       draco::HashArray<AttributeHashableValue>>
+      pos_value_ids_maps;
     for (draco::AttributeValueIndex i(0);
          i < static_cast<uint32_t>(posAtt->size());
          ++i) {
-      std::array<int32_t, 3> value{};
-      if (!posAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
+      std::array<float, 3> value{};
+      if (!posAtt->ConvertValue<float, 3>(i, value.data())) { return; }
+      pos_value_ids_maps[value].insert(i.value());
       dst.addPoint(value[0], value[1], value[2]);
+    }
+    if (mesh_lossless && texAtt) {
+      std::unordered_map<AttributeHashableValue,
+                         std::set<int>,
+                         draco::HashArray<AttributeHashableValue>>
+        pos_tex_maps;
+
+      for (draco::FaceIndex i(0); i < mesh.num_faces(); ++i) {
+        const draco::Mesh::Face& face = mesh.face(i);
+        for (int j = 0; j < 3; ++j) {
+          int p_id = posAtt->mapped_index(face[j]).value();
+          int t_id = texAtt->mapped_index(face[j]).value();
+
+          std::array<float, 3> value;
+          posAtt->ConvertValue<float, 3>(draco::AttributeValueIndex(p_id),
+                                         &value[0]);
+          bool is_new_tid = true;
+          if (!pos_tex_maps[value].empty()) {
+            if (pos_tex_maps[value].find(t_id) != pos_tex_maps[value].end()) {
+              is_new_tid = false;
+            }
+          }
+          if (is_new_tid) {
+            if (!pos_tex_maps[value].empty()
+                && pos_value_ids_maps[value].size()
+                     <= pos_tex_maps[value].size()) {
+              dst.addPoint(value[0], value[1], value[2]);
+              //dst.addPoint(p_id);
+            }
+            pos_tex_maps[value].insert(t_id);
+          }
+        }
+      }
     }
   }
   // Normal
@@ -134,7 +185,10 @@ DracoGeometryDecoder<T>::decode(std::vector<uint8_t>&      bitstream,
     draco::Decoder decoder;
     decoder.options()->SetGlobalBool("use_position", params.dracoUsePosition_);
     decoder.options()->SetGlobalBool("use_uv", params.dracoUseUV_);
-    auto status = decoder.DecodeMeshFromBuffer(&decBuffer);
+    decoder.options()->SetGlobalBool("mesh_lossless",
+                                     params.dracoMeshLossless_);
+    auto status =
+      decoder.DecodeMeshFromBuffer(&decBuffer);
     if (!status.ok()) {
       printf("Failed DecodeMeshFromBuffer: %s.\n",
              status.status().error_msg());
@@ -142,7 +196,7 @@ DracoGeometryDecoder<T>::decode(std::vector<uint8_t>&      bitstream,
     }
     std::unique_ptr<draco::Mesh> decMesh = std::move(status).value();
     if (decMesh) {
-      convert(decMesh, dec);
+      convert(decMesh, dec, params.dracoMeshLossless_);
     } else {
       printf("Failed no in mesh  \n");
       exit(-1);

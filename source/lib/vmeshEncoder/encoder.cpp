@@ -731,14 +731,16 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
 
   // Encode
   GeometryEncoderParameters encoderParams;
-  encoderParams.dracoUsePosition_ = params.dracoUsePosition_;
-  encoderParams.dracoUseUV_       = params.dracoUseUV_;
+  encoderParams.dracoUsePosition_  = params.dracoUsePosition;
+  encoderParams.dracoUseUV_        = params.dracoUseUV;
+  encoderParams.dracoMeshLossless_ = params.dracoMeshLossless;
   TriangleMesh<MeshType> rec;
   std::vector<uint8_t>   geometryBitstream;
   auto encoder = GeometryEncoder<MeshType>::create(params.meshCodecId);
-  printf("DracoMapping: use_position = %d use_uv = %d \n",
+  printf("DracoMapping: use_position = %d use_uv = %d mesh_lossless = %d \n",
          encoderParams.dracoUsePosition_,
-         encoderParams.dracoUseUV_);
+         encoderParams.dracoUseUV_,
+         encoderParams.dracoMeshLossless_);
   encoder->encode(base, encoderParams, geometryBitstream, rec);
 
   // Save intermediate files
@@ -1070,16 +1072,18 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
     // Encode
     GeometryEncoderParameters encoderParams;
-    encoderParams.qp_               = params.qpPosition;
-    encoderParams.qt_               = params.qpTexCoord;
-    encoderParams.dracoUsePosition_ = params.dracoUsePosition_;
-    encoderParams.dracoUseUV_       = params.dracoUseUV_;
+    encoderParams.qp_                = params.qpPosition;
+    encoderParams.qt_                = params.qpTexCoord;
+    encoderParams.dracoUsePosition_  = params.dracoUsePosition;
+    encoderParams.dracoUseUV_        = params.dracoUseUV;
+    encoderParams.dracoMeshLossless_ = params.dracoMeshLossless;
     TriangleMesh<MeshType> rec;
     std::vector<uint8_t>   geometryBitstream;
     auto encoder = GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
-    printf("BaseMeshEnco: use_position = %d use_uv = %d \n",
+    printf("BaseMeshEnco: use_position = %d use_uv = %d mesh_lossless = %d \n",
            encoderParams.dracoUsePosition_,
-           encoderParams.dracoUseUV_);
+           encoderParams.dracoUseUV_,
+           encoderParams.dracoMeshLossless_);
     encoder->encode(base, encoderParams, geometryBitstream, rec);
 
     // Save intermediate files
@@ -1158,7 +1162,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
                     rec,
                     params.intraGeoParams.subdivisionMethod,
                     params.liftingSubdivisionIterationCount,
-                    params.interpolateDisplacementNormals);
+                    params.interpolateDisplacementNormals,
+                    params.dracoMeshLossless);
 
   auto rsubdiv = rec;
   std::swap(rsubdiv, subdiv);
@@ -1315,7 +1320,10 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
     static_cast<int>(params.encodeDisplacementsVideo)
     | (static_cast<int>(params.encodeTextureVideo) << 1)
     | (static_cast<int>(params.interpolateDisplacementNormals) << 2)
-    | (static_cast<int>(params.displacementReversePacking) << 3);
+    | (static_cast<int>(params.displacementReversePacking) << 3)
+    | (static_cast<int>(params.dracoUsePosition) << 4)
+    | (static_cast<int>(params.dracoUseUV) << 5)
+    | (static_cast<int>(params.dracoMeshLossless) << 6);
   bitstream.write(frameCount);
   bitstream.write(bitField);
   bitstream.write(bitDepth);
@@ -1324,8 +1332,6 @@ VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
 #if defined(CODE_CODEC_ID)
   bitstream.write(uint8_t(params.meshCodecId));
 #endif
-  bitstream.write(uint8_t(params.dracoUsePosition_));
-  bitstream.write(uint8_t(params.dracoUseUV_));
   bitstream.write(qpBaseMesh);
   if (params.encodeDisplacementsVideo) {
 #if defined(CODE_CODEC_ID)
@@ -1435,7 +1441,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   // Unify vertices
   printf("UnifyVertices \n");
   fflush(stdout);
-  unifyVertices(gofInfo, gof, params);
+  if (!params.dracoMeshLossless) {  
+    // Note JR: TODO check if params.unifyVertices=0 or 
+    // params.liftingSubdivisionIterationCount == 0 can be used
+    // rather than meshLossless
+    unifyVertices(gofInfo, gof, params);
+  }
 
   // Compress geometry
   Bitstream     bitstreamGeo;

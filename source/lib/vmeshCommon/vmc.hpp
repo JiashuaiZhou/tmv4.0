@@ -119,6 +119,7 @@ struct VMCSequenceParameterSet {
   VideoCodecId    textureVideoCodecId  = VideoCodecId::HM;
   bool            dracoUsePosition     = false;
   bool            dracoUseUV           = false;
+  bool            dracoMeshLossless    = false;
 };
 
 //============================================================================
@@ -337,20 +338,24 @@ subdivideBaseMesh(VMCFrame&               frame,
                   TriangleMesh<MeshType>& rec,
                   const SubdivisionMethod subdivisionMethod,
                   const int32_t           subdivisionIterationCount,
-                  const int32_t           interpolateDisplacementNormals) {
+                  const int32_t           interpolateDisplacementNormals,
+                  const bool              meshLossless) {
   printf("Subdivide base mesh \n");
   fflush(stdout);
   auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   auto& subdivEdges        = frame.subdivEdges;
   rec                      = frame.base;
-  if (interpolateDisplacementNormals) { rec.computeNormals(); }
+  if (interpolateDisplacementNormals && (!meshLossless)) {
+    rec.computeNormals();
+  }
   if (subdivisionMethod == SubdivisionMethod::MID_POINT) {
     rec.subdivideMidPoint(
       subdivisionIterationCount, &infoLevelOfDetails, &subdivEdges);
   } else {
     return -1;
   }
-  rec.resizeNormals(rec.pointCount());
+  if (!meshLossless)
+    rec.resizeNormals(rec.pointCount());
   if (interpolateDisplacementNormals) {
     interpolateSubdivision(
       rec.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);

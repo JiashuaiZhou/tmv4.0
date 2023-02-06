@@ -219,8 +219,9 @@ struct VMCEncoderParameters {
 
   // Base mesh
   GeometryCodecId meshCodecId                     = GeometryCodecId::DRACO;
-  bool            dracoUsePosition_               = false;
-  bool            dracoUseUV_                     = false;
+  bool            dracoUsePosition                = false;
+  bool            dracoUseUV                      = false;
+  bool            dracoMeshLossless               = false;
   int32_t         motionGroupSize                 = 16;
   bool            motionWithoutDuplicatedVertices = true;
 

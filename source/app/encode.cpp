@@ -423,13 +423,17 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.meshCodecId, 
       "Mesh codec id")
     ("dracoUsePosition", 
-      encParams.dracoUsePosition_, 
-      encParams.dracoUsePosition_, 
+      encParams.dracoUsePosition, 
+      encParams.dracoUsePosition, 
       "Draco use position")
     ("dracoUseUV", 
-      encParams.dracoUseUV_, 
-      encParams.dracoUseUV_, 
+      encParams.dracoUseUV, 
+      encParams.dracoUseUV, 
       "Draco use UV")
+    ("dracoMeshLossless", 
+      encParams.dracoMeshLossless, 
+      encParams.dracoMeshLossless, 
+      "draco mesh lossless")
   
   (po::Section("Motion"))
     ("motionGroupSize",

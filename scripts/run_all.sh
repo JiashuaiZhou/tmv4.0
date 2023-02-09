@@ -3,9 +3,9 @@
 CURDIR=$( cd "$( dirname "$0" )" && pwd ); 
 
 # Experiences
-CONDS="3 4 1 2";
+CONDS="0 1 2";
 SEQS="1 2 3 4 7 8 5 6";
-RATES=( "1 2 3 4 5" "1 2 3 4 5" "0" "0" );
+RATES=( "0" "1 2 3 4 5" "1 2 3 4 5" );
 
 function formatCmd(){ 
   local f=${1}; 
@@ -38,7 +38,7 @@ function readCsv(){
 
 function getRunCmd(){
   ENCPARAMS=(); for p in ${EXPERIMENTS[$i,encParams]} ; do ENCPARAMS+=( "--encParams \\\"$p\\\"" ); done
-  DECPARAMS=(); for p in ${EXPERIMENTS[$i,decParams]} ; do DECPARAMS+=( "--decParams \\\"$p\\\"" ); done   
+  DECPARAMS=(); for p in ${EXPERIMENTS[$i,decParams]} ; do DECPARAMS+=( "--decParams \\\"$p\\\"" ); done     
   echo "${CURDIR}/run.sh \
           --frame     $FRAMECOUNT \
           --outdir    ${OUTDIR}/${EXPERIMENTS[$i,name]} \
@@ -60,12 +60,15 @@ function print_usage() {
   echo "    -f|--frames    : frame count                     (default: $FRAMECOUNT )"
   echo "    -c|--cfgdir    : configured directory            (default: \"$CFGDIR\" )"
   echo "    -o|--outdir    : output directory                (default: $OUTDIR )"
+  echo "    -r|--refresh   : remove .csv result and re-run   (default: $REFRESH )"
   echo "    --experiments  : csv configuration files         (default: $CSVFILE )"
   echo "    --tmmMetric    : Use TMM metric software         (default: 0 )"
   echo "    -t|--threads   : Number of parallel experiments  (default: $THREADS )"
   echo "    --render       : Create pdf  rendered images     (default: $RENDER )"
   echo "    --graph        : Create pdf with metric graphs   (default: $GRAPH )"
   echo "    --xlsm         : Create CTC xlsm files           (default: $XLSM )"
+  echo "    --video        : Create video                    (default: $VIDEO )"   
+  echo "    --ffmpeg       : path to ffmpeg sw               (default: $FFMPEG )"        
   echo ""
   echo "  Examples:"
   echo "    $0 -h" 
@@ -88,13 +91,16 @@ FRAMECOUNT=1
 PARAMS=()
 VERBOSE=1
 OUTDIR="experiments"
-CFGDIR="generatedConfigFilesHM"
+CFGDIR="generatedConfigFiles/hm"
 TMMMETRIC=
 RENDER=0
 GRAPH=0
 XLSM=0
 CSVFILE=${CURDIR}/test.csv
 THREADS=1
+REFRESH=0
+VIDEO=0
+FFMPEG=ffmpeg
 
 # Parse input parameters
 while [[ $# -gt 0 ]] ; do
@@ -105,17 +111,20 @@ while [[ $# -gt 0 ]] ; do
     -f|--frame*  ) FRAMECOUNT=$V;; 
     -o|--outdir* ) OUTDIR=$V;; 
     -c|--cfgdir* ) CFGDIR=$V;; 
+    -r|--refresh ) REFRESH=1;; 
     --experiments) CSVFILE=$V;;
     -t|--threads ) THREADS=$V;;
     --tmmMetric  ) PARAMS+=( --tmmMetric );;
     --render     ) RENDER=1; PARAMS+=( --render );;
+    --video      ) VIDEO=1;;
     --graph      ) GRAPH=1;;
     --xlsm       ) XLSM=1;;
+    --ffmpeg     ) FFMPEG=$V;;
     *            ) print_usage "unsupported arguments: $C ";;
   esac
   shift;
 done
-
+if [ $VIDEO == 1 ] ; then PARAMS+=( --video --ffmpeg ${FFMPEG} ); fi
 
 function isNotFinish() {
   if [ ! -f $CSV ] ; then true; return; fi
@@ -127,10 +136,11 @@ function isNotFinish() {
 }
 
 function isNotFinishAll() {
+  if [ $REFRESH == 1 ] ; then true; return; fi
   if [ ! -f $CSV ] ; then true; return; fi
   for CONDID in $CONDS ; do 
     for SEQID in $SEQS; do
-      for RATEID in ${RATES[((${CONDID}-1))]}; do
+      for RATEID in ${RATES[((${CONDID}))]}; do
         if isNotFinish ; then true; return; fi
       done
     done
@@ -153,12 +163,12 @@ if [ $THREADS -gt 1 ] ; then
     if isNotFinishAll ; then
       for CONDID in ${CONDS}; do 
         for SEQID in ${SEQS}; do
-          for RATEID in ${RATES[((${CONDID}-1))]}; do
+          for RATEID in ${RATES[((${CONDID}))]}; do
             if isNotFinish ; then
               # Start encode/decode/metric/renderer without create csv files
               echo "start $CONDID $SEQID $RATEID ${EXPERIMENTS[$i,name]} Thread = $( getRunning ) / ${THREADS}"
               CMD="$( getRunCmd ) &"
-              if (( $VERBOSE )) ; then formatCmd "$CMD"; fi      
+              if (( $VERBOSE )) ; then formatCmd "$CMD" "-- "; fi      
               while [ $( getRunning ) -ge $THREADS ] ; do sleep 1; done;             
               if ! eval $CMD ; then echo "ERROR: gnuplot graphs return !0"; fi      
             fi
@@ -179,9 +189,9 @@ for ((i=0;i<NUMTESTS;i++)) ; do
     rm -f ${CSV}
     for CONDID in ${CONDS}; do 
       for SEQID in ${SEQS}; do
-        for RATEID in ${RATES[((${CONDID}-1))]}; do
+        for RATEID in ${RATES[((${CONDID}))]}; do
           CMD="$( getRunCmd ) --csv $CSV "
-          if (( $VERBOSE )) ; then formatCmd "$CMD"; fi          
+          if (( $VERBOSE )) ; then formatCmd "$CMD" "-- "; fi          
           if ! eval $CMD ; then echo "ERROR: gnuplot graphs return !0"; fi          
         done
       done
@@ -192,7 +202,7 @@ for ((i=0;i<NUMTESTS;i++)) ; do
 done
 
 # Create graph and render pdf
-if (( ${GRAPH} || ${RENDER} )) ; then 
+if (( ${GRAPH} || ${RENDER} || ${XLSM} || ${VIDEO} )) ; then 
   LISTDIRS=()
   LISTNAMES=""
   PDFNAMES=""
@@ -253,5 +263,100 @@ if (( ${GRAPH} || ${RENDER} )) ; then
     else 
       echo "${PDFNAMES}_render.pdf already exists"
     fi
-  fi  
+  fi
+
+  # Create comparison videos
+  if (( ${VIDEO} )) ; then
+    echo "FFMPEG = $FFMPEG"
+    if ! command -v ${FFMPEG} &> /dev/null ; then
+      if [ ! -f "${FFMPEG}" ] ; then 
+        print_usage "${FFMPEG} not exist, please add \--ffmpeg path_to_ffmpeg\" ";
+      fi 
+    fi
+    for ((i=0;i<NUMTESTS;i++)) ; do
+      NAME=${EXPERIMENTS[$i,name]}
+      DIR=${OUTDIR}/${NAME}/$( printf "F%03d" ${FRAMECOUNT} )/video
+      CSV=$( getCsvFilename $NAME )
+      for CONDID in 1 2 ; do 
+        for SEQID in 1 2 3 4 7 8 5 6; do
+          case $SEQID in
+            1) WIDTH=480; HEIGHT=1080; X=600; Y=0; SEQ="longdress";;
+            2) WIDTH=480; HEIGHT=1080; X=600; Y=0; SEQ="soldier";;
+            3) WIDTH=480; HEIGHT=1080; X=700; Y=0; SEQ="basketball_player";;
+            4) WIDTH=480; HEIGHT=1080; X=600; Y=0; SEQ="dancer";;
+            5) WIDTH=480; HEIGHT=1080; X=800; Y=0; SEQ="mitch";;
+            6) WIDTH=480; HEIGHT=1080; X=400; Y=0; SEQ="thomas";;
+            7) WIDTH=480; HEIGHT=1080; X=800; Y=0; SEQ="football";;
+            8) WIDTH=480; HEIGHT=1080; X=800; Y=0; SEQ="levi";;
+            *) print_usage "seqId not valid ($SEQID)";;
+          esac
+          OUTVIDEO=${DIR}/s${SEQID}c${CONDID}_${SEQ:0:4}_comparison_x265lossy.mp4
+          if [ ! -f ${OUTVIDEO} ]; then
+            createVideo=1
+            LISTVIDEOS=()
+            LISTRATES=()
+            LISTGEODISTS=()
+            LISTLUMADISTS=()
+            for RATEID in 1 2 3 4 5; do
+              if isNotFinish ; then
+                createVideo=0
+              else        
+                VIDEOFILE=${DIR}/s${SEQID}c${CONDID}r${RATEID}_${SEQ:0:4}_x265lossless.mp4
+                LISTVIDEOS+=( ${VIDEOFILE} )
+                RESULTS=( $( cat $CSV | grep "$SEQID,$CONDID,$RATEID," | \
+                             awk -F ',' '{ printf("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s ", \
+                             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16 ) }' ) )
+                VIDEORATE=$(awk "BEGIN {printf \"%.2f\",${RESULTS[4]}*30/(${FRAMECOUNT}*1000000)}")
+                LISTRATES+=( ${VIDEORATE} )
+                D1=$(awk "BEGIN {printf \"%.2f\",${RESULTS[5]}}")
+                LISTGEODISTS+=( ${D1} )
+                LUMA=$(awk "BEGIN {printf \"%.2f\",${RESULTS[7]}}")
+                LISTLUMADISTS+=( ${LUMA} )
+                echo "VIDEOFILE=${VIDEOFILE}"
+                echo "LISTRATES=${VIDEORATE}"
+                echo "LISTGEODISTS=${D1}"
+                echo "LISTLUMADISTS=${LUMA}"
+              fi
+            done
+            if (( ${createVideo} )); then
+              OUTVIDEO_NOLEGEND=${DIR}/s${SEQID}c${CONDID}_${SEQ:0:4}_comparison_NO_LEGEND_x265lossy.mp4
+              ${FFMPEG} \
+                -i ${LISTVIDEOS[0]} \
+                -i ${LISTVIDEOS[1]} \
+                -i ${LISTVIDEOS[2]} \
+                -i ${LISTVIDEOS[3]} \
+                -i ${LISTVIDEOS[4]} \
+                -filter_complex "[0:v]crop=${WIDTH}:${HEIGHT}:${X}:${Y}[v0];
+                                 [1:v]crop=${WIDTH}:${HEIGHT}:${X}:${Y}[v1];
+                                 [2:v]crop=${WIDTH}:${HEIGHT}:${X}:${Y}[v2];
+                                 [3:v]crop=${WIDTH}:${HEIGHT}:${X}:${Y}[v3];
+                                 [4:v]crop=${WIDTH}:${HEIGHT}:${X}:${Y}[v4];
+                                 [v0][v1]hstack[v01];
+                                 [v01][v2]hstack[v012];
+                                 [v012][v3]hstack[v0123];
+                                 [v0123][v4]hstack" \
+                -c:v libx265 \
+                -crf 10 \
+                ${OUTVIDEO_NOLEGEND}
+      
+              TEXTR1=$(print "R1(%.2f Mbps)\n%.2f dB|%.2f dB",${LISTRATES[0]},${LISTGEODISTS[0]},${LISTLUMADISTS[0]} )
+              ${FFMPEG} \
+                -i ${OUTVIDEO_NOLEGEND} \
+                -vf "drawtext=text='R1(${LISTRATES[0]}Mbps)
+                  ${LISTGEODISTS[0]}dB|${LISTLUMADISTS[0]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*1/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R2(${LISTRATES[1]}Mbps)
+                  ${LISTGEODISTS[1]}dB|${LISTLUMADISTS[1]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*3/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R1(${LISTRATES[2]}Mbps)
+                  ${LISTGEODISTS[2]}dB|${LISTLUMADISTS[2]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*5/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R4(${LISTRATES[3]}Mbps)
+                  ${LISTGEODISTS[3]}dB|${LISTLUMADISTS[3]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*7/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R5(${LISTRATES[4]}Mbps)
+                  ${LISTGEODISTS[4]}dB|${LISTLUMADISTS[0]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*9/2-text_w/2): y=(${HEIGHT}-text_h)" \
+                ${OUTVIDEO}
+            
+            rm ${OUTVIDEO_NOLEGEND}
+          fi
+        else
+          echo "${OUTVIDEO} already exists"
+        fi
+      done #SEQID
+    done #CONDID
+  done #NUMTESTS
+  fi   
 fi

@@ -928,7 +928,7 @@ Void
 hmVideoEncoderImpl<T>::xReadPicture(TComPicYuv*       pic,
                                     FrameSequence<T>& video,
                                     int               frameIndex) {
-  auto& image = video.frame(frameIndex);
+  auto& image = video.frame(0);
   printf("video colourSpace = %d \n", (int)video.colourSpace());
   printf("image colourSpace = %d \n", (int)image.colourSpace());
   image.get(pic->getAddr(COMPONENT_Y),
@@ -942,6 +942,7 @@ hmVideoEncoderImpl<T>::xReadPicture(TComPicYuv*       pic,
             pic->getStride(COMPONENT_Cb),
             m_internalBitDepth[0] - m_outputBitDepth[0],
             m_inputColourSpaceConvert == IPCOLOURSPACE_RGBtoGBR);
+  video.removeFirstFrame();
 }
 
 template class hmVideoEncoderImpl<uint8_t>;

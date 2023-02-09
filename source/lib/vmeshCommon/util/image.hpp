@@ -746,6 +746,7 @@ public:
       _frames[i].convert400To444(dst[i]);
     }
   }
+  void removeFirstFrame() { _frames.erase(_frames.begin()); }
 
 private:
   int                   _width       = 0;

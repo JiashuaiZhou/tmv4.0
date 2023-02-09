@@ -54,7 +54,7 @@ struct VMCDecoderParameters {
   bool        textureVideoFullRange        = false;
   bool        dequantizeUV                 = true;
   bool        keepIntermediateFiles        = false;
-  bool        reconstructNormals           = false;
+  bool        reconstructNormals           = true;
 };
 
 //============================================================================

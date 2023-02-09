@@ -87,7 +87,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     "Input video color space: YUV420p, YUV444p, RGB444p, BGR444p ")
   
   (po::Section("Output"))
-  ("outputPath",       params.outputPath,    {}, "Reconsctructed video path")
+  ("outputPath",       params.outputPath,    {}, "Reconstructed video path")
   ("outputColorSpace", params.outputColorSpace, vmesh::ColourSpace::UNKNOW, 
     "Input video color space: YUV420p, YUV444p, RGB444p, BGR444p ")
   ("outputBitDepth",   params.outputBitDepth,   10, "Output bit depth ")  

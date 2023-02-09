@@ -1,7 +1,7 @@
 ---
 categories:
   ai-ll:
-    cond-id: 3
+    cond-id: 0
     # the list of tools to generate configurations for
     tools: [ encoder, decoder, mmetric ]
 
@@ -10,12 +10,13 @@ categories:
       - analyzeGof: 0
       - subdivIsBase: 1
       - baseIsSrc: 1
-      - encodeGeometryVideo: 0      
-      - unifyVertices: 1
+      - encodeGeometryVideo: 0     
       - ai_fitSubdiv: 0
       - liftingIterationCount: 0
       - textureTransferEnable: 0
-      - textureBGR444: 1
+      - textureBGR444: 1 
+      - unifyVertices: 0
+      - dracoMeshLossless: 1
 
       # configuration for HM
       - textureVideoEncoderConfig: ${cfg-prefix}/${video-config-text-ai-ll}     

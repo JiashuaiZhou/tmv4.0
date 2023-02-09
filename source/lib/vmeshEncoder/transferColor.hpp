@@ -44,8 +44,8 @@ class TriangleMesh;
 template<typename T>
 class Frame;
 template<typename T>
-class Plane;
-class VMCEncoderParameters;
+struct Plane;
+struct VMCEncoderParameters;
 
 //============================================================================
 

@@ -285,7 +285,7 @@ decompress(const Parameters& params) {
       std::chrono::duration<double>(decoder.stats().processingTime).count());
     fflush(stdout);
 
-    // Save reconsctructed models
+    // Save reconstructed models
     if (!reconstruct.save(params.decodedMeshPath,
                           params.decodedTexturePath,
                           params.decodedMaterialLibPath,

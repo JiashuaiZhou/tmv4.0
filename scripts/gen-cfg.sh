@@ -54,10 +54,9 @@ done
 # capable of being merged together by gen-cfg.pl.  Ie, no two
 # configs may have different definitions of one category.
 cfg_all=(
+	cfg-cond-ai-ll.yaml
 	cfg-cond-ai.yaml
 	cfg-cond-ld.yaml
-	cfg-cond-ai-ll.yaml
-	cfg-cond-ld-ll.yaml
 )
 
 # Check parameters

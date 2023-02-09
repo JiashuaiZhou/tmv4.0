@@ -281,15 +281,10 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
       base.save(prefix + "_dec.ply");
       save(prefix + ".drc", geometryBitstream);
     }
-
-    printf("Round qposition \n");
-    fflush(stdout);
     qpositions.resize(base.pointCount());
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       qpositions[v] = base.point(v).round();
     }
-    printf("Scale TexCoord \n");
-    fflush(stdout);
     const auto scaleTexCoord  = std::pow(2.0, _sps.qpTexCoord) - 1.0;
     const auto iscaleTexCoord = 1.0 / scaleTexCoord;
     for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
@@ -318,8 +313,6 @@ VMCDecoder::decompressBaseMesh(const Bitstream&            bitstream,
                      refFrame.qpositions,
                      qpositions,
                      params);
-    // decompressMotion(
-    //     bitstream, base.triangles(), refFrame.qpositions, {}, qpositions, params);
 
     _stats.motionByteCount += _byteCounter - bitstreamByteCount0;
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {

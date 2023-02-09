@@ -286,8 +286,8 @@ Checksum::print() {
   for (size_t i = 0; i < mesh_.size(); i++) {
     printf("Frame %4zu: [MD5GEO:%32s][MD5TEX:%32s] \n",
            i,
-           i < mesh_[i].size() ? toString(mesh_[i]).c_str() : "",
-           i < texture_[i].size() ? toString(texture_[i]).c_str() : "");
+           i < mesh_.size() ? toString(mesh_[i]).c_str() : "",
+           i < texture_.size() ? toString(texture_[i]).c_str() : "");
   }
 }
 

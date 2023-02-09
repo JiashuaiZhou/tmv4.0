@@ -83,11 +83,11 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("decMesh", 
       params.decMeshPath,
       params.decMeshPath,
-      "Reconsctructed/decoded mesh")
+      "Reconstructed/decoded mesh")
     ("decTex",
       params.decTexturePath,
       params.decTexturePath,
-      "Reconsctructed/decoded texture")
+      "Reconstructed/decoded texture")
         
   (po::Section("Sequence"))
     ("startFrameIndex",

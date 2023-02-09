@@ -271,7 +271,7 @@ struct VMCEncoderParameters {
   // Output
   bool dequantizeUV          = true;
   bool keepIntermediateFiles = false;
-  bool reconstructNormals    = false;
+  bool reconstructNormals    = true;
 
   // GeometryDecimate
   int32_t texCoordQuantizationBits        = 0;

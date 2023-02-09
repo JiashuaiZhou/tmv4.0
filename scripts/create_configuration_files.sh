@@ -21,11 +21,11 @@ print_usage()
   echo "  Examples:";
   echo "    $0  "; 
   echo "    $0 \\"; 
-  echo "      --outdir=generatedConfigFilesHM  \\"; 
+  echo "      --outdir=generatedConfigFiles/hm/  \\"; 
   echo "      --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/ \\"; 
   echo "      --codec=hm"; 
   echo "    $0 \\"; 
-  echo "      --outdir=generatedConfigFilesVTM \\"; 
+  echo "      --outdir=generatedConfigFiles/vtm/ \\"; 
   echo "      --seqdir=/home/library24/PCC/contents/mpeg_vmesh_cfp_final/contents/voxelized/ \\"; 
   echo "      --codec=vtm";     
   echo "    ";

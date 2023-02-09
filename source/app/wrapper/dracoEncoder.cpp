@@ -79,7 +79,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   (po::Section("Input/Output"))
   ("inputPath",     params.inputPath,     {}, "Input mesh path")
   ("bitstreamPath", params.bitstreamPath, {}, "Generated bitstream path")
-  ("recPath",       params.outputPath,    {}, "Reconsctructed mesh path")
+  ("recPath",       params.outputPath,    {}, "Reconstructed mesh path")
   ("codecId",       params.codecId,       vmesh::GeometryCodecId::UNKNOWN_GEOMETRY_CODEC, 
     "Video codec Id: DRACO")  
     

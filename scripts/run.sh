@@ -18,19 +18,28 @@ function setSoftwarePath(){
   ENCODER=${MAINDIR}/build/Release/bin/encode
   DECODER=${MAINDIR}/build/Release/bin/decode
   MMETRIC=${MAINDIR}/externaltools/mpeg-pcc-mmetric/build/Release/bin/mm
+  RENDER=${MAINDIR}/externaltools/mpeg-pcc-renderer/bin/linux/Release/PccAppRenderer
   if [ ! -f "${ENCODER}" ] ; then ENCODER=${MAINDIR}/build/Release/bin/Release/encode.exe; fi
   if [ ! -f "${DECODER}" ] ; then DECODER=${MAINDIR}/build/Release/bin/Release/decode.exe; fi
   if [ ! -f "${MMETRIC}" ] ; then MMETRIC=${MAINDIR}/externaltools/mpeg-pcc-mmetric/build/Release/bin/Release/mm.exe; fi
+  if [ ! -f "${RENDER}"  ] ; then RENDER=${MAINDIR}/externaltools/mpeg-pcc-renderer/bin/windows/Release/PccAppRenderer.exe; fi
   if [ ${TMMMETRIC} == 1 ] ; then 
     METRICS=${MAINDIR}/build/Release/bin/metrics
-    if [ ! -f "${METRICS}" ] ; then METRICS=${MAINDIR}/build/Release/bin/Release/metrics.exe; fi  
+    if [ ! -f "${METRICSgit }" ] ; then METRICS=${MAINDIR}/build/Release/bin/Release/metrics.exe; fi  
     if [ ! -f "${METRICS}" ] ; then print_usage "${METRICS} not exist, please run ./build.sh"; fi 
   fi
-  for NAME in $ENCODER $DECODER $MMETRIC ; do  
+  for NAME in $ENCODER $DECODER $MMETRIC $RENDER; do  
     if [ ! -f $NAME ] ; then 
-      print_usage "$NAME not exist, please run ./build.sh and ./scripts/get_external_tools.sh"; 
+      print_usage "$NAME not exist, please run ./build.sh"; 
     fi 
   done
+  if [ $VIDEO == 1 ] ; then 
+    if ! command -v ${FFMPEG} &> /dev/null ; then
+      if [ ! -f "${FFMPEG}" ] ; then 
+        print_usage "${FFMPEG} not exist, please add \--ffmpeg path_to_ffmpeg\" ";
+      fi 
+    fi
+  fi
 }
 
 function encode() {   
@@ -138,7 +147,6 @@ function mmetric() {
         --inputModelB   ID:deqDis \
         --inputMapA     ${SRCTEX} \
         --inputMapB     ${NAME}_%04d_dec.png \
-        --ibsmOutputPrefix  ${NAME}_ibsm_debug \
       END \
       reindex \
         --inputModel    ID:deqRef \
@@ -257,10 +265,65 @@ function render() {
         --height        ${RENDERHEIGHT} \
         --outputImage   ${OUTDIR}/${1}_light1.png  \
         > ${OUTDIR}/render_${1}.log"
-    if (( $VERBOSE )) ; then formatCmd "$CMD" "-- > sequence render END "; fi
+    if (( $VERBOSE )) ; then formatCmd "$CMD" "-- > sequence dequantize render END "; fi
     if ! eval $CMD ; then echo "ERROR: metrics sw return !0"; exit; fi
   else 
     if (( $VERBOSE )) ; then echo "${OUTDIR}/${1}_light0.png and ${OUTDIR}/${1}_light1.png already exist"; fi
+  fi
+}
+
+# Render process
+function render_video() {
+  if [ ! -f ${VIDEODIR}/${1}_x265lossless.mp4 ] ; then
+    RENDERWIDTH=1080
+    RENDERHEIGHT=1920
+    START=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "startFrameIndex:"  | awk '{print $2}' )
+    CMD="$RENDER \
+        --frameNumber=${FRAMECOUNT} \
+        --frameIndex=${START} \
+        --fps=30 \
+        --width=1920 \
+        --height=1080 \
+        --rotate=0 \
+        --playBackward=1 \
+        --play=1 \
+        --overlay=0 \
+        --size=1 \
+        --type=0 \
+        --binary=0 \
+        --visible=0 \
+        --spline=0 \
+        --floor=1 \
+        --lighting=0 \
+        --softwareRenderer=1 \
+        --camera=${CAMPATH} \
+        --PlyFile=${2} \
+        --RgbFile=${VIDEODIR}/${1} \
+        > ${OUTDIR}/render_video_mpeg_renderer.log"
+    if (( $VERBOSE )) ; then formatCmd "$CMD" "-- > "; fi
+    if ! eval $CMD ; then echo "ERROR: mpeg renderer sw return !0"; exit; fi
+
+    #now convert rgb file to 265 video file
+    CMD="$FFMPEG \
+        -y \
+        -f rawvideo \
+        -r 30 \
+        -pix_fmt rgb48 \
+        -s 1920x1080 \
+        -threads 4 \
+        -i ${VIDEODIR}/${1}*.rgb \
+        -c:v libx265 \
+        -preset fast \
+        -x265-params lossless=1 \
+        -pix_fmt yuv420p10le \
+        ${VIDEODIR}/${1}_x265lossless.mp4 \
+        > ${OUTDIR}/render_video_ffmpeg.log";
+    if (( $VERBOSE )) ; then formatCmd "$CMD" "- > "; fi
+    if ! eval $CMD ; then  echo "ERROR: ffmpeg sw return !0"; exit;  fi
+    if (( $VERBOSE )) ; then echo rm ${VIDEODIR}/${1}*.rgb; fi 
+    rm ${VIDEODIR}/${1}*.rgb
+  else 
+    if (( $VERBOSE )) ; then echo "${VIDEODIR}/${1}_x265lossless.mp4 already exist"; fi
   fi
 }
 
@@ -293,14 +356,16 @@ function print_usage() {
   echo "    -f|--frames : frame count             (default: $FRAMECOUNT )";
   echo "    -c|--cfgdir : configured directory    (default: \"$CFGDIR\" )";
   echo "    -o|--outdir : output directory        (default: \"$OUTDIR\" )";
-  echo "    --condId=   : condition: 1, 2, 3, 4   (default: $CONDID )";
+  echo "    --condId=   : condition: 0,1,2        (default: $CONDID )";
   echo "    --seqId=    : seq: 1,2,3,4,5,6,7,8    (default: $SEQID )";
   echo "    --rateId=   : Rate: 1,2,3,4,5         (default: $RATEID )";
   echo "    --tmmMetric : Use TMM metric software (default: $TMMMETRIC )";
   echo "    --render    : Create rendered images  (default: $RENDER )";
+  echo "    --video     : Create rendered video   (default: $VIDEO )";
   echo "    --encParams : configured directory    (default: \"${ENCPARAMS[@]}\" )";
   echo "    --decParams : configured directory    (default: \"${DECPARAMS[@]}\" )";    
   echo "    --csv       : generate .csv file      (default: \"$CSV\" )";    
+  echo "    --ffmpeg=   : path to ffmpeg sw       (default: \"$FFMPEG\" )";    
   echo "";
   echo "  Examples:";
   echo "    $0 -h"; 
@@ -321,9 +386,11 @@ SEQID=1
 RATEID=1
 TMMMETRIC=0
 RENDER=0;
+VIDEO=0
 ENCPARAMS=()
 DECPARAMS=()
 CSV=
+FFMPEG=
 
 # Parse input parameters
 while [[ $# -gt 0 ]] ; do  
@@ -331,17 +398,19 @@ while [[ $# -gt 0 ]] ; do
   case "$C" in    
     -h|--help    ) print_usage;;
     --quiet      ) VERBOSE=0;;
-    -f|--frame*  ) FRAMECOUNT=$V;; 
-    -o|--outdir* ) OUTDIR=$V;; 
-    -c|--cfgdir* ) CFGDIR=$V;; 
-    --condId*    ) CONDID=$V;;
-    --seqId*     ) SEQID=$V;;
-    --rateId*    ) RATEID=$V;;    
+    -f|--frame   ) FRAMECOUNT=$V;; 
+    -o|--outdir  ) OUTDIR=$V;; 
+    -c|--cfgdir  ) CFGDIR=$V;; 
+    --condId     ) CONDID=$V;;
+    --seqId      ) SEQID=$V;;
+    --rateId     ) RATEID=$V;;    
     --tmmMetric  ) TMMMETRIC=1;;
     --render     ) RENDER=1;;
+    --video      ) VIDEO=1;;
     --encParams  ) ENCPARAMS+=( $V );;
     --decParams  ) DECPARAMS+=( $V );;
     --csv        ) CSV=$V;;
+    --ffmpeg     ) FFMPEG=$V;;
     *            ) print_usage "unsupported arguments: $C ";;
   esac
   shift;
@@ -352,10 +421,9 @@ setSoftwarePath;
 
 # Check parameters
 case $CONDID in
+  0) RATEID=0;;
   1) ;;
   2) ;;
-  3) RATEID=0;;
-  4) RATEID=0;;
   *) print_usage "condId not valid ($CONDID)";;
 esac
 case $SEQID in
@@ -378,6 +446,19 @@ case $RATEID in
   5) RATE="r5";;
   *) print_usage "rateId not valid ($RATEID)";;
 esac
+if [ -z "${CAMPATH}" ]; then
+  case $SEQID in
+    1) CAMPATH=${MAINDIR}/cfg/renderer/camerapath_longdress_dq1.txt;;
+    2) CAMPATH=${MAINDIR}/cfg/renderer/camerapath_longdress_dq1.txt;;
+    3) CAMPATH=${MAINDIR}/cfg/renderer/camerapath_basketball_player_dq1.txt;;
+    4) CAMPATH=${MAINDIR}/cfg/renderer/camerapath_basketball_player_dq1.txt;;
+    5) CAMPATH=${MAINDIR}/cfg/renderer/camerapath_mitch_dq1.txt;;
+    6) CAMPATH=${MAINDIR}/cfg/renderer/camerapath_mitch_dq1.txt;;
+    7) CAMPATH=${MAINDIR}/cfg/renderer/camerapath_football_dq2-spline0.txt;;
+    8) CAMPATH=${MAINDIR}/cfg/renderer/camerapath_levi_dq2.txt;;
+    *) print_usage "seqId not valid ($SEQID)";;
+  esac
+fi
 
 # Check configuration files
 CFGSUBDIR=$( cd "$CFGDIR" && pwd )/s${SEQID}c${CONDID}${RATE}_${SEQ:0:4}/
@@ -388,6 +469,10 @@ fi
 
 # Set output directory
 NAME=$( basename "$CFGSUBDIR" )
+if [ ${VIDEO} == 1 ] ; then
+  VIDEODIR=${OUTDIR}/$( printf "F%03d" "$FRAMECOUNT" )/video; 
+  if [ ! -d $VIDEODIR ] ; then mkdir -p $VIDEODIR; fi
+fi
 OUTDIR=${OUTDIR}/$( printf "F%03d" "$FRAMECOUNT" )/${NAME}; 
 if [ ! -d $OUTDIR ] ; then mkdir -p $OUTDIR; fi
 NAME=${OUTDIR}/${NAME}
@@ -405,6 +490,9 @@ if [ ${TMMMETRIC} == 1 ] ; then metrics; else mmetric; fi
 if [ ${RENDER} == 1 ] ; then
   render dec ${NAME}_%04d_dec.ply ${NAME}_%04d_dec.png 
   render src
+fi
+if [ ${VIDEO} == 1 ] ; then
+  render_video $( basename "$CFGSUBDIR" ) ${NAME}_%04d_dec.ply
 fi
 
 # Get metrics results

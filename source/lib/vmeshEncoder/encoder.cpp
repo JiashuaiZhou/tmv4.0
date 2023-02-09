@@ -1092,7 +1092,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
            encoderParams.dracoUseUV_,
            encoderParams.dracoMeshLossless_);
     encoder->encode(base, encoderParams, geometryBitstream, rec);
-
+  
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       base.save(prefix + "_base_enc.ply");
@@ -1172,13 +1172,15 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
                     params.interpolateDisplacementNormals,
                     params.dracoMeshLossless);
 
-  auto rsubdiv = rec;
-  std::swap(rsubdiv, subdiv);
-  const auto& mapping = frame.mapping;
-  for (int32_t v = 0, vcount = subdiv.pointCount(); v < vcount; ++v) {
-    const auto vindex = mapping[v];
-    assert(vindex >= 0 && vindex < vcount);
-    subdiv.setPoint(v, rsubdiv.point(vindex));
+  if (!params.dracoMeshLossless) {
+    auto rsubdiv = rec;
+    std::swap(rsubdiv, subdiv);
+    const auto& mapping = frame.mapping;
+    for (int32_t v = 0, vcount = subdiv.pointCount(); v < vcount; ++v) {
+      const auto vindex = mapping[v];
+      assert(vindex >= 0 && vindex < vcount);
+      subdiv.setPoint(v, rsubdiv.point(vindex));
+    }
   }
   return true;
 }
@@ -1448,12 +1450,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   // Unify vertices
   printf("UnifyVertices \n");
   fflush(stdout);
-  if (!params.dracoMeshLossless) {  
-    // Note JR: TODO check if params.unifyVertices=0 or 
-    // params.liftingSubdivisionIterationCount == 0 can be used
-    // rather than meshLossless
-    unifyVertices(gofInfo, gof, params);
-  }
+  unifyVertices(gofInfo, gof, params);
 
   // Compress geometry
   Bitstream     bitstreamGeo;

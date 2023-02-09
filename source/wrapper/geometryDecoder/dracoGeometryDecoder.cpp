@@ -61,7 +61,7 @@ convert(std::unique_ptr<draco::Mesh>& src,
     mesh.GetNamedAttribute(draco::GeometryAttribute::TEX_COORD);
   // position
   if (posAtt) {
-    if (!mesh_lossless)
+    if (!mesh_lossless) {
       for (draco::AttributeValueIndex i(0);
            i < static_cast<uint32_t>(posAtt->size());
            ++i) {
@@ -69,49 +69,51 @@ convert(std::unique_ptr<draco::Mesh>& src,
         if (!posAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
         dst.addPoint(value[0], value[1], value[2]);
       }
-  } else {
-    typedef std::array<float, 3> AttributeHashableValue;
-    std::unordered_map<AttributeHashableValue,
-                       std::set<int>,
-                       draco::HashArray<AttributeHashableValue>>
-      pos_value_ids_maps;
-    for (draco::AttributeValueIndex i(0);
-         i < static_cast<uint32_t>(posAtt->size());
-         ++i) {
-      std::array<float, 3> value{};
-      if (!posAtt->ConvertValue<float, 3>(i, value.data())) { return; }
-      pos_value_ids_maps[value].insert(i.value());
-      dst.addPoint(value[0], value[1], value[2]);
-    }
-    if (mesh_lossless && texAtt) {
+    } else {
+      typedef std::array<float, 3> AttributeHashableValue;
       std::unordered_map<AttributeHashableValue,
                          std::set<int>,
                          draco::HashArray<AttributeHashableValue>>
-        pos_tex_maps;
+        pos_value_ids_maps;
+      for (draco::AttributeValueIndex i(0);
+           i < static_cast<uint32_t>(posAtt->size());
+           ++i) {
+        std::array<float, 3> value{};
+        if (!posAtt->ConvertValue<float, 3>(i, value.data())) { return; }
+        pos_value_ids_maps[value].insert(i.value());
+        dst.addPoint(value[0], value[1], value[2]);
+      }
+      if (mesh_lossless && texAtt) {
+        std::unordered_map<AttributeHashableValue,
+                           std::set<int>,
+                           draco::HashArray<AttributeHashableValue>>
+          pos_tex_maps;
 
-      for (draco::FaceIndex i(0); i < mesh.num_faces(); ++i) {
-        const draco::Mesh::Face& face = mesh.face(i);
-        for (int j = 0; j < 3; ++j) {
-          int p_id = posAtt->mapped_index(face[j]).value();
-          int t_id = texAtt->mapped_index(face[j]).value();
+        for (draco::FaceIndex i(0); i < mesh.num_faces(); ++i) {
+          const draco::Mesh::Face& face = mesh.face(i);
+          for (int j = 0; j < 3; ++j) {
+            int p_id = posAtt->mapped_index(face[j]).value();
+            int t_id = texAtt->mapped_index(face[j]).value();
 
-          std::array<float, 3> value;
-          posAtt->ConvertValue<float, 3>(draco::AttributeValueIndex(p_id),
-                                         &value[0]);
-          bool is_new_tid = true;
-          if (!pos_tex_maps[value].empty()) {
-            if (pos_tex_maps[value].find(t_id) != pos_tex_maps[value].end()) {
-              is_new_tid = false;
+            std::array<float, 3> value;
+            posAtt->ConvertValue<float, 3>(draco::AttributeValueIndex(p_id),
+                                           &value[0]);
+            bool is_new_tid = true;
+            if (!pos_tex_maps[value].empty()) {
+              if (pos_tex_maps[value].find(t_id)
+                  != pos_tex_maps[value].end()) {
+                is_new_tid = false;
+              }
             }
-          }
-          if (is_new_tid) {
-            if (!pos_tex_maps[value].empty()
-                && pos_value_ids_maps[value].size()
-                     <= pos_tex_maps[value].size()) {
-              dst.addPoint(value[0], value[1], value[2]);
-              //dst.addPoint(p_id);
+            if (is_new_tid) {
+              if (!pos_tex_maps[value].empty()
+                  && pos_value_ids_maps[value].size()
+                       <= pos_tex_maps[value].size()) {
+                dst.addPoint(value[0], value[1], value[2]);
+                //dst.addPoint(p_id);
+              }
+              pos_tex_maps[value].insert(t_id);
             }
-            pos_tex_maps[value].insert(t_id);
           }
         }
       }
@@ -187,8 +189,7 @@ DracoGeometryDecoder<T>::decode(std::vector<uint8_t>&      bitstream,
     decoder.options()->SetGlobalBool("use_uv", params.dracoUseUV_);
     decoder.options()->SetGlobalBool("mesh_lossless",
                                      params.dracoMeshLossless_);
-    auto status =
-      decoder.DecodeMeshFromBuffer(&decBuffer);
+    auto status = decoder.DecodeMeshFromBuffer(&decBuffer);
     if (!status.ok()) {
       printf("Failed DecodeMeshFromBuffer: %s.\n",
              status.status().error_msg());

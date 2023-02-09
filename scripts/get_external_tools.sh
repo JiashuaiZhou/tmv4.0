@@ -2,7 +2,7 @@
 
 CURDIR=$( cd "$( dirname "$0" )" && pwd ); 
 MAINDIR=$( dirname ${CURDIR} )
-echo -e "\033[0;32mBuild external tools: mpeg-pcc-mmetric, HM and HDRTools \033[0m";
+echo -e "\033[0;32mBuild external tools: mpeg-pcc-mmetric, mpeg-pcc-renderer, HM and HDRTools \033[0m";
   
 ALL=0
 print_usage()
@@ -57,7 +57,16 @@ then
 fi
 echo -e "\033[0;32mBuild: ${MMETRIC} \033[0m";
 ${MMETRIC}/build.sh
-echo "ALL = ${ALL}"
+
+# mpeg-pcc-render
+RENDER=${DEPDIR}/mpeg-pcc-renderer
+if [ ! -d ${RENDER} ] 
+then 
+  echo -e "\033[0;32mClone: ${RENDER} \033[0m";
+  git clone http://mpegx.int-evry.fr/software/MPEG/PCC/mpeg-pcc-renderer.git ${RENDER}
+fi    
+echo -e "\033[0;32mBuild: ${RENDER} \033[0m";
+${RENDER}/build.sh noomp
 
 if [ ${ALL} == 1 ]
 then 

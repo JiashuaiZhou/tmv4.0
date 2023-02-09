@@ -27,8 +27,8 @@ set grid
 unset key
 
 print "Create: ", output
-do for [cond=1:2] {  
-  do for [seq=1:8] {          
+do for [cond=1:2] {
+  do for [seq=1:8] {
     print "Cond = ".cond." - Sequence = ".seq. " - ". word( sequences, seq) . " - Frame = ". frame 
     set multiplot layout 3,4 title "Cond = ".cond." - Sequence = ".seq. " - ". word( sequences, seq) . " - Frame = ". frame
     
@@ -39,12 +39,12 @@ do for [cond=1:2] {
       set ylabel word( labels, int( colnum ) - 5 )
       set yrange [*:*]
       do for [ name in csvFiles ] {
-        stats name using colnum index 0 every ::(1+(seq-1)*5+(cond-1)*40)::(5+(seq-1)*5+(cond-1)*40) prefix "PSNR" nooutput
+        stats name using colnum index 0 every ::(1+8+(seq-1)*5+(cond-1)*40)::(5+8+(seq-1)*5+(cond-1)*40) prefix "PSNR" nooutput
         if ( PSNR_max > 100 ) { set yrange [*:100]; }
       }
       plot for [ name in csvFiles ] \
         name \
-        every::(1+(seq-1)*5+(cond-1)*40)::(5+(seq-1)*5+(cond-1)*40) \
+        every::(1+8+(seq-1)*5+(cond-1)*40)::(5+8+(seq-1)*5+(cond-1)*40) \
         using ($5/1000000):(column(colnum+0)) with linespoints pointtype 7 pointsize 0.2
     }
     
@@ -75,7 +75,7 @@ do for [cond=1:2] {
       set ylabel word( labels, int( colnum ) - 5 )    
       plot for [ name in csvFiles ] \
         name \
-        every::(1+(seq-1)*5+(cond-1)*40)::(5+(seq-1)*5+(cond-1)*40) \
+        every::(1+8+(seq-1)*5+(cond-1)*40)::(5+8+(seq-1)*5+(cond-1)*40) \
         using colnum with histogram \
         title name 
     }

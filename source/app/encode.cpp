@@ -739,12 +739,6 @@ compress(const Parameters& params) {
       std::cerr << "Error: can't load source sequence\n";
       return false;
     }
-    printf("source count =  %d \n", source.frameCount());
-    fflush(stdout);
-    printf("source.texture(frameIndex) = %d %d \n",
-           source.texture(0).width(),
-           source.texture(0).height());
-    fflush(stdout);
 
     // Compress group of frame
     auto start = std::chrono::steady_clock::now();
@@ -756,7 +750,7 @@ compress(const Parameters& params) {
     auto end                       = std::chrono::steady_clock::now();
     encoder.stats().processingTime = end - start;
 
-    // Save reconsctructed models
+    // Save reconstructed models
     if (!reconstruct.save(params.reconstructedMeshPath,
                           params.reconstructedTexturePath,
                           params.reconstructedMaterialLibPath,

@@ -32,23 +32,24 @@ if ( USE_DRACO_GEOMETRY_CODEC )
   else()
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
       add_compile_options(-Wno-deprecated-copy-with-user-provided-copy
-        -Wno-sign-compare
-        -Wno-ignored-qualifiers
-        -Wno-range-loop-construct
-        -Wno-implicit-const-int-float-conversion)
+                          -Wno-sign-compare
+                          -Wno-ignored-qualifiers
+                          -Wno-range-loop-construct
+                          -Wno-implicit-const-int-float-conversion)
     else()
-      add_compile_options(
-        -Wno-deprecated-copy
-        -Wno-sign-compare
-        -Wno-shadow
-        -Wno-error=shadow
-        -Wno-unused-parameter
-        -Wno-comment
-        -Wno-ignored-qualifiers
-        -Wno-unused-local-typedefs
-        -Wno-bool-compare
-        -Wno-maybe-uninitialized
-        -Wno-pedantic)
+      if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9 )
+        add_compile_options(-Wno-deprecated-copy)
+      endif ()
+      add_compile_options(-Wno-sign-compare
+                          -Wno-shadow
+                          -Wno-error=shadow
+                          -Wno-unused-parameter
+                          -Wno-comment
+                          -Wno-ignored-qualifiers
+                          -Wno-unused-local-typedefs
+                          -Wno-bool-compare
+                          -Wno-maybe-uninitialized
+                          -Wno-pedantic)
     endif()
   endif()
   add_subdirectory(dependencies/draco)

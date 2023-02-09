@@ -7,10 +7,12 @@ if ( USE_VV_VIDEO_CODEC )
   # Update GCC 
   message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
   if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")    
-    add_compile_options(-Wno-error=deprecated-copy)
-    add_compile_options(-Wno-error=implicit-fallthrough)
-    add_compile_options(-Wno-error=type-limits)
-    add_compile_options(-Wno-error=shift-negative-value)
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9 )
+      add_compile_options(-Wno-error=deprecated-copy)
+    endif ()
+    add_compile_options(-Wno-error=implicit-fallthrough
+                        -Wno-error=type-limits
+                        -Wno-error=shift-negative-value)
   endif()
 
   # VVENC

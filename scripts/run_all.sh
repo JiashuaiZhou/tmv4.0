@@ -343,11 +343,11 @@ if (( ${GRAPH} || ${RENDER} || ${XLSM} || ${VIDEO} )) ; then
               ${FFMPEG} \
                 -i ${OUTVIDEO_NOLEGEND} \
                 -vf "drawtext=text='R1(${LISTRATES[0]}Mbps)
-                  ${LISTGEODISTS[0]}dB|${LISTLUMADISTS[0]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*1/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R2(${LISTRATES[1]}Mbps)
-                  ${LISTGEODISTS[1]}dB|${LISTLUMADISTS[1]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*3/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R1(${LISTRATES[2]}Mbps)
-                  ${LISTGEODISTS[2]}dB|${LISTLUMADISTS[2]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*5/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R4(${LISTRATES[3]}Mbps)
-                  ${LISTGEODISTS[3]}dB|${LISTLUMADISTS[3]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*7/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R5(${LISTRATES[4]}Mbps)
-                  ${LISTGEODISTS[4]}dB|${LISTLUMADISTS[0]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*9/2-text_w/2): y=(${HEIGHT}-text_h)" \
+${LISTGEODISTS[0]}dB|${LISTLUMADISTS[0]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*1/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R2(${LISTRATES[1]}Mbps)
+${LISTGEODISTS[1]}dB|${LISTLUMADISTS[1]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*3/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R3(${LISTRATES[2]}Mbps)
+${LISTGEODISTS[2]}dB|${LISTLUMADISTS[2]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*5/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R4(${LISTRATES[3]}Mbps)
+${LISTGEODISTS[3]}dB|${LISTLUMADISTS[3]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*7/2-text_w/2): y=(${HEIGHT}-text_h), drawtext=text='R5(${LISTRATES[4]}Mbps)
+${LISTGEODISTS[4]}dB|${LISTLUMADISTS[4]}dB': fontcolor=white: fontsize=30: box=1: boxcolor=black@0.5: boxborderw=4: x=(${WIDTH}*9/2-text_w/2): y=(${HEIGHT}-text_h)" \
                 ${OUTVIDEO}
             
             rm ${OUTVIDEO_NOLEGEND}

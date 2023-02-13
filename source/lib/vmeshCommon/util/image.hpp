@@ -510,7 +510,9 @@ public:
            sizeof(T));
     for (size_t c = 0; c < 3; c++) {
       auto* src = ptr[rgb2bgr][c];
-      auto* dst = _planes[c].data();
+      auto* dst = _planes[0].data();
+      if (format != ColourSpace::YUV400p)
+          dst = _planes[c].data();
       if (shiftbits > 0) {
         T minval = 0;
         T maxval = (T)((1 << (10 - (int)shiftbits)) - 1);
@@ -573,7 +575,9 @@ public:
            rgb2bgr,
            sizeof(Pel));
     for (size_t c = 0; c < 3; c++) {
-      auto* src = _planes[c].data();
+      auto* src = _planes[0].data();
+      if(_colourSpace != ColourSpace::YUV400p)
+          src = _planes[c].data();
       auto* dst = ptr[rgb2bgr][c];
       if (shiftbits > 0) {
         for (size_t v = 0; v < heightSrc[c];

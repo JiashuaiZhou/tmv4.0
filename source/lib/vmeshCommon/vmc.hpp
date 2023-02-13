@@ -360,7 +360,8 @@ subdivideBaseMesh(VMCFrame&               frame,
     interpolateSubdivision(
       rec.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);
   } else {
-    rec.computeNormals();
+    if (!meshLossless)
+      rec.computeNormals();
   }
   return 0;
 }

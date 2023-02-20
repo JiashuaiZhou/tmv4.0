@@ -101,6 +101,63 @@ function metrics() {
   fi
 }
 
+function metriclossless() { 
+  if isNotFinishMM ${LOGMET} ; 
+  then 
+    START=$(       cat ${CFGSUBDIR}/mmetric.cfg | grep "startFrameIndex:"  | awk '{print $2}' )
+    SRCMESH=$(     cat ${CFGSUBDIR}/mmetric.cfg | grep "srcMesh:"          | awk '{print $2}' )
+    SRCTEX=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "srcTex:"           | awk '{print $2}' )
+    QP=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "positionBitDepth:" | awk '{print $2}' )
+    QT=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "texCoordBitDepth:" | awk '{print $2}' )
+    MINPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "minPosition:"      | awk '{print $2" "$3" "$4}' )
+    MAXPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "maxPosition:"      | awk '{print $2" "$3" "$4}' )
+    LAST=$(( START + FRAMECOUNT - 1 ))
+    CMD="$MMETRIC \
+      sequence  \
+        --firstFrame    ${START} \
+        --lastFrame     ${LAST} \
+        END \
+      dequantize \
+        --inputModel    ${SRCMESH} \
+        --useFixedPoint \
+        --qp            ${QP} \
+        --qt            ${QT} \
+        --minPos        \"${MINPOSITION}\" \
+        --maxPos        \"${MAXPOSITION}\" \
+        --minUv         \"0.0 0.0\" \
+        --maxUv         \"1.0 1.0\" \
+        --outputModel   ID:deqRef \
+        END \
+      dequantize \
+        --inputModel    ${NAME}_%04d_dec.ply \
+        --useFixedPoint \
+        --qp            ${QP} \
+        --qt            0 \
+        --minPos        \"${MINPOSITION}\" \
+        --maxPos        \"${MAXPOSITION}\" \
+        --minUv         \"0.0 0.0\" \
+        --maxUv         \"1.0 1.0\" \
+        --outputModel   ID:deqDis \
+        END \
+      compare \
+        --mode          equ \
+        --inputModelA   ID:deqRef \
+        --inputModelB   ID:deqDis \
+        --inputMapA     ${SRCTEX} \
+        --inputMapB     ${NAME}_%04d_dec.png \
+      END \
+      > ${LOGMET}"
+      
+    if (( $VERBOSE )) ; then 
+      #echo -e "\033[0;32mMMetric: ${NAME} \033[0m";
+      formatCmd "$CMD" "-- -c > compare dequantize sequence reindex sample END"
+    fi
+    if ! eval $CMD ; then echo "ERROR: mmetric sw return !0"; exit; fi
+  else
+    if (( $VERBOSE )) ; then echo "${LOGMET} already exist"; fi
+  fi
+}
+
 function mmetric() { 
   if isNotFinishMM ${LOGMET} ; 
   then 
@@ -486,7 +543,15 @@ LOGMET=${OUTDIR}/metrics.log
 # Start sub-processes
 encode
 decode
-if [ ${TMMMETRIC} == 1 ] ; then metrics; else mmetric; fi
+if [ ${TMMMETRIC} == 1 ] ; then 
+  metrics; 
+else
+  if [ ${CONDID} == 0 ] ; then
+	  metriclossless;
+	else
+		mmetric; 
+	fi 
+fi
 if [ ${RENDER} == 1 ] ; then
   render dec ${NAME}_%04d_dec.ply ${NAME}_%04d_dec.png 
   render src

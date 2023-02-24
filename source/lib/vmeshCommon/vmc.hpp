@@ -289,12 +289,13 @@ private:
 };
 
 static int32_t
-reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
-                                      VMCFrame&              frame,
-                                      const TriangleMesh<MeshType>& rec,
-                                      const int32_t geometryVideoBlockSize,
-                                      const int32_t geometryVideoBitDepth,
-                                      const int32_t displacementReversePacking) {
+reconstructDisplacementFromVideoFrame(
+  const Frame<uint16_t>&        dispVideoFrame,
+  VMCFrame&                     frame,
+  const TriangleMesh<MeshType>& rec,
+  const int32_t                 geometryVideoBlockSize,
+  const int32_t                 geometryVideoBitDepth,
+  const int32_t                 displacementReversePacking) {
   printf("Reconstruct displacements from video frame \n");
   fflush(stdout);
   const auto geometryVideoWidthInBlocks =
@@ -354,14 +355,12 @@ subdivideBaseMesh(VMCFrame&               frame,
   } else {
     return -1;
   }
-  if (!meshLossless)
-    rec.resizeNormals(rec.pointCount());
+  if (!meshLossless) rec.resizeNormals(rec.pointCount());
   if (interpolateDisplacementNormals) {
     interpolateSubdivision(
       rec.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);
   } else {
-    if (!meshLossless)
-      rec.computeNormals();
+    if (!meshLossless) rec.computeNormals();
   }
   return 0;
 }
@@ -454,7 +453,7 @@ removeDuplicatedVertices(VMCFrame& frame) {
   const auto                 pointCount0 = int32_t(umapping.size());
   for (int32_t vindex0 = 0; vindex0 < pointCount0; ++vindex0) {
     auto vindex1 = umapping[vindex0];
-    auto it = uniqueIndices.find(vindex1);
+    auto it      = uniqueIndices.find(vindex1);
     if (it == uniqueIndices.end()) {
       uniqueIndices[vindex1] = vindex0;
     } else {
@@ -479,7 +478,7 @@ typedef std::tuple<
   std::string,
   std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds>,
   std::chrono::nanoseconds>
-                    TicToc;
+                           TicToc;
 static std::vector<TicToc> g_ticTocList;
 
 //============================================================================
@@ -487,9 +486,9 @@ static std::vector<TicToc> g_ticTocList;
 static void
 tic(const std::string& name) {
   auto it = std::find_if(
-    g_ticTocList.begin(),
-    g_ticTocList.end(),
-    [&name](const TicToc& element) { return std::get<0>( element )  == name; });
+    g_ticTocList.begin(), g_ticTocList.end(), [&name](const TicToc& element) {
+      return std::get<0>(element) == name;
+    });
 
   auto start = std::chrono::steady_clock::now();
   if (it != g_ticTocList.end()) {
@@ -505,16 +504,16 @@ tic(const std::string& name) {
 static void
 toc(const std::string& name) {
   auto it = std::find_if(
-    g_ticTocList.begin(),
-    g_ticTocList.end(),
-    [&name](const TicToc& element) { return std::get<0>( element )  == name; });
+    g_ticTocList.begin(), g_ticTocList.end(), [&name](const TicToc& element) {
+      return std::get<0>(element) == name;
+    });
 
   if (it != g_ticTocList.end()) {
     auto end      = std::chrono::steady_clock::now();
     auto duration = end - std::get<1>(*it);
     std::get<2>(*it) += duration;
     std::cout << "Duration " << std::left << std::setw(25) << name
-              << ": time = " <<  std::right <<std::setw(15)
+              << ": time = " << std::right << std::setw(15)
               << std::chrono::duration<double>(duration).count()
               << " s Total = " << std::setw(15)
               << std::chrono::duration<double>(std::get<2>(*it)).count()

@@ -215,7 +215,7 @@ struct VMCEncoderParameters {
   int32_t      textureVideoDownsampleFilter = 4;
   int32_t      textureVideoUpsampleFilter   = 0;
   bool         textureVideoFullRange        = false;
-  VideoCodecId textureVideoCodecId          = VideoCodecId::HM;  
+  VideoCodecId textureVideoCodecId          = VideoCodecId::HM;
   bool         textureBGR444                = false;
 
   // Base mesh
@@ -303,8 +303,7 @@ struct VMCEncoderParameters {
   std::string  cachingDirectory = {};
 
   // Metrics
-  bool    normalCalcModificationEnable = false;
-
+  bool normalCalcModificationEnable = false;
 };
 
 //============================================================================
@@ -367,18 +366,19 @@ private:
   static bool quantizeDisplacements(VMCFrame&                   frame,
                                     const VMCEncoderParameters& params);
 
-  bool        compressBaseMesh(const VMCGroupOfFrames&     gof,
-                               const VMCFrameInfo&         frameInfo,
-                               VMCFrame&                   frame,
-                               TriangleMesh<MeshType>&     rec,
-                               Bitstream&                  bitstream,
-                               const VMCEncoderParameters& params);
-  static bool compressMotion(const std::vector<Vec3<int32_t>>& triangles,
-                             const std::vector<Vec3<int32_t>>& reference,
-                             const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
-                             const std::vector<Vec3<int32_t>>& current,
-                             Bitstream&                        bitstream,
-                             const VMCEncoderParameters&       params);
+  bool compressBaseMesh(const VMCGroupOfFrames&     gof,
+                        const VMCFrameInfo&         frameInfo,
+                        VMCFrame&                   frame,
+                        TriangleMesh<MeshType>&     rec,
+                        Bitstream&                  bitstream,
+                        const VMCEncoderParameters& params);
+  static bool
+  compressMotion(const std::vector<Vec3<int32_t>>& triangles,
+                 const std::vector<Vec3<int32_t>>& reference,
+                 const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
+                 const std::vector<Vec3<int32_t>>& current,
+                 Bitstream&                        bitstream,
+                 const VMCEncoderParameters&       params);
   static bool
        computeDisplacementVideoFrame(const VMCFrame&             frame,
                                      Frame<uint16_t>&            dispVideoFrame,

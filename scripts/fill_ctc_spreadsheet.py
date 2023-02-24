@@ -33,7 +33,7 @@ def parseArgs():
   global parser
   source = getCurrentDir() + "/results/empty.xlsm"
   parser = argparse.ArgumentParser(description="Fill CTC .xlsm file")
-  # clang-format off  
+  # clang-format off
   parser.add_argument("--anchor", help="Anchor .csv path (csv)",            default="anchor.cvs", type=str)
   parser.add_argument("--tested", help="Test.csv path (csv)",               default="test.csv",   type=str)
   parser.add_argument("--source", help="VMesh CFP spreadsheet path (xlsm)", default=source,       type=str)
@@ -53,7 +53,7 @@ def readCsv(filename):
   with open( filename, 'r') as read_obj:
     data = []
     for row in DictReader(read_obj):
-      data.append( row )  
+      data.append( row )
   return data
 
 # Print sequences
@@ -116,18 +116,18 @@ if __name__ == "__main__":
   # Parse arguments
   args = parseArgs()
 
-  # Check options  
+  # Check options
   if args.frame <= 0:
     printArgs(args)
     print("Error: number of frame must be set \n" )
     exit(-1)
-  if not os.path.isfile( args.source ) and not os.path.exists( args.source ): 
+  if not os.path.isfile( args.source ) and not os.path.exists( args.source ):
     printArgs(args)
-    print("Error: source xlsm file not exist: %s \n"% args.source)    
+    print("Error: source xlsm file not exist: %s \n"% args.source)
     exit(-1)
-  if not os.path.isfile( args.anchor ) and not os.path.exists( args.anchor ):  
-    printArgs(args)   
-    print("Error: anchor csv file not exist: %s \n"% args.anchor)    
+  if not os.path.isfile( args.anchor ) and not os.path.exists( args.anchor ):
+    printArgs(args)
+    print("Error: anchor csv file not exist: %s \n"% args.anchor)
     exit(-1)
 
   # Fill xlsm

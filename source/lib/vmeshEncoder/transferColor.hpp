@@ -69,14 +69,14 @@ private:
                              Plane<uint8_t>&             ocm,
                              const VMCEncoderParameters& params);
 
-  int  transferColorByMeshes(const TriangleMesh<MeshType>& targetMesh,
-                             const Frame<uint8_t>&         targetTexture,
-                             const TriangleMesh<MeshType>& reconstructedMesh,
-                             Frame<uint8_t>&               reconstructedTexture,
-                             Plane<uint8_t>&               occupancy,
-                             const std::vector<int32_t>&   srcTri2tgtTri,
-                             const VMCEncoderParameters&   params);
-                             
+  int transferColorByMeshes(const TriangleMesh<MeshType>& targetMesh,
+                            const Frame<uint8_t>&         targetTexture,
+                            const TriangleMesh<MeshType>& reconstructedMesh,
+                            Frame<uint8_t>&               reconstructedTexture,
+                            Plane<uint8_t>&               occupancy,
+                            const std::vector<int32_t>&   srcTri2tgtTri,
+                            const VMCEncoderParameters&   params);
+
   void dilateTexture(Frame<uint8_t>&             reconstructedTexture,
                      Plane<uint8_t>&             occupancy,
                      const VMCEncoderParameters& params);

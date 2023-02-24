@@ -1,16 +1,16 @@
 #!/usr/bin/gnuplot -persist
 
-set print "-"  
+set print "-"
 print "experiments = ", experiments
 print "names       = ", names
-print "output      = ", output 
+print "output      = ", output
 
-set terminal pdf enhanced font 'Verdana,4' 
-set out      output  
+set terminal pdf enhanced font 'Verdana,4'
+set out      output
 set datafile separator ','
 
-sequences = "Longdress Soldier Basketball Dancer Mitch Thomas Football Levi" 
-sequencesShort = "long sold bask danc mitc thom foot levi" 
+sequences = "Longdress Soldier Basketball Dancer Mitch Thomas Football Levi"
+sequencesShort = "long sold bask danc mitc thom foot levi"
 
 # init graph parameters
 numTests=words( experiments )
@@ -38,20 +38,20 @@ do for [cond=0:2] {
       if ( seq == 7 ){ x=340; y=900;  }
       if ( seq == 8 ){ x=300; y=1130; }
       set xrange [x:x+w]
-      set yrange [y:y+h]            
+      set yrange [y:y+h]
       if ( cond == 0 ){
         titlename="Cond = ".cond." - Sequence = ".seq. " - ". word( sequences, seq ) . " - Frame = ". frame;
         testname='s'.seq.'c'.cond.'_'. word( sequencesShort, seq );
-      } else{    
-        titlename="Cond = ".cond." - Sequence = ".seq. " - ". word( sequences, seq ) . " - Rate = ".rate. " - Frame = ". frame;        
+      } else{
+        titlename="Cond = ".cond." - Sequence = ".seq. " - ". word( sequences, seq ) . " - Rate = ".rate. " - Frame = ". frame;
         testname='s'.seq.'c'.cond.'r'.rate.'_'. word( sequencesShort, seq );
       }
       print titlename;
       set multiplot layout 2,numTests+1 title titlename
-      unset xlabel      
+      unset xlabel
       do for [test=1:numTests] {
         set title word(names, test)
-        filename=word(experiments, test).'/'. testname .'/dec_light0.png'      
+        filename=word(experiments, test).'/'. testname .'/dec_light0.png'
         plot filename binary filetype=png with rgbimage
         if ( test == 1 ){
           set title "Original"

@@ -52,7 +52,7 @@ DracoGeometryEncoder<T>::~DracoGeometryEncoder() = default;
 template<typename T>
 std::unique_ptr<draco::Mesh>
 convert(TriangleMesh<T>& src, const bool deduplicateAttribute) {
-  const bool    enableNormal = false;
+  const bool    enableNormal  = false;
   const int32_t triCount      = src.triangleCount();
   const int32_t pointCount    = src.pointCount();
   const int32_t texCoordCount = src.texCoordCount();

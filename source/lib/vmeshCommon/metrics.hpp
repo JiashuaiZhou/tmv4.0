@@ -77,7 +77,7 @@ struct VMCMetricsParameters {
   double pcqmRadiusFactor       = 2.0;
 
   // Optionals
-  bool        verbose        = false;
+  bool verbose = false;
 };
 
 //============================================================================

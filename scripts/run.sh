@@ -1,14 +1,14 @@
 #!/bin/bash
 
-CURDIR=$( cd "$( dirname "$0" )" && pwd ); 
+CURDIR=$( cd "$( dirname "$0" )" && pwd );
 MAINDIR=$( dirname ${CURDIR} )
 
-function formatCmd(){ 
-  local f=${1}; 
-  for s in ${2} ; do 
+function formatCmd(){
+  local f=${1};
+  for s in ${2} ; do
     if [ $s == "--" ] ; then f=${f//${s}/ \\\\\\n    ${s}};  else f=${f// ${s}/ \\\\\\n   ${s}};  fi
   done
-  echo -e "$f" | sed 's/ *\\$/ \\/' 
+  echo -e "$f" | sed 's/ *\\$/ \\/'
 }
 function clip() { awk -v v="$1" -v a="$2" -v b="$3" 'BEGIN {print (v<a?a:v>b?b:v)}'; }
 function isNotFinishTMM(){ [ ! -f "$1" ] || [[ "$( cat $1 | grep 'All frames have been'        )" == "" ]] && return; false; }
@@ -18,52 +18,52 @@ function setSoftwarePath(){
   ENCODER=${MAINDIR}/build/Release/bin/encode
   DECODER=${MAINDIR}/build/Release/bin/decode
   MMETRIC=${MAINDIR}/externaltools/mpeg-pcc-mmetric/build/Release/bin/mm
-  RENDER=${MAINDIR}/externaltools/mpeg-pcc-renderer/bin/linux/Release/PccAppRenderer
-  if [ ! -f "${ENCODER}" ] ; then ENCODER=${MAINDIR}/build/Release/bin/Release/encode.exe; fi
-  if [ ! -f "${DECODER}" ] ; then DECODER=${MAINDIR}/build/Release/bin/Release/decode.exe; fi
-  if [ ! -f "${MMETRIC}" ] ; then MMETRIC=${MAINDIR}/externaltools/mpeg-pcc-mmetric/build/Release/bin/Release/mm.exe; fi
-  if [ ! -f "${RENDER}"  ] ; then RENDER=${MAINDIR}/externaltools/mpeg-pcc-renderer/bin/windows/Release/PccAppRenderer.exe; fi
-  if [ ${TMMMETRIC} == 1 ] ; then 
+  RENDERER=${MAINDIR}/externaltools/mpeg-pcc-renderer/bin/linux/Release/PccAppRenderer
+  if [ ! -f "${ENCODER}"  ] ; then ENCODER=${MAINDIR}/build/Release/bin/Release/encode.exe; fi
+  if [ ! -f "${DECODER}"  ] ; then DECODER=${MAINDIR}/build/Release/bin/Release/decode.exe; fi
+  if [ ! -f "${MMETRIC}"  ] ; then MMETRIC=${MAINDIR}/externaltools/mpeg-pcc-mmetric/build/Release/bin/Release/mm.exe; fi
+  if [ ! -f "${RENDERER}" ] ; then RENDERER=${MAINDIR}/externaltools/mpeg-pcc-renderer/bin/windows/Release/PccAppRenderer.exe; fi
+  if [ ${TMMMETRIC} == 1 ] ; then
     METRICS=${MAINDIR}/build/Release/bin/metrics
-    if [ ! -f "${METRICSgit }" ] ; then METRICS=${MAINDIR}/build/Release/bin/Release/metrics.exe; fi  
-    if [ ! -f "${METRICS}" ] ; then print_usage "${METRICS} not exist, please run ./build.sh"; fi 
+    if [ ! -f "${METRICSgit }" ] ; then METRICS=${MAINDIR}/build/Release/bin/Release/metrics.exe; fi
+    if [ ! -f "${METRICS}" ] ; then print_usage "${METRICS} not exist, please run ./build.sh"; fi
   fi
-  for NAME in $ENCODER $DECODER $MMETRIC $RENDER; do  
-    if [ ! -f $NAME ] ; then 
-      print_usage "$NAME not exist, please run ./build.sh"; 
-    fi 
+  for NAME in $ENCODER $DECODER $MMETRIC $RENDERER; do
+    if [ ! -f $NAME ] ; then
+      print_usage "$NAME not exist, please run ./build.sh";
+    fi
   done
-  if [ $VIDEO == 1 ] ; then 
+  if [ $VIDEO == 1 ] ; then
     if ! command -v ${FFMPEG} &> /dev/null ; then
-      if [ ! -f "${FFMPEG}" ] ; then 
+      if [ ! -f "${FFMPEG}" ] ; then
         print_usage "${FFMPEG} not exist, please add \--ffmpeg path_to_ffmpeg\" ";
-      fi 
+      fi
     fi
   fi
 }
 
-function encode() {   
-  if isNotFinishTMM ${LOGENC} ; 
-  then 
+function encode() {
+  if isNotFinishTMM ${LOGENC} ;
+  then
     CMD="$ENCODER \
       --config=${CFGSUBDIR}/encoder.cfg \
       --frameCount=${FRAMECOUNT} \
       --compressed=${VDMC} \
       ${ENCPARAMS[@]} \
-      > ${LOGENC} 2>&1"    
-    if (( $VERBOSE )) ; then 
-      echo -e "\033[0;32mEncode: ${NAME} \033[0m";   
+      > ${LOGENC} 2>&1"
+    if (( $VERBOSE )) ; then
+      echo -e "\033[0;32mEncode: ${NAME} \033[0m";
       formatCmd "$CMD" "-- >"
     fi
     if ! eval $CMD ; then echo "ERROR: encode sw return !0"; exit; fi
-  else 
+  else
     if (( $VERBOSE )) ; then echo "${LOGENC} already exist"; fi
   fi
 }
 
-function decode() { 
-  if isNotFinishTMM ${LOGDEC} ; 
-  then 
+function decode() {
+  if isNotFinishTMM ${LOGDEC} ;
+  then
     CMD="$DECODER \
       --config=${CFGSUBDIR}/decoder.cfg \
       --compressed=${VDMC} \
@@ -71,96 +71,39 @@ function decode() {
       --decTex=${NAME}_%04d_dec.png \
       --decMat=${NAME}_%04d_dec.mtl \
       ${DECPARAMS[@]} \
-      > ${LOGDEC} 2>&1 ";  
-    if (( $VERBOSE )) ; then 
+      > ${LOGDEC} 2>&1 ";
+    if (( $VERBOSE )) ; then
       echo -e "\033[0;32mDecode: ${NAME} \033[0m";
       formatCmd "$CMD" "-- >"
     fi
     if ! eval $CMD ; then echo "ERROR: decode sw return !0"; exit; fi
-  else 
+  else
     if (( $VERBOSE )) ; then echo "${LOGDEC} already exist"; fi
   fi
 }
 
-function metrics() { 
-  if isNotFinishTMM ${LOGMET} ; 
-  then 
+function metrics() {
+  if isNotFinishTMM ${LOGMET} ;
+  then
     CMD="${METRICS} \
       --config=${CFGSUBDIR}/mmetric.cfg \
       --decMesh=${NAME}_%04d_dec.ply \
       --decTex=${NAME}_%04d_dec.png \
       --frameCount=${FRAMECOUNT} \
       > ${LOGMET}";
-    if (( $VERBOSE )) ; then 
+    if (( $VERBOSE )) ; then
       echo -e "\033[0;32mMetrics: ${NAME} \033[0m";
       formatCmd "$CMD" "-- >"
     fi
     if ! eval $CMD ; then echo "ERROR: metrics sw return !0"; exit; fi
-  else 
-    if (( $VERBOSE )) ; then echo "${LOGMET} already exist"; fi
-  fi
-}
-
-function metriclossless() { 
-  if isNotFinishMM ${LOGMET} ; 
-  then 
-    START=$(       cat ${CFGSUBDIR}/mmetric.cfg | grep "startFrameIndex:"  | awk '{print $2}' )
-    SRCMESH=$(     cat ${CFGSUBDIR}/mmetric.cfg | grep "srcMesh:"          | awk '{print $2}' )
-    SRCTEX=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "srcTex:"           | awk '{print $2}' )
-    QP=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "positionBitDepth:" | awk '{print $2}' )
-    QT=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "texCoordBitDepth:" | awk '{print $2}' )
-    MINPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "minPosition:"      | awk '{print $2" "$3" "$4}' )
-    MAXPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "maxPosition:"      | awk '{print $2" "$3" "$4}' )
-    LAST=$(( START + FRAMECOUNT - 1 ))
-    CMD="$MMETRIC \
-      sequence  \
-        --firstFrame    ${START} \
-        --lastFrame     ${LAST} \
-        END \
-      dequantize \
-        --inputModel    ${SRCMESH} \
-        --useFixedPoint \
-        --qp            ${QP} \
-        --qt            ${QT} \
-        --minPos        \"${MINPOSITION}\" \
-        --maxPos        \"${MAXPOSITION}\" \
-        --minUv         \"0.0 0.0\" \
-        --maxUv         \"1.0 1.0\" \
-        --outputModel   ID:deqRef \
-        END \
-      dequantize \
-        --inputModel    ${NAME}_%04d_dec.ply \
-        --useFixedPoint \
-        --qp            ${QP} \
-        --qt            0 \
-        --minPos        \"${MINPOSITION}\" \
-        --maxPos        \"${MAXPOSITION}\" \
-        --minUv         \"0.0 0.0\" \
-        --maxUv         \"1.0 1.0\" \
-        --outputModel   ID:deqDis \
-        END \
-      compare \
-        --mode          equ \
-        --inputModelA   ID:deqRef \
-        --inputModelB   ID:deqDis \
-        --inputMapA     ${SRCTEX} \
-        --inputMapB     ${NAME}_%04d_dec.png \
-      END \
-      > ${LOGMET}"
-      
-    if (( $VERBOSE )) ; then 
-      #echo -e "\033[0;32mMMetric: ${NAME} \033[0m";
-      formatCmd "$CMD" "-- -c > compare dequantize sequence reindex sample END"
-    fi
-    if ! eval $CMD ; then echo "ERROR: mmetric sw return !0"; exit; fi
   else
     if (( $VERBOSE )) ; then echo "${LOGMET} already exist"; fi
   fi
 }
 
-function mmetric() { 
-  if isNotFinishMM ${LOGMET} ; 
-  then 
+function mmetric() {
+  if isNotFinishMM ${LOGMET} ;
+  then
     START=$(       cat ${CFGSUBDIR}/mmetric.cfg | grep "startFrameIndex:"  | awk '{print $2}' )
     SRCMESH=$(     cat ${CFGSUBDIR}/mmetric.cfg | grep "srcMesh:"          | awk '{print $2}' )
     SRCTEX=$(      cat ${CFGSUBDIR}/mmetric.cfg | grep "srcTex:"           | awk '{print $2}' )
@@ -168,8 +111,6 @@ function mmetric() {
     QT=$(          cat ${CFGSUBDIR}/mmetric.cfg | grep "texCoordBitDepth:" | awk '{print $2}' )
     MINPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "minPosition:"      | awk '{print $2" "$3" "$4}' )
     MAXPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "maxPosition:"      | awk '{print $2" "$3" "$4}' )
-    GRIDSIZE=$(    cat ${CFGSUBDIR}/mmetric.cfg | grep "gridSize:"         | awk '{print $2}' )
-    RESOLUTION=$(  cat ${CFGSUBDIR}/mmetric.cfg | grep "resolution:"       | awk '{print $2}' )
     LAST=$(( START + FRAMECOUNT - 1 ))
     CMD="$MMETRIC \
       sequence  \
@@ -197,58 +138,72 @@ function mmetric() {
         --minUv         \"0.0 0.0\" \
         --maxUv         \"1.0 1.0\" \
         --outputModel   ID:deqDis \
+        END "
+    if [ ${CONDID} == 0 ] ; then
+      CMD+=" \
+        compare \
+          --mode          equ \
+          --inputModelA   ID:deqRef \
+          --inputModelB   ID:deqDis \
+          --inputMapA     ${SRCTEX} \
+          --inputMapB     ${NAME}_%04d_dec.png \
         END \
-      compare \
-        --mode          ibsm \
-        --inputModelA   ID:deqRef \
-        --inputModelB   ID:deqDis \
-        --inputMapA     ${SRCTEX} \
-        --inputMapB     ${NAME}_%04d_dec.png \
-      END \
-      reindex \
-        --inputModel    ID:deqRef \
-        --sort          oriented \
-        --outputModel   ID:ref_reordered \
-      END \
-      reindex \
-        --inputModel    ID:deqDis \
-        --sort          oriented \
-        --outputModel   ID:dis_reordered \
-      END \
-      sample  \
-        --inputModel    ID:ref_reordered \
-        --inputMap      ${SRCTEX} \
-        --mode          grid \
-        --useNormal     \
-        --useFixedPoint \
-        --minPos        \"${MINPOSITION}\" \
-        --maxPos        \"${MAXPOSITION}\" \
-        --bilinear      \
-        --gridSize      ${GRIDSIZE} \
-        --hideProgress  1 \
-        --outputModel   ID:ref_pc \
-      END \
-      sample  \
-        --inputModel    ID:dis_reordered \
-        --inputMap      ${NAME}_%04d_dec.png \
-        --mode          grid \
-        --useNormal     \
-        --useFixedPoint \
-        --minPos        \"${MINPOSITION}\" \
-        --maxPos        \"${MAXPOSITION}\" \
-        --bilinear      \
-        --gridSize      ${GRIDSIZE} \
-        --hideProgress  1 \
-        --outputModel   ID:dis_pc \
-      END \
-      compare \
-        --mode          pcc  \
-        --inputModelA   ID:ref_pc \
-        --inputModelB   ID:dis_pc \
-        --resolution    ${RESOLUTION} \
-      > ${LOGMET}"
-      
-    if (( $VERBOSE )) ; then 
+        > ${LOGMET}"
+    else
+      GRIDSIZE=$(    cat ${CFGSUBDIR}/mmetric.cfg | grep "gridSize:"         | awk '{print $2}' )
+      RESOLUTION=$(  cat ${CFGSUBDIR}/mmetric.cfg | grep "resolution:"       | awk '{print $2}' )
+      CMD+=" \
+        compare \
+          --mode          ibsm \
+          --inputModelA   ID:deqRef \
+          --inputModelB   ID:deqDis \
+          --inputMapA     ${SRCTEX} \
+          --inputMapB     ${NAME}_%04d_dec.png \
+        END \
+        reindex \
+          --inputModel    ID:deqRef \
+          --sort          oriented \
+          --outputModel   ID:ref_reordered \
+        END \
+        reindex \
+          --inputModel    ID:deqDis \
+          --sort          oriented \
+          --outputModel   ID:dis_reordered \
+        END \
+        sample  \
+          --inputModel    ID:ref_reordered \
+          --inputMap      ${SRCTEX} \
+          --mode          grid \
+          --useNormal     \
+          --useFixedPoint \
+          --minPos        \"${MINPOSITION}\" \
+          --maxPos        \"${MAXPOSITION}\" \
+          --bilinear      \
+          --gridSize      ${GRIDSIZE} \
+          --hideProgress  1 \
+          --outputModel   ID:ref_pc \
+        END \
+        sample  \
+          --inputModel    ID:dis_reordered \
+          --inputMap      ${NAME}_%04d_dec.png \
+          --mode          grid \
+          --useNormal     \
+          --useFixedPoint \
+          --minPos        \"${MINPOSITION}\" \
+          --maxPos        \"${MAXPOSITION}\" \
+          --bilinear      \
+          --gridSize      ${GRIDSIZE} \
+          --hideProgress  1 \
+          --outputModel   ID:dis_pc \
+        END \
+        compare \
+          --mode          pcc  \
+          --inputModelA   ID:ref_pc \
+          --inputModelB   ID:dis_pc \
+          --resolution    ${RESOLUTION} \
+        > ${LOGMET}"
+    fi
+    if (( $VERBOSE )) ; then
       echo -e "\033[0;32mMMetric: ${NAME} \033[0m";
       formatCmd "$CMD" "-- -c > compare dequantize sequence reindex sample END"
     fi
@@ -275,9 +230,9 @@ function render() {
     fi
     MINPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "minPosition:" | awk '{print $2" "$3" "$4}' )
     MAXPOSITION=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "maxPosition:" | awk '{print $2" "$3" "$4}' )
-    LAST=$(( START + FRAMECOUNT - 1 ))  
+    LAST=$(( START + FRAMECOUNT - 1 ))
     INDEXFRAME=$(( $START + $INDEXFRAME ))
-    INDEXFRAME=$(( $INDEXFRAME < $LAST ? $INDEXFRAME : $LAST )) 
+    INDEXFRAME=$(( $INDEXFRAME < $LAST ? $INDEXFRAME : $LAST ))
     if [ $# == 3 ] ; then MESH=$2; TEX=$3; else MESH=$SRCMESH; TEX=$SRCTEX; fi
     CMD="${MMETRIC} \
       sequence \
@@ -324,7 +279,7 @@ function render() {
         > ${OUTDIR}/render_${1}.log"
     if (( $VERBOSE )) ; then formatCmd "$CMD" "-- > sequence dequantize render END "; fi
     if ! eval $CMD ; then echo "ERROR: metrics sw return !0"; exit; fi
-  else 
+  else
     if (( $VERBOSE )) ; then echo "${OUTDIR}/${1}_light0.png and ${OUTDIR}/${1}_light1.png already exist"; fi
   fi
 }
@@ -335,7 +290,7 @@ function render_video() {
     RENDERWIDTH=1080
     RENDERHEIGHT=1920
     START=$( cat ${CFGSUBDIR}/mmetric.cfg | grep "startFrameIndex:"  | awk '{print $2}' )
-    CMD="$RENDER \
+    CMD="$RENDERER \
         --frameNumber=${FRAMECOUNT} \
         --frameIndex=${START} \
         --fps=30 \
@@ -377,16 +332,16 @@ function render_video() {
         > ${OUTDIR}/render_video_ffmpeg.log";
     if (( $VERBOSE )) ; then formatCmd "$CMD" "- > "; fi
     if ! eval $CMD ; then  echo "ERROR: ffmpeg sw return !0"; exit;  fi
-    if (( $VERBOSE )) ; then echo rm ${VIDEODIR}/${1}*.rgb; fi 
+    if (( $VERBOSE )) ; then echo rm ${VIDEODIR}/${1}*.rgb; fi
     rm ${VIDEODIR}/${1}*.rgb
-  else 
+  else
     if (( $VERBOSE )) ; then echo "${VIDEODIR}/${1}_x265lossless.mp4 already exist"; fi
   fi
 }
 
-function collect() {   
+function collect() {
   PARAMS=()
-  if [ $VERBOSE == 0  ] ; then PARAMS+=( "--quiet" ); fi
+  # if [ $VERBOSE == 0  ] ; then PARAMS+=( "--quiet" ); fi
   if [ "$CSV"   != "" ] ; then PARAMS+=( "--csv $CSV" ); fi
   CMD="${CURDIR}/collect_results.sh \
     --condId  ${CONDID} \
@@ -396,9 +351,9 @@ function collect() {
     --logenc  ${LOGENC} \
     --logdec  ${LOGDEC} \
     --logmet  ${LOGMET}\
-    ${PARAMS[@]}" 
-  if (( $VERBOSE )) ; then 
-    echo -e "\033[0;32mCollect: ${NAME} \033[0m";   
+    ${PARAMS[@]}"
+  if (( $VERBOSE )) ; then
+    echo -e "\033[0;32mCollect: ${NAME} \033[0m";
     formatCmd "$CMD" "--"
   fi
   if ! eval $CMD ; then echo "ERROR: collect return !0"; exit; fi
@@ -407,7 +362,7 @@ function collect() {
 function print_usage() {
   echo "$0 execute encoding/decoding/metrics "
   echo "";
-  echo "  Usage:"   
+  echo "  Usage:"
   echo "    -h|--help   : print help ";
   echo "    -q|--quiet  : disable logs            (default: $VERBOSE )";
   echo "    -f|--frames : frame count             (default: $FRAMECOUNT )";
@@ -420,12 +375,12 @@ function print_usage() {
   echo "    --render    : Create rendered images  (default: $RENDER )";
   echo "    --video     : Create rendered video   (default: $VIDEO )";
   echo "    --encParams : configured directory    (default: \"${ENCPARAMS[@]}\" )";
-  echo "    --decParams : configured directory    (default: \"${DECPARAMS[@]}\" )";    
-  echo "    --csv       : generate .csv file      (default: \"$CSV\" )";    
-  echo "    --ffmpeg=   : path to ffmpeg sw       (default: \"$FFMPEG\" )";    
+  echo "    --decParams : configured directory    (default: \"${DECPARAMS[@]}\" )";
+  echo "    --csv       : generate .csv file      (default: \"$CSV\" )";
+  echo "    --ffmpeg=   : path to ffmpeg sw       (default: \"$FFMPEG\" )";
   echo "";
   echo "  Examples:";
-  echo "    $0 -h"; 
+  echo "    $0 -h";
   echo "    $0 --condId=1 --seqId=3 --rateId=3 --cfgdir=generatedConfigFiles ";
   echo "    $0 --condId=1 --seqId=3 --rateId=3 --cfgdir=generatedConfigFiles --TMMMETRIC ";
   echo "    ";
@@ -450,17 +405,17 @@ CSV=
 FFMPEG=
 
 # Parse input parameters
-while [[ $# -gt 0 ]] ; do  
+while [[ $# -gt 0 ]] ; do
   C=$1; if [[ "$C" =~ [=] ]] ; then V=${C#*=}; elif [[ $2 == -* ]] ; then  V=""; else V=$2; shift; fi;
-  case "$C" in    
+  case "$C" in
     -h|--help    ) print_usage;;
     --quiet      ) VERBOSE=0;;
-    -f|--frame   ) FRAMECOUNT=$V;; 
-    -o|--outdir  ) OUTDIR=$V;; 
-    -c|--cfgdir  ) CFGDIR=$V;; 
+    -f|--frame   ) FRAMECOUNT=$V;;
+    -o|--outdir  ) OUTDIR=$V;;
+    -c|--cfgdir  ) CFGDIR=$V;;
     --condId     ) CONDID=$V;;
     --seqId      ) SEQID=$V;;
-    --rateId     ) RATEID=$V;;    
+    --rateId     ) RATEID=$V;;
     --tmmMetric  ) TMMMETRIC=1;;
     --render     ) RENDER=1;;
     --video      ) VIDEO=1;;
@@ -520,17 +475,17 @@ fi
 # Check configuration files
 CFGSUBDIR=$( cd "$CFGDIR" && pwd )/s${SEQID}c${CONDID}${RATE}_${SEQ:0:4}/
 if [ ! -d $CFGDIR ] || [ ! -f ${CFGSUBDIR}/encoder.cfg ] || [ ! -f ${CFGSUBDIR}/decoder.cfg ] || [ ! -f ${CFGSUBDIR}/mmetric.cfg ]
-then 
-  print_usage "Config directory is not valid (${CFGSUBDIR}) \n please run ./scripts/create_configuration_files.sh"; 
+then
+  print_usage "Config directory is not valid (${CFGSUBDIR}) \n please run ./scripts/create_configuration_files.sh";
 fi
 
 # Set output directory
 NAME=$( basename "$CFGSUBDIR" )
 if [ ${VIDEO} == 1 ] ; then
-  VIDEODIR=${OUTDIR}/$( printf "F%03d" "$FRAMECOUNT" )/video; 
+  VIDEODIR=${OUTDIR}/$( printf "F%03d" "$FRAMECOUNT" )/video;
   if [ ! -d $VIDEODIR ] ; then mkdir -p $VIDEODIR; fi
 fi
-OUTDIR=${OUTDIR}/$( printf "F%03d" "$FRAMECOUNT" )/${NAME}; 
+OUTDIR=${OUTDIR}/$( printf "F%03d" "$FRAMECOUNT" )/${NAME};
 if [ ! -d $OUTDIR ] ; then mkdir -p $OUTDIR; fi
 NAME=${OUTDIR}/${NAME}
 VDMC=${NAME}.vmesh
@@ -543,17 +498,9 @@ LOGMET=${OUTDIR}/metrics.log
 # Start sub-processes
 encode
 decode
-if [ ${TMMMETRIC} == 1 ] ; then 
-  metrics; 
-else
-  if [ ${CONDID} == 0 ] ; then
-	  metriclossless;
-	else
-		mmetric; 
-	fi 
-fi
+if [ ${TMMMETRIC} == 1 ] ; then metrics; else mmetric; fi
 if [ ${RENDER} == 1 ] ; then
-  render dec ${NAME}_%04d_dec.ply ${NAME}_%04d_dec.png 
+  render dec ${NAME}_%04d_dec.ply ${NAME}_%04d_dec.png
   render src
 fi
 if [ ${VIDEO} == 1 ] ; then

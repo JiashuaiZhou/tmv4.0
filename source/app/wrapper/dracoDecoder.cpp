@@ -121,7 +121,7 @@ main(int argc, char* argv[]) {
 
   // Encode
   vmesh::TriangleMesh<double> dec;
-  auto encoder = vmesh::GeometryDecoder<double>::create(params.codecId);  
+  auto encoder = vmesh::GeometryDecoder<double>::create(params.codecId);
   vmesh::GeometryDecoderParameters decoderParams;
   decoderParams.dracoUsePosition_ = false;
   decoderParams.dracoUseUV_       = false;

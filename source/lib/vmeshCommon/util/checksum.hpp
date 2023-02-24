@@ -66,7 +66,7 @@ public:
 
   bool operator!=(const Checksum& rhs) const { return !(*this == rhs); }
 
-  bool operator==(const Checksum& rhs) const ;
+  bool operator==(const Checksum& rhs) const;
 
 private:
   template<typename T>

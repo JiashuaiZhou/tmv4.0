@@ -37,9 +37,9 @@
 namespace vmesh {
 
 struct GeometryDecoderParameters {
-  bool dracoUsePosition_  = false; // draco use position mode (m60340)
-  bool dracoUseUV_        = false; // draco use uv mode (m60293)
-  bool dracoMeshLossless_ = false; // whether mesh is lossless (m60289)
+  bool dracoUsePosition_  = false;  // draco use position mode (m60340)
+  bool dracoUseUV_        = false;  // draco use uv mode (m60293)
+  bool dracoMeshLossless_ = false;  // whether mesh is lossless (m60289)
 };
 
 template<class T>

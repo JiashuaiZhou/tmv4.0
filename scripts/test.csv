@@ -1,3 +1,3 @@
 Name,EncParams,DecParams    
 anchor,,
-test,,
+test,--applyOneDimensionalDisplacement=0 --textureTransferBasedPointcloud=0 --displacementReversePacking=0 --interpolateDisplacementNormals=1 --motionGroupSize=1 --motionWithoutDuplicatedVertices=0,

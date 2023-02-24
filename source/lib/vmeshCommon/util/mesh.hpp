@@ -705,7 +705,7 @@ public:
 
     _normalIndex.resize(src.normalTriangles().size());
     for (int i = 0; i < src.normalTriangles().size(); i++) {
-      _texCoordIndex[i] = src.normalTriangle(i);
+      _normalIndex[i] = src.normalTriangle(i);
     }
 
     _disp.resize(src.displacements().size());

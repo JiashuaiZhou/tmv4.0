@@ -50,65 +50,75 @@ namespace vmesh {
 
 //============================================================================
 
-bool
-getBit(const uint8_t& data, int8_t pos) {
-  assert(pos > 7);
-  return (((data >> (7 - pos)) & 1) != 0);
-}
-
 //============================================================================
 
 bool
-VMCDecoder::decompressMotion(
-  const Bitstream&                  bitstream,
-  const std::vector<Vec3<int32_t>>& trianglesReference,
-  const std::vector<Vec3<int32_t>>& referenceReference,
-  const std::vector<Vec2<int32_t>>& baseIntegrateIndicesReference,
-  const std::vector<Vec3<int32_t>>& trianglesBase,
-  const std::vector<Vec3<int32_t>>& referenceBase,
-  std::vector<Vec3<int32_t>>&       current,
-  const VMCDecoderParameters& /*params*/) {
+VMCDecoder::decompressMotion(const Bitstream&                  bitstream,
+                             const std::vector<Vec3<int32_t>>& trianglesReference,
+                             const std::vector<Vec3<int32_t>>& referenceReference,
+                             const std::vector<Vec2<int32_t>>& baseIntegrateIndicesReference,
+                             const std::vector<Vec3<int32_t>>& trianglesBase,
+                             const std::vector<Vec3<int32_t>>& referenceBase,
+                             std::vector<Vec3<int32_t>>&       current,
+                             const VMCDecoderParameters& /*params*/) {
   printf("decompressMotion \n");
   fflush(stdout);
-  VMCMotionACContext ctx;
-  EntropyDecoder     arithmeticDecoder;
-  uint32_t           byteCount = 0;
-  bitstream.read(byteCount, _byteCounter);
-  std::cout << "Motion byte count = " << byteCount << '\n';
-  uint8_t multiMvModeBits = 0;
-  bitstream.read(multiMvModeBits, _byteCounter);
-  const auto* const bufferPtr =
-    reinterpret_cast<const char*>(bitstream.buffer.data() + _byteCounter);
-  _byteCounter += byteCount;
-  arithmeticDecoder.setBuffer(byteCount, bufferPtr);
-  arithmeticDecoder.start();
-  bool                  multiMvFlag = getBit(multiMvModeBits, 0);
-  uint32_t              multiMvNum  = 0;
-  std::vector<uint32_t> multiMvIdx;
-  if (multiMvFlag) {
-    AdaptiveBitModel ctxPrefix;
-    multiMvNum = arithmeticDecoder.decodeExpGolomb(0, ctxPrefix);
-    multiMvIdx.resize(multiMvNum, 0);
-    for (uint32_t v = 0; v < multiMvNum; ++v) {
-      multiMvIdx[v] = arithmeticDecoder.decodeExpGolomb(0, ctxPrefix);
-    }
-  }
+  // here we should decode all_skip_mode from bitstream before starting to decode the MVs
+  bool all_skip_mode = true;
+  int no_skip_num = 0;
+  std::vector<uint8_t> no_skip_vindices;
+  uint8_t skip_mode_bits;  // 1 bit for all_skip_mode, 7 bits for no_skip_num
+  bitstream.read(skip_mode_bits, _byteCounter);
+  int skip_mode_size = sizeof(skip_mode_bits);
   std::vector<Vec3<int32_t>> triangles;
   std::vector<Vec3<int32_t>> reference;
   std::vector<Vec2<int32_t>> baseIntegrateIndices;
-  bool motionWithoutDuplicatedVertices = !(multiMvFlag && multiMvNum == 0);
-  if (motionWithoutDuplicatedVertices) {
+  if (skip_mode_bits == 255) {
+    triangles = trianglesBase;
+    reference = referenceBase;
+  } else if (skip_mode_bits == 128) {
     triangles            = trianglesReference;
     reference            = referenceReference;
     baseIntegrateIndices = baseIntegrateIndicesReference;
   } else {
-    triangles = trianglesBase;
-    reference = referenceBase;
+    all_skip_mode = false;
+    no_skip_num   = static_cast<decltype(no_skip_num)>(skip_mode_bits);
+    triangles            = trianglesReference;
+    reference            = referenceReference;
+    baseIntegrateIndices = baseIntegrateIndicesReference;
   }
+  if (!all_skip_mode){
+    no_skip_vindices.resize(no_skip_num);
+    const auto byteCount = no_skip_num * sizeof(decltype(no_skip_vindices)::value_type);
+    std::copy(bitstream.buffer.begin() + _byteCounter,
+              bitstream.buffer.begin() + _byteCounter + byteCount,
+              reinterpret_cast<uint8_t*>(no_skip_vindices.data()));
+    _byteCounter += byteCount;
+    skip_mode_size += byteCount;
+    for (int i = 0; i < no_skip_num; ++i) {
+      std::cout << "[DEBUG][stat] non-skippable MV " << static_cast<int32_t>(no_skip_vindices[i])
+                << " , index: " << i
+                << ". Total non-skippable MVs: " << no_skip_num
+                << "\n";
+    }
+  }
+  printf("skip_mode_bits = %u \n",skip_mode_bits);
+  std::cout << "[DEBUG][stat]skip mode bits: " << skip_mode_bits << std::endl;
+  std::cout << "[DEBUG][stat]skip mode bytes: " << skip_mode_size << std::endl;
+
+  uint32_t byteCount = 0;
+  bitstream.read(byteCount, _byteCounter);
+  std::cout << "Motion byte count = " << byteCount << '\n';
+  VMCMotionACContext ctx;
+  EntropyDecoder     arithmeticDecoder;
+  const auto* const  bufferPtr =
+    reinterpret_cast<const char*>(bitstream.buffer.data() + _byteCounter);
+  _byteCounter += byteCount;
+  arithmeticDecoder.setBuffer(byteCount, bufferPtr);
+  arithmeticDecoder.start();
   const auto refPointCount = static_cast<int32_t>(reference.size());
-  const auto motionCount   = refPointCount + multiMvNum;
-  const auto pointCount =
-    refPointCount + static_cast<int32_t>(baseIntegrateIndices.size());
+  const auto motionCount   = refPointCount + no_skip_num;
+  const auto pointCount = refPointCount + static_cast<int32_t>(baseIntegrateIndices.size());
   StaticAdjacencyInformation<int32_t> vertexToTriangle;
   ComputeVertexToTriangle(triangles, motionCount, vertexToTriangle);
   std::vector<int8_t>        available(motionCount, 0);
@@ -117,107 +127,106 @@ VMCDecoder::decompressMotion(
   std::vector<int32_t>       tadj;
   std::vector<Vec3<int32_t>> motion(motionCount);
   current.resize(pointCount);
+  std::cout << "[DEBUG][stat] total vertex num: " << pointCount
+            << " duplicated vertex num: " << baseIntegrateIndices.size()
+            << " non-skippable MV num: " << no_skip_num << std::endl;
   int32_t remainP = motionCount;
   int32_t vindexS = 0, vindexE = 0, vCount = 0;
   while (remainP) {
-    vindexS              = vindexE;
-    const auto predIndex = arithmeticDecoder.decode(ctx.ctxPred);
-    vCount               = 0;
+    vindexS = vindexE;
+    const auto    predIndex = arithmeticDecoder.decode(ctx.ctxPred);
+    vCount = 0;
     while ((vCount < _sps.motionGroupSize) && (remainP)) {
-      int vindex0 = vindexE;
-      ++vindexE;
-      --remainP;
-      ++vCount;
-      Vec3<int32_t> res{};
-      for (int32_t k = 0; k < 3; ++k) {
-        int32_t value = 0;
-        if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[0][k]) != 0) {
-          const auto sign = arithmeticDecoder.decode(ctx.ctxSign[k]);
-          ++value;
-          if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[1][k]) != 0) {
-            value += 1
-                     + arithmeticDecoder.decodeExpGolomb(
-                       0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
-          }
-          if (sign != 0) { value = -value; }
+        int vindex0 = vindexE;
+        ++vindexE;
+        --remainP;
+        ++vCount;
+        Vec3<int32_t> res{};
+        for (int32_t k = 0; k < 3; ++k) {
+            int32_t value = 0;
+            if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[0][k]) != 0) {
+                const auto sign = arithmeticDecoder.decode(ctx.ctxSign[k]);
+                ++value;
+                if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[1][k]) != 0) {
+                    value += 1
+                        + arithmeticDecoder.decodeExpGolomb(
+                        0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
+                }
+                if (sign != 0) { value = -value; }
+            }
+            res[k] = value;
         }
-        res[k] = value;
-      }
-      if (predIndex == 0) {
-        motion[vindex0] = res;
-      } else {
-        int vindex = vindex0;
-        if (vindex0 >= refPointCount) {
-          auto idx          = multiMvIdx[vindex0 - refPointCount];
-          auto integrate_to = baseIntegrateIndices[idx][1];
-          auto it           = std::lower_bound(
-            baseIntegrateIndices.begin(),
-            baseIntegrateIndices.end(),
-            Vec2<int32_t>(integrate_to, 0),
-            [](const Vec2<int32_t>& a, const Vec2<int32_t>& b) {
-              return a[0] < b[0];
-            });
-          auto shift = std::distance(baseIntegrateIndices.begin(), it);
-          vindex     = static_cast<int32_t>(integrate_to - shift);
+        if (predIndex == 0) {
+            motion[vindex0] = res;
+        } else {
+	      int vindex = vindex0;
+	      if (vindex0 >= refPointCount) {
+	        auto idx = no_skip_vindices[vindex0 - refPointCount];
+	        auto integrate_to = baseIntegrateIndices[idx][1];
+	        auto it = std::lower_bound(
+	          baseIntegrateIndices.begin(),
+	          baseIntegrateIndices.end(),
+	          Vec2<int32_t>(integrate_to, 0),
+	          [](const Vec2<int32_t>& a, const Vec2<int32_t>& b) { return a[0] < b[0]; });
+	        auto shift = std::distance(baseIntegrateIndices.begin(), it);
+	        vindex = static_cast<int32_t>(integrate_to - shift);
+	      }
+	      ComputeAdjacentVertices(
+	        vindex, triangles, vertexToTriangle, vtags, vadj);
+            Vec3<int32_t> pred(0);
+            int32_t       predCount = 0;
+            for (int vindex1 : vadj) {
+                if (available[vindex1] != 0) {
+                    const auto& mv1 = motion[vindex1];
+                    for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
+                    ++predCount;
+                }
+            }
+            if (predCount > 1) {
+                const auto bias = predCount >> 1;
+                for (int32_t k = 0; k < 3; ++k) {
+                    pred[k] = pred[k] >= 0 ? (pred[k] + bias) / predCount
+                                 : -(-pred[k] + bias) / predCount;
+                }
+            }
+            motion[vindex0] = res + pred;
         }
-        ComputeAdjacentVertices(
-          vindex, triangles, vertexToTriangle, vtags, vadj);
-        Vec3<int32_t> pred(0);
-        int32_t       predCount = 0;
-        for (int vindex1 : vadj) {
-          if (available[vindex1] != 0) {
-            const auto& mv1 = motion[vindex1];
-            for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
-            ++predCount;
-          }
-        }
-        if (predCount > 1) {
-          const auto bias = predCount >> 1;
-          for (int32_t k = 0; k < 3; ++k) {
-            pred[k] = pred[k] >= 0 ? (pred[k] + bias) / predCount
-                                   : -(-pred[k] + bias) / predCount;
-          }
-        }
-        motion[vindex0] = res + pred;
-      }
-      available[vindex0] = 1;
+        available[vindex0] = 1;
     }
   }
   for (int vindex = 0; vindex < pointCount; ++vindex) {
     auto index = vindex;
     auto it =
-      std::lower_bound(baseIntegrateIndices.begin(),
-                       baseIntegrateIndices.end(),
-                       Vec2<int32_t>(index, 0),
-                       [](const Vec2<int32_t>& a, const Vec2<int32_t>& b) {
-                         return a[0] < b[0];
-                       });
+      std::lower_bound(
+        baseIntegrateIndices.begin(),
+        baseIntegrateIndices.end(),
+        Vec2<int32_t>(index, 0),
+        [](const Vec2<int32_t>& a, const Vec2<int32_t>& b) { return a[0] < b[0]; });
     if (it != baseIntegrateIndices.end() && (*it)[0] == index) {
       // set integrated index
       index = (*it)[1];
       it =
-        std::lower_bound(baseIntegrateIndices.begin(),
-                         baseIntegrateIndices.end(),
-                         Vec2<int32_t>(index, 0),
-                         [](const Vec2<int32_t>& a, const Vec2<int32_t>& b) {
-                           return a[0] < b[0];
-                         });
+        std::lower_bound(
+          baseIntegrateIndices.begin(),
+          baseIntegrateIndices.end(),
+          Vec2<int32_t>(index, 0),
+          [](const Vec2<int32_t>& a, const Vec2<int32_t>& b) { return a[0] < b[0]; });
     }
     // move up index
     auto shift       = std::distance(baseIntegrateIndices.begin(), it);
-    auto refIndex    = index - shift;
-    auto motionIndex = refIndex;
-    auto itMultiMv =
-      std::find_if(multiMvIdx.begin(),
-                   multiMvIdx.end(),
-                   [&](const decltype(multiMvIdx)::value_type& a) {
+    auto refindex    = index - shift;
+    auto motionindex = refindex;
+    auto it_no_skip =
+      std::find_if(no_skip_vindices.begin(),
+                   no_skip_vindices.end(),
+                   [&](const decltype(no_skip_vindices)::value_type& a) {
                      return baseIntegrateIndices[a][0] == vindex;
                    });
-    if (itMultiMv != multiMvIdx.end()) {
-      auto multi_motion_index = std::distance(multiMvIdx.begin(), itMultiMv);
-      motionIndex             = refPointCount + multi_motion_index;
+    if (it_no_skip != no_skip_vindices.end()) {
+      auto no_skip_index = std::distance(no_skip_vindices.begin(), it_no_skip);
+      motionindex        = refPointCount + no_skip_index;
     }
-    current[vindex] = reference[refIndex] + motion[motionIndex];
+    current[vindex] = reference[refindex] + motion[motionindex];
   }
   return true;
 }
@@ -553,14 +562,14 @@ VMCDecoder::decodeSequenceHeader(const Bitstream& bitstream) {
   meshCodecId = uint8_t(GeometryCodecId::DRACO);
 #endif
   bitstream.read(qpBaseMesh, _byteCounter);
-  _sps.frameCount                     = frameCount;
-  _sps.encodeDisplacementsVideo       = getBit(bitField, 0);
-  _sps.encodeTextureVideo             = getBit(bitField, 1);
-  _sps.interpolateDisplacementNormals = getBit(bitField, 2);
-  _sps.displacementReversePacking     = getBit(bitField, 3);
-  _sps.dracoUsePosition               = getBit(bitField, 4);
-  _sps.dracoUseUV                     = getBit(bitField, 5);
-  _sps.dracoMeshLossless              = getBit(bitField, 6);
+  _sps.frameCount                      = frameCount;
+  _sps.encodeDisplacementsVideo        = ((bitField & 1) != 0);
+  _sps.encodeTextureVideo              = (((bitField >> 1) & 1) != 0);
+  _sps.interpolateDisplacementNormals  = (((bitField >> 2) & 1) != 0);
+  _sps.displacementReversePacking      = (((bitField >> 3) & 1) != 0);
+  _sps.dracoUsePosition                = (((bitField >> 4) & 1) != 0);
+  _sps.dracoUseUV                      = (((bitField >> 5) & 1) != 0);
+  _sps.dracoMeshLossless               = (((bitField >> 6) & 1) != 0);
   if (_sps.encodeDisplacementsVideo) {
 #if defined(CODE_CODEC_ID)
     bitstream.read(geometryVideoCodecId, _byteCounter);

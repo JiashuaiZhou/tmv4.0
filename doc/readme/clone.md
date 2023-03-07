@@ -3,7 +3,7 @@
 
 The authoritative location of the software is the following git repository: <http://mpegx.int-evry.fr/software/MPEG/dmc/TM/mpeg-vmesh-tm>
 
-Each released version may be identified by a version control system tag in the form: `v2.0`
+Each released version may be identified by a version control system tag in the form: `v3.0`
 
 An example:
 
@@ -11,7 +11,7 @@ An example:
 $ git clone \
    http://mpegx.int-evry.fr/software/MPEG/dmc/TM/mpeg-vmesh-tm.git
 $ cd mpeg-vmesh-tm
-$ git checkout v2.0
+$ git checkout v3.0
 ```
 
 > It is strongly advised to obtain the software using the version control

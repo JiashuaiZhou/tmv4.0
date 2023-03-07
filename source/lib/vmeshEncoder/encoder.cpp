@@ -452,7 +452,8 @@ VMCEncoder::geometryParametrization(VMCGroupOfFrames&             gof,
         metricParams.minPosition[c] = params.minPosition[c];
         metricParams.maxPosition[c] = params.maxPosition[c];
       }
-      metricParams.normalCalcModificationEnable = params.normalCalcModificationEnable;
+      metricParams.normalCalcModificationEnable =
+        params.normalCalcModificationEnable;
       metricsIntra.compute(input, subdivIntra, metricParams);
       metricsInter.compute(input, subdivInter, metricParams);
       auto metIntra = metricsIntra.getPccResults();
@@ -815,12 +816,13 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
 //----------------------------------------------------------------------------
 
 bool
-VMCEncoder::compressMotion(const std::vector<Vec3<int32_t>>& triangles,
-                           const std::vector<Vec3<int32_t>>& reference,
-                           const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
-                           const std::vector<Vec3<int32_t>>& current,
-                           Bitstream&                        bitstream,
-                           const VMCEncoderParameters&       params) {
+VMCEncoder::compressMotion(
+  const std::vector<Vec3<int32_t>>& triangles,
+  const std::vector<Vec3<int32_t>>& reference,
+  const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
+  const std::vector<Vec3<int32_t>>& current,
+  Bitstream&                        bitstream,
+  const VMCEncoderParameters&       params) {
   const auto         pointCount  = int32_t(current.size());
   const auto         maxAcBufLen = pointCount * 3 * 4 + 1024;
   VMCMotionACContext ctx;
@@ -908,7 +910,7 @@ VMCEncoder::compressMotion(const std::vector<Vec3<int32_t>>& triangles,
       skip_mode_bits = static_cast<uint8_t>(no_skip_num);
     }
   }
-  printf("skip_mode_bits = %u \n",skip_mode_bits);
+  printf("skip_mode_bits = %u \n", skip_mode_bits);
   std::cout << "[DEBUG][stat]skip mode bits: " << skip_mode_bits << std::endl;
   bitstream.write(skip_mode_bits);
   int skip_mode_size = sizeof(skip_mode_bits);
@@ -1092,7 +1094,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
            encoderParams.dracoUseUV_,
            encoderParams.dracoMeshLossless_);
     encoder->encode(base, encoderParams, geometryBitstream, rec);
-  
+
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       base.save(prefix + "_base_enc.ply");
@@ -1156,7 +1158,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     _stats.motionByteCount += bitstream.size() - bitstreamByteCount0;
   }
   // Duplicated Vertex Reduction
-  if( params.motionWithoutDuplicatedVertices){
+  if (params.motionWithoutDuplicatedVertices) {
     removeDuplicatedVertices(frame);
     if (params.keepIntermediateFiles) {
       frame.baseClean.save(prefix + "_baseClean.obj");
@@ -1484,7 +1486,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
         params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
       const auto height =
         geometryVideoHeightInBlocks * params.geometryVideoBlockSize;
-      printf("displacemnt video Size = %d x %d \n",width,height);
+      printf("displacemnt video Size = %d x %d \n", width, height);
       dispVideoFrame.resize(width, height, colourSpaceDispVideo);
       computeDisplacements(frame, rec, params);
       computeForwardLinearLifting(frame.disp,

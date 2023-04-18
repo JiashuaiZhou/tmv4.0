@@ -39,7 +39,6 @@
 #include "util/misc.hpp"
 #include "util/verbose.hpp"
 #include "version.hpp"
-#include "util/bitstream.hpp"
 
 #include "colourConverter.hpp"
 

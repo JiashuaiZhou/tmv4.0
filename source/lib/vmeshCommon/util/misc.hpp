@@ -124,7 +124,7 @@ removeExtension(const std::string& name) {
 //============================================================================
 
 static int
-save(const std::string& filename, std::vector<uint8_t>& buffer) {
+save(const std::string& filename, const std::vector<uint8_t>& buffer) {
   std::ofstream file(filename, std::ios::binary);
   if (!file.is_open()) {
     printf("Can not save: %s \n", filename.c_str());

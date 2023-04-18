@@ -42,11 +42,11 @@ public:
   vtmVideoDecoder();
   ~vtmVideoDecoder();
 
-  void decode(std::vector<uint8_t>& bitstream,
-              FrameSequence<T>&     video,
-              size_t                outputBitDepth = 8,
-              const std::string&    decoderPath    = "",
-              const std::string&    parameters     = "");
+  void decode(const std::vector<uint8_t>& bitstream,
+              FrameSequence<T>&           video,
+              size_t                      outputBitDepth = 8,
+              const std::string&          decoderPath    = "",
+              const std::string&          parameters     = "");
 };
 
 }  // namespace vmesh

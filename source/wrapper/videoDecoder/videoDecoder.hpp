@@ -44,11 +44,11 @@ public:
 
   static std::shared_ptr<VideoDecoder<T>> create(VideoCodecId codecId);
 
-  virtual void decode(std::vector<uint8_t>& bitstream,
-                      FrameSequence<T>&     video,
-                      size_t                outputBitDepth = 8,
-                      const std::string&    decoderPath    = "",
-                      const std::string&    parameters     = "") = 0;
+  virtual void decode(const std::vector<uint8_t>& bitstream,
+                      FrameSequence<T>&           video,
+                      size_t                      outputBitDepth = 8,
+                      const std::string&          decoderPath    = "",
+                      const std::string&          parameters     = "") = 0;
 };
 
 }  // namespace vmesh

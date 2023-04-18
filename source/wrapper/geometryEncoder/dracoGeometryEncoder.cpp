@@ -328,12 +328,16 @@ DracoGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
   fflush(stdout);
 
   // Copy bitstream
-  bitstream.resize(buffer.size());
-  std::copy(buffer.data(), buffer.data() + buffer.size(), bitstream.data());
+  bitstream.resize(buffer.size() + 1, 0);
+  bitstream[0] = static_cast<int>(params.dracoUsePosition_)
+                 | (static_cast<int>(params.dracoUseUV_) << 1)
+                 | (static_cast<int>(params.dracoMeshLossless_) << 2);
+  std::copy(
+    buffer.data(), buffer.data() + buffer.size(), bitstream.data() + 1);
 
   // Decode
   draco::DecoderBuffer decBuffer;
-  decBuffer.Init((const char*)bitstream.data(), bitstream.size());
+  decBuffer.Init((const char*)bitstream.data() + 1, bitstream.size() - 1);
   auto type = draco::Decoder::GetEncodedGeometryType(&decBuffer);
   if (!type.ok()) {
     printf("Failed GetEncodedGeometryType: %s.\n", type.status().error_msg());
@@ -341,10 +345,17 @@ DracoGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
   }
   if (type.value() == draco::TRIANGULAR_MESH) {
     draco::Decoder decoder;
-    decoder.options()->SetGlobalBool("use_position", params.dracoUsePosition_);
-    decoder.options()->SetGlobalBool("use_uv", params.dracoUseUV_);
-    decoder.options()->SetGlobalBool("mesh_lossless",
-                                     params.dracoMeshLossless_);
+    // Draco addition parameters:
+    //  - draco use position mode (m60340)
+    //  - draco use uv mode (m60293)
+    //  - whether mesh is lossless (m60289)
+    auto*      options      = decoder.options();
+    const bool usePosition  = ((bitstream[0] >> 0) & 1) != 0;
+    const bool useUv        = ((bitstream[0] >> 1) & 1) != 0;
+    const bool meshLossless = ((bitstream[0] >> 2) & 1) != 0;
+    decoder.options()->SetGlobalBool("use_position", usePosition);
+    decoder.options()->SetGlobalBool("use_uv", useUv);
+    decoder.options()->SetGlobalBool("mesh_lossless", meshLossless);
     auto status = decoder.DecodeMeshFromBuffer(&decBuffer);
     if (!status.ok()) {
       printf("Failed DecodeMeshFromBuffer: %s.\n",
@@ -353,7 +364,7 @@ DracoGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
     }
     std::unique_ptr<draco::Mesh> decMesh = std::move(status).value();
     if (decMesh) {
-      convert(decMesh, rec, params.dracoMeshLossless_);
+      convert(decMesh, rec, meshLossless);
     } else {
       printf("Failed no in mesh  \n");
       exit(-1);

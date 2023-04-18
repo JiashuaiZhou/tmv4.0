@@ -38,7 +38,7 @@
 
 #include "util/verbose.hpp"
 #include "version.hpp"
-#include "util/bitstream.hpp"
+#include "bitstream.hpp"
 
 #include "geometryDecoder.hpp"
 
@@ -123,8 +123,6 @@ main(int argc, char* argv[]) {
   vmesh::TriangleMesh<double> dec;
   auto encoder = vmesh::GeometryDecoder<double>::create(params.codecId);
   vmesh::GeometryDecoderParameters decoderParams;
-  decoderParams.dracoUsePosition_ = false;
-  decoderParams.dracoUseUV_       = false;
   encoder->decode(bitstream.vector(), decoderParams, dec);
 
   // Save reconstructed mesh

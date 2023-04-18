@@ -49,9 +49,9 @@ public:
   hmVideoDecoderImpl();
 
   ~hmVideoDecoderImpl();
-  void decode(std::vector<uint8_t>& bitstream,
-              size_t                outputBitDepth,
-              FrameSequence<T>&     video);
+  void decode(const std::vector<uint8_t>& bitstream,
+              size_t                      outputBitDepth,
+              FrameSequence<T>&           video);
 
 private:
   void setVideoSize(const pcc_hm::TComSPS* sps);

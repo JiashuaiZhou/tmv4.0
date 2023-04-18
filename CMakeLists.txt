@@ -26,6 +26,7 @@ OPTION( BUILD_UNIT_TEST_APPS      "Build unit test applications"                
 # Set CODE_CODEC_ID to enable/disable codecIds saving in vmesh bitstream        
 # Note: Disable to stay compliant with v1.0       
 OPTION( CODE_CODEC_ID             "Code codec id in bitstreams"                           FALSE )
+OPTION( BITSTREAM_TRACE           "Enable bitstream logs"                                 FALSE )
 
 # Mesh coordinate type: float or double
 SET( MESH_TYPE "double" CACHE STRING "Mesh coordinate type: float or double" )
@@ -39,7 +40,7 @@ enable_language(C)
 if (MSVC)
   add_definitions("/W3 /D_CRT_SECURE_NO_WARNINGS /nologo /std:c++14")
 else ()
-  add_compile_options( -Wall -Wextra -Wno-unused-function -Wno-unused-parameter)   
+  add_compile_options( -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-deprecated-declarations)   
 endif()
 if (UNIX)
   if(NOT APPLE)
@@ -70,6 +71,9 @@ endif()
 # Set codec codec ID
 if( ${CODE_CODEC_ID} )  
   add_compile_definitions(CODE_CODEC_ID)
+endif()
+if( ${BITSTREAM_TRACE} )  
+  add_compile_definitions(BITSTREAM_TRACE)
 endif()
 
 # Tools

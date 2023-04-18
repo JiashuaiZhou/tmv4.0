@@ -42,7 +42,6 @@
 #include "mmDequantize.h"
 #include "mmIO.h"
 
-using namespace std;
 using namespace vmesh;
 
 //============================================================================

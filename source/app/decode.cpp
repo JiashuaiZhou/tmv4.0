@@ -32,21 +32,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <chrono>
 #include <program-options-lite/program_options_lite.h>
-
 #include "util/misc.hpp"
 #include "util/verbose.hpp"
-#include "util/bitstream.hpp"
 #include "util/memory.hpp"
 #include "decoder.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
 #include "checksum.hpp"
 #include "metrics.hpp"
-#include "vmcStats.hpp"
 #include "sequenceInfo.hpp"
+#include "bitstream.hpp"
+#include "v3cReader.hpp"
 
 //============================================================================
 
@@ -246,44 +243,65 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
 
 bool
 decompress(const Parameters& params) {
-  vmesh::Bitstream bitstream;
+  std::string keepFilesPathPrefix = "";
+  if (params.decParams.keepIntermediateFiles) {
+    keepFilesPathPrefix = vmesh::dirname(params.compressedStreamPath);
+  }
+  vmesh::VMCGroupOfFramesInfo gofInfo;
+  vmesh::Checksum             checksum;
+  vmesh::VMCMetrics           metrics;
+  auto&                       metParams = params.metParams;
+  gofInfo.index_                        = 0;
+  gofInfo.startFrameIndex_              = params.startFrame;
+  vmesh::Bitstream           bitstream;
+  vmesh::BitstreamStat       bitstreamStat;
+  vmesh::SampleStreamV3CUnit ssvu;
+  vmesh::V3CReader           readerV3c;
+#if defined(BITSTREAM_TRACE)
+  const auto    basePath = vmesh::removeExtension(params.compressedStreamPath);
+  vmesh::Logger loggerHls;
+  vmesh::Logger loggerV3c;
+  loggerHls.initilalize(basePath + "_hls");
+  loggerV3c.initilalize(basePath + "_v3c");
+  bitstream.setLogger(loggerV3c);
+  readerV3c.setLogger(loggerV3c);
+  bitstream.setTrace(true);
+#endif
   if (!bitstream.load(params.compressedStreamPath)) {
     std::cerr << "Error: can't load compressed bitstream ! ("
               << params.compressedStreamPath << ")\n";
     return false;
   }
-  std::string keepFilesPathPrefix = "";
-  if (params.decParams.keepIntermediateFiles) {
-    keepFilesPathPrefix = vmesh::dirname(params.compressedStreamPath);
-  }
 
-  vmesh::VMCGroupOfFramesInfo gofInfo;
-  vmesh::VMCStats             totalStats;
-  vmesh::Checksum             checksum;
-  vmesh::VMCMetrics           metrics;
-  auto&                       metParams   = params.metParams;
-  size_t                      byteCounter = 0;
-  gofInfo.index_                          = 0;
-  gofInfo.startFrameIndex_                = params.startFrame;
-  while (byteCounter != bitstream.size()) {
+  printf("read ssvu \n");
+  auto headerSize = readerV3c.read(bitstream, ssvu);
+  bitstreamStat.setHeader(headerSize);
+  printf("bitstream.size() = %zu \n", bitstream.size());
+  while (ssvu.getV3CUnitCount() > 0) {
     // Decompress
-    vmesh::VMCDecoder decoder;
-    vmesh::Sequence   reconstruct;
+    vmesh::V3cBitstream syntax;
+    vmesh::VMCDecoder   decoder;
+    vmesh::Sequence     reconstruct;
     decoder.setKeepFilesPathPrefix(keepFilesPathPrefix + "GOF_"
                                    + std::to_string(gofInfo.index_) + "_");
-    auto start = std::chrono::steady_clock::now();
-    if (!decoder.decompress(
-          bitstream, gofInfo, reconstruct, byteCounter, params.decParams)) {
+
+    // Read V3C sample stream
+    syntax.setBitstreamStat(bitstreamStat);
+    vmesh::V3CReader reader;
+#if defined(BITSTREAM_TRACE)
+    reader.setLogger(loggerHls);
+#endif
+    vmesh::tic( "reader");
+    if (reader.decode(ssvu, syntax) == 0) { return 0; }
+    vmesh::toc( "reader");
+
+    // Decode and reconstruct meshes
+    vmesh::tic( "decompress");
+    if (!decoder.decompress(syntax, gofInfo, reconstruct, params.decParams)) {
       std::cerr << "Error: can't decompress group of frames!\n";
       return false;
     }
-    auto end                       = std::chrono::steady_clock::now();
-    decoder.stats().processingTime = end - start;
-    printf(
-      "gof decoded: frameCount = %zu in %f sec. \n",
-      decoder.stats().frameCount,
-      std::chrono::duration<double>(decoder.stats().processingTime).count());
-    fflush(stdout);
+    vmesh::toc( "decompress");
 
     // Save reconstructed models
     if (!reconstruct.save(params.decodedMeshPath,
@@ -293,8 +311,10 @@ decompress(const Parameters& params) {
       std::cerr << "Error: can't save decoded sequence \n";
       return false;
     }
+    // Compute checksum
     if (params.checksum) { checksum.add(reconstruct); }
 
+    // Compute Metric
     if (metParams.computePcc || metParams.computeIbsm
         || metParams.computePcqm) {
       vmesh::Sequence source;
@@ -307,38 +327,29 @@ decompress(const Parameters& params) {
       }
       metrics.compute(source, reconstruct, metParams);
     }
-    totalStats += decoder.stats();
-    gofInfo.startFrameIndex_ += decoder.stats().frameCount;
+    for (auto& rec : reconstruct.meshes())
+      bitstreamStat.getFaceCount() += rec.triangleCount();
+    gofInfo.startFrameIndex_ += gofInfo.frameCount_;
     ++gofInfo.index_;
-
-    if (vmesh::vout) {
-      vmesh::vout << "\n------- Group of frames " << gofInfo.index_
-                  << " -----------\n";
-      decoder.stats().dump("GOF", params.framerate);
-      vmesh::vout << "---------------------------------------\n";
-    }
   }
+  
+  // Compare the checksums of the decoder with those of the encoder
   if (params.checksum) {
     vmesh::Checksum checksumEnc;
     checksumEnc.read(vmesh::removeFileExtension(params.compressedStreamPath)
                      + ".checksum");
     if (checksum != checksumEnc)
-      totalStats.processingTime =
-        std::chrono::steady_clock::duration((int)-1E9);
+      vmesh::resetTime("decoding");
   }
 
+  // Display stat: metrics, duractions, bitstreams, memory and face counts
   if (metParams.computePcc || metParams.computeIbsm || metParams.computePcqm) {
-    std::cout << "\n------- All frames metrics -----------\n";
+    printf("\n------- All frames metrics -----------\n");
     metrics.display();
-    std::cout << "---------------------------------------\n";
+    printf("---------------------------------------\n");   
   }
-
-  std::cout << "\n------- All frames -----------\n";
-  totalStats.dump("Sequence", params.framerate);
-  std::cout << "Sequence peak memory " << vmesh::getPeakMemory() << " KB\n";
-  std::cout << "---------------------------------------\n";
-
-  std::cout << "\nAll frames have been decoded. \n";
+  bitstreamStat.trace();
+  printf("\nAll frames have been decoded. \n");
   return true;
 }
 

@@ -44,11 +44,11 @@ vtmVideoDecoder<T>::~vtmVideoDecoder() {}
 
 template<typename T>
 void
-vtmVideoDecoder<T>::decode(std::vector<uint8_t>& bitstream,
-                           FrameSequence<T>&     video,
-                           size_t                outputBitDepth,
-                           const std::string&    decoderPath,
-                           const std::string&    fileName) {
+vtmVideoDecoder<T>::decode(const std::vector<uint8_t>& bitstream,
+                           FrameSequence<T>&           video,
+                           size_t                      outputBitDepth,
+                           const std::string&          decoderPath,
+                           const std::string&          fileName) {
   // print information
   fprintf(stdout, "\n");
   fprintf(stdout, "VVCSoftware: VTM Decoder Version %s ", VTM_VERSION);

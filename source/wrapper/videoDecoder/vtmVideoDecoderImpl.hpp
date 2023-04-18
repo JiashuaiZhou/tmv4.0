@@ -49,9 +49,9 @@ public:
   vtmVideoDecoderImpl();
 
   ~vtmVideoDecoderImpl();
-  uint32_t decode(std::vector<uint8_t>& bitstream,
-                  size_t                outputBitDepth,
-                  FrameSequence<T>&     video);
+  uint32_t decode(const std::vector<uint8_t>& bitstream,
+                  size_t                      outputBitDepth,
+                  FrameSequence<T>&           video);
 
 private:
   void xCreateDecLib();

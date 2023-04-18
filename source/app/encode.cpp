@@ -32,21 +32,20 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <chrono>
 #include <program-options-lite/program_options_lite.h>
-
 #include "util/misc.hpp"
 #include "util/verbose.hpp"
-#include "util/bitstream.hpp"
-#include "util/memory.hpp"
 #include "encoder.hpp"
 #include "version.hpp"
 #include "vmc.hpp"
 #include "checksum.hpp"
 #include "metrics.hpp"
-#include "vmcStats.hpp"
 #include "sequenceInfo.hpp"
+#include "v3cParameterSet.hpp"
+#include "v3cBitstream.hpp"
+#include "bitstream.hpp"
+#include "v3cWriter.hpp"
+#include "sampleStreamV3CUnit.hpp"
 
 //============================================================================
 
@@ -473,6 +472,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.interpolateDisplacementNormals,
       encParams.interpolateDisplacementNormals,
       "Interpolate displacement normals")
+    ("addReconstructedNormals",
+      encParams.addReconstructedNormals,
+      encParams.addReconstructedNormals,
+      "add reconstructed normals")    
     ("displacementReversePacking",
       encParams.displacementReversePacking,
       encParams.displacementReversePacking,
@@ -590,6 +593,12 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureHeight, 
       "Output texture height")
 
+  (po::Section("Bitstreams"))
+    ("forceSsvhUnitSizePrecision", 
+      encParams.forceSsvhUnitSizePrecision, 
+      encParams.forceSsvhUnitSizePrecision, 
+      "force SampleStreamV3CUnit size precision bytes")
+
   (po::Section("Metrics"))
     ("pcc",
       metParams.computePcc,
@@ -702,6 +711,19 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
 
 bool
 compress(const Parameters& params) {
+  const auto basePath = vmesh::removeExtension(params.compressedStreamPath);
+  const bool computeMetrics = params.metParams.computePcc
+                              || params.metParams.computeIbsm
+                              || params.metParams.computePcqm;
+  vmesh::SampleStreamV3CUnit ssvu;
+  vmesh::BitstreamStat       bitstreamStat;
+  vmesh::Checksum            checksum;
+  vmesh::VMCMetrics          metrics;
+#if defined(BITSTREAM_TRACE)
+  vmesh::Logger loggerHls;
+  loggerHls.initilalize(basePath + "_hls", true);
+#endif
+
   // Generate gof structure
   vmesh::SequenceInfo sequenceInfo;
   sequenceInfo.generate(params.frameCount,
@@ -709,28 +731,20 @@ compress(const Parameters& params) {
                         params.encParams.groupOfFramesMaxSize,
                         params.encParams.analyzeGof,
                         params.inputMeshPath);
-  std::string keepFilesPathPrefix = "";
-  if (params.encParams.keepIntermediateFiles) {
-    keepFilesPathPrefix =
-      vmesh::removeExtension(params.compressedStreamPath) + "_";
-    auto gofPath = keepFilesPathPrefix + "gof.txt";
-    sequenceInfo.save(gofPath);
-  }
+  if (params.encParams.keepIntermediateFiles)
+    sequenceInfo.save(basePath + "_gof.txt");
 
-  vmesh::Bitstream  bitstream;
-  vmesh::VMCStats   totalStats;
-  vmesh::Checksum   checksum;
-  vmesh::VMCMetrics metrics;
-  auto&             metParams = params.metParams;
-  for (int g = 0; g < sequenceInfo.gofCount(); ++g) {
-    vmesh::VMCEncoder encoder;
-    vmesh::Sequence   source;
-    vmesh::Sequence   reconstruct;
-    const auto&       gofInfo = sequenceInfo[g];
-    printf("GOF = %d / %d \n", g, sequenceInfo.gofCount());
-    encoder.setKeepFilesPathPrefix(keepFilesPathPrefix + "GOF_"
+  // Compress GOF
+  for (const auto& gofInfo : sequenceInfo) {
+    printf("GOF = %d / %d \n", gofInfo.index_, sequenceInfo.gofCount());
+    vmesh::VMCEncoder   encoder;
+    vmesh::Sequence     source;
+    vmesh::Sequence     reconstruct;
+    vmesh::V3cBitstream syntax;
+    syntax.setBitstreamStat(bitstreamStat);
+    encoder.setKeepFilesPathPrefix(basePath + "_GOF_"
                                    + std::to_string(gofInfo.index_) + "_");
-
+    
     // Load source sequence
     if (!source.load(params.inputMeshPath,
                      params.inputTexturePath,
@@ -740,15 +754,24 @@ compress(const Parameters& params) {
       return false;
     }
 
-    // Compress group of frame
-    auto start = std::chrono::steady_clock::now();
+    // Compress meshes
+    vmesh::tic( "compress" );
     if (!encoder.compress(
-          gofInfo, source, bitstream, reconstruct, params.encParams)) {
+          gofInfo, source, syntax, reconstruct, params.encParams)) {
       std::cerr << "Error: can't compress group of frames!\n";
       return false;
     }
     auto end                       = std::chrono::steady_clock::now();
-    encoder.stats().processingTime = end - start;
+    vmesh::toc( "compress" );
+
+    // Create V3C sample stream units
+    vmesh::V3CWriter writer;    
+#if defined(BITSTREAM_TRACE)
+    writer.setLogger(loggerHls);
+#endif
+    vmesh::tic( "writer" );
+    writer.encode(syntax, ssvu);
+    vmesh::toc( "writer" );
 
     // Save reconstructed models
     if (!reconstruct.save(params.reconstructedMeshPath,
@@ -759,43 +782,45 @@ compress(const Parameters& params) {
       return false;
     }
     if (params.checksum) { checksum.add(reconstruct); }
-    if (metParams.computePcc || metParams.computeIbsm
-        || metParams.computePcqm) {
-      metrics.compute(source, reconstruct, metParams);
+    if (computeMetrics) {
+      metrics.compute(source, reconstruct, params.metParams);
     }
-
-    totalStats += encoder.stats();
-    if (vmesh::vout) {
-      vmesh::vout << "\n------- Group of frames " << gofInfo.index_
-                  << " -----------\n";
-      encoder.stats().dump("GOF", params.framerate);
-      vmesh::vout << "---------------------------------------\n";
-    }
+    for (auto& rec : reconstruct.meshes())
+      bitstreamStat.getFaceCount() += rec.triangleCount();
   }
 
-  if (params.checksum) {
-    checksum.write(vmesh::removeFileExtension(params.compressedStreamPath)
-                   + ".checksum");
-    checksum.print();
-  }
-
-  if (metParams.computePcc || metParams.computeIbsm || metParams.computePcqm) {
-    std::cout << "\n------- All frames metrics -----------\n";
-    metrics.display();
-    std::cout << "---------------------------------------\n";
-  }
-
-  std::cout << "\n------- All frames -----------\n";
-  totalStats.dump("Sequence", params.framerate);
-  std::cout << "Sequence peak memory " << vmesh::getPeakMemory() << " KB\n";
-  std::cout << "---------------------------------------\n";
-
-  // save bistream
+  // Write V3C bistream
+  vmesh::V3CWriter writer;
+  vmesh::Bitstream bitstream;
+#if defined(BITSTREAM_TRACE)
+  vmesh::Logger loggerV3c;
+  loggerV3c.initilalize(basePath + "_v3c", true);
+  bitstream.setLogger(loggerV3c);
+  bitstream.setTrace(true);
+  writer.setLogger(loggerV3c);
+#endif
+  size_t headerSize =
+    writer.write(ssvu, bitstream, params.encParams.forceSsvhUnitSizePrecision);
+  bitstreamStat.incrHeader(headerSize);
   if (!bitstream.save(params.compressedStreamPath)) {
     std::cerr << "Error: can't save compressed bitstream!\n";
     return false;
   }
-  std::cout << "\nAll frames have been encoded. \n";
+
+  // Write checksums
+  if (params.checksum) {
+    checksum.write(basePath + ".checksum");
+    checksum.print();
+  }
+
+  // Display stat: metrics, duractions, bitstreams, memory and face counts
+  if (computeMetrics) {
+    printf("\n------- All frames metrics -----------\n");
+    metrics.display();
+    printf("---------------------------------------\n");    
+  }
+  bitstreamStat.trace();
+  printf("\nAll frames have been encoded. \n");
   return true;
 }
 

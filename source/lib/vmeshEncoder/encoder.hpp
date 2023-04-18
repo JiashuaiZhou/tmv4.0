@@ -32,7 +32,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 #pragma once
 
 #include <cstdint>
@@ -40,7 +39,7 @@
 
 #include "util/mesh.hpp"
 #include "vmc.hpp"
-#include "util/bitstream.hpp"
+#include "v3cBitstream.hpp"
 
 #include <UVAtlas.h>
 
@@ -200,7 +199,7 @@ struct VMCEncoderParameters {
   bool    analyzeGof           = false;
 
   // Geometry video
-  int32_t      geometryVideoBlockSize     = 16;
+  int32_t      displacementVideoBlockSize = 16;
   int32_t      geometryVideoWidthInBlocks = 16;
   int32_t      geometryVideoBitDepth      = 10;
   std::string  geometryVideoEncoderConfig = {};
@@ -233,6 +232,7 @@ struct VMCEncoderParameters {
   bool encodeTextureVideo              = true;
   bool applyOneDimensionalDisplacement = true;
   bool interpolateDisplacementNormals  = false;
+  bool addReconstructedNormals         = true;
   bool displacementReversePacking      = true;
 
   // Lifting
@@ -302,6 +302,19 @@ struct VMCEncoderParameters {
   CachingPoint cachingPoint     = CachingPoint::NONE;
   std::string  cachingDirectory = {};
 
+  // Bitsteam
+  uint32_t forceSsvhUnitSizePrecision = 0;
+
+  // New
+  int32_t          maxNumRefAtlasList  = 1;
+  int32_t          maxNumRefAtlasFrame = 4;
+  std::vector<int> refFrameDiff        = {1, 2, 3, 4};
+  int32_t          numSubmesh          = 1;
+  int32_t          patchSegmentMethod =
+    2;  //0. facegroup 1. connected component 2.single patch 3.one triangle one patch"
+  std::string compressedFilename   = {};
+  int32_t     texturePaddingMethod = (int32_t)PaddingMethod::SPARSE_LINEAR;
+
   // Metrics
   bool normalCalcModificationEnable = false;
 };
@@ -317,15 +330,13 @@ public:
 
   bool compress(const VMCGroupOfFramesInfo& gofInfo,
                 const Sequence&             source,
-                Bitstream&                  bitstream,
+                V3cBitstream&               syntax,
                 Sequence&                   reconstruct,
                 const VMCEncoderParameters& params);
 
   inline void setKeepFilesPathPrefix(const std::string& path) {
     _keepFilesPathPrefix = path;
   }
-
-  VMCStats& stats() { return _stats; }
 
 private:
   void decimateInput(const TriangleMesh<MeshType>& input,
@@ -354,12 +365,6 @@ private:
                                   std::vector<int32_t>&       mapping,
                                   int32_t                     frameIndex,
                                   const VMCEncoderParameters& params) const;
-  bool        encodeSequenceHeader(const VMCGroupOfFrames&     gof,
-                                   FrameSequence<uint16_t>&    dispVideo,
-                                   Bitstream&                  bitstream,
-                                   const VMCEncoderParameters& params) const;
-  static bool encodeFrameHeader(const VMCFrameInfo& frameInfo,
-                                Bitstream&          bitstream);
   static bool computeDisplacements(VMCFrame&                     frame,
                                    const TriangleMesh<MeshType>& rec,
                                    const VMCEncoderParameters&   params);
@@ -370,25 +375,25 @@ private:
                         const VMCFrameInfo&         frameInfo,
                         VMCFrame&                   frame,
                         TriangleMesh<MeshType>&     rec,
-                        Bitstream&                  bitstream,
+                        BaseMeshTileLayer&          mfdu,
                         const VMCEncoderParameters& params);
   static bool
   compressMotion(const std::vector<Vec3<int32_t>>& triangles,
                  const std::vector<Vec3<int32_t>>& reference,
                  const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
                  const std::vector<Vec3<int32_t>>& current,
-                 Bitstream&                        bitstream,
+                 BaseMeshTileLayer&                mfdu,
                  const VMCEncoderParameters&       params);
   static bool
        computeDisplacementVideoFrame(const VMCFrame&             frame,
                                      Frame<uint16_t>&            dispVideoFrame,
                                      const VMCEncoderParameters& params);
   bool compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
-                                  Bitstream&                  bitstream,
+                                  V3cBitstream&               syntax,
                                   const VMCEncoderParameters& params);
   bool compressTextureVideo(Sequence&                   reconstruct,
-                            Bitstream&                  bitstream,
-                            const VMCEncoderParameters& params) const;
+                            V3cBitstream&               syntax,
+                            const VMCEncoderParameters& params);
 
   static bool transferTexture(const TriangleMesh<MeshType>& input,
                               const Frame<uint8_t>&         inputTexture,
@@ -405,7 +410,6 @@ private:
 
   std::string _keepFilesPathPrefix = {};
   int32_t     _gofIndex            = 0;
-  VMCStats    _stats;
 };
 
 //============================================================================

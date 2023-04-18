@@ -1959,7 +1959,7 @@ vtmVideoEncoderCfg::parseCfg(int argc, char* argv[]) {
             "when sps_subpic_same_size_flag is equal to, "
             "sps_num_subpics_minus1 is invalid");
     }
-    // automatically determine subpicture ID lenght in case it is not specified
+    // automatically determine subpicture ID length in case it is not specified
     if (m_subPicIdLen == 0) {
       if (m_subPicIdMappingExplicitlySignalledFlag) {
         // use the heighest specified ID

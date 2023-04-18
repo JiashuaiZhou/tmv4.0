@@ -52,13 +52,20 @@ public:
   }
   VMCGroupOfFramesInfo& operator[](int index) { return sequenceInfo_[index]; }
 
+  std::vector<VMCGroupOfFramesInfo>::iterator begin() {
+    return sequenceInfo_.begin();
+  }
+  std::vector<VMCGroupOfFramesInfo>::iterator end() {
+    return sequenceInfo_.end();
+  }
+
   int generate(int                frameCount,
                int                startFrame,
                int                maxGOFSize,
                bool               analyzeGof,
                const std::string& inputPath);
 
-  int save(std::string& outputPath);
+  int save(const std::string& outputPath);
 
   int load(int          frameCount,
            int          startFrame,

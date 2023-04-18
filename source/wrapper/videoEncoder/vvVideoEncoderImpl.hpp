@@ -32,7 +32,6 @@
  */
 #if defined(USE_VV_VIDEO_CODEC)
 #  include "util/image.hpp"
-#  include "util/bitstream.hpp"
 
 #  include <list>
 #  include <ostream>

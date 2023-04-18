@@ -12,7 +12,9 @@ include_directories( ${CMAKE_SOURCE_DIR}/dependencies
                      ${CMAKE_SOURCE_DIR}/source/wrapper/videoDecoder
                      ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder
                      ${CMAKE_SOURCE_DIR}/source/wrapper/colourConverter
-                     ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
+                     ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source 
+                     ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream
+                     ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream/syntaxElements )
  
 add_library( ${MYNAME} ${SRC} ${CMAKE_SOURCE_DIR}/dependencies/schroedinger/schroarith.c )
 

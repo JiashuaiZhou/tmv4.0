@@ -74,7 +74,7 @@ SequenceInfo::generate(const int          frameCount,
         VMCFrameInfo frameInfo;
         frameInfo.frameIndex          = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type                = FrameType::INTRA;
+        frameInfo.type                = I_BASEMESH;
         gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
         gofInfo.framesInfo_.push_back(frameInfo);
       } else {
@@ -83,7 +83,7 @@ SequenceInfo::generate(const int          frameCount,
         VMCFrameInfo frameInfo;
         frameInfo.frameIndex          = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type                = FrameType::INTRA;
+        frameInfo.type                = I_BASEMESH;
         gofInfo.framesInfo_.push_back(frameInfo);
       }
     }
@@ -206,7 +206,7 @@ SequenceInfo::generate(const int          frameCount,
         VMCFrameInfo frameInfo;
         frameInfo.frameIndex          = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type                = FrameType::INTRA;
+        frameInfo.type                = I_BASEMESH;
         gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
         gofInfo.framesInfo_.push_back(frameInfo);
       } else {
@@ -218,13 +218,13 @@ SequenceInfo::generate(const int          frameCount,
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex = -1;
           frameInfo.previousFrameIndex  = -1;
-          frameInfo.type                = FrameType::INTRA;
+          frameInfo.type                = I_BASEMESH;
         } else {
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex =
             referenceFrameIndex - gofInfo.startFrameIndex_;
           frameInfo.previousFrameIndex = frameInfo.frameIndex - 1;
-          frameInfo.type               = FrameType::SKIP;
+          frameInfo.type               = P_BASEMESH;
         }
         gofInfo.framesInfo_.push_back(frameInfo);
       }
@@ -234,7 +234,7 @@ SequenceInfo::generate(const int          frameCount,
 }
 
 int
-SequenceInfo::save(std::string& outputPath) {
+SequenceInfo::save(const std::string& outputPath) {
   std::ofstream fout(outputPath);
   if (!fout.is_open()) {
     std::cerr << "Error: can't create output file " << outputPath << '\n';
@@ -278,7 +278,7 @@ SequenceInfo::load(int          frameCount,
         VMCFrameInfo& frameInfo       = gofInfo.frameInfo(frameIndexInGOF);
         frameInfo.frameIndex          = frameIndexInGOF;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type                = FrameType::INTRA;
+        frameInfo.type                = I_BASEMESH;
       }
       f += frameCountGOF;
     }
@@ -320,7 +320,7 @@ SequenceInfo::load(int          frameCount,
         VMCFrameInfo frameInfo;
         frameInfo.frameIndex          = frameIndex - gofInfo.startFrameIndex_;
         frameInfo.referenceFrameIndex = -1;
-        frameInfo.type                = FrameType::INTRA;
+        frameInfo.type                = I_BASEMESH;
         gofInfo.framesInfo_.reserve(groupOfFramesMaxSize_);
         gofInfo.framesInfo_.push_back(frameInfo);
       } else {
@@ -331,11 +331,11 @@ SequenceInfo::load(int          frameCount,
         if (referenceFrameIndex == frameIndex) {
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex = -1;
-          frameInfo.type                = FrameType::INTRA;
+          frameInfo.type                = I_BASEMESH;
         } else {
           frameInfo.frameIndex = frameIndex - gofInfo.startFrameIndex_;
           frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
-          frameInfo.type                = FrameType::SKIP;
+          frameInfo.type                = P_BASEMESH;
         }
         gofInfo.framesInfo_.push_back(frameInfo);
       }

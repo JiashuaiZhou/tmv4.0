@@ -16,6 +16,7 @@ categories:
       - textureTransferEnable: 0
       - textureBGR444: 1 
       - unifyVertices: 0
+      - addReconstructedNormals: 0
       - dracoMeshLossless: 1
 
       # configuration for HM

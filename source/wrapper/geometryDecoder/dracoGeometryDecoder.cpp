@@ -172,12 +172,11 @@ convert(std::unique_ptr<draco::Mesh>& src,
 
 template<typename T>
 void
-DracoGeometryDecoder<T>::decode(std::vector<uint8_t>&      bitstream,
-                                GeometryDecoderParameters& params,
-                                TriangleMesh<T>&           dec) {
+DracoGeometryDecoder<T>::decode(const std::vector<uint8_t>& bitstream,
+                                GeometryDecoderParameters&  params,
+                                TriangleMesh<T>&            dec) {
   draco::DecoderBuffer decBuffer;
-  printf("bitstream.size() = %zu \n", bitstream.size());
-  decBuffer.Init((const char*)bitstream.data(), bitstream.size());
+  decBuffer.Init((const char*)bitstream.data() + 1, bitstream.size() - 1);
   auto type = draco::Decoder::GetEncodedGeometryType(&decBuffer);
   if (!type.ok()) {
     printf("Failed GetEncodedGeometryType: %s.\n", type.status().error_msg());
@@ -185,10 +184,16 @@ DracoGeometryDecoder<T>::decode(std::vector<uint8_t>&      bitstream,
   }
   if (type.value() == draco::TRIANGULAR_MESH) {
     draco::Decoder decoder;
-    decoder.options()->SetGlobalBool("use_position", params.dracoUsePosition_);
-    decoder.options()->SetGlobalBool("use_uv", params.dracoUseUV_);
-    decoder.options()->SetGlobalBool("mesh_lossless",
-                                     params.dracoMeshLossless_);
+    // Draco addition parameters:
+    //  - draco use position mode (m60340)
+    //  - draco use uv mode (m60293)
+    //  - whether mesh is lossless (m60289)
+    const bool usePosition  = ((bitstream[0] >> 0) & 1) != 0;
+    const bool useUv        = ((bitstream[0] >> 1) & 1) != 0;
+    const bool meshLossless = ((bitstream[0] >> 2) & 1) != 0;
+    decoder.options()->SetGlobalBool("use_position", usePosition);
+    decoder.options()->SetGlobalBool("use_uv", useUv);
+    decoder.options()->SetGlobalBool("mesh_lossless", meshLossless);
     auto status = decoder.DecodeMeshFromBuffer(&decBuffer);
     if (!status.ok()) {
       printf("Failed DecodeMeshFromBuffer: %s.\n",
@@ -197,7 +202,7 @@ DracoGeometryDecoder<T>::decode(std::vector<uint8_t>&      bitstream,
     }
     std::unique_ptr<draco::Mesh> decMesh = std::move(status).value();
     if (decMesh) {
-      convert(decMesh, dec, params.dracoMeshLossless_);
+      convert(decMesh, dec, meshLossless);
     } else {
       printf("Failed no in mesh  \n");
       exit(-1);

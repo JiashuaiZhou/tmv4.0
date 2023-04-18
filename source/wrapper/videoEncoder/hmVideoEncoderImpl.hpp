@@ -76,12 +76,12 @@ public:
 
               FrameSequence<T>& videoRec);
   // #if PCC_CF_EXT
-  // void setLogger( PCCLogger& logger ) { logger_ = &logger; }
+  // void setLogger( Logger& logger ) { logger_ = &logger; }
   // #endif
   // protected:
 
   // #if PCC_CF_EXT
-  // PCCLogger* logger_ = nullptr;
+  // Logger* logger_ = nullptr;
   // #endif
 
 private:

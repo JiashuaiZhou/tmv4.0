@@ -24,7 +24,7 @@ add_custom_target(
 )
 add_custom_command( OUTPUT ${VERSION_FILE} DEPENDS genversion )
 
-file(GLOB SRC *.h *.cpp util/*.h util/*.cpp )
+file(GLOB SRC *.cpp util/*.cpp )
 
 include_directories( ${CMAKE_SOURCE_DIR}/dependencies
                      ${CMAKE_SOURCE_DIR}/dependencies/mmetric/source/lib/include
@@ -33,6 +33,8 @@ include_directories( ${CMAKE_SOURCE_DIR}/dependencies
                      ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies/glfw/include
                      ${CMAKE_SOURCE_DIR}/dependencies/libmd5/
                      ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source
+                     ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream
+                     ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream/syntaxElements
                      . )
 
 add_library( ${MYNAME} ${SRC} ${VERSION_FILE} )

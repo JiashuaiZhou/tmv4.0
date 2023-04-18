@@ -42,8 +42,7 @@
 #include <sstream>
 #include <unordered_map>
 
-#include "util/bitstream.hpp"
-#include "contexts.hpp"
+#include "motionContexts.hpp"
 #include "entropy.hpp"
 #include "vmc.hpp"
 #include "metrics.hpp"
@@ -52,6 +51,7 @@
 #include "geometryParametrization.hpp"
 #include "transferColor.hpp"
 #include "util/checksum.hpp"
+#include "util/misc.hpp"
 
 #include "geometryEncoder.hpp"
 #include "videoEncoder.hpp"
@@ -86,6 +86,160 @@ loadCache(const VMCEncoderParameters& params,
   return mesh.load(params.cachingDirectory + separator() + name
                    + expandNum("_gof%02d", gofIndex)
                    + expandNum("_fr%04d.vmb", frameIndex));
+}
+
+//============================================================================
+
+int32_t
+initialize(V3cBitstream&               syntax,
+           const VMCEncoderParameters& params,
+           const VMCGroupOfFramesInfo& gofInfo) {
+  const uint8_t aspsId  = 0;
+  const uint8_t afpsId  = 0;
+  const uint8_t bmspsId = 0;
+  const uint8_t bmfpsId = 0;
+
+  // Allocate VPS, Atlas and base mesh
+  syntax.allocateAtlas(1);
+  syntax.allocateBaseMesh(1);
+  syntax.getActiveVpsId()   = 0;
+  syntax.getAtlasIndex()    = 0;
+  syntax.getBaseMeshIndex() = 0;
+
+  // V3C parameter set
+  auto& vps = syntax.addV3CParameterSet(0);
+  vps.allocateAtlas(1);
+  vps.getV3CParameterSetId()               = 0;
+  vps.getAtlasId(0)                        = 0;
+  vps.getFrameWidth(0)                     = params.textureWidth;
+  vps.getFrameHeight(0)                    = params.textureHeight;
+  vps.getMapCountMinus1(0)                 = 0;
+  vps.getMultipleMapStreamsPresentFlag(0)  = 0;
+  vps.getAuxiliaryVideoPresentFlag(0)      = false;
+  vps.getOccupancyVideoPresentFlag(0)      = false;
+  vps.getGeometryVideoPresentFlag(0)       = params.encodeDisplacementsVideo;
+  vps.getAttributeVideoPresentFlag(0)      = params.encodeTextureVideo;
+  vps.getMapAbsoluteCodingEnableFlag(0, 0) = true;
+  vps.getMapPredictorIndexDiff(0, 0)       = false;
+
+  // Geometry information
+  auto& gi                         = vps.getGeometryInformation(0);
+  gi.getGeometry2dBitdepthMinus1() = params.geometryVideoBitDepth - 1;
+  gi.getGeometryCodecId()          = params.geometryVideoCodecId;
+
+  // Attribute information
+  auto& ai = vps.getAttributeInformation(0);
+  ai.allocate(1);
+  ai.getAttribute2dBitdepthMinus1(0) = params.textureVideoBitDepth - 1;
+  ai.getAttributeCodecId(0)          = params.textureVideoCodecId;
+
+  // Atlas
+  auto& atlas = syntax.getAtlas();
+
+  // Atlas sequence parameter set
+  auto& asps                         = atlas.addAtlasSequenceParameterSet();
+  asps.getFrameWidth()               = params.textureWidth;
+  asps.getFrameHeight()              = params.textureHeight;
+  asps.getGeometry3dBitdepthMinus1() = params.bitDepthPosition - 1;
+  asps.getGeometry2dBitdepthMinus1() = params.bitDepthTexCoord - 1;
+  asps.getLog2PatchPackingBlockSize() =
+    log2(params.displacementVideoBlockSize);
+  asps.getExtensionFlag()     = 1;
+  asps.getVdmcExtensionFlag() = 1;
+
+  // ASPS extension
+  auto& ext                        = asps.getAspsVdmcExtension();
+  ext.getAddReconstructedNormals() = params.addReconstructedNormals;
+  ext.getSubdivisionMethod()       = params.intraGeoParams.subdivisionMethod;
+  ext.getSubdivisionIterationCount() =
+    uint8_t(params.liftingSubdivisionIterationCount);
+  ext.getLiftingQPs(0) = uint8_t(params.liftingQP[0]);
+  ext.getLiftingQPs(1) = uint8_t(params.liftingQP[1]);
+  ext.getLiftingQPs(2) = uint8_t(params.liftingQP[2]);
+  ext.getInterpolateDisplacementNormals() =
+    params.interpolateDisplacementNormals;
+  ext.getDisplacementReversePacking() = params.displacementReversePacking;
+
+  // Atlas frame parameter set
+  auto& afps                            = atlas.addAtlasFrameParameterSet();
+  afps.getAtlasSequenceParameterSetId() = aspsId;
+  afps.getAtlasFrameParameterSetId()    = afpsId;
+
+  // Atlas frame tile information
+  auto& afti                           = afps.getAtlasFrameTileInformation();
+  afti.getSingleTileInAtlasFrameFlag() = true;
+  afti.getSignalledTileIdFlag()        = false;
+
+  // Atlas tile layer
+  for (size_t i = 0; i < gofInfo.frameCount_; i++) {
+    auto& atl                            = atlas.addAtlasTileLayer();
+    auto& ath                            = atl.getHeader();
+    atl.getAtlasFrmOrderCntVal()         = i;
+    ath.getAtlasFrmOrderCntLsb()         = i;
+    ath.getAtlasFrameParameterSetId()    = afpsId;
+    ath.getNumRefIdxActiveOverrideFlag() = false;
+    ath.getRefAtlasFrameListSpsFlag()    = false;
+    ath.getRefAtlasFrameListIdx()        = 0;
+    ath.getId()                          = 0;
+    ath.getType()                        = SKIP_TILE;
+
+    // init ref list;
+    auto& refList              = ath.getRefListStruct();
+    refList.getNumRefEntries() = 0;
+    refList.allocate();
+    for (size_t j = 0; j < refList.getNumRefEntries(); j++) {
+      int32_t afocDiff                  = j == 0 ? -1 : 1;
+      refList.getAbsDeltaAfocSt(j)      = std::abs(afocDiff);
+      refList.getStrafEntrySignFlag(j)  = afocDiff < 0 ? false : true;
+      refList.getStRefAtlasFrameFlag(j) = true;
+    }
+  }
+
+  // Mesh sub bitstream
+  auto& baseMesh = syntax.getBaseMesh();
+
+  // Base mesh sequence parameter set
+  auto& bmsps = baseMesh.addBaseMeshSequenceParameterSet(bmspsId);
+  bmsps.getBaseMeshCodecId()  = params.meshCodecId;
+  bmsps.getQpPositionMinus1() = params.qpPosition - 1;
+  bmsps.getQpTexCoordMinus1() = params.qpTexCoord - 1;
+
+  // Base mesh frame parameter set
+  auto& bmfps = baseMesh.addBaseMeshFrameParameterSet(bmfpsId);
+  bmfps.getBaseMeshSequenceParameterSetId() = bmspsId;
+  bmfps.getBaseMeshFrameParameterSetId()    = bmfpsId;
+  bmfps.getMotionGroupSize()                = uint8_t(params.motionGroupSize);
+
+  // Base mesh frame parameter set
+  for (size_t i = 0; i < gofInfo.frameCount_; i++) {
+    auto& bmtl                            = baseMesh.addBaseMeshTileLayer();
+    auto& bmth                            = bmtl.getHeader();
+    auto& bmtdu                           = bmtl.getDataUnit();
+    bmtl.getBaseMeshFrmOrderCntVal()      = i;
+    bmth.getBaseMeshFrmOrderCntLsb()      = i;
+    bmth.getBaseMeshFrameParameterSetId() = bmfpsId;
+    bmth.getNumRefIdxActiveOverrideFlag() = false;
+    bmth.getRefBaseMeshFrameListSpsFlag() = false;
+    bmth.getRefBaseMeshFrameListIdx()     = 0;
+    bmth.getBaseMeshId()                  = 0;
+    // init ref list;
+    auto& refList              = bmth.getRefListStruct();
+    refList.getNumRefEntries() = 0;
+    refList.allocate();
+    for (size_t j = 0; j < refList.getNumRefEntries(); j++) {
+      int32_t afocDiff                  = j == 0 ? -1 : 1;
+      refList.getAbsDeltaAfocSt(j)      = std::abs(afocDiff);
+      refList.getStrafEntrySignFlag(j)  = afocDiff < 0 ? false : true;
+      refList.getStRefAtlasFrameFlag(j) = true;
+    }
+  }
+
+  // Video streams
+  if (params.encodeDisplacementsVideo)
+    atlas.createVideoBitstream(vmesh::VIDEO_GEOMETRY);
+  if (params.encodeTextureVideo)
+    atlas.createVideoBitstream(vmesh::VIDEO_ATTRIBUTE);
+  return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -472,13 +626,13 @@ VMCEncoder::geometryParametrization(VMCGroupOfFrames&             gof,
     if (chooseIntra) {
       frame.base                    = baseIntra;
       frame.subdiv                  = subdivIntra;
-      frameInfo.type                = FrameType::INTRA;
+      frameInfo.type                = I_BASEMESH;
       frameInfo.referenceFrameIndex = -1;
       lastIntraFrameIndex           = frameIndex;
     } else {
       frame.base                    = baseInter;
       frame.subdiv                  = subdivInter;
-      frameInfo.type                = FrameType::SKIP;
+      frameInfo.type                = P_BASEMESH;
       frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1;
       printf("Update referenceFrameIndex = %d \n",
              frameInfo.referenceFrameIndex);
@@ -524,7 +678,7 @@ VMCEncoder::unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
       const auto                  pointCount0 = base.pointCount();
       const auto&                 frameInfo   = gofInfo.frameInfo(findex);
       auto&                       umapping    = umappings[findex];
-      if (frameInfo.type == FrameType::INTRA) {
+      if (frameInfo.type == I_BASEMESH) {
         printf("Frame %2d: INTRA \n", findex);
         UnifyVertices(
           base.points(), base.triangles(), upoints, utriangles, umapping);
@@ -574,7 +728,7 @@ VMCEncoder::unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
 
 bool
 VMCEncoder::compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
-                                       Bitstream&                  bitstream,
+                                       V3cBitstream&               syntax,
                                        const VMCEncoderParameters& params) {
   //Encode
   VideoEncoderParameters videoEncoderParams;
@@ -584,23 +738,24 @@ VMCEncoder::compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
   videoEncoderParams.outputBitDepth_   = params.geometryVideoBitDepth;
   videoEncoderParams.qp_               = 8;
   FrameSequence<uint16_t> rec;
-  std::vector<uint8_t>    videoBitstream;
   printf("geometryVideoCodecId = %d \n", (int)params.geometryVideoCodecId);
   fflush(stdout);
-  auto encoder = VideoEncoder<uint16_t>::create(params.geometryVideoCodecId);
-  encoder->encode(dispVideo, videoEncoderParams, videoBitstream, rec);
+  auto& atlas        = syntax.getAtlas();
+  auto& displacement = atlas.getDisplacement();
+  auto& vps          = syntax.getVps();
+  auto& gi           = vps.getGeometryInformation(0);
+  auto  encoder =
+    VideoEncoder<uint16_t>::create(VideoCodecId(gi.getGeometryCodecId()));
+  encoder->encode(dispVideo, videoEncoderParams, displacement, rec);
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto prefix = _keepFilesPathPrefix + "disp";
     dispVideo.save(dispVideo.createName(prefix + "_enc", 10));
     rec.save(rec.createName(prefix + "_rec", 10));
-    save(prefix + ".h265", videoBitstream);
+    save(prefix + ".h265", displacement);
   }
-  dispVideo = rec;
-
-  bitstream.write((uint32_t)videoBitstream.size());
-  bitstream.append(videoBitstream);
+  dispVideo                     = rec;
   return true;
 }
 
@@ -608,8 +763,10 @@ VMCEncoder::compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
 
 bool
 VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
-                                 Bitstream&                  bitstream,
-                                 const VMCEncoderParameters& params) const {
+                                 V3cBitstream&               syntax,
+                                 const VMCEncoderParameters& params) {
+  printf("Compress texture video \n");
+  fflush(stdout);
   if (!params.encodeTextureVideo) {
     for (auto& texture : reconstruct.textures()) {
       texture.clear();
@@ -665,11 +822,13 @@ VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
     videoEncoderParams.outputBitDepth_   = params.textureVideoBitDepth;
     videoEncoderParams.qp_               = params.textureVideoQP;
     FrameSequence<uint16_t> rec;
-    std::vector<uint8_t>    videoBitstream;
-    auto encoder = VideoEncoder<uint16_t>::create(params.textureVideoCodecId);
-    encoder->encode(src, videoEncoderParams, videoBitstream, rec);
-    bitstream.write((uint32_t)videoBitstream.size());
-    bitstream.append(videoBitstream);
+    auto&                   atlas     = syntax.getAtlas();
+    auto&                   attribute = atlas.getAttribute();
+    auto&                   vps       = syntax.getVps();
+    auto&                   ai        = vps.getAttributeInformation(0);
+    auto                    encoder =
+      VideoEncoder<uint16_t>::create(VideoCodecId(ai.getAttributeCodecId(0)));
+    encoder->encode(src, videoEncoderParams, attribute, rec);
     src.clear();
     printf("encode texture video done \n");
     fflush(stdout);
@@ -677,7 +836,7 @@ VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       rec.save(rec.createName(_keepFilesPathPrefix + "tex_rec", 10));
-      save(_keepFilesPathPrefix + ".h265", videoBitstream);
+      save(_keepFilesPathPrefix + ".h265", attribute);
     }
 
     // Convert Rec YUV420 to BGR444
@@ -821,7 +980,7 @@ VMCEncoder::compressMotion(
   const std::vector<Vec3<int32_t>>& reference,
   const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
   const std::vector<Vec3<int32_t>>& current,
-  Bitstream&                        bitstream,
+  BaseMeshTileLayer&                bmtl,
   const VMCEncoderParameters&       params) {
   const auto         pointCount  = int32_t(current.size());
   const auto         maxAcBufLen = pointCount * 3 * 4 + 1024;
@@ -901,36 +1060,36 @@ VMCEncoder::compressMotion(
     std::cout << "[DEBUG][error] no_skip_num: " << no_skip_num << std::endl;
     return 1;
   };
+  auto& bmth  = bmtl.getHeader();
+  auto& bmtdu = bmtl.getDataUnit();
   if (baseIntegrateIndices.empty()) {
-    skip_mode_bits = 255;
+    skip_mode_bits             = 255;
+    bmtdu.getMotionSkipFlag()  = false;
+    bmtdu.getMotionSkipCount() = 0;
   } else {
+    bmtdu.getMotionSkipFlag() = true;
     if (all_skip_mode) {
-      skip_mode_bits = 128;
+      skip_mode_bits             = 128;
+      bmtdu.getMotionSkipAll()   = true;
+      bmtdu.getMotionSkipCount() = 0;
     } else {
-      skip_mode_bits = static_cast<uint8_t>(no_skip_num);
+      skip_mode_bits             = static_cast<uint8_t>(no_skip_num);
+      bmtdu.getMotionSkipFlag()  = true;
+      bmtdu.getMotionSkipAll()   = false;
+      bmtdu.getMotionSkipCount() = no_skip_num;
     }
   }
-  printf("skip_mode_bits = %u \n", skip_mode_bits);
-  std::cout << "[DEBUG][stat]skip mode bits: " << skip_mode_bits << std::endl;
-  bitstream.write(skip_mode_bits);
-  int skip_mode_size = sizeof(skip_mode_bits);
+  // bitstream.write(skip_mode_bits);
   if (!all_skip_mode) {
-    const auto byteCount =
-      no_skip_vindices.size() * sizeof(decltype(no_skip_vindices)::value_type);
-    const auto offset = bitstream.size();
-    bitstream.resize(offset + byteCount);
-    const auto data =
-      reinterpret_cast<const uint8_t*>(no_skip_vindices.data());
-    std::copy(data, data + byteCount, bitstream.buffer.begin() + offset);
+    bmtdu.getMotionSkipVextexIndices() = no_skip_vindices;
     motion.insert(motion.end(), motion_no_skip.begin(), motion_no_skip.end());
-    skip_mode_size += byteCount;
   }
-  std::cout << "[DEBUG][stat] skip mode bytes: " << skip_mode_size
-            << std::endl;
-
+  printf("MotionSkipFlag  = %d \n", bmtdu.getMotionSkipFlag());
+  printf("MotionSkipAll   = %d \n", bmtdu.getMotionSkipAll());
+  printf("MotionSkipCount = %d \n", bmtdu.getMotionSkipCount());
+  printf("skip_mode_bits  = %u \n", skip_mode_bits);
   const auto motionCount   = static_cast<int32_t>(motion.size());
   const auto refPointCount = static_cast<int32_t>(reference.size());
-
   printf("pointCount = %d motionCount = %d \n", pointCount, motionCount);
   fflush(stdout);
   int32_t remainP = motionCount;
@@ -1007,19 +1166,13 @@ VMCEncoder::compressMotion(
       }
     }
   }
-
-  printf("end Loog \n");
-  fflush(stdout);
   const auto length = arithmeticEncoder.stop();
   std::cout << "Motion byte count = " << length << '\n';
   assert(length <= std::numeric_limits<uint32_t>::max());
-  const auto byteCount = uint32_t(length);
-  bitstream.write(byteCount);
-  const auto offset = bitstream.size();
-  bitstream.resize(offset + byteCount);
+  bmtdu.getData().resize(length);
   std::copy(arithmeticEncoder.buffer(),
-            arithmeticEncoder.buffer() + byteCount,
-            bitstream.buffer.begin() + offset);
+            arithmeticEncoder.buffer() + length,
+            bmtdu.getData().vector().begin());
   return true;
 }
 
@@ -1030,9 +1183,9 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
                              const VMCFrameInfo&         frameInfo,
                              VMCFrame&                   frame,
                              TriangleMesh<MeshType>&     rec,
-                             Bitstream&                  bitstream,
+                             BaseMeshTileLayer&          bmtl,
                              const VMCEncoderParameters& params) {
-  if (!encodeFrameHeader(frameInfo, bitstream)) { return false; }
+  // if (!encodeFrameHeader(frameInfo, bitstream)) { return false; }
   const auto scalePosition =
     ((1 << params.qpPosition) - 1.0) / ((1 << params.bitDepthPosition) - 1.0);
   const auto scaleTexCoord  = std::pow(2.0, params.qpTexCoord) - 1.0;
@@ -1040,6 +1193,10 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
   const auto iscaleTexCoord = 1.0 / scaleTexCoord;
   auto&      base           = frame.base;
   auto&      subdiv         = frame.subdiv;
+  auto&      bmth           = bmtl.getHeader();
+  auto&      bmtdu          = bmtl.getDataUnit();
+  bmth.getBaseMeshType()    = frameInfo.type;
+
   // Save intermediate files
   std::string prefix = "";
   if (params.keepIntermediateFiles) {
@@ -1048,10 +1205,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     base.save(prefix + "_base_compress.ply");
     subdiv.save(prefix + "_subdiv_compress.ply");
   }
-  printf("Frame %4d: type = %s \n",
-         frameInfo.frameIndex,
-         frameInfo.type == FrameType::INTRA ? "Intra" : "Inter");
-  if (frameInfo.type == FrameType::INTRA) {
+  if (frameInfo.type == I_BASEMESH) {
     const auto texCoordBBox = base.texCoordBoundingBox();
     const auto delta        = texCoordBBox.max - texCoordBBox.min;
     const auto d            = std::max(delta[0], delta[1]);
@@ -1093,20 +1247,14 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
            encoderParams.dracoUsePosition_,
            encoderParams.dracoUseUV_,
            encoderParams.dracoMeshLossless_);
-    encoder->encode(base, encoderParams, geometryBitstream, rec);
+    encoder->encode(base, encoderParams, bmtdu.getData().vector(), rec);
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       base.save(prefix + "_base_enc.ply");
       rec.save(prefix + "_base_rec.ply");
-      save(prefix + "_base.drc", geometryBitstream);
+      save(prefix + "_base.drc", bmtdu.getData().vector());
     }
-
-    // Store bitstream
-    auto bitstreamByteCount0 = bitstream.size();
-    bitstream.write((uint32_t)geometryBitstream.size());
-    bitstream.append(geometryBitstream);
-    _stats.baseMeshByteCount += bitstream.size() - bitstreamByteCount0;
 
     // Round positions
     base             = rec;
@@ -1139,23 +1287,26 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       base.point(v) = qpositions[v];
     }
-    auto bitstreamByteCount0 = bitstream.size();
     if (params.motionWithoutDuplicatedVertices) {
       compressMotion(refFrame.baseClean.triangles(),
                      refFrame.baseClean.points(),
                      refFrame.baseIntegrateIndices,
                      qpositions,
-                     bitstream,
+                     bmtl,
                      params);
     } else {
-      compressMotion(base.triangles(),
-                     refFrame.qpositions,
-                     {},
-                     qpositions,
-                     bitstream,
-                     params);
+      compressMotion(
+        base.triangles(), refFrame.qpositions, {}, qpositions, bmtl, params);
     }
-    _stats.motionByteCount += bitstream.size() - bitstreamByteCount0;
+
+    // bmth.getReferenceFrameIndex() =
+    //   frameInfo.frameIndex - frameInfo.referenceFrameIndex - 1;
+    auto& refList = bmth.getRefListStruct();
+    refList.allocate(1);
+    refList.getAbsDeltaAfocSt(0) =
+      frameInfo.frameIndex - frameInfo.referenceFrameIndex;
+    refList.getStrafEntrySignFlag(0)  = false;
+    refList.getStRefAtlasFrameFlag(0) = true;
   }
   // Duplicated Vertex Reduction
   if (params.motionWithoutDuplicatedVertices) {
@@ -1172,7 +1323,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
                     params.intraGeoParams.subdivisionMethod,
                     params.liftingSubdivisionIterationCount,
                     params.interpolateDisplacementNormals,
-                    params.dracoMeshLossless);
+                    params.addReconstructedNormals);
 
   if (!params.dracoMeshLossless) {
     auto rsubdiv = rec;
@@ -1257,7 +1408,7 @@ VMCEncoder::computeDisplacementVideoFrame(
     dispVideoFrame,  // , ColourSpace::YUV400p, ColourSpace::YUV444p
   const VMCEncoderParameters& params) {
   const auto pixelsPerBlock =
-    params.geometryVideoBlockSize * params.geometryVideoBlockSize;
+    params.displacementVideoBlockSize * params.displacementVideoBlockSize;
   const auto  shift      = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
   const auto& disp       = frame.disp;
   const auto  planeCount = dispVideoFrame.planeCount();
@@ -1272,14 +1423,14 @@ VMCEncoder::computeDisplacementVideoFrame(
     const auto  blockIndex = v0 / pixelsPerBlock;
     const auto  indexWithinBlock = v0 % pixelsPerBlock;
     const auto  x0 = (blockIndex % params.geometryVideoWidthInBlocks)
-                    * params.geometryVideoBlockSize;
+                    * params.displacementVideoBlockSize;
     const auto y0 = (blockIndex / params.geometryVideoWidthInBlocks)
-                    * params.geometryVideoBlockSize;
+                    * params.displacementVideoBlockSize;
     int32_t x = 0;
     int32_t y = 0;
     computeMorton2D(indexWithinBlock, x, y);
-    assert(x < params.geometryVideoBlockSize);
-    assert(y < params.geometryVideoBlockSize);
+    assert(x < params.displacementVideoBlockSize);
+    assert(y < params.displacementVideoBlockSize);
 
     const auto x1 = x0 + x;
     const auto y1 = y0 + y;
@@ -1292,105 +1443,12 @@ VMCEncoder::computeDisplacementVideoFrame(
   return true;
 }
 
-//============================================================================
-
-bool
-VMCEncoder::encodeSequenceHeader(const VMCGroupOfFrames&     gof,
-                                 FrameSequence<uint16_t>&    dispVideo,
-                                 Bitstream&                  bitstream,
-                                 const VMCEncoderParameters& params) const {
-  if (dispVideo.width() < 0 || dispVideo.width() > 16384
-      || dispVideo.height() < 0 || dispVideo.height() > 16384
-      || (dispVideo.frameCount() != 0
-          && dispVideo.frameCount() != gof.frameCount())
-      || gof.frameCount() < 0 || gof.frameCount() > 65535
-      || params.textureWidth < 0 || params.textureWidth > 16384
-      || params.textureHeight < 0 || params.textureHeight > 16384
-      || params.bitDepthPosition < 0 || params.bitDepthPosition > 16
-      || params.bitDepthTexCoord < 0 || params.bitDepthTexCoord > 16) {
-    return false;
-  }
-  const auto     frameCount             = uint16_t(gof.frameCount());
-  const uint16_t widthDispVideo         = uint32_t(dispVideo.width());
-  const uint16_t heightDispVideo        = uint32_t(dispVideo.height());
-  const uint16_t widthTexVideo          = uint32_t(params.textureWidth);
-  const uint16_t heightTexVideo         = uint32_t(params.textureHeight);
-  const uint8_t  geometryVideoBlockSize = params.geometryVideoBlockSize;
-  const uint8_t  motionGroupSize        = uint8_t(params.motionGroupSize);
-  const auto     bitDepth               = uint8_t((params.bitDepthPosition - 1)
-                                + ((params.bitDepthTexCoord - 1) << 4));
-  const uint8_t  subdivInfo =
-    uint8_t(params.intraGeoParams.subdivisionMethod)
-    + ((params.liftingSubdivisionIterationCount) << 4);
-  const auto qpBaseMesh =
-    uint8_t((params.qpPosition - 1) + ((params.qpTexCoord - 1) << 4));
-  const uint8_t liftingQPs[3] = {uint8_t(params.liftingQP[0]),
-                                 uint8_t(params.liftingQP[1]),
-                                 uint8_t(params.liftingQP[2])};
-  const uint8_t bitField =
-    static_cast<int>(params.encodeDisplacementsVideo)
-    | (static_cast<int>(params.encodeTextureVideo) << 1)
-    | (static_cast<int>(params.interpolateDisplacementNormals) << 2)
-    | (static_cast<int>(params.displacementReversePacking) << 3)
-    | (static_cast<int>(params.dracoUsePosition) << 4)
-    | (static_cast<int>(params.dracoUseUV) << 5)
-    | (static_cast<int>(params.dracoMeshLossless) << 6);
-  bitstream.write(frameCount);
-  bitstream.write(bitField);
-  bitstream.write(bitDepth);
-  bitstream.write(subdivInfo);
-  bitstream.write(motionGroupSize);
-#if defined(CODE_CODEC_ID)
-  bitstream.write(uint8_t(params.meshCodecId));
-#endif
-  bitstream.write(qpBaseMesh);
-  if (params.encodeDisplacementsVideo) {
-#if defined(CODE_CODEC_ID)
-    bitstream.write(uint8_t(params.geometryVideoCodecId));
-#endif
-    bitstream.write(widthDispVideo);
-    bitstream.write(heightDispVideo);
-    bitstream.write(geometryVideoBlockSize);
-    bitstream.write(liftingQPs[0]);
-    bitstream.write(liftingQPs[1]);
-    bitstream.write(liftingQPs[2]);
-  }
-  if (params.encodeTextureVideo) {
-#if defined(CODE_CODEC_ID)
-    bitstream.write(uint8_t(params.textureVideoCodecId));
-#endif
-    bitstream.write(widthTexVideo);
-    bitstream.write(heightTexVideo);
-  }
-  return true;
-}
-
-//----------------------------------------------------------------------------
-
-bool
-VMCEncoder::encodeFrameHeader(const VMCFrameInfo& frameInfo,
-                              Bitstream&          bitstream) {
-  const auto frameType = uint8_t(frameInfo.type);
-  assert(frameInfo.patchCount >= 0 && frameInfo.patchCount <= 256);
-  const auto patchCountMinusOne = uint8_t(frameInfo.patchCount - 1);
-  bitstream.write(frameType);
-  bitstream.write(patchCountMinusOne);
-  if (frameInfo.type != FrameType::INTRA) {
-    uint8_t referenceFrameIndex =
-      frameInfo.frameIndex - frameInfo.referenceFrameIndex - 1;
-    assert(frameInfo.frameIndex > frameInfo.referenceFrameIndex);
-    assert(frameInfo.frameIndex - frameInfo.referenceFrameIndex - 1 < 256);
-    bitstream.write(referenceFrameIndex);
-  }
-  return true;
-}
-
 //----------------------------------------------------------------------------
 
 bool
 VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                      const Sequence&             source,
-                     Bitstream&                  bitstream,
+                     V3cBitstream&               syntax,
                      Sequence&                   reconstruct,
                      const VMCEncoderParameters& params) {
   VMCGroupOfFrames gof;
@@ -1398,8 +1456,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   gofInfo.trace();
   const int32_t frameCount          = gofInfo.frameCount_;
   int32_t       lastIntraFrameIndex = 0;
-  _stats.reset();
-  _stats.totalByteCount = bitstream.size();
+  initialize(syntax, params, gofInfo);
+
   gof.resize(source.frameCount());
   reconstruct.resize(source.frameCount());
   printf("Compress: frameCount = %d \n", frameCount);
@@ -1436,11 +1494,13 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frame     = gof.frame(frameIndex);
     const auto& frameInfo = gofInfo.frameInfo(frameIndex);
-    printf("Frame %2d: base = %6d points subdiv = %6d points Ref = %d \n",
-           frameIndex,
-           frame.base.pointCount(),
-           frame.subdiv.pointCount(),
-           frameInfo.referenceFrameIndex);
+    printf(
+      "Frame %2d: type = %s base = %6d points subdiv = %6d points Ref = %d \n",
+      frameIndex,
+      toString(frameInfo.type).c_str(),
+      frame.base.pointCount(),
+      frame.subdiv.pointCount(),
+      frameInfo.referenceFrameIndex);
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       auto prefix = _keepFilesPathPrefix + "fr_" + std::to_string(frameIndex);
@@ -1455,27 +1515,33 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   unifyVertices(gofInfo, gof, params);
 
   // Compress geometry
-  Bitstream     bitstreamGeo;
+  // Bitstream     bitstreamGeo;
   const int32_t pixelsPerBlock =
-    params.geometryVideoBlockSize * params.geometryVideoBlockSize;
+    params.displacementVideoBlockSize * params.displacementVideoBlockSize;
   const auto widthDispVideo =
-    params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
+    params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
   auto       heightDispVideo      = 0;
   const auto colourSpaceDispVideo = params.applyOneDimensionalDisplacement
                                       ? ColourSpace::YUV400p
                                       : ColourSpace::YUV444p;
   FrameSequence<uint16_t> dispVideo;
   dispVideo.resize(0, 0, colourSpaceDispVideo, frameCount);
+
+  printf("frameCount = %zu \n", frameCount);
+  auto& baseMesh = syntax.getBaseMesh();
+  // auto& msdu = atlas.getMeshSequenceDataUnit(0);
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frameInfo      = gofInfo.frameInfo(frameIndex);
     auto&       frame          = gof.frame(frameIndex);
     auto&       dispVideoFrame = dispVideo.frame(frameIndex);
     auto&       rec            = reconstruct.mesh(frameIndex);
-    compressBaseMesh(gof, frameInfo, frame, rec, bitstreamGeo, params);
+    auto&       bmtl           = baseMesh.getBaseMeshTileLayer(frameIndex);
+    printf("Frame %4d: type = %s ReferenceFrame = %4d \n",
+           frameInfo.frameIndex,
+           toString(frameInfo.type).c_str(),
+           frameInfo.referenceFrameIndex);
+    compressBaseMesh(gof, frameInfo, frame, rec, bmtl, params);
     const auto vertexCount = frame.subdiv.pointCount();
-    _stats.baseMeshVertexCount += frame.base.pointCount();
-    _stats.vertexCount += rec.pointCount();
-    _stats.faceCount += rec.triangleCount();
     if (params.encodeDisplacementsVideo) {
       const auto blockCount =
         (vertexCount + pixelsPerBlock - 1) / pixelsPerBlock;
@@ -1483,10 +1549,9 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
         (blockCount + params.geometryVideoWidthInBlocks - 1)
         / params.geometryVideoWidthInBlocks;
       const auto width =
-        params.geometryVideoWidthInBlocks * params.geometryVideoBlockSize;
+        params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
       const auto height =
-        geometryVideoHeightInBlocks * params.geometryVideoBlockSize;
-      printf("displacemnt video Size = %d x %d \n", width, height);
+        geometryVideoHeightInBlocks * params.displacementVideoBlockSize;
       dispVideoFrame.resize(width, height, colourSpaceDispVideo);
       computeDisplacements(frame, rec, params);
       computeForwardLinearLifting(frame.disp,
@@ -1504,23 +1569,17 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     const auto padding = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
     dispVideo.standardizeFrameSizes(!params.displacementReversePacking,
                                     padding);
+    auto& atlas              = syntax.getAtlas();
+    auto& asps               = atlas.getAtlasSequenceParameterSet(0);
+    auto& ext                = asps.getAspsVdmcExtension();
+    ext.getWidthDispVideo()  = uint32_t(dispVideo.width());
+    ext.getHeightDispVideo() = uint32_t(dispVideo.height());
   }
-
-  // write sequence header
-  if (!encodeSequenceHeader(gof, dispVideo, bitstream, params)) {
-    return false;
-  }
-  bitstream.append(bitstreamGeo.buffer);
-
   // Encode displacements video
-  _stats.frameCount             = frameCount;
-  _stats.displacementsByteCount = bitstream.size();
   if (params.encodeDisplacementsVideo
-      && (!compressDisplacementsVideo(dispVideo, bitstream, params))) {
+      && (!compressDisplacementsVideo(dispVideo, syntax, params))) {
     return false;
   }
-  _stats.displacementsByteCount =
-    bitstream.size() - _stats.displacementsByteCount;
 
   // Reconstruct
   printf("Reconstruct \n");
@@ -1538,7 +1597,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
       reconstructDisplacementFromVideoFrame(dispVideo.frame(frameIndex),
                                             frame,
                                             reconstruct.mesh(frameIndex),
-                                            params.geometryVideoBlockSize,
+                                            params.displacementVideoBlockSize,
                                             params.geometryVideoBitDepth,
                                             params.displacementReversePacking);
       inverseQuantizeDisplacements(frame,
@@ -1555,8 +1614,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                          reconstruct.mesh(frameIndex),
                          params.displacementCoordinateSystem);
     }
-    auto start = std::chrono::steady_clock::now();
-
+    tic("ColorTransfer");
     if (params.encodeTextureVideo && params.textureTransferEnable) {
       TransferColor transferColor;
       if (!transferColor.transfer(source.mesh(frameIndex),
@@ -1569,15 +1627,10 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     } else {
       reconstruct.texture(frameIndex) = source.texture(frameIndex);
     }
-    _stats.colorTransferTime += std::chrono::steady_clock::now() - start;
+    toc("ColorTransfer");
   }
   // compress texture
-  printf("Compress texture video \n");
-  fflush(stdout);
-  _stats.textureByteCount = bitstream.size();
-  if (!compressTextureVideo(reconstruct, bitstream, params)) { return false; }
-  _stats.textureByteCount = bitstream.size() - _stats.textureByteCount;
-  _stats.totalByteCount   = bitstream.size() - _stats.totalByteCount;
+  if (!compressTextureVideo(reconstruct, syntax, params)) { return false; }
 
   // Quantize UV coordinate
   if (!params.dequantizeUV) {
@@ -1594,9 +1647,6 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   if (!params.reconstructNormals) {
     for (auto& rec : reconstruct.meshes()) { rec.resizeNormals(0); }
   }
-
-  printf("Compress done \n");
-  fflush(stdout);
   return true;
 }
 

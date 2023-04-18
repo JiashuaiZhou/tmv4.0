@@ -8,8 +8,10 @@ target_include_directories(po INTERFACE "${PROJECT_SOURCE_DIR}/dependencies/" )
 # Encode
 create_executable( NAME      encode 
                    SOURCES   encode.cpp 
-                   LIBRARIES po vmeshCommon vmeshEncoder UVAtlas DirectX-Headers DirectXMath DirectXMesh
-                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                   LIBRARIES po vmeshCommon vmeshEncoder v3cBitstream UVAtlas DirectX-Headers DirectXMath DirectXMesh 
+                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream
+                             ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream/syntaxElements
+                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon/util
                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshEncoder
                              ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )  
@@ -17,8 +19,10 @@ create_executable( NAME      encode
 # Decode
 create_executable( NAME      decode 
                    SOURCES   decode.cpp 
-                   LIBRARIES po vmeshCommon vmeshDecoder 
-                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                   LIBRARIES po vmeshCommon vmeshDecoder v3cBitstream
+                   INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream
+                             ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream/syntaxElements
+                             ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon/util
                              ${CMAKE_SOURCE_DIR}/source/lib/vmeshDecoder
                              ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
@@ -44,22 +48,28 @@ if ( BUILD_WRAPPER_APPS )
   # Draco Encoder/decoder
   create_executable( NAME      decodeDraco 
                      SOURCES   wrapper/dracoDecoder.cpp 
-                     LIBRARIES po geometryDecoder
+                     LIBRARIES po geometryDecoder v3cBitstream
                      INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                               ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream
+                               ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream/syntaxElements
                                ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder
                                ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 
   # Video Encoder/decoder
   create_executable( NAME      encodeVideo 
                      SOURCES   wrapper/videoEncoder.cpp 
-                     LIBRARIES po videoEncoder
+                     LIBRARIES po videoEncoder v3cBitstream
                      INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
-                    CMAKE_ANDROID_API           ${CMAKE_SOURCE_DIR}/source/wrapper/videoEncoder )
+                               ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream
+                               ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream/syntaxElements
+                               ${CMAKE_SOURCE_DIR}/source/wrapper/videoEncoder )
 
   create_executable( NAME      decodeVideo 
                      SOURCES   wrapper/videoDecoder.cpp 
-                     LIBRARIES po videoDecoder
+                     LIBRARIES po videoDecoder v3cBitstream
                      INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+                               ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream
+                               ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream/syntaxElements
                                ${CMAKE_SOURCE_DIR}/source/wrapper/videoDecoder )
 
   # Colour Converter

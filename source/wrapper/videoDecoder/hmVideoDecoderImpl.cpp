@@ -49,14 +49,15 @@ hmVideoDecoderImpl<T>::~hmVideoDecoderImpl() {
 
 template<typename T>
 void
-hmVideoDecoderImpl<T>::decode(std::vector<uint8_t>& bitstream,
-                              size_t                outputBitDepth,
-                              FrameSequence<T>&     video) {
-  std::string s(reinterpret_cast<char*>(bitstream.data()), bitstream.size());
-  std::istringstream                  iss(s);
-  std::istream&                       bitstreamFile = iss;
-  Int                                 poc           = 0;
-  pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic     = nullptr;
+hmVideoDecoderImpl<T>::decode(const std::vector<uint8_t>& bitstream,
+                              size_t                      outputBitDepth,
+                              FrameSequence<T>&           video) {
+  std::string        s(reinterpret_cast<const char*>(bitstream.data()),
+                bitstream.size());
+  std::istringstream iss(s);
+  std::istream&      bitstreamFile              = iss;
+  Int                poc                        = 0;
+  pcc_hm::TComList<pcc_hm::TComPic*>* pcListPic = nullptr;
   pcc_hm::InputByteStream             bytestream(bitstreamFile);
   if (outputBitDepth != 0U) {
     m_outputBitDepth[CHANNEL_TYPE_LUMA]   = outputBitDepth;

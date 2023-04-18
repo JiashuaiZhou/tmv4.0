@@ -307,12 +307,12 @@ Checksum::operator==(const Checksum& rhs) const {
   for (size_t i = 0; i < numMax; i++) {
     printf("Frame %4zu: [MD5GEO:%32s,%32s][MD5TEX:%32s,%32s][%s,%s]\n",
            i,
-           i < mesh_[i].size() ? toString(mesh_[i]).c_str() : "",
-           i < rhs.mesh_[i].size() ? toString(rhs.mesh_[i]).c_str() : "",
-           i < texture_[i].size() ? toString(texture_[i]).c_str() : "",
-           i < rhs.texture_[i].size() ? toString(rhs.texture_[i]).c_str() : "",
-           mesh_[i] == rhs.mesh_[i] ? "EQUAL" : "DIFF",
-           texture_[i] == rhs.texture_[i] ? "EQUAL" : "DIFF");
+           i < mesh_.size() ? toString(mesh_[i]).c_str() : "",
+           i < rhs.mesh_.size() ? toString(rhs.mesh_[i]).c_str() : "",
+           i < texture_.size() ? toString(texture_[i]).c_str() : "",
+           i < rhs.texture_.size() ? toString(rhs.texture_[i]).c_str() : "",
+           i < numMin && mesh_[i] == rhs.mesh_[i] ? "EQUAL" : "DIFF",
+           i < numMin && texture_[i] == rhs.texture_[i] ? "EQUAL" : "DIFF");
   }
   return equal;
 }

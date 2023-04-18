@@ -191,10 +191,11 @@ vvVideoDecoderImpl<T>::~vvVideoDecoderImpl() {}
 
 template<typename T>
 void
-vvVideoDecoderImpl<T>::decode(std::vector<uint8_t>& bitstream,
-                              size_t                outputBitDepth,
-                              FrameSequence<T>&     video) {
-  std::string s(reinterpret_cast<char*>(bitstream.data()), bitstream.size());
+vvVideoDecoderImpl<T>::decode(const std::vector<uint8_t>& bitstream,
+                              size_t                      outputBitDepth,
+                              FrameSequence<T>&           video) {
+  std::string        s(reinterpret_cast<const char*>(bitstream.data()),
+                bitstream.size());
   std::istringstream iss(s);
   std::istream&      cInFile          = iss;
   int                iMaxFrames       = -1;

@@ -45,9 +45,9 @@ public:
   vvVideoDecoderImpl();
 
   ~vvVideoDecoderImpl();
-  void decode(std::vector<uint8_t>& bitstream,
-              size_t                outputBitDepth,
-              FrameSequence<T>&     video);
+  void decode(const std::vector<uint8_t>& bitstream,
+              size_t                      outputBitDepth,
+              FrameSequence<T>&           video);
 
 private:
   int storeDecodedFrame(const vvdecFrame* pcFrame,

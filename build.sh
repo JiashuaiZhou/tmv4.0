@@ -13,25 +13,26 @@ print_usage()
   echo "$0 mpeg-vmesh-tm building script: "
   echo "";
   echo "    Usage:" 
-  echo "       -h|--help    : Display this information."  
-  echo "       -o|--output  : Output build directory."
-  echo "       -n|--ninja   : Use Ninja."
-  echo "       --debug      : Build in debug mode."
-  echo "       --release    : Build in release mode."
-  echo "       --doc        : Build documentation (latex and pdflatex requiered)."
-  echo "       --format     : Format source code."
-  echo "       --tidy       : Check source code with clang-tidy."
-  echo "       --cppcheck   : Check source code with cppcheck."
-  echo "       --test       : Build unit tests."
-  echo "       --meshType=* : Define template mesh type: float or double."
-  echo "       --doc        : Build documentation (latex and pdflatex requiered)"
-  echo "       --format     : Format source code"
-  echo "       --tidy       : Check source code with clang-tidy"
-  echo "       --cppcheck   : Check source code with cppcheck"
-  echo "       --position   : Turn on position compression enhancement"
-  echo "       --uv         : Turn on uv coordinates compression enhancement"
-  echo "       --test       : Build unit tests"
-  echo "       --codeCodecId: Code codec id used in the bitstream"
+  echo "       -h|--help     : Display this information."  
+  echo "       -o|--output   : Output build directory."
+  echo "       -n|--ninja    : Use Ninja."
+  echo "       --debug       : Build in debug mode."
+  echo "       --release     : Build in release mode."
+  echo "       --doc         : Build documentation (latex and pdflatex requiered)."
+  echo "       --format      : Format source code."
+  echo "       --tidy        : Check source code with clang-tidy."
+  echo "       --cppcheck    : Check source code with cppcheck."
+  echo "       --test        : Build unit tests."
+  echo "       --meshType=*  : Define template mesh type: float or double."
+  echo "       --doc         : Build documentation (latex and pdflatex requiered)"
+  echo "       --format      : Format source code"
+  echo "       --tidy        : Check source code with clang-tidy"
+  echo "       --cppcheck    : Check source code with cppcheck"
+  echo "       --position    : Turn on position compression enhancement"
+  echo "       --uv          : Turn on uv coordinates compression enhancement"
+  echo "       --test        : Build unit tests"
+  echo "       --codeCodecId : Code codec id used in the bitstream"
+  echo "       --logBitstream: enable bitstream logs"
   echo "";
   echo "    Examples:";
   echo "      $0 "; 
@@ -64,6 +65,7 @@ while [[ $# -gt 0 ]] ; do
     --cppcheck    ) TARGETS+=( "cppcheck" );;       
     --test        ) CMAKE_FLAGS+=( "-DBUILD_UNIT_TEST_APPS=TRUE" ) ;;
     --codeCodecId ) CMAKE_FLAGS+=( "-DCODE_CODEC_ID=TRUE" ) ;;
+    --logBitstream) CMAKE_FLAGS+=( "-DBITSTREAM_TRACE=TRUE" ) ;;
     *             ) print_usage "unsupported arguments: $C ";;
   esac
   shift;
@@ -76,7 +78,7 @@ CMAKE_FLAGS+=( "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=${CURDIR}/${OUTPUT}/${MODE}/lib
 CMAKE_FLAGS+=( "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CURDIR}/${OUTPUT}/${MODE}/lib" )
 # CMAKE_FLAGS+=( "-DCMAKE_CXX_FLAGS=-stdlib=libc++" )
 
-echo "$CMAKE_FLAGS"
+echo "${CMAKE_FLAGS[@]}"
 if ! ${CMAKE} -H${CURDIR} -B"${CURDIR}/${OUTPUT}/${MODE}" "${CMAKE_FLAGS[@]}";
 then
   echo -e "\033[1;31mfailed \033[0m"

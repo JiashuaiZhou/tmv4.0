@@ -11,6 +11,8 @@ include_directories( ${CMAKE_SOURCE_DIR}/dependencies
                      ${CMAKE_SOURCE_DIR}/dependencies/directx-math/Inc
                      ${CMAKE_SOURCE_DIR}/dependencies/directx-mesh/DirectXMesh
                      ${CMAKE_SOURCE_DIR}/dependencies/directx-headers/include
+                     ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream
+                     ${CMAKE_SOURCE_DIR}/source/lib/v3cBitstream/syntaxElements
                      ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
                      ${CMAKE_SOURCE_DIR}/source/wrapper/videoEncoder
                      ${CMAKE_SOURCE_DIR}/source/wrapper/geometryEncoder

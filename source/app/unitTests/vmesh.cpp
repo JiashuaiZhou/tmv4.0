@@ -38,7 +38,6 @@
 #include "util/misc.hpp"
 #include "util/verbose.hpp"
 #include "version.hpp"
-#include "util/bitstream.hpp"
 
 #include <gtest/gtest.h>
 #include "common.hpp"

@@ -37,20 +37,13 @@
 
 #include <cstdint>
 #include <string>
+#include <chrono>
 
 #include "util/image.hpp"
 #include "util/mesh.hpp"
-#include "vmcStats.hpp"
+#include "v3cCommon.hpp"
 
 namespace vmesh {
-
-//============================================================================
-
-enum class FrameType {
-  INTER = 0,
-  INTRA = 1,
-  SKIP  = 2
-};
 
 //============================================================================
 
@@ -85,51 +78,11 @@ enum class SmoothingMethod {
 
 //============================================================================
 
-struct VMCSequenceParameterSet {
-  int32_t widthDispVideo                      = 0;
-  int32_t heightDispVideo                     = 0;
-  int32_t widthTexVideo                       = 0;
-  int32_t heightTexVideo                      = 0;
-  int32_t frameCount                          = 0;
-  int32_t geometryVideoBlockSize              = 0;
-  int32_t geometryVideoBitDepth               = 10;
-  int32_t textureVideoBitDepth                = 10;
-  int32_t bitDepthPosition                    = 0;
-  int32_t bitDepthTexCoord                    = 0;
-  int32_t qpPosition                          = 0;
-  int32_t qpTexCoord                          = 0;
-  int32_t subdivisionIterationCount           = 0;
-  int32_t liftingQP[3]                        = {0, 0, 0};
-  uint8_t motionGroupSize                     = 16;
-  double  liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
-  double  liftingUpdateWeight                 = 0.125;
-  double  liftingPredictionWeight             = 0.5;
-  bool    liftingSkipUpdate                   = false;
-  bool    encodeDisplacementsVideo            = true;
-  bool    encodeTextureVideo                  = true;
-  bool    interpolateDisplacementNormals      = false;
-  bool    displacementReversePacking          = true;
-
-  SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;
-  DisplacementCoordinateSystem displacementCoordinateSystem =
-    DisplacementCoordinateSystem::LOCAL;
-
-  GeometryCodecId meshCodecId          = GeometryCodecId::DRACO;
-  VideoCodecId    geometryVideoCodecId = VideoCodecId::HM;
-  VideoCodecId    textureVideoCodecId  = VideoCodecId::HM;
-  bool            dracoUsePosition     = false;
-  bool            dracoUseUV           = false;
-  bool            dracoMeshLossless    = false;
-};
-
-//============================================================================
-
 struct VMCFrameInfo {
-  int32_t   frameIndex          = -1;
-  int32_t   referenceFrameIndex = -1;
-  int32_t   previousFrameIndex  = -1;
-  int32_t   patchCount          = 1;
-  FrameType type                = FrameType::INTRA;
+  int32_t      frameIndex          = -1;
+  int32_t      referenceFrameIndex = -1;
+  int32_t      previousFrameIndex  = -1;
+  BaseMeshType type                = I_BASEMESH;
 };
 
 //============================================================================
@@ -158,9 +111,7 @@ struct VMCGroupOfFramesInfo {
       printf("    - frameIndex = %3d refIndex = %3d type = %s \n",
              frameInfo.frameIndex,
              frameInfo.referenceFrameIndex,
-             frameInfo.type == FrameType::INTRA   ? "Intra"
-             : frameInfo.type == FrameType::INTER ? "Inter"
-                                                  : "Skip");
+             toString(frameInfo.type).c_str());
     }
   }
   int32_t                   startFrameIndex_ = -1;
@@ -293,18 +244,19 @@ reconstructDisplacementFromVideoFrame(
   const Frame<uint16_t>&        dispVideoFrame,
   VMCFrame&                     frame,
   const TriangleMesh<MeshType>& rec,
-  const int32_t                 geometryVideoBlockSize,
+  const int32_t                 displacementVideoBlockSize,
   const int32_t                 geometryVideoBitDepth,
   const int32_t                 displacementReversePacking) {
   printf("Reconstruct displacements from video frame \n");
   fflush(stdout);
-  const auto geometryVideoWidthInBlocks =
-    dispVideoFrame.width() / geometryVideoBlockSize;
-  const auto pixelsPerBlock = geometryVideoBlockSize * geometryVideoBlockSize;
-  const auto shift          = uint16_t((1 << geometryVideoBitDepth) >> 1);
-  const auto planeCount     = dispVideoFrame.planeCount();
-  const auto pointCount     = rec.pointCount();
-  auto&      disp           = frame.disp;
+  const auto displacementVideoWidthInBlocks =
+    dispVideoFrame.width() / displacementVideoBlockSize;
+  const auto pixelsPerBlock =
+    displacementVideoBlockSize * displacementVideoBlockSize;
+  const auto    shift      = uint16_t((1 << geometryVideoBitDepth) >> 1);
+  const auto    planeCount = dispVideoFrame.planeCount();
+  const auto    pointCount = rec.pointCount();
+  auto&         disp       = frame.disp;
   const int32_t start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
   disp.assign(pointCount, Vec3<double>(0));
   for (int32_t v = 0; v < pointCount; ++v) {
@@ -312,15 +264,15 @@ reconstructDisplacementFromVideoFrame(
     const auto v0               = displacementReversePacking ? start - v : v;
     const auto blockIndex       = v0 / pixelsPerBlock;
     const auto indexWithinBlock = v0 % pixelsPerBlock;
-    const auto x0 =
-      (blockIndex % geometryVideoWidthInBlocks) * geometryVideoBlockSize;
-    const auto y0 =
-      (blockIndex / geometryVideoWidthInBlocks) * geometryVideoBlockSize;
+    const auto x0               = (blockIndex % displacementVideoWidthInBlocks)
+                    * displacementVideoBlockSize;
+    const auto y0 = (blockIndex / displacementVideoWidthInBlocks)
+                    * displacementVideoBlockSize;
     int32_t x = 0;
     int32_t y = 0;
     computeMorton2D(indexWithinBlock, x, y);
-    assert(x < geometryVideoBlockSize);
-    assert(y < geometryVideoBlockSize);
+    assert(x < displacementVideoBlockSize);
+    assert(y < displacementVideoBlockSize);
     const auto x1 = x0 + x;
     const auto y1 = y0 + y;
     auto&      d  = disp[v];
@@ -340,27 +292,25 @@ subdivideBaseMesh(VMCFrame&               frame,
                   const SubdivisionMethod subdivisionMethod,
                   const int32_t           subdivisionIterationCount,
                   const int32_t           interpolateDisplacementNormals,
-                  const bool              meshLossless) {
+                  const bool              addReconstructedNormals) {
   printf("Subdivide base mesh \n");
   fflush(stdout);
   auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
   auto& subdivEdges        = frame.subdivEdges;
   rec                      = frame.base;
-  if (interpolateDisplacementNormals && (!meshLossless)) {
-    rec.computeNormals();
-  }
+  if (interpolateDisplacementNormals) { rec.computeNormals(); }
   if (subdivisionMethod == SubdivisionMethod::MID_POINT) {
     rec.subdivideMidPoint(
       subdivisionIterationCount, &infoLevelOfDetails, &subdivEdges);
   } else {
     return -1;
   }
-  if (!meshLossless) rec.resizeNormals(rec.pointCount());
+  if (addReconstructedNormals) rec.resizeNormals(rec.pointCount());
   if (interpolateDisplacementNormals) {
     interpolateSubdivision(
       rec.normals(), infoLevelOfDetails, subdivEdges, 0.5, 0.5, true);
   } else {
-    if (!meshLossless) rec.computeNormals();
+    if (addReconstructedNormals) rec.computeNormals();
   }
   return 0;
 }
@@ -406,7 +356,7 @@ inverseQuantizeDisplacements(
   double iscale[3];
   double ilodScale[3];
   for (int32_t k = 0; k < 3; ++k) {
-    const auto qp = liftingQP[k];
+    const auto qp = (int32_t)liftingQP[k];
     iscale[k] =
       qp >= 0 ? pow(0.5, 16 - bitDepthPosition + (4 - qp) / 6.0) : 0.0;
     ilodScale[k] = liftingLevelOfDetailInverseScale[k];
@@ -422,14 +372,6 @@ inverseQuantizeDisplacements(
     for (int32_t k = 0; k < 3; ++k) { iscale[k] *= ilodScale[k]; }
   }
   return 0;
-}
-
-//============================================================================
-
-static inline std::string
-removeFileExtension(const std::string string) {
-  size_t pos = string.find_last_of(".");
-  return pos != std::string::npos ? string.substr(0, pos) : string;
 }
 
 //============================================================================
@@ -489,7 +431,6 @@ tic(const std::string& name) {
     g_ticTocList.begin(), g_ticTocList.end(), [&name](const TicToc& element) {
       return std::get<0>(element) == name;
     });
-
   auto start = std::chrono::steady_clock::now();
   if (it != g_ticTocList.end()) {
     std::get<1>(*it) = start;
@@ -507,7 +448,6 @@ toc(const std::string& name) {
     g_ticTocList.begin(), g_ticTocList.end(), [&name](const TicToc& element) {
       return std::get<0>(element) == name;
     });
-
   if (it != g_ticTocList.end()) {
     auto end      = std::chrono::steady_clock::now();
     auto duration = end - std::get<1>(*it);
@@ -522,6 +462,34 @@ toc(const std::string& name) {
     std::cout << "Duration " << name << ": can't find clock\n";
   }
 }
+//============================================================================
+
+static void
+resetTime(const std::string& name) {
+  auto it = std::find_if(
+    g_ticTocList.begin(), g_ticTocList.end(), [&name](const TicToc& element) {
+      return std::get<0>(element) == name;
+    });
+  if (it != g_ticTocList.end()) {
+    std::get<2>(*it) = (std::chrono::nanoseconds::max)();
+  } 
+}
+
+//============================================================================
+
+static double
+getTime(const std::string& name) {
+  double duration = -1.0;
+  auto   it       = std::find_if(
+    g_ticTocList.begin(), g_ticTocList.end(), [&name](const TicToc& element) {
+      return std::get<0>(element) == name;
+    });
+  if (it != g_ticTocList.end())
+    duration = (std::get<2>(*it) == (std::chrono::nanoseconds::max)()
+                  ? -1.0
+                  : std::chrono::duration<double>(std::get<2>(*it)).count());
+  return duration;
+}
 
 //============================================================================
 
@@ -529,11 +497,11 @@ static void
 traceTime() {
   std::cout << "Duration: \n";
   for (auto& el : g_ticTocList) {
-    // auto duration = std::get<2>(el) - std::get<1>(el);
     std::cout << "  " << std::left << std::setw(25) << std::get<0>(el)
               << ": time = " << std::right << std::setw(15)
-              << std::chrono::duration<double>(std::get<2>(el)).count()
-              << " s \n";
+              << (std::get<2>(el) == (std::chrono::nanoseconds::max)()
+      ? -1.0
+      : std::chrono::duration<double>(std::get<2>(el)).count() ) << " s \n";
   }
 }
 

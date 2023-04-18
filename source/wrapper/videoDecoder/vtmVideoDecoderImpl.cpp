@@ -46,10 +46,11 @@ vtmVideoDecoderImpl<T>::~vtmVideoDecoderImpl() {}
 
 template<typename T>
 uint32_t
-vtmVideoDecoderImpl<T>::decode(std::vector<uint8_t>& bitstream,
-                               size_t                outputBitDepth,
-                               FrameSequence<T>&     video) {
-  std::string s(reinterpret_cast<char*>(bitstream.data()), bitstream.size());
+vtmVideoDecoderImpl<T>::decode(const std::vector<uint8_t>& bitstream,
+                               size_t                      outputBitDepth,
+                               FrameSequence<T>&           video) {
+  std::string        s(reinterpret_cast<const char*>(bitstream.data()),
+                bitstream.size());
   std::istringstream iss(s);
   std::istream&      bitstreamFile = iss;
   int                poc;

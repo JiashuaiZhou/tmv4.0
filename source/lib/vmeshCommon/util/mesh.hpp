@@ -88,6 +88,23 @@ enum class SubdivisionMethod {
 
 //============================================================================
 
+enum class TransformMethod {
+  NONE_TRANSFORM = 0,
+  LINEAR_LIFTING = 1,
+};
+
+//============================================================================
+
+enum class MeshAttribueType {
+  ATTRIBUTE_TEXTURE     = 0,
+  ATTRIBUTE_FACEGROUPID = 1,
+  ATTRIBUTE_NORMAL      = 2,
+  ATTRIBUTE_MATERIALID  = 3,
+  ATTRIBUTE_REFLECTION  = 4,
+};
+
+//============================================================================
+
 template<typename T>
 class StaticAdjacencyInformation {
 public:

@@ -156,9 +156,19 @@ initialize(V3cBitstream&               syntax,
   ext.getLiftingQPs(0) = uint8_t(params.liftingQP[0]);
   ext.getLiftingQPs(1) = uint8_t(params.liftingQP[1]);
   ext.getLiftingQPs(2) = uint8_t(params.liftingQP[2]);
+  ext.getLiftingLevelOfDetailInverseScale(0) =
+    params.liftingLevelOfDetailInverseScale[0];
+  ext.getLiftingLevelOfDetailInverseScale(1) =
+    params.liftingLevelOfDetailInverseScale[1];
+  ext.getLiftingLevelOfDetailInverseScale(2) =
+    params.liftingLevelOfDetailInverseScale[2];
   ext.getInterpolateDisplacementNormals() =
     params.interpolateDisplacementNormals;
   ext.getDisplacementReversePacking() = params.displacementReversePacking;
+  ext.getLodDisplacementQuantizationFlag() =
+    params.lodDisplacementQuantizationFlag;
+  ext.getLiftingQuantizationParametersPerLevelOfDetails() =
+    params.liftingQuantizationParametersPerLevelOfDetails;
 
   // Atlas frame parameter set
   auto& afps                            = atlas.addAtlasFrameParameterSet();
@@ -1374,17 +1384,39 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
   const auto  lodCount           = int32_t(infoLevelOfDetails.size());
   assert(lodCount > 0);
   const auto dispDimensions = params.applyOneDimensionalDisplacement ? 1 : 3;
-  std::vector<double> scale(dispDimensions);
-  std::vector<double> lodScale(dispDimensions);
-  for (int32_t k = 0; k < dispDimensions; ++k) {
-    const auto qp = params.liftingQP[k];
-    scale[k] =
-      qp >= 0 ? pow(2.0, 16 - params.bitDepthPosition + (4 - qp) / 6.0) : 0.0;
-    lodScale[k] = 1.0 / params.liftingLevelOfDetailInverseScale[k];
+  std::vector<std::vector<double>> scales(
+    lodCount, std::vector<double>(dispDimensions, 0));
+  if (params.lodDisplacementQuantizationFlag) {
+    for (int32_t it = 0; it < lodCount; ++it) {
+      auto& scale = scales[it];
+      for (int32_t k = 0; k < dispDimensions; ++k) {
+        const auto qp =
+          params.liftingQuantizationParametersPerLevelOfDetails[it][k];
+        scale[k] = qp >= 0
+                     ? pow(2.0, 16 - params.bitDepthPosition + (4 - qp) / 6.0)
+                     : 0.0;
+      }
+    }
+  } else {
+    std::vector<double> lodScale(dispDimensions);
+    auto&               scale = scales[0];
+    for (int32_t k = 0; k < dispDimensions; ++k) {
+      const auto qp = params.liftingQP[k];
+      scale[k]      = qp >= 0
+                        ? pow(2.0, 16 - params.bitDepthPosition + (4 - qp) / 6.0)
+                        : 0.0;
+      lodScale[k]   = 1.0 / params.liftingLevelOfDetailInverseScale[k];
+    }
+    for (int32_t it = 1; it < lodCount; ++it) {
+      for (int32_t k = 0; k < dispDimensions; ++k) {
+        scales[it][k] = scales[it - 1][k] * lodScale[k];
+      }
+    }
   }
   auto& disp = frame.disp;
   for (int32_t it = 0, vcount0 = 0; it < lodCount; ++it) {
-    const auto vcount1 = infoLevelOfDetails[it].pointCount;
+    const auto& scale   = scales[it];
+    const auto  vcount1 = infoLevelOfDetails[it].pointCount;
     for (int32_t v = vcount0; v < vcount1; ++v) {
       auto& d = disp[v];
       for (int32_t k = 0; k < dispDimensions; ++k) {
@@ -1394,7 +1426,6 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
       }
     }
     vcount0 = vcount1;
-    for (int32_t k = 0; k < dispDimensions; ++k) { scale[k] *= lodScale[k]; }
   }
   return true;
 }
@@ -1600,10 +1631,17 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                             params.displacementVideoBlockSize,
                                             params.geometryVideoBitDepth,
                                             params.displacementReversePacking);
-      inverseQuantizeDisplacements(frame,
-                                   params.bitDepthPosition,
-                                   params.liftingLevelOfDetailInverseScale,
-                                   params.liftingQP);
+      if (params.lodDisplacementQuantizationFlag) {
+        inverseQuantizeDisplacements(
+          frame,
+          params.bitDepthPosition,
+          params.liftingQuantizationParametersPerLevelOfDetails);
+      } else {
+        inverseQuantizeDisplacements(frame,
+                                     params.bitDepthPosition,
+                                     params.liftingLevelOfDetailInverseScale,
+                                     params.liftingQP);
+      }
       computeInverseLinearLifting(frame.disp,
                                   frame.subdivInfoLevelOfDetails,
                                   frame.subdivEdges,

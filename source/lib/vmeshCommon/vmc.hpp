@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <chrono>
@@ -370,6 +371,36 @@ inverseQuantizeDisplacements(
     }
     vcount0 = vcount1;
     for (int32_t k = 0; k < 3; ++k) { iscale[k] *= ilodScale[k]; }
+  }
+  return 0;
+}
+
+static int32_t
+inverseQuantizeDisplacements(
+  VMCFrame&     frame,
+  const int32_t bitDepthPosition,
+  const std::vector<std::array<int32_t, 3>>&
+    liftingQuantizationParametersPerLevelOfDetails) {
+  const auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
+  const auto  lodCount           = int32_t(infoLevelOfDetails.size());
+  assert(lodCount > 0);
+  assert(lodCount
+         == static_cast<int32_t>(
+           liftingQuantizationParametersPerLevelOfDetails.size()));
+  auto& disp = frame.disp;
+  for (int32_t it = 0, vcount0 = 0; it < lodCount; ++it) {
+    double iscale[3];
+    for (int32_t k = 0; k < 3; ++k) {
+      const auto qp = liftingQuantizationParametersPerLevelOfDetails[it][k];
+      iscale[k] =
+        qp >= 0 ? pow(0.5, 16 - bitDepthPosition + (4 - qp) / 6.0) : 0.0;
+    }
+    const auto vcount1 = infoLevelOfDetails[it].pointCount;
+    for (int32_t v = vcount0; v < vcount1; ++v) {
+      auto& d = disp[v];
+      for (int32_t k = 0; k < 3; ++k) { d[k] *= iscale[k]; }
+    }
+    vcount0 = vcount1;
   }
   return 0;
 }

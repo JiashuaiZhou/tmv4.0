@@ -515,10 +515,17 @@ VMCDecoder::decompress(const V3cBitstream&         syntax,
         ext.getDisplacementReversePacking());
 
       const auto bitDepthPosition = asps.getGeometry3dBitdepthMinus1() + 1;
-      inverseQuantizeDisplacements(frame,
-                                   bitDepthPosition,
-                                   ext.getLiftingLevelOfDetailInverseScale(),
-                                   ext.getLiftingQPs());
+      if (ext.getLodDisplacementQuantizationFlag()) {
+        inverseQuantizeDisplacements(
+          frame,
+          bitDepthPosition,
+          ext.getLiftingQuantizationParametersPerLevelOfDetails());
+      } else {
+        inverseQuantizeDisplacements(frame,
+                                     bitDepthPosition,
+                                     ext.getLiftingLevelOfDetailInverseScale(),
+                                     ext.getLiftingQPs());
+      }
       computeInverseLinearLifting(frame.disp,
                                   frame.subdivInfoLevelOfDetails,
                                   frame.subdivEdges,

@@ -234,6 +234,7 @@ struct VMCEncoderParameters {
   bool interpolateDisplacementNormals  = false;
   bool addReconstructedNormals         = true;
   bool displacementReversePacking      = true;
+  bool lodDisplacementQuantizationFlag = true;
 
   // Lifting
   int32_t liftingSubdivisionIterationCount    = 2;
@@ -243,6 +244,10 @@ struct VMCEncoderParameters {
   double  liftingBias[3]                      = {1. / 3., 1. / 3., 1. / 3};
   double  liftingLevelOfDetailInverseScale[3] = {2.0, 2.0, 2.0};
   int32_t liftingQP[3]                        = {16, 28, 28};
+  std::vector<std::array<int32_t, 3>>
+    liftingQuantizationParametersPerLevelOfDetails = {{16, 28, 28},
+                                                      {22, 34, 34},
+                                                      {28, 40, 40}};
 
   // Texture transfer
   bool          textureTransferEnable                            = true;

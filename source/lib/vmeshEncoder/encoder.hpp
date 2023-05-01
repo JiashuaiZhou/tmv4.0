@@ -317,7 +317,7 @@ struct VMCEncoderParameters {
   int32_t     texturePaddingMethod = (int32_t)PaddingMethod::SPARSE_LINEAR;
 
   // Metrics
-  bool normalCalcModificationEnable = false;
+  bool normalCalcModificationEnable = true;
 };
 
 //============================================================================

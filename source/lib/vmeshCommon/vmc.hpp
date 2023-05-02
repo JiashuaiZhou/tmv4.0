@@ -57,7 +57,9 @@ enum class DisplacementCoordinateSystem {
 enum class PaddingMethod {
   NONE          = 0,
   PUSH_PULL     = 1,
-  SPARSE_LINEAR = 2
+  SPARSE_LINEAR = 2,
+  SMOOTHED_PUSH_PULL = 3,
+  HARMONIC_FILL = 4
 };
 
 //============================================================================

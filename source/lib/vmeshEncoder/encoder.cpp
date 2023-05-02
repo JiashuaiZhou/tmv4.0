@@ -1686,10 +1686,23 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     tic("ColorTransfer");
     if (params.encodeTextureVideo && params.textureTransferEnable) {
       TransferColor transferColor;
-      if (!transferColor.transfer(source.mesh(frameIndex),
-                                  source.texture(frameIndex),
-                                  reconstruct.mesh(frameIndex),
-                                  reconstruct.texture(frameIndex),
+      auto& refMesh = source.mesh(frameIndex);
+      auto& refTexture = source.texture(frameIndex);
+      auto& targetMesh = reconstruct.mesh(frameIndex);
+      auto& targetTexture = reconstruct.texture(frameIndex);
+      Frame<uint8_t> pastTexture;
+      bool usePastTexture = false;
+      if (params.textureTransferCopyBackground && frameIndex > 0 && gofInfo.frameInfo(frameIndex).type == P_BASEMESH) {
+          //occupancy map will be the same as the reference, so use the background from reference as well
+          pastTexture = reconstruct.texture(gofInfo.frameInfo(frameIndex).referenceFrameIndex);
+          usePastTexture = true;
+      }
+      if (!transferColor.transfer(refMesh,
+                                  refTexture,
+                                  targetMesh,
+                                  targetTexture,
+                                  usePastTexture,
+                                  pastTexture,
                                   params)) {
         return false;
       }

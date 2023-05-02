@@ -2093,6 +2093,35 @@ TransferColor::dilateTexture(Frame<uint8_t>&             reconstructedTexture,
                         occupancy,
                         params.textureTransferPaddingSparseLinearThreshold);
   }
+  else if (params.textureTransferPaddingMethod
+      == PaddingMethod::SMOOTHED_PUSH_PULL) {
+      SmoothedPushPull(reconstructedTexture, occupancy);
+  }
+  else if (params.textureTransferPaddingMethod
+      == PaddingMethod::HARMONIC_FILL) {
+      HarmonicBackgroundFill(reconstructedTexture, occupancy);
+  }
+}
+
+//----------------------------------------------------------------------------
+
+void
+TransferColor::dilateTexture(Frame<uint8_t>& reconstructedTexture,
+    Plane<uint8_t>& occupancy,
+    Frame<uint8_t>& pastReconstructedTexture,
+    const VMCEncoderParameters& params) {
+    if (params.textureTransferPaddingDilateIterationCount != 0) {
+        Frame<uint8_t> tmpTexture;
+        Plane<uint8_t> tmpOccupancy;
+        for (int32_t it = 0;
+            it < params.textureTransferPaddingDilateIterationCount;
+            ++it) {
+            DilatePadding(reconstructedTexture, occupancy, tmpTexture, tmpOccupancy);
+            DilatePadding(tmpTexture, tmpOccupancy, reconstructedTexture, occupancy);
+        }
+    }
+    //now copy the background from the previous frame
+    CopyBackground(reconstructedTexture, occupancy, pastReconstructedTexture);
 }
 
 //----------------------------------------------------------------------------
@@ -2102,6 +2131,8 @@ TransferColor::transfer(const TriangleMesh<MeshType>& sourceMesh,
                         const Frame<uint8_t>&         sourceTexture,
                         TriangleMesh<MeshType>&       reconstructedMesh,
                         Frame<uint8_t>&               reconstructedTexture,
+                        bool usePastTexture,
+                        Frame<uint8_t>& pastReconstructedTexture,
                         const VMCEncoderParameters&   params) {
   auto targetMesh   = sourceMesh;
   auto targetMeshPC = sourceMesh;
@@ -2151,7 +2182,12 @@ TransferColor::transfer(const TriangleMesh<MeshType>& sourceMesh,
                           srcTri2tgtTri,
                           params);
   }
+  if (usePastTexture) {
+      dilateTexture(reconstructedTexture, occupancy, pastReconstructedTexture, params);
+  }
+  else {
   dilateTexture(reconstructedTexture, occupancy, params);
+  }
 
   if (params.invertOrientation) { reconstructedMesh.invertOrientation(); }
 

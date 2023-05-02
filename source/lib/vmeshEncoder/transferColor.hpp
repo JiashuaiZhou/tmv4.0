@@ -58,6 +58,8 @@ public:
                 const Frame<uint8_t>&         sourceTexture,
                 TriangleMesh<MeshType>&       reconstructedMesh,
                 Frame<uint8_t>&               reconstructedTexture,
+                bool                          usePastTexture,
+                Frame<uint8_t>&               pastReconstructedTexture,
                 const VMCEncoderParameters&   params);
 
 private:
@@ -79,6 +81,10 @@ private:
 
   void dilateTexture(Frame<uint8_t>&             reconstructedTexture,
                      Plane<uint8_t>&             occupancy,
+                     const VMCEncoderParameters& params);
+  void dilateTexture(Frame<uint8_t>& reconstructedTexture, 
+                     Plane<uint8_t>& occupancy, 
+                     Frame<uint8_t>& pastReconstructedTexture, 
                      const VMCEncoderParameters& params);
 };
 

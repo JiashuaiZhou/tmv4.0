@@ -142,7 +142,14 @@ operator>>(std::istream& in, PaddingMethod& val) {
     val = PaddingMethod::PUSH_PULL;
   } else if (str == "sparse_linear" || str == "2") {
     val = PaddingMethod::SPARSE_LINEAR;
-  } else {
+  }
+  else if (str == "smoothed_push_pull" || str == "3") {
+      val = PaddingMethod::SMOOTHED_PUSH_PULL;
+  }
+  else if (str == "harmonic" || str == "4") {
+      val = PaddingMethod::HARMONIC_FILL;
+  }
+  else {
     val = PaddingMethod::NONE;
   }
   return in;
@@ -156,6 +163,8 @@ operator<<(std::ostream& out, PaddingMethod val) {
   case PaddingMethod::NONE: out << "none"; break;
   case PaddingMethod::PUSH_PULL: out << "push_pull"; break;
   case PaddingMethod::SPARSE_LINEAR: out << "sparse_linear"; break;
+  case PaddingMethod::SMOOTHED_PUSH_PULL: out << "smoothed_push_pull"; break;
+  case PaddingMethod::HARMONIC_FILL: out << "harmonic"; break;
   }
   return out;
 }
@@ -252,7 +261,7 @@ struct VMCEncoderParameters {
   int32_t       textureTransferSamplingSubdivisionIterationCount = 3;
   int32_t       textureTransferPaddingBoundaryIterationCount     = 2;
   int32_t       textureTransferPaddingDilateIterationCount       = 2;
-  PaddingMethod textureTransferPaddingMethod = PaddingMethod::SPARSE_LINEAR;
+  PaddingMethod textureTransferPaddingMethod = PaddingMethod::SMOOTHED_PUSH_PULL;
   double        textureTransferPaddingSparseLinearThreshold = 0.05;  //0.005
   double        textureTransferBasedPointcloud              = true;
   double        textureTransferPreferUV                     = false;
@@ -264,6 +273,7 @@ struct VMCEncoderParameters {
   int32_t       textureTransferMapNumPoints                 = 8;
   int32_t       textureTransferMethod                       = 0;
   float         textureTransferSigma                        = 0.2f;
+  bool          textureTransferCopyBackground               = true;
 
   // Input
   bool unifyVertices     = false;

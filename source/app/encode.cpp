@@ -550,6 +550,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureTransferMapNumPoints, 
       encParams.textureTransferMapNumPoints,
       "textureTransferMapNumPoints")
+    ("textureTransferCopyBackground",
+      encParams.textureTransferCopyBackground,
+      encParams.textureTransferCopyBackground,
+      "textureTransferMapNumPoints")
 
   (po::Section("Texture video"))
     ("encodeTextureVideo", 

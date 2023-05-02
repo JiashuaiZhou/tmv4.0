@@ -313,7 +313,7 @@ VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
                      + std::to_string(frameInfo.frameIndex)
                      + "_baseClean.obj");
     }
-  } else {
+  } else if (frameInfo.type == P_BASEMESH) {
     // frameInfo.referenceFrameIndex =
     //   frameInfo.frameIndex - 1 - int32_t(bmth.getReferenceFrameIndex());
     const auto& refFrame = gof.frame(frameInfo.referenceFrameIndex);
@@ -332,7 +332,18 @@ VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
     }
     // Duplicated Vertex Reduction
     removeDuplicatedVertices(frame);
+  } else {
+    const auto& refFrame = gof.frame(frameInfo.referenceFrameIndex);
+    base                 = refFrame.base;
+    qpositions           = refFrame.qpositions;
+    for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
+      base.point(v) = qpositions[v];
+    }
+    // Duplicated Vertex Reduction
+    frame.baseClean            = refFrame.baseClean;
+    frame.baseIntegrateIndices = refFrame.baseIntegrateIndices;
   }
+
 
   auto& atlas = syntax.getAtlas();
   auto& asps  = atlas.getAtlasSequenceParameterSet(0);
@@ -491,6 +502,8 @@ VMCDecoder::decompress(const V3cBitstream&         syntax,
       else
         frameInfo.referenceFrameIndex =
           frameInfo.frameIndex - refList.getAbsDeltaAfocSt(0);
+    } else if (bmth.getBaseMeshType() == SKIP_BASEMESH) {
+      frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1; 
     }
     printf("Frame %4d: type = %s ReferenceFrame = %4d \n",
            frameInfo.frameIndex,

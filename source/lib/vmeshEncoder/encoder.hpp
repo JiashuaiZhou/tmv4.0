@@ -365,6 +365,9 @@ private:
                                   std::vector<int32_t>&       mapping,
                                   int32_t                     frameIndex,
                                   const VMCEncoderParameters& params) const;
+  static BaseMeshType
+  chooseSkipOrInter(const std::vector<Vec3<int32_t>>& current,
+                              const std::vector<Vec3<int32_t>>& reference);
   static bool computeDisplacements(VMCFrame&                     frame,
                                    const TriangleMesh<MeshType>& rec,
                                    const VMCEncoderParameters&   params);

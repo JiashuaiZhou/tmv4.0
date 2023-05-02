@@ -202,6 +202,9 @@ private:
   // Base mesh NAL unit header syntax
   void baseMeshNalUnitHeader(Bitstream& bitstream, BaseMeshNalUnit& nalUnit);
 
+  // Displacement sub-bitstream syntax
+  void displacementSubStream(V3cBitstream& syntax, Bitstream& bitstream);
+  
   // V3C VPS extension
   void vpsExtension(V3CParameterSet& vps, uint8_t index, Bitstream& bitstream);
 

@@ -463,10 +463,6 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Motion field coding by integrating duplicated vertices in reference frames")
 
   (po::Section("Geometry video"))
-    ("encodeGeometryVideo", 
-      encParams.encodeDisplacementsVideo, 
-      encParams.encodeDisplacementsVideo, 
-      "Encode displacements video")
     ("geometryVideoCodecId",
       encParams.geometryVideoCodecId,
       encParams.geometryVideoCodecId,
@@ -477,6 +473,13 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Geometry video config file")
         
   (po::Section("Displacements"))
+    ("encodeDisplacements", 
+      encParams.encodeDisplacements, 
+      encParams.encodeDisplacements, 
+      "Displacements coding mode:\n"
+      "  0: no displacements coding\n"
+      "  1: arithmetic coding\n"
+      "  2: video coding")
     ("applyOneDimensionalDisplacement",
       encParams.applyOneDimensionalDisplacement,
       encParams.applyOneDimensionalDisplacement,
@@ -497,6 +500,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.displacementUse420,
       encParams.displacementUse420,
       "Displacement use 4:2:0 encoding")
+    ("subBlockSize", 
+      encParams.subBlockSize, 
+      encParams.subBlockSize, 
+      "Subblock size for arithmetic coding")
       
   (po::Section("Transfer texture"))    
     ("textureTransferEnable", 
@@ -703,7 +710,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   }
 
   if (encParams.geometryVideoEncoderConfig.empty()
-      && encParams.encodeDisplacementsVideo) {
+      && encParams.encodeDisplacements == 2) {
     err.error() << "geometry video config not specified\n";
   }
 

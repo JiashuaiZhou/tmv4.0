@@ -177,6 +177,7 @@ V3CWriter::encode(V3cBitstream& syntax, SampleStreamV3CUnit& ssvu) {
   auto& vps                     = syntax.getVps();
   auto& atlas                   = syntax.getAtlas();
   auto& asps                    = atlas.getAtlasSequenceParameterSet(0);
+  auto& ext                     = asps.getAspsVdmcExtension();
   auto& vuhAD                   = syntax.getV3CUnitHeader(V3C_AD);
   auto& vuhMD                   = syntax.getV3CUnitHeader(V3C_BMD);
   auto& vuhGVD                  = syntax.getV3CUnitHeader(V3C_GVD);
@@ -202,6 +203,11 @@ V3CWriter::encode(V3cBitstream& syntax, SampleStreamV3CUnit& ssvu) {
     
     // Add Base mesh 
     addV3CUnit(syntax, ssvu, V3C_BMD);
+
+    // Add displacement
+    if (ext.getEncodeDisplacements() == 1) {
+      addV3CUnit(syntax, ssvu, V3C_DD);
+    }
 
     // Add displacement video
     if (vps.getGeometryVideoPresentFlag(0)) {
@@ -305,6 +311,8 @@ V3CWriter::v3cUnitPayload(V3cBitstream& syntax,
     atlasSubStream(syntax, bitstream);
   } else if (v3cUnitType == V3C_BMD) {
     baseMeshSubStream(syntax, bitstream);
+  } else if (v3cUnitType == V3C_DD) {
+    displacementSubStream(syntax, bitstream);
   } else if (v3cUnitType == V3C_OVD || v3cUnitType == V3C_GVD
              || v3cUnitType == V3C_AVD) {
     videoSubStream(syntax, bitstream, v3cUnitType);
@@ -609,6 +617,17 @@ V3CWriter::baseMeshSkipTileDataUnit(BaseMeshTileDataUnit& bmtdu,
   TRACE_BITSTREAM_OUT("%s", __func__);
 }
 
+// Displacement sub-bitstream syntax
+void
+V3CWriter::displacementSubStream(V3cBitstream& syntax, Bitstream& bitstream) {
+  TRACE_BITSTREAM_IN("%s", __func__);
+  const auto& displacement = syntax.getDisplacement();
+  auto& bistreamStat = syntax.getBitstreamStat();
+  WRITE_VECTOR(displacement.getData().vector());
+  bistreamStat.setDisplacement(displacement.getData().vector().size());
+  TRACE_BITSTREAM_OUT("%s", __func__);
+  }
+
 // V3C VPS extension
 void
 V3CWriter::vpsExtension(V3CParameterSet& vps,
@@ -645,7 +664,7 @@ V3CWriter::aspsVdmcExtension(Bitstream&                     bitstream,
                              AtlasSequenceParameterSetRbsp& asps,
                              AspsVdmcExtension&             ext) {
   TRACE_BITSTREAM_IN("%s", __func__);
-
+  WRITE_CODE(ext.getEncodeDisplacements(), 2);              //u2
   WRITE_CODE(ext.getSubdivisionIterationCount(), 4);        //u4
   WRITE_CODE(ext.getLodDisplacementQuantizationFlag(), 1);  //u1
   if (ext.getLodDisplacementQuantizationFlag()) {
@@ -673,12 +692,20 @@ V3CWriter::aspsVdmcExtension(Bitstream&                     bitstream,
   WRITE_CODE(ext.getAddReconstructedNormals(), 1);         //u1
   WRITE_CODE(ext.getDisplacement1D(), 1)                   //u1
   WRITE_CODE(ext.getDisplacementReversePacking(), 1);      //u1
+  if (ext.getEncodeDisplacements() == 1) {
+    WRITE_CODE(ext.getSubBlockSize(), 16);                 //u16
+  }
+  else if (ext.getEncodeDisplacements() == 2) {
+    WRITE_CODE(ext.getWidthDispVideo(), 16);               //u16
+    WRITE_CODE(ext.getHeightDispVideo(), 16);              //u16
+  }
   WRITE_CODE(ext.getMaxNumNeighborsMotion(), 8);           //u8
+
   // Video streams
   // if (vps.getGeometryVideoPresentFlag(0)) {
   // JR Note: will be move
-  WRITE_CODE(ext.getWidthDispVideo(), 16);   //u16
-  WRITE_CODE(ext.getHeightDispVideo(), 16);  //u16
+  // WRITE_CODE(ext.getWidthDispVideo(), 16);   //u16
+  // WRITE_CODE(ext.getHeightDispVideo(), 16);  //u16
   // }
   TRACE_BITSTREAM_OUT("%s", __func__);
 }

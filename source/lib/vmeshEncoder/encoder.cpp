@@ -43,6 +43,7 @@
 #include <unordered_map>
 
 #include "motionContexts.hpp"
+#include "displacementContexts.hpp"
 #include "entropy.hpp"
 #include "vmc.hpp"
 #include "metrics.hpp"
@@ -117,7 +118,7 @@ initialize(V3cBitstream&               syntax,
   vps.getMultipleMapStreamsPresentFlag(0)  = 0;
   vps.getAuxiliaryVideoPresentFlag(0)      = false;
   vps.getOccupancyVideoPresentFlag(0)      = false;
-  vps.getGeometryVideoPresentFlag(0)       = params.encodeDisplacementsVideo;
+  vps.getGeometryVideoPresentFlag(0)       = params.encodeDisplacements == 2;
   vps.getAttributeVideoPresentFlag(0)      = params.encodeTextureVideo;
   vps.getMapAbsoluteCodingEnableFlag(0, 0) = true;
   vps.getMapPredictorIndexDiff(0, 0)       = false;
@@ -149,6 +150,7 @@ initialize(V3cBitstream&               syntax,
 
   // ASPS extension
   auto& ext                        = asps.getAspsVdmcExtension();
+  ext.getEncodeDisplacements()     = params.encodeDisplacements;
   ext.getAddReconstructedNormals() = params.addReconstructedNormals;
   ext.getSubdivisionMethod()       = params.intraGeoParams.subdivisionMethod;
   ext.getSubdivisionIterationCount() =
@@ -169,7 +171,9 @@ initialize(V3cBitstream&               syntax,
     params.lodDisplacementQuantizationFlag;
   ext.getLiftingQuantizationParametersPerLevelOfDetails() =
     params.liftingQuantizationParametersPerLevelOfDetails;
+  ext.getSubBlockSize() = params.subBlockSize;
   ext.getMaxNumNeighborsMotion() = params.maxNumNeighborsMotion;
+
   // Atlas frame parameter set
   auto& afps                            = atlas.addAtlasFrameParameterSet();
   afps.getAtlasSequenceParameterSetId() = aspsId;
@@ -245,7 +249,7 @@ initialize(V3cBitstream&               syntax,
   }
 
   // Video streams
-  if (params.encodeDisplacementsVideo)
+  if (params.encodeDisplacements == 2)
     atlas.createVideoBitstream(vmesh::VIDEO_GEOMETRY);
   if (params.encodeTextureVideo)
     atlas.createVideoBitstream(vmesh::VIDEO_ATTRIBUTE);
@@ -766,6 +770,148 @@ VMCEncoder::compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
     save(prefix + ".h265", displacement);
   }
   dispVideo                     = rec;
+  return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool
+VMCEncoder::compressDisplacementsAC(V3cBitstream&               syntax, 
+                                    VMCGroupOfFrames&           gof,
+                                    const VMCGroupOfFramesInfo& gofInfo,
+                                    const VMCEncoderParameters& params) {
+  const auto dispDimensions = params.applyOneDimensionalDisplacement ? 1 : 3;
+  const auto subBlockSize = params.subBlockSize;
+  int32_t lodCount = int32_t(gof.frames[0].subdivInfoLevelOfDetails.size());
+  std::vector<std::vector<VMCDispContext>> ctxDisp(2);
+  ctxDisp[0].resize(lodCount);
+  ctxDisp[1].resize(lodCount);
+  std::vector<VMCDispContext> ctxNonzero(2);
+  VMCDispContext ctxBypass;
+  EntropyEncoder dispEncoder;
+  int32_t maxAcBufLen = gof.frames[0].disp.size() * gof.frames.size() * 3;
+  dispEncoder.setBuffer(maxAcBufLen, nullptr);
+  dispEncoder.start();
+  std::vector<vmesh::Vec3<double>> disp;
+  for (int32_t frameIndex = 0; frameIndex < gofInfo.frameCount_; frameIndex++) {
+    auto& frame = gof.frames[frameIndex];
+    const auto& frameInfo = gofInfo.frameInfo(frameIndex);
+    int32_t ctxIdx;
+    if (frameInfo.type == I_BASEMESH) {
+      disp = frame.disp;
+      ctxIdx = 0;
+    } else {
+      for (int32_t i = 0; i < disp.size(); i++) {
+        disp[i] = frame.disp[i] - gof.frames[frameIndex - 1].disp[i];
+      }
+      ctxIdx = 1;
+    }
+    std::vector<int32_t> lod = {0};
+    for (int32_t i = 0; i < lodCount; ++i) {
+      lod.push_back(frame.subdivInfoLevelOfDetails[i].pointCount);
+    }
+
+    for (int32_t dim = 0; dim < 3; dim++) {
+      if (dispDimensions != 3 && dim > 0) {
+        for (int32_t i = 0; i < disp.size(); i++) {
+          frame.disp[i][dim] = 0;
+        }
+        dispEncoder.encode(0, ctxNonzero[ctxIdx].ctxCoeffGtN[0][dim]);
+        continue;
+      }
+      int32_t codedFlag = 0;
+      int32_t lastPos = -1;
+      int32_t lastPosS = -1;
+      int32_t lastPosT = -1;
+      int32_t lastPosV = -1;
+      int32_t codedBlockFlag[10] = {0};
+      int32_t codedSubBlockFlag[10][1000] = {0};
+      for (int32_t level = lodCount - 1; level >= 0; --level) {
+        codedSubBlockFlag[lodCount][1000] = {0};
+        auto blockNum = (lod[level+1] - lod[level]) / subBlockSize + 1;
+        for (int32_t t = blockNum - 1; t >= 0; --t) {
+          auto subBlockSize_ = subBlockSize;
+          if (t == blockNum - 1) {
+            subBlockSize_ = (lod[level+1] - lod[level]) % subBlockSize;
+          }
+          for (int32_t v = subBlockSize_ - 1; v >= 0; --v) {
+            auto value = disp[lod[level] + t*subBlockSize + v][dim];
+            if (value != 0) {
+              if (lastPos == -1) {
+                lastPosS = level;
+                lastPosT = t;
+                lastPosV = v;
+                lastPos = lod[lastPosS] + subBlockSize*lastPosT + lastPosV;
+              }
+              else {
+                codedBlockFlag[level] = 1;
+                codedSubBlockFlag[level][t] = 1;
+              }
+              break;
+            }
+          }
+        }
+      }
+      codedFlag = (lastPos >= 0);
+      dispEncoder.encode(codedFlag, ctxNonzero[ctxIdx].ctxCoeffGtN[0][dim]);
+      if (!codedFlag) {
+        continue;
+      }
+      dispEncoder.encodeExpGolomb(lastPos, 12, ctxNonzero[ctxIdx].ctxCoeffRemPrefix);
+      for (int32_t level = lodCount - 1; level >= 0; --level) {
+        if (lastPosS < level) {
+          continue;
+        }
+        else if (level < lastPosS) {
+          dispEncoder.encode(codedBlockFlag[level], ctxDisp[ctxIdx][level].ctxCodedBlock[dim]);
+          if (codedBlockFlag[level] == 0) {
+            continue;
+          }
+        }
+        auto blockNum = (lod[level+1] - lod[level]) / subBlockSize + 1;
+        for (int32_t t = blockNum - 1; t >= 0; --t) {
+          if (level == lastPosS && lastPosT < t) {
+            continue;
+          }
+          else if (level < lastPosS || (level == lastPosS && t < lastPosT)) {
+            dispEncoder.encode(codedSubBlockFlag[level][t], ctxDisp[ctxIdx][level].ctxCodedSubBlock[dim]);
+            if (codedSubBlockFlag[level][t] == 0) {
+              continue;
+            }
+          }
+          auto subBlockSize_ = subBlockSize;
+          if (t == blockNum - 1) {
+            subBlockSize_ = (lod[level+1] - lod[level]) % subBlockSize;
+          }
+          for (int32_t v = subBlockSize_ - 1; v >= 0; --v) {
+            if (lastPosS == level && lastPosT == t && lastPosV < v) {
+              continue;
+            }
+            auto d = disp[lod[level] + t*subBlockSize + v][dim];
+            dispEncoder.encode(d != 0, ctxDisp[ctxIdx][level].ctxCoeffGtN[0][dim]);
+            if (!d) {
+              continue;
+            }
+            dispEncoder.encode(d < 0, ctxBypass.ctxStatic);
+            d = std::abs(d) - 1;
+            dispEncoder.encode(d != 0, ctxDisp[ctxIdx][level].ctxCoeffGtN[1][dim]);
+            if (!d) {
+              continue;
+            }
+            assert(d > 0);
+            dispEncoder.encodeExpGolomb(--d, 0, ctxBypass.ctxCoeffRemStatic);
+          }
+        }
+      }
+    }
+  }
+  const auto length = dispEncoder.stop();
+  assert(length <= std::numeric_limits<uint32_t>::max());
+  auto& displacement = syntax.getDisplacement();
+  displacement.getData().resize(length);
+  std::copy(dispEncoder.buffer(),
+            dispEncoder.buffer() + length,
+            displacement.getData().vector().begin());
   return true;
 }
 
@@ -1710,20 +1856,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
            frameInfo.referenceFrameIndex);
     compressBaseMesh(gof, frameInfo, frame, rec, bmtl, params);
     const auto vertexCount = frame.subdiv.pointCount();
-    if (params.encodeDisplacementsVideo) {
-      const auto blockCount =
-        (vertexCount + pixelsPerBlock - 1) / pixelsPerBlock;
-      const auto geometryVideoHeightInBlocks =
-        (blockCount + params.geometryVideoWidthInBlocks - 1)
-        / params.geometryVideoWidthInBlocks;
-      const auto width =
-        params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
-      auto height =
-        geometryVideoHeightInBlocks * params.displacementVideoBlockSize;
-      if (params.displacementUse420 && (!params.applyOneDimensionalDisplacement)) {
-        height *= 3;
-      }
-      dispVideoFrame.resize(width, height, colourSpaceDispVideo);
+    if (params.encodeDisplacements) {
       computeDisplacements(frame, rec, params);
       computeForwardLinearLifting(frame.disp,
                                   frame.subdivInfoLevelOfDetails,
@@ -1732,11 +1865,26 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                   params.liftingUpdateWeight,
                                   params.liftingSkipUpdate);
       quantizeDisplacements(frame, params);
-      computeDisplacementVideoFrame(frame, dispVideoFrame, params);
+      if (params.encodeDisplacements == 2) {
+        const auto blockCount =
+          (vertexCount + pixelsPerBlock - 1) / pixelsPerBlock;
+        const auto geometryVideoHeightInBlocks =
+          (blockCount + params.geometryVideoWidthInBlocks - 1)
+          / params.geometryVideoWidthInBlocks;
+        const auto width =
+          params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
+        auto height =
+          geometryVideoHeightInBlocks * params.displacementVideoBlockSize;
+        if (params.displacementUse420 && (!params.applyOneDimensionalDisplacement)) {
+          height *= 3;
+        }
+        dispVideoFrame.resize(width, height, colourSpaceDispVideo);
+        computeDisplacementVideoFrame(frame, dispVideoFrame, params);
+      }
     }
   }
   // resize all the frame to the same resolution
-  if (params.encodeDisplacementsVideo) {
+  if (params.encodeDisplacements == 2) {
     const auto padding = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
     dispVideo.standardizeFrameSizes(true, padding);
     auto& atlas              = syntax.getAtlas();
@@ -1745,10 +1893,11 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     ext.getWidthDispVideo()  = uint32_t(dispVideo.width());
     ext.getHeightDispVideo() = uint32_t(dispVideo.height());
   }
-  // Encode displacements video
-  if (params.encodeDisplacementsVideo
-      && (!compressDisplacementsVideo(dispVideo, syntax, params))) {
-    return false;
+  // Encode displacements
+  if (params.encodeDisplacements == 1) {
+      compressDisplacementsAC(syntax, gof, gofInfo, params);
+  } else if (params.encodeDisplacements == 2) {
+      compressDisplacementsVideo(dispVideo, syntax, params);
   }
 
   // Reconstruct
@@ -1763,7 +1912,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     auto& frame = gof.frame(frameIndex);
     printf("Reconstruct frame %2d / %d \n", frameIndex, frameCount);
     fflush(stdout);
-    if (params.encodeDisplacementsVideo) {
+    if (params.encodeDisplacements == 2) {
       reconstructDisplacementFromVideoFrame(dispVideo.frame(frameIndex),
                                             frame,
                                             reconstruct.mesh(frameIndex),
@@ -1771,6 +1920,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                             params.geometryVideoBitDepth,
                                             params.applyOneDimensionalDisplacement,
                                             params.displacementReversePacking);
+    }
+    if (params.encodeDisplacements) {
       if (params.lodDisplacementQuantizationFlag) {
         inverseQuantizeDisplacements(
           frame,

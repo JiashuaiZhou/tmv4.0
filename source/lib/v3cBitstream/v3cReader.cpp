@@ -252,6 +252,8 @@ V3CReader::v3cUnitPayload(V3cBitstream& syntax,
     atlasSubStream(syntax, bitstream);
   } else if (v3cUnitType == V3C_BMD) {
     baseMeshSubStream(syntax, bitstream);
+  } else if (v3cUnitType == V3C_DD) {
+    displacementSubStream(syntax, bitstream);
   } else if (v3cUnitType == V3C_OVD || v3cUnitType == V3C_GVD
              || v3cUnitType == V3C_AVD) {
     videoSubStream(syntax, bitstream, v3cUnitType, v3cUnitSize - 4);
@@ -536,6 +538,20 @@ V3CReader::baseMeshSkipTileDataUnit(BaseMeshTileDataUnit& bmtdu,
   TRACE_BITSTREAM_OUT("%s", __func__);
 }
 
+// Displacement sub-bitstream syntax
+void
+V3CReader::displacementSubStream(V3cBitstream& syntax, Bitstream& bitstream) {
+  TRACE_BITSTREAM_IN("%s", __func__);
+
+  auto& displacement = syntax.getDisplacement();
+  auto& bistreamStat = syntax.getBitstreamStat();
+  uint32_t size = bitstream.capacity() - bitstream.size() - 1;
+  READ_VECTOR(displacement.getData().vector(), size);
+  bistreamStat.setDisplacement(displacement.getData().vector().size());
+
+  TRACE_BITSTREAM_OUT("%s", __func__);
+}
+
 // V3C VPS extension
 void
 V3CReader::vpsExtension(V3CParameterSet& vps,
@@ -576,6 +592,7 @@ V3CReader::aspsVdmcExtension(Bitstream&                     bitstream,
                              AtlasSequenceParameterSetRbsp& asps,
                              AspsVdmcExtension&             ext) {
   TRACE_BITSTREAM_IN("%s", __func__);
+  READ_CODE(ext.getEncodeDisplacements(), 2);              //u2
   READ_CODE(ext.getSubdivisionIterationCount(), 4);        //u4
   READ_CODE(ext.getLodDisplacementQuantizationFlag(), 1);  //u1
   ext.getLiftingQuantizationParametersPerLevelOfDetails().clear();
@@ -602,9 +619,14 @@ V3CReader::aspsVdmcExtension(Bitstream&                     bitstream,
   READ_CODE(ext.getAddReconstructedNormals(), 1);         //u1
   READ_CODE(ext.getDisplacement1D(), 1);                  //u1
   READ_CODE(ext.getDisplacementReversePacking(), 1);      //u1
+  if (ext.getEncodeDisplacements() == 1) {
+    READ_CODE(ext.getSubBlockSize(), 16);                 //u16
+  }
+  else if (ext.getEncodeDisplacements() == 2) {
+    READ_CODE(ext.getWidthDispVideo(), 16);               //u16
+    READ_CODE(ext.getHeightDispVideo(), 16);              //u16
+  }
   READ_CODE(ext.getMaxNumNeighborsMotion(), 8);           //u8
-  READ_CODE(ext.getWidthDispVideo(), 16);                 //u16
-  READ_CODE(ext.getHeightDispVideo(), 16);                //u16
   TRACE_BITSTREAM_OUT("%s", __func__);
 }
 

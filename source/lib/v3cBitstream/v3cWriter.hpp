@@ -199,6 +199,9 @@ private:
                   SampleStreamV3CUnit& ssvu,
                   V3CUnitType          v3cUnitType);
 
+  // Displacement sub-bitstream syntax
+  void displacementSubStream(V3cBitstream& syntax, Bitstream& bitstream);
+
   // V3C VPS extension
   void vpsExtension(V3CParameterSet& vps, uint8_t index, Bitstream& bitstream);
 

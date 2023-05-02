@@ -120,7 +120,7 @@ enum V3CUnitType {
   V3C_GVD,           //  3: Geometry Video Data
   V3C_AVD,           //  4: Attribute Video Data
   V3C_BMD,           //  5: Base Mesh Data
-  V3C_RSVD_06,       //  6: Reserved
+  V3C_DD,            //  6: Displacement Data
   V3C_RSVD_07,       //  7: Reserved
   V3C_RSVD_08,       //  8: Reserved
   V3C_RSVD_09,       //  9: Reserved
@@ -512,6 +512,7 @@ toString(V3CUnitType type) {
   case V3C_VPS: return std::string("V3C_VPS"); break;
   case V3C_AD: return std::string("V3C_AD"); break;
   case V3C_BMD: return std::string("V3C_BMD"); break;
+  case V3C_DD: return std::string("V3C_DD"); break;
   case V3C_OVD: return std::string("V3C_OVD"); break;
   case V3C_GVD: return std::string("V3C_GVD"); break;
   case V3C_AVD: return std::string("V3C_AVD"); break;

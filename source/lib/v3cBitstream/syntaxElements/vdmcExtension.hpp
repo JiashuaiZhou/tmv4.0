@@ -52,6 +52,7 @@ public:
   ~AspsVdmcExtension() {}
   AspsVdmcExtension& operator=(const AspsVdmcExtension&) = default;
 
+  auto& getEncodeDisplacements() const { return encodeDisplacements; }
   auto& getWidthDispVideo() const { return widthDispVideo; }
   auto& getHeightDispVideo() const { return heightDispVideo; }
   auto& getAddReconstructedNormals() const { return addReconstructedNormals; }
@@ -82,11 +83,12 @@ public:
   auto& getLodDisplacementQuantizationFlag() const {
     return lodDisplacementQuantizationFlag;
   }
+  auto& getSubBlockSize() const { return subBlockSize; }
 
+  auto& getEncodeDisplacements() { return encodeDisplacements; }
   auto& getWidthDispVideo() { return widthDispVideo; }
   auto& getHeightDispVideo() { return heightDispVideo; }
   auto& getAddReconstructedNormals() { return addReconstructedNormals; }
-
   auto& getSubdivisionMethod() { return subdivisionMethod; }
   auto& getSubdivisionIterationCount() { return subdivisionIterationCount; }
   auto& getLiftingQPs() { return liftingQPs; }
@@ -108,6 +110,7 @@ public:
   auto& getLodDisplacementQuantizationFlag() {
     return lodDisplacementQuantizationFlag;
   }
+  auto& getSubBlockSize() { return subBlockSize; }
 
   auto& getMaxNumNeighborsMotion() const {
       return maxNumNeighborsMotion;
@@ -124,12 +127,14 @@ public:
 
 private:
   // Displacement
+  uint8_t  encodeDisplacements        = 0;
   uint16_t widthDispVideo             = 0;
   uint16_t heightDispVideo            = 0;
   bool     displacementReversePacking = false;
   bool     displacement1D             = true;
   bool     addReconstructedNormals    = true;
   bool     lodDisplacementQuantizationFlag = true;
+  uint16_t subBlockSize               = 0;
 
   // Motion
   int32_t maxNumNeighborsMotion       = 3;

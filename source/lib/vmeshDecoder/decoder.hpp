@@ -101,6 +101,10 @@ private:
   bool decompressDisplacementsVideo(const V3cBitstream&         syntax,
                                     FrameSequence<uint16_t>&    dispVideo,
                                     const VMCDecoderParameters& params);
+  bool decompressDisplacementsAC(const V3cBitstream&   syntax, 
+                                 VMCGroupOfFrames&     gof,
+                                 VMCGroupOfFramesInfo& gofInfo,
+                                 int32_t               subBlockSize);
   bool decompressTextureVideo(const V3cBitstream&         syntax,
                               Sequence&                   reconsctruct,
                               const VMCDecoderParameters& params);

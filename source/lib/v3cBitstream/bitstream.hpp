@@ -72,19 +72,23 @@ public:
   void setBaseMesh(BaseMeshType type, size_t size) {
     baseMeshBinSize_[type] += size;
   }
+  void setDisplacement(size_t size) {
+    displacementBinSize_ += size;
+  }
   size_t getV3CUnitSize(V3CUnitType type) { return v3cUnitSize_[type]; }
   size_t getVideoBinSize(VideoType type) { return videoBinSize_[type]; }
   BitstreamGofStat& operator+=(const BitstreamGofStat& other) {
     v3cUnitSize_     = other.v3cUnitSize_;
     videoBinSize_    = other.videoBinSize_;
     baseMeshBinSize_ = other.baseMeshBinSize_;
+    displacementBinSize_ = other.displacementBinSize_;
     faceCount        = other.faceCount;
     return *this;
   }
   size_t getTotal() {
     return v3cUnitSize_[V3C_VPS] + v3cUnitSize_[V3C_AD] + v3cUnitSize_[V3C_BMD]
            + v3cUnitSize_[V3C_OVD] + v3cUnitSize_[V3C_GVD]
-           + v3cUnitSize_[V3C_AVD];
+           + v3cUnitSize_[V3C_AVD] + v3cUnitSize_[V3C_DD];
   }
   size_t getTotalGeometry() {
     size_t retVal = 0;
@@ -105,9 +109,11 @@ public:
   }
   size_t getTotalBaseMeshIntra() { return baseMeshBinSize_[I_BASEMESH]; }
   size_t getTotalBaseMeshInter() { return baseMeshBinSize_[P_BASEMESH]; }
+  size_t getTotalDisplacement() { return displacementBinSize_; }
   size_t getTotalMetadata() {
     return v3cUnitSize_[V3C_VPS] + v3cUnitSize_[V3C_AD]
            + (v3cUnitSize_[V3C_BMD] - getTotalBaseMesh())
+           + (v3cUnitSize_[V3C_DD]  - getTotalDisplacement())
            + (v3cUnitSize_[V3C_GVD] - getTotalGeometry())
            + (v3cUnitSize_[V3C_AVD] - getTotalAttribute());
   }
@@ -126,6 +132,12 @@ public:
            v3cUnitSize_[V3C_BMD] - getTotalBaseMesh(),
            getTotalBaseMeshIntra(),
            getTotalBaseMeshInter());
+    printf("    V3CUnitSize[ V3C_DD  ]: %9zu B %9zu b ( Header = %9zu B +"
+           " Data  = %9zu B)\n",
+           v3cUnitSize_[V3C_DD],
+           v3cUnitSize_[V3C_DD] * 8,
+           v3cUnitSize_[V3C_DD] - getTotalDisplacement(),
+           getTotalDisplacement());
     printf("    V3CUnitSize[ V3C_GVD ]: %9zu B %9zu b ( Header = %9zu B + "
            "Video = %9zu B)\n",
            v3cUnitSize_[V3C_GVD],
@@ -144,6 +156,7 @@ private:
   std::vector<size_t> v3cUnitSize_;
   std::vector<size_t> videoBinSize_;
   std::vector<size_t> baseMeshBinSize_;
+  size_t              displacementBinSize_ = 0;
   size_t              faceCount = 0;
 };
 
@@ -171,6 +184,9 @@ public:
   }
   void setBaseMesh(BaseMeshType type, size_t size) {
     bitstreamGofStat_.back().setBaseMesh(type, size);
+  }
+  void setDisplacement(size_t size) {
+    bitstreamGofStat_.back().setDisplacement(size);
   }
   
   auto& getFaceCount() { return bitstreamGofStat_.back().getFaceCount(); }
@@ -208,7 +224,7 @@ public:
     allGof.trace();
     auto totalMetadata  = allGof.getTotalMetadata() + header_;
     auto totalBaseMesh  = allGof.getTotalBaseMesh();
-    auto totalGeometry  = allGof.getTotalGeometry();
+    auto totalGeometry  = allGof.getTotalGeometry() + allGof.getTotalDisplacement();
     auto totalAttribute = allGof.getTotalAttribute();
     auto total          = allGof.getTotal() + header_;
     printf("  By types \n");

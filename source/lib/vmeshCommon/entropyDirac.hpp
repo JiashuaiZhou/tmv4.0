@@ -230,7 +230,7 @@ namespace dirac {
 
 }  // namespace dirac
 
-// using StaticBitModel = dirac::SchroContextFixed;
+using StaticBitModel = dirac::SchroContextFixed;
 using AdaptiveBitModel = dirac::SchroContext;
 
 //============================================================================

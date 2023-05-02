@@ -74,6 +74,10 @@ tools:
       - textureVideoEncoderConvertConfig:    ${cfg-prefix}/hdrconvert/bgr444toyuv420.cfg
       - textureVideoDecoderConvertConfig:    ${cfg-prefix}/hdrconvert/yuv420tobgr444.cfg
 
+      # displacements
+      - encodeDisplacements:  2
+      - subBlockSize:         100
+
     # Decode
     decoder:
       - startFrameIndex:                     ${first-frame}

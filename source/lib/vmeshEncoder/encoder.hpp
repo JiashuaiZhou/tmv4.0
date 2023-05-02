@@ -237,7 +237,7 @@ struct VMCEncoderParameters {
   // Displacements
   DisplacementCoordinateSystem displacementCoordinateSystem =
     DisplacementCoordinateSystem::LOCAL;
-  bool encodeDisplacementsVideo        = true;
+  int32_t encodeDisplacements          = 1;
   bool encodeTextureVideo              = true;
   bool applyOneDimensionalDisplacement = true;
   bool interpolateDisplacementNormals  = false;
@@ -245,6 +245,7 @@ struct VMCEncoderParameters {
   bool displacementReversePacking      = true;
   bool displacementUse420              = true;
   bool lodDisplacementQuantizationFlag = true;
+  int32_t subBlockSize                 = 100;
 
   // Motion
   int32_t maxNumNeighborsMotion        = 3;
@@ -418,6 +419,10 @@ private:
   bool compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
                                   V3cBitstream&               syntax,
                                   const VMCEncoderParameters& params);
+  bool compressDisplacementsAC(V3cBitstream&               syntax, 
+                               VMCGroupOfFrames&           gof,
+                               const VMCGroupOfFramesInfo& gofInfo,
+                               const VMCEncoderParameters& params);
   bool compressTextureVideo(Sequence&                   reconstruct,
                             V3cBitstream&               syntax,
                             const VMCEncoderParameters& params);

@@ -49,6 +49,7 @@
 #include "atlasTileLayerRbsp.hpp"
 #include "atlasSubBitstream.hpp"
 #include "baseMeshSubBitstream.hpp"
+#include "displacementSubBitstream.hpp"
 
 namespace vmesh {
 
@@ -111,6 +112,7 @@ public:
   auto& getBaseMeshIndex() const { return baseMeshIndex_; }
   auto& getAtlas() const { return atlasHLS_[atlasIndex_]; }
   auto& getBaseMesh() const { return baseMeshHLS_[baseMeshIndex_]; }
+  auto& getDisplacement() const { return displacementHLS_; }
   auto  getOccupancyPrecision() const { return occupancyPrecision_; }
   auto  getLog2PatchQuantizerSizeX() const { return log2PatchQuantizerSizeX_; }
   auto  getLog2PatchQuantizerSizeY() const { return log2PatchQuantizerSizeY_; }
@@ -128,6 +130,7 @@ public:
   auto& getBaseMeshIndex() { return baseMeshIndex_; }
   auto& getAtlas() { return atlasHLS_[atlasIndex_]; }
   auto& getBaseMesh() { return baseMeshHLS_[baseMeshIndex_]; }
+  auto& getDisplacement() { return displacementHLS_; }
   auto& getOccupancyPrecision() { return occupancyPrecision_; }
   auto& getLog2PatchQuantizerSizeX() { return log2PatchQuantizerSizeX_; }
   auto& getLog2PatchQuantizerSizeY() { return log2PatchQuantizerSizeY_; }
@@ -210,10 +213,12 @@ private:
   bool                              singleLayerMode_               = 0;
   size_t                            atlasIndex_                    = 0;
   size_t                            baseMeshIndex_                 = 0;
+  size_t                            displacementIndex_             = 0;
   V3CUnitHeader                     v3cUnitHeader_[NUM_V3C_UNIT_TYPE];
   std::vector<V3CParameterSet>      vpccParameterSets_;
   std::vector<AtlasSubBitstream>    atlasHLS_;
   std::vector<BaseMeshSubBitstream> baseMeshHLS_;
+  DisplacementBitstream             displacementHLS_;
   std::vector<VideoBitstream>       videoBitstream_;
   BitstreamStat*                    bitstreamStat_;
 };

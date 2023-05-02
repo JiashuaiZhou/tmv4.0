@@ -39,6 +39,7 @@
 #include <sstream>
 
 #include "motionContexts.hpp"
+#include "displacementContexts.hpp"
 #include "entropy.hpp"
 
 #include "geometryDecoder.hpp"
@@ -474,6 +475,123 @@ VMCDecoder::decompressDisplacementsVideo(const V3cBitstream&         syntax,
 //----------------------------------------------------------------------------
 
 bool
+VMCDecoder::decompressDisplacementsAC(const V3cBitstream&   syntax, 
+                                      VMCGroupOfFrames&     gof,
+                                      VMCGroupOfFramesInfo& gofInfo,
+                                      int32_t               subBlockSize) {
+  const auto& displacement = syntax.getDisplacement();
+  const auto& buffer   = displacement.getData().vector();
+  EntropyDecoder dispDecoder;
+  dispDecoder.setBuffer(buffer.size(),
+                              reinterpret_cast<const char*>(buffer.data()));
+  dispDecoder.start();
+  int32_t lodCount = int32_t(gof.frames[0].subdivInfoLevelOfDetails.size());
+  std::vector<std::vector<VMCDispContext>> ctxDisp(2);
+  ctxDisp[0].resize(lodCount);
+  ctxDisp[1].resize(lodCount);
+  std::vector<VMCDispContext> ctxNonzero(2);
+  VMCDispContext ctxBypass;
+  
+  for (int32_t frameIndex = 0; frameIndex < gofInfo.frameCount_; frameIndex++) {
+    auto& frame = gof.frames[frameIndex];
+    const auto& frameInfo = gofInfo.frameInfo(frameIndex);
+    int32_t ctxIdx;
+    if (frameInfo.type == I_BASEMESH) {
+      ctxIdx = 0;
+    } else {
+      ctxIdx = 1;
+    }
+    
+    frame.disp.resize(frame.subdivInfoLevelOfDetails[lodCount - 1].pointCount);
+    for(auto& disp : frame.disp) {
+      disp = 0.0;
+    }
+    std::vector<int32_t> lod = {0};
+    for (int32_t i = 0; i < lodCount; ++i) {
+      lod.push_back(frame.subdivInfoLevelOfDetails[i].pointCount);
+    }
+
+    for (int32_t dim = 0; dim < 3; dim++) {
+      int32_t lastPos = -1;
+      int32_t lastPosS = -1;
+      int32_t lastPosT = -1;
+      int32_t lastPosV = -1;
+      auto codedFlag = dispDecoder.decode(ctxNonzero[ctxIdx].ctxCoeffGtN[0][dim]);
+      if (codedFlag == 0) {
+        continue;
+      }
+      else {
+        lastPos = dispDecoder.decodeExpGolomb(12, ctxNonzero[ctxIdx].ctxCoeffRemPrefix);
+        for (int32_t i = 0; i < lodCount; ++i) {
+          if (lod[i] <= lastPos && lastPos < lod[i+1]) {
+            lastPosS = i;
+            break;
+          }
+        }
+        lastPosT = (lastPos - lod[lastPosS]) / subBlockSize;
+        lastPosV = (lastPos - lod[lastPosS]) % subBlockSize;
+      }
+      int32_t codedBlockFlag[10] = {0};
+      for (int32_t level = lastPosS; level >= 0; --level) {
+        if (level < lastPosS) {
+          codedBlockFlag[level] = dispDecoder.decode(ctxDisp[ctxIdx][level].ctxCodedBlock[dim]);
+          if (codedBlockFlag[level] == 0) {
+            continue;
+          }
+        }
+        int32_t codedSubBlockFlag[1000] = {0};
+        auto blockNum = (lod[level+1] - lod[level]) / subBlockSize + 1;
+        for (int32_t t = blockNum - 1; t >= 0; --t) {
+          if ((level < lastPosS && codedBlockFlag[level] == 1) || (level == lastPosS && t < lastPosT)) {
+            codedSubBlockFlag[t] = dispDecoder.decode(ctxDisp[ctxIdx][level].ctxCodedSubBlock[dim]);
+            if (codedSubBlockFlag[t] == 0) {
+              continue;
+            }
+          }
+          auto subBlockSize_ = subBlockSize;
+          if (t == blockNum - 1) {
+            subBlockSize_ = (lod[level+1] - lod[level]) % subBlockSize;
+          }
+          for (int32_t v = subBlockSize_ - 1; v >= 0; --v) {
+            if (lastPosS == level) {
+              if (lastPosT < t || (lastPosT == t && lastPosV < v) || (t < lastPosT && codedSubBlockFlag[t] == 0)) {
+                continue;
+              }
+            }
+            int32_t value = 0;
+            int32_t coeffGt0 = 0;
+            int32_t coeffGt1 = 0;
+            int32_t coeffGt2 = 0;
+            coeffGt0 = dispDecoder.decode(ctxDisp[ctxIdx][level].ctxCoeffGtN[0][dim]);
+            if (coeffGt0) {
+              const auto sign = dispDecoder.decode(ctxBypass.ctxStatic);
+              ++value;
+              coeffGt1 = dispDecoder.decode(ctxDisp[ctxIdx][level].ctxCoeffGtN[1][dim]);
+              if (coeffGt1) {
+                value += 1 + dispDecoder.decodeExpGolomb(0, ctxBypass.ctxCoeffRemStatic);
+              }
+              if (sign) {
+                value = -value;
+              }
+            }
+            frame.disp[lod[level] + t*subBlockSize + v][dim] = value;
+          }
+        }
+      }
+    }
+    if (ctxIdx) {
+      const auto& frameRef = gof.frames[frameIndex - 1];
+      for (int32_t vindex = 0; vindex < frame.disp.size(); vindex++) {
+        frame.disp[vindex] += frameRef.disp[vindex];
+      }
+    }
+  } // frame loop
+  return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool
 VMCDecoder::decompressTextureVideo(const V3cBitstream&         syntax,
                                    Sequence&                   reconsctruct,
                                    const VMCDecoderParameters& params) {
@@ -585,22 +703,25 @@ VMCDecoder::decompress(const V3cBitstream&         syntax,
            frameInfo.referenceFrameIndex);
     decompressBaseMesh(syntax, bmtl, gof, frameInfo, frame, rec, params);
   }
-  if (vps.getGeometryVideoPresentFlag(0)
-      && !decompressDisplacementsVideo(syntax, dispVideo, params)) {
-    return false;
+  if (ext.getEncodeDisplacements() == 1) {
+    decompressDisplacementsAC(syntax, gof, gofInfo, ext.getSubBlockSize());
+  } else if (ext.getEncodeDisplacements() == 2) {
+    decompressDisplacementsVideo(syntax, dispVideo, params);
   }
-  if (vps.getGeometryVideoPresentFlag(0)) {
+  if (ext.getEncodeDisplacements()) {
     for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
       auto& frame = gof.frame(frameIndex);
       auto& rec   = reconstruct.mesh(frameIndex);
-      reconstructDisplacementFromVideoFrame(
-        dispVideo.frame(frameIndex),
-        frame,
-        rec,
-        1 << asps.getLog2PatchPackingBlockSize(),
-        gi.getGeometry2dBitdepthMinus1() + 1,
-        ext.getDisplacement1D(),
-        ext.getDisplacementReversePacking());
+      if (ext.getEncodeDisplacements() == 2) {
+        reconstructDisplacementFromVideoFrame(
+          dispVideo.frame(frameIndex),
+          frame,
+          rec,
+          1 << asps.getLog2PatchPackingBlockSize(),
+          gi.getGeometry2dBitdepthMinus1() + 1,
+          ext.getDisplacement1D(),
+          ext.getDisplacementReversePacking());
+      }
 
       const auto bitDepthPosition = asps.getGeometry3dBitdepthMinus1() + 1;
       if (ext.getLodDisplacementQuantizationFlag()) {

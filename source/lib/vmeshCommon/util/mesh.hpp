@@ -1358,6 +1358,46 @@ UnifyVertices(const std::vector<Vec3<T>>&  pointsInput,
   return pointCounter;
 }
 
+template<typename T>
+int32_t
+UnifyVerticesInter(const std::vector<Vec3<T>>& pointsInput,
+    const std::vector<Triangle>& trianglesInput,
+    std::vector<Vec3<T>>& pointsOutput,
+    std::vector<Triangle>& trianglesOutput,
+    std::vector<int32_t>& mapping) {
+    const auto pointCount0 = int32_t(pointsInput.size());
+    const auto triangleCount0 = int32_t(trianglesInput.size());
+    pointsOutput.resize(0);
+    pointsOutput.reserve(pointsInput.size());
+    trianglesOutput.resize(0);
+    trianglesOutput.reserve(trianglesInput.size());
+
+    std::map<int32_t, int32_t> uniqueIndices;
+    int32_t pointCounter = 0;
+    for (int32_t vindex0 = 0; vindex0 < pointCount0; ++vindex0) {
+        const auto& pt = pointsInput[vindex0];
+        auto vindex1 = mapping[vindex0];
+        auto it = uniqueIndices.find(vindex1);
+        if (it == uniqueIndices.end()) {
+            uniqueIndices[vindex1] = vindex0;
+            pointsOutput.push_back(pt);
+            ++pointCounter;
+        }
+    }
+    assert(pointCounter <= pointCount0);
+
+    trianglesOutput.resize(triangleCount0);
+    for (int32_t tindex = 0; tindex < triangleCount0; ++tindex) {
+        const auto& tri0 = trianglesInput[tindex];
+        auto& tri1 = trianglesOutput[tindex];
+        for (int32_t k = 0; k < 3; ++k) {
+            tri1[k] = mapping[tri0[k]];
+            assert(tri1[k] >= 0 && tri1[k] < pointCounter);
+        }
+    }
+    return pointCounter;
+}
+
 //----------------------------------------------------------------------------
 
 template<typename T>

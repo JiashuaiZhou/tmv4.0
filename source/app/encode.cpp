@@ -546,7 +546,11 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.textureTransferMapNumPoints, 
       encParams.textureTransferMapNumPoints,
       "textureTransferMapNumPoints")
-
+  (po::Section("Motion coding"))
+    ("maxNumNeighborsMotion",
+      encParams.maxNumNeighborsMotion,
+      encParams.maxNumNeighborsMotion,
+      "Max number of vertex neighbors in motion coding")
   (po::Section("Texture video"))
     ("encodeTextureVideo", 
       encParams.encodeTextureVideo, 

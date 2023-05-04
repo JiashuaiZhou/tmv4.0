@@ -376,19 +376,22 @@ inverseQuantizeDisplacements(
 
 //============================================================================
 
+//============================================================================
 static int32_t
-removeDuplicatedVertices(VMCFrame& frame) {
+removeDuplicatedVertices(VMCFrame& frame, std::vector<int32_t>& umapping, bool isIntra) {
   auto& base                 = frame.base;
   auto& qpositions           = frame.qpositions;
   auto& baseClean            = frame.baseClean;
   auto& baseIntegrateIndices = frame.baseIntegrateIndices;
   baseClean.clear();
-  std::vector<int32_t> umapping;
-  UnifyVertices(qpositions,
-                base.triangles(),
-                baseClean.points(),
-                baseClean.triangles(),
-                umapping);
+  if (isIntra) {
+    UnifyVertices(qpositions, base.triangles(), baseClean.points(),
+                  baseClean.triangles(), umapping);
+  }
+  else {
+    UnifyVerticesInter(qpositions, base.triangles(), baseClean.points(),
+                       baseClean.triangles(), umapping);
+  }
   // generate baseIntegrateIndices
   baseIntegrateIndices.clear();
   std::map<int32_t, int32_t> uniqueIndices;

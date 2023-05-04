@@ -81,6 +81,11 @@ public:
   }
   auto& getDisplacementReversePacking() { return displacementReversePacking; }
 
+  auto& getMaxNumNeighborsMotion() const {
+      return maxNumNeighborsMotion;
+  }
+  auto& getMaxNumNeighborsMotion() { return maxNumNeighborsMotion; }
+
   auto getDisplacementCoordinateSystem() const {
     return displacementCoordinateSystem;
   }
@@ -99,6 +104,9 @@ private:
   uint16_t heightDispVideo            = 0;
   bool     displacementReversePacking = false;
   bool     addReconstructedNormals    = true;
+
+  // Motion
+  int32_t maxNumNeighborsMotion       = 3;
 
   // Subdivition
   uint8_t subdivisionIterationCount      = 0;

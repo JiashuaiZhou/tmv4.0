@@ -47,6 +47,86 @@
 
 namespace vmesh {
 
+bool VMCDecoder::addNeighbor(
+    int32_t vertex1,
+    int32_t vertex2,
+    int32_t maxNumNeighborsMotion) {
+    bool duplicate = false;
+    auto vertex = vertex1;
+    auto vertexNeighbor = vertex2;
+    auto predCount = numNeighborsMotion[vertex];
+    predCount = std::min(predCount, maxNumNeighborsMotion);
+    if (vertex > vertexNeighbor) { // Check if vertexNeighbor is available
+        for (int32_t n = 0; n < predCount; ++n) {
+            if (vertexAdjTableMotion[vertex * maxNumNeighborsMotion + n] == vertexNeighbor) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (!duplicate) {
+            if (predCount == maxNumNeighborsMotion) {
+                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + maxNumNeighborsMotion - 1] = vertexNeighbor;
+            } else {
+                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + predCount] = vertexNeighbor;
+                numNeighborsMotion[vertex] = predCount + 1;
+            }
+        }
+    }
+    duplicate = false;
+    vertex = vertex2;
+    vertexNeighbor = vertex1;
+    predCount = numNeighborsMotion[vertex];
+    if (vertex > vertexNeighbor) { // Check if vertexNeighbor is available
+        for (int32_t n = 0; n < predCount; ++n) {
+            if (vertexAdjTableMotion[vertex * maxNumNeighborsMotion + n] == vertexNeighbor) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (!duplicate) {
+            if (predCount == maxNumNeighborsMotion) {
+                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + maxNumNeighborsMotion - 1] = vertexNeighbor;
+            } else {
+                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + predCount] = vertexNeighbor;
+                numNeighborsMotion[vertex] = predCount + 1;
+            }
+        }
+    }
+    return true;
+}
+
+bool
+VMCDecoder::computeVertexAdjTableMotion(
+  const std::vector<Vec3<int32_t>>& triangles,
+  int32_t vertexCount,
+  int32_t maxNumNeighborsMotion) {
+  const auto triangleCount = int32_t(triangles.size());
+  // const auto vertexCount = int32_t(reference.size());
+  if (vertexAdjTableMotion.size() < vertexCount * maxNumNeighborsMotion) {
+    vertexAdjTableMotion.resize(vertexCount * maxNumNeighborsMotion);
+  }
+  if (numNeighborsMotion.size() < vertexCount) {
+    numNeighborsMotion.resize(vertexCount);
+  }
+  for (int32_t v = 0; v < vertexCount; ++v) {
+    numNeighborsMotion[v] = 0;
+  }
+
+  for (int32_t triangleIndex = 0; triangleIndex < triangleCount; ++triangleIndex) {
+    const auto& tri = triangles[triangleIndex];
+    assert(tri.i() >= 0 && tri.i() < vertexCount);
+    assert(tri.j() >= 0 && tri.j() < vertexCount);
+    assert(tri.k() >= 0 && tri.k() < vertexCount);
+    // Add Neighbors
+    addNeighbor(tri.i(), tri.j(), maxNumNeighborsMotion);
+    addNeighbor(tri.i(), tri.k(), maxNumNeighborsMotion);
+    addNeighbor(tri.j(), tri.k(), maxNumNeighborsMotion);
+  }
+  return true;
+}
+
+//============================================================================
+
 //============================================================================
 
 bool
@@ -138,12 +218,10 @@ VMCDecoder::decompressMotion(
   const auto motionCount   = refPointCount + no_skip_num;
   const auto pointCount =
     refPointCount + static_cast<int32_t>(baseIntegrateIndices.size());
-  StaticAdjacencyInformation<int32_t> vertexToTriangle;
-  ComputeVertexToTriangle(triangles, motionCount, vertexToTriangle);
-  std::vector<int8_t>        available(motionCount, 0);
-  std::vector<int8_t>        vtags(motionCount);
-  std::vector<int32_t>       vadj;
-  std::vector<int32_t>       tadj;
+  if (createVertexAdjTableMotion) {
+      computeVertexAdjTableMotion(triangles, motionCount, ext.getMaxNumNeighborsMotion());
+      createVertexAdjTableMotion = false;
+  }
   std::vector<Vec3<int32_t>> motion(motionCount);
   current.resize(pointCount);
   std::cout << "[DEBUG][stat] total vertex num: " << pointCount
@@ -192,16 +270,12 @@ VMCDecoder::decompressMotion(
           auto shift = std::distance(baseIntegrateIndices.begin(), it);
           vindex     = static_cast<int32_t>(integrate_to - shift);
         }
-        ComputeAdjacentVertices(
-          vindex, triangles, vertexToTriangle, vtags, vadj);
         Vec3<int32_t> pred(0);
-        int32_t       predCount = 0;
-        for (int vindex1 : vadj) {
-          if (available[vindex1] != 0) {
+        int32_t       predCount = numNeighborsMotion[vindex];
+        for (int32_t i = 0; i < predCount; ++i) {
+            const auto vindex1 = vertexAdjTableMotion[vindex * ext.getMaxNumNeighborsMotion() + i];
             const auto& mv1 = motion[vindex1];
             for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
-            ++predCount;
-          }
         }
         if (predCount > 1) {
           const auto bias = predCount >> 1;
@@ -212,7 +286,6 @@ VMCDecoder::decompressMotion(
         }
         motion[vindex0] = res + pred;
       }
-      available[vindex0] = 1;
     }
   }
   for (int vindex = 0; vindex < pointCount; ++vindex) {
@@ -306,13 +379,14 @@ VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
       base.texCoord(tc) *= iscaleTexCoord;
     }
     // Duplicated Vertex Reduction
-    removeDuplicatedVertices(frame);
+    removeDuplicatedVertices(frame, umapping, frameInfo.type == I_BASEMESH);
     if (params.keepIntermediateFiles) {
       auto& baseClean = frame.baseClean;
       baseClean.save(_keepFilesPathPrefix + "fr_"
                      + std::to_string(frameInfo.frameIndex)
                      + "_baseClean.obj");
     }
+    createVertexAdjTableMotion = true;
   } else {
     // frameInfo.referenceFrameIndex =
     //   frameInfo.frameIndex - 1 - int32_t(bmth.getReferenceFrameIndex());
@@ -331,7 +405,7 @@ VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
       base.point(v) = qpositions[v];
     }
     // Duplicated Vertex Reduction
-    removeDuplicatedVertices(frame);
+    removeDuplicatedVertices(frame, umapping, frameInfo.type == I_BASEMESH);
   }
 
   auto& atlas = syntax.getAtlas();

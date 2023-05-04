@@ -159,6 +159,7 @@ initialize(V3cBitstream&               syntax,
   ext.getInterpolateDisplacementNormals() =
     params.interpolateDisplacementNormals;
   ext.getDisplacementReversePacking() = params.displacementReversePacking;
+  ext.getMaxNumNeighborsMotion() = params.maxNumNeighborsMotion;
 
   // Atlas frame parameter set
   auto& afps                            = atlas.addAtlasFrameParameterSet();
@@ -972,6 +973,84 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
   return true;
 }
 
+bool VMCEncoder::addNeighbor(
+    int32_t vertex1,
+    int32_t vertex2,
+    int32_t maxNumNeighborsMotion) {
+    bool duplicate = false;
+    auto vertex = vertex1;
+    auto vertexNeighbor = vertex2;
+    auto predCount = numNeighborsMotion[vertex];
+    predCount = std::min(predCount, maxNumNeighborsMotion);
+    if (vertex > vertexNeighbor) { // Check if vertexNeighbor is available
+        for (int32_t n = 0; n < predCount; ++n) {
+            if (vertexAdjTableMotion[vertex * maxNumNeighborsMotion + n] == vertexNeighbor) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (!duplicate) {
+            if (predCount == maxNumNeighborsMotion) {
+                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + maxNumNeighborsMotion - 1] = vertexNeighbor;
+            } else {
+                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + predCount] = vertexNeighbor;
+                numNeighborsMotion[vertex] = predCount + 1;
+            }
+        }
+    }
+    duplicate = false;
+    vertex = vertex2;
+    vertexNeighbor = vertex1;
+    predCount = numNeighborsMotion[vertex];
+    if (vertex > vertexNeighbor) { // Check if vertexNeighbor is available
+        for (int32_t n = 0; n < predCount; ++n) {
+            if (vertexAdjTableMotion[vertex * maxNumNeighborsMotion + n] == vertexNeighbor) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (!duplicate) {
+            if (predCount == maxNumNeighborsMotion) {
+                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + maxNumNeighborsMotion - 1] = vertexNeighbor;
+            } else {
+                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + predCount] = vertexNeighbor;
+                numNeighborsMotion[vertex] = predCount + 1;
+            }
+        }
+    }
+    return true;
+}
+
+bool
+VMCEncoder::computeVertexAdjTableMotion(
+    const std::vector<Vec3<int32_t>>& triangles,
+    int32_t vertexCount,
+    int32_t maxNumNeighborsMotion) {
+    const auto triangleCount = int32_t(triangles.size());
+    // const auto vertexCount = int32_t(reference.size());
+    if (vertexAdjTableMotion.size() < vertexCount * maxNumNeighborsMotion) {
+        vertexAdjTableMotion.resize(vertexCount * maxNumNeighborsMotion);
+    }
+    if (numNeighborsMotion.size() < vertexCount) {
+        numNeighborsMotion.resize(vertexCount);
+    }
+    for (int32_t v = 0; v < vertexCount; ++v) {
+        numNeighborsMotion[v] = 0;
+    }
+
+    for (int32_t triangleIndex = 0; triangleIndex < triangleCount; ++triangleIndex) {
+        const auto& tri = triangles[triangleIndex];
+        assert(tri.i() >= 0 && tri.i() < vertexCount);
+        assert(tri.j() >= 0 && tri.j() < vertexCount);
+        assert(tri.k() >= 0 && tri.k() < vertexCount);
+        // Add Neighbors
+        addNeighbor(tri.i(), tri.j(), maxNumNeighborsMotion);
+        addNeighbor(tri.i(), tri.k(), maxNumNeighborsMotion);
+        addNeighbor(tri.j(), tri.k(), maxNumNeighborsMotion);
+}
+    return true;
+}
+
 //----------------------------------------------------------------------------
 
 bool
@@ -988,12 +1067,10 @@ VMCEncoder::compressMotion(
   EntropyEncoder     arithmeticEncoder;
   arithmeticEncoder.setBuffer(maxAcBufLen, nullptr);
   arithmeticEncoder.start();
-  StaticAdjacencyInformation<int32_t> vertexToTriangle;
-  ComputeVertexToTriangle(triangles, pointCount, vertexToTriangle);
-  std::vector<int8_t>        available(pointCount, 0);
-  std::vector<int8_t>        vtags(pointCount);
-  std::vector<int32_t>       vadj;
-  std::vector<int32_t>       tadj;
+  if (createVertexAdjTableMotion) {
+      computeVertexAdjTableMotion(triangles, pointCount, params.maxNumNeighborsMotion);
+      createVertexAdjTableMotion = false;
+  }
   std::vector<Vec3<int32_t>> motion;
   std::vector<Vec3<int32_t>> motion_no_skip;
   motion.reserve(pointCount);
@@ -1110,16 +1187,12 @@ VMCEncoder::compressMotion(
       if (vindex0 >= refPointCount) {
         vindex = no_skip_refvindices[vindex0 - refPointCount];
       }
-      ComputeAdjacentVertices(
-        vindex, triangles, vertexToTriangle, vtags, vadj);
       Vec3<int32_t> pred(0);
-      int32_t       predCount = 0;
-      for (int vindex1 : vadj) {
-        if (available[vindex1] != 0) {
+      int32_t       predCount = numNeighborsMotion[vindex];
+      for (int32_t i = 0; i < predCount; ++i) {
+          const auto vindex1 = vertexAdjTableMotion[vindex * params.maxNumNeighborsMotion + i];
           const auto& mv1 = motion[vindex1];
           for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
-          ++predCount;
-        }
       }
       if (predCount > 1) {
         const auto bias = predCount >> 1;
@@ -1128,7 +1201,6 @@ VMCEncoder::compressMotion(
                                  : -(-pred[k] + bias) / predCount;
         }
       }
-      available[vindex0] = 1;
       const auto res0    = motion[vindex0];
       const auto res1    = motion[vindex0] - pred;
       ++vCount;
@@ -1266,6 +1338,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
       base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
     }
+    createVertexAdjTableMotion = true;
   } else {
     printf("Inter: index = %d ref = %d \n",
            frameInfo.frameIndex,
@@ -1310,7 +1383,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
   }
   // Duplicated Vertex Reduction
   if (params.motionWithoutDuplicatedVertices) {
-    removeDuplicatedVertices(frame);
+    removeDuplicatedVertices(frame, umapping, frameInfo.type == I_BASEMESH);
     if (params.keepIntermediateFiles) {
       frame.baseClean.save(prefix + "_baseClean.obj");
     }

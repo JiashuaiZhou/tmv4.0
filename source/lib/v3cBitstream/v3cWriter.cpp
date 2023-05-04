@@ -652,7 +652,7 @@ V3CWriter::aspsVdmcExtension(Bitstream&                     bitstream,
   WRITE_CODE(ext.getInterpolateDisplacementNormals(), 1);  //u1
   WRITE_CODE(ext.getAddReconstructedNormals(), 1);         //u1
   WRITE_CODE(ext.getDisplacementReversePacking(), 1);      //u1
-
+  WRITE_CODE(ext.getMaxNumNeighborsMotion(), 8);           //u8
   // Video streams
   // if (vps.getGeometryVideoPresentFlag(0)) {
   // JR Note: will be move

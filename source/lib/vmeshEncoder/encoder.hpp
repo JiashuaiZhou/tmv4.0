@@ -235,6 +235,9 @@ struct VMCEncoderParameters {
   bool addReconstructedNormals         = true;
   bool displacementReversePacking      = true;
 
+  // Motion
+  int32_t maxNumNeighborsMotion        = 3;
+
   // Lifting
   int32_t liftingSubdivisionIterationCount    = 2;
   double  liftingUpdateWeight                 = 0.125;
@@ -377,13 +380,18 @@ private:
                         TriangleMesh<MeshType>&     rec,
                         BaseMeshTileLayer&          mfdu,
                         const VMCEncoderParameters& params);
-  static bool
+  bool
   compressMotion(const std::vector<Vec3<int32_t>>& triangles,
                  const std::vector<Vec3<int32_t>>& reference,
                  const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
                  const std::vector<Vec3<int32_t>>& current,
                  BaseMeshTileLayer&                mfdu,
                  const VMCEncoderParameters&       params);
+  bool computeVertexAdjTableMotion(const std::vector<Vec3<int32_t>>& triangles,
+                                   int32_t vertexCount,
+                                   int32_t maxNumNeighborsMotion);
+  bool addNeighbor(int32_t vertex, int32_t vertexNeighbor,
+                   int32_t maxNumNeighborsMotion);
   static bool
        computeDisplacementVideoFrame(const VMCFrame&             frame,
                                      Frame<uint16_t>&            dispVideoFrame,
@@ -410,6 +418,10 @@ private:
 
   std::string _keepFilesPathPrefix = {};
   int32_t     _gofIndex            = 0;
+  std::vector<int32_t>  vertexAdjTableMotion;
+  bool createVertexAdjTableMotion  = true;
+  std::vector<int32_t> numNeighborsMotion;
+  std::vector<int32_t> umapping;
 };
 
 //============================================================================

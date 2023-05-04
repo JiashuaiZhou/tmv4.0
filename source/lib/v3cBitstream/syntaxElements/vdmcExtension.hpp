@@ -67,6 +67,9 @@ public:
   auto& getDisplacementReversePacking() const {
     return displacementReversePacking;
   }
+  auto& getDisplacement1D() const {
+      return displacement1D;
+  }
 
   auto& getWidthDispVideo() { return widthDispVideo; }
   auto& getHeightDispVideo() { return heightDispVideo; }
@@ -80,6 +83,7 @@ public:
     return interpolateDisplacementNormals;
   }
   auto& getDisplacementReversePacking() { return displacementReversePacking; }
+  auto& getDisplacement1D() { return displacement1D; }
 
   auto getDisplacementCoordinateSystem() const {
     return displacementCoordinateSystem;
@@ -98,6 +102,7 @@ private:
   uint16_t widthDispVideo             = 0;
   uint16_t heightDispVideo            = 0;
   bool     displacementReversePacking = false;
+  bool     displacement1D             = true;
   bool     addReconstructedNormals    = true;
 
   // Subdivition

@@ -480,6 +480,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.displacementReversePacking,
       encParams.displacementReversePacking,
       "Displacement reverse packing")
+    ("displacementUse420",
+      encParams.displacementUse420,
+      encParams.displacementUse420,
+      "Displacement use 4:2:0 encoding")
       
   (po::Section("Transfer texture"))    
     ("textureTransferEnable", 

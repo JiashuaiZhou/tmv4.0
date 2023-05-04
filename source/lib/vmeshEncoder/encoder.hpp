@@ -234,6 +234,7 @@ struct VMCEncoderParameters {
   bool interpolateDisplacementNormals  = false;
   bool addReconstructedNormals         = true;
   bool displacementReversePacking      = true;
+  bool displacementUse420              = true;
 
   // Lifting
   int32_t liftingSubdivisionIterationCount    = 2;

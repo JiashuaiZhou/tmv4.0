@@ -246,7 +246,9 @@ reconstructDisplacementFromVideoFrame(
   const TriangleMesh<MeshType>& rec,
   const int32_t                 displacementVideoBlockSize,
   const int32_t                 geometryVideoBitDepth,
-  const int32_t                 displacementReversePacking) {
+  const bool                    oneDimensionalDisplacement,
+  const int32_t                 displacementReversePacking,
+  const bool                    is420=true ) {
   printf("Reconstruct displacements from video frame \n");
   fflush(stdout);
   const auto displacementVideoWidthInBlocks =
@@ -257,7 +259,13 @@ reconstructDisplacementFromVideoFrame(
   const auto    planeCount = dispVideoFrame.planeCount();
   const auto    pointCount = rec.pointCount();
   auto&         disp       = frame.disp;
-  const int32_t start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
+  const auto blockCount =
+    (pointCount + pixelsPerBlock - 1) / pixelsPerBlock;
+  const auto displacementVideoHeightInBlocks =
+    (blockCount + displacementVideoWidthInBlocks - 1) / displacementVideoWidthInBlocks;
+  const auto origHeight = displacementVideoHeightInBlocks * displacementVideoBlockSize;
+  const int32_t start = dispVideoFrame.width() * origHeight - 1;
+  const int32_t dispDim = oneDimensionalDisplacement ? 1:3;
   disp.assign(pointCount, Vec3<double>(0));
   for (int32_t v = 0; v < pointCount; ++v) {
     // to do: optimize power of 2
@@ -276,9 +284,15 @@ reconstructDisplacementFromVideoFrame(
     const auto x1 = x0 + x;
     const auto y1 = y0 + y;
     auto&      d  = disp[v];
-    for (int32_t p = 0; p < planeCount; ++p) {
-      const auto& plane = dispVideoFrame.plane(p);
-      d[p]              = double(plane.get(y1, x1)) - shift;
+    for (int32_t p = 0; p < dispDim; ++p) {
+      if (is420) {
+        const auto& plane = dispVideoFrame.plane(0);
+        d[p] = double(plane.get(p * origHeight + y1, x1)) - shift;
+      }
+      else {
+        const auto& plane = dispVideoFrame.plane(p);
+        d[p] = double(plane.get(y1, x1)) - shift;
+      }
     }
   }
   return 0;

@@ -651,6 +651,7 @@ V3CWriter::aspsVdmcExtension(Bitstream&                     bitstream,
   WRITE_CODE(ext.getLiftingQPs(2), 8);                     //u8
   WRITE_CODE(ext.getInterpolateDisplacementNormals(), 1);  //u1
   WRITE_CODE(ext.getAddReconstructedNormals(), 1);         //u1
+  WRITE_CODE(ext.getDisplacement1D(), 1)                   //u1
   WRITE_CODE(ext.getDisplacementReversePacking(), 1);      //u1
 
   // Video streams

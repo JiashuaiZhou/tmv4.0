@@ -1467,7 +1467,13 @@ VMCEncoder::computeDisplacementVideoFrame(
   for (int32_t p = 0; p < planeCount; ++p) {
     dispVideoFrame.plane(p).fill(shift);
   }
-  const int32_t start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
+  int32_t start;
+  if (params.displacementUse420 && (!params.applyOneDimensionalDisplacement)) {
+    start = dispVideoFrame.width() * dispVideoFrame.height() / 3 - 1;
+  }
+  else {
+    start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
+  }
   for (int32_t v = 0, vcount = int32_t(disp.size()); v < vcount; ++v) {
     // to do: optimize power of 2
     const auto& d          = disp[v];
@@ -1478,6 +1484,7 @@ VMCEncoder::computeDisplacementVideoFrame(
                     * params.displacementVideoBlockSize;
     const auto y0 = (blockIndex / params.geometryVideoWidthInBlocks)
                     * params.displacementVideoBlockSize;
+    const int32_t dispDim = params.applyOneDimensionalDisplacement ? 1 : 3;
     int32_t x = 0;
     int32_t y = 0;
     computeMorton2D(indexWithinBlock, x, y);
@@ -1486,10 +1493,15 @@ VMCEncoder::computeDisplacementVideoFrame(
 
     const auto x1 = x0 + x;
     const auto y1 = y0 + y;
-    for (int32_t p = 0; p < planeCount; ++p) {
+    for (int32_t p = 0; p < dispDim; ++p) {
       const auto dshift = int32_t(shift + d[p]);
       assert(dshift >= 0 && dshift < (1 << params.geometryVideoBitDepth));
-      dispVideoFrame.plane(p).set(y1, x1, uint16_t(dshift));
+      if (params.displacementUse420) {
+        dispVideoFrame.plane(0).set(p * dispVideoFrame.height() / 3 + y1, x1, uint16_t(dshift));
+      }
+      else {
+        dispVideoFrame.plane(p).set(y1, x1, uint16_t(dshift));
+      }
     }
   }
   return true;
@@ -1573,9 +1585,10 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   const auto widthDispVideo =
     params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
   auto       heightDispVideo      = 0;
-  const auto colourSpaceDispVideo = params.applyOneDimensionalDisplacement
-                                      ? ColourSpace::YUV400p
-                                      : ColourSpace::YUV444p;
+  auto colourSpaceDispVideo = ColourSpace::YUV420p;
+  if (!params.displacementUse420) {
+    colourSpaceDispVideo = params.applyOneDimensionalDisplacement ? ColourSpace::YUV400p : ColourSpace::YUV444p;
+  }
   FrameSequence<uint16_t> dispVideo;
   dispVideo.resize(0, 0, colourSpaceDispVideo, frameCount);
 
@@ -1602,8 +1615,11 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
         / params.geometryVideoWidthInBlocks;
       const auto width =
         params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
-      const auto height =
+      auto height =
         geometryVideoHeightInBlocks * params.displacementVideoBlockSize;
+      if (params.displacementUse420 && (!params.applyOneDimensionalDisplacement)) {
+        height *= 3;
+      }
       dispVideoFrame.resize(width, height, colourSpaceDispVideo);
       computeDisplacements(frame, rec, params);
       computeForwardLinearLifting(frame.disp,
@@ -1619,8 +1635,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   // resize all the frame to the same resolution
   if (params.encodeDisplacementsVideo) {
     const auto padding = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
-    dispVideo.standardizeFrameSizes(!params.displacementReversePacking,
-                                    padding);
+    dispVideo.standardizeFrameSizes(true, padding);
     auto& atlas              = syntax.getAtlas();
     auto& asps               = atlas.getAtlasSequenceParameterSet(0);
     auto& ext                = asps.getAspsVdmcExtension();
@@ -1651,6 +1666,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                             reconstruct.mesh(frameIndex),
                                             params.displacementVideoBlockSize,
                                             params.geometryVideoBitDepth,
+                                            params.applyOneDimensionalDisplacement,
                                             params.displacementReversePacking);
       inverseQuantizeDisplacements(frame,
                                    params.bitDepthPosition,

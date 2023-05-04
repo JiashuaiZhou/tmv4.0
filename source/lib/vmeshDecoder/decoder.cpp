@@ -525,6 +525,7 @@ VMCDecoder::decompress(const V3cBitstream&         syntax,
         rec,
         1 << asps.getLog2PatchPackingBlockSize(),
         gi.getGeometry2dBitdepthMinus1() + 1,
+        ext.getDisplacement1D(),
         ext.getDisplacementReversePacking());
 
       const auto bitDepthPosition = asps.getGeometry3dBitdepthMinus1() + 1;

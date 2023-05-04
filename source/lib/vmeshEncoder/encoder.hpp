@@ -227,12 +227,15 @@ struct VMCEncoderParameters {
   bool         textureBGR444                = false;
 
   // Base mesh
-  GeometryCodecId meshCodecId                     = GeometryCodecId::DRACO;
+  GeometryCodecId meshCodecId                     = GeometryCodecId::MPEG;
   bool            dracoUsePosition                = false;
   bool            dracoUseUV                      = false;
   bool            dracoMeshLossless               = false;
   int32_t         motionGroupSize                 = 16;
   bool            motionWithoutDuplicatedVertices = true;
+  std::string     predCoder                       = { "dirac" };
+  std::string     topoCoder                       = { "dirac" };
+  bool            baseMeshDeduplicatePositions    = false;
 
   // Displacements
   DisplacementCoordinateSystem displacementCoordinateSystem =

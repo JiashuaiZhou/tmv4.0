@@ -12,6 +12,11 @@ endif()
 set(MM_BUILD_CMD on)
 set(USE_OPENMP off)
 
+# followjng reuqires/activates cxx17 
+set(CMAKE_CXX_STANDARD          17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS        OFF)
+
 # disable submodule warnings
 if(MSVC)
   add_definitions("/wd4267")

@@ -4,6 +4,12 @@ if ( USE_HM_VIDEO_CODEC )
   set( HM_DIR             ${CMAKE_SOURCE_DIR}/dependencies/hm/ )
   set( HM_LIB_SOURCE_DIR  ${HM_DIR}/source/Lib )
 
+  # Building options
+  set(CMAKE_CXX_STANDARD             14)
+  set(CMAKE_CXX_STANDARD_REQUIRED    ON)
+  set(CMAKE_CXX_EXTENSIONS           OFF)
+  set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
   if( NOT EXISTS "${HM_DIR}/README" )
     execute_process( COMMAND git clone --depth 1 --branch ${HM_VERSION} https://vcgit.hhi.fraunhofer.de/jvet/HM.git ${HM_DIR} RESULT_VARIABLE ret)
     if( NOT ${ret} EQUAL "0")

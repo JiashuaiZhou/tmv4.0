@@ -42,17 +42,17 @@ struct GeometryEncoderParameters {
   std::string binFileName_   = {};
   std::string recFileName_   = {};
   std::string encoderConfig_ = {};
-  int32_t     qp_ =
-    11;  // quantization bits for the position attribute, default=11.
-  int32_t qt_ =
-    10;  // quantization bits for the texture coordinate attribute, default=10.
-  int32_t qn_ =
-    -1;  // quantization bits for the normal vector attribute, default=8.
-  int32_t qg_ = -1;  // quantization bits for any generic attribute, default=8.
-  int32_t cl_ = 10;  // compression level [0-10], most=10, least=0, default=7.
-  bool    dracoUsePosition_  = false;  // draco use position mode (m60340)
-  bool    dracoUseUV_        = false;  // draco use uv mode (m60293)
-  bool    dracoMeshLossless_ = false;  // whether mesh is lossless (m60289)
+  int32_t     qp_            = 11;  // quantization bits for the position attribute, default=11.
+  int32_t     qt_            = 10;  // quantization bits for the texture coordinate attribute, default=10.
+  int32_t     qn_            = -1;  // quantization bits for the normal vector attribute, default=8.
+  int32_t     qg_            = -1;  // quantization bits for any generic attribute, default=8.
+  int32_t     cl_            = 10;  // compression level [0-10], most=10, least=0, default=7.
+  bool        dracoUsePosition_             = false;           // draco use position mode (m60340)
+  bool        dracoUseUV_                   = false;           // draco use uv mode (m60293)
+  bool        dracoMeshLossless_            = false;           // whether mesh is lossless (m60289)
+  std::string predCoder_                    = { "dirac" }; // prediction residuals encoding method
+  std::string topoCoder_                    = { "dirac" }; // topology symbols encoding method
+  bool        baseMeshDeduplicatePositions_ = false;           // add position deduplication information
 };
 
 template<class T>

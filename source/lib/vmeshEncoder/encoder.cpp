@@ -1054,9 +1054,21 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
 
   // Encode
   GeometryEncoderParameters encoderParams;
-  encoderParams.dracoUsePosition_  = params.dracoUsePosition;
-  encoderParams.dracoUseUV_        = params.dracoUseUV;
-  encoderParams.dracoMeshLossless_ = params.dracoMeshLossless;
+  // remove this one ??
+  encoderParams.cl_ = 10; // this is the default for draco
+  // were not specified before, using scale
+  encoderParams.qp_ = 18;
+  // in practice 19 bits are used for texcoords as 1.0 is scaled as 0x4000
+  // this only has incidence when qp-bits packing is used in the encoder
+  encoderParams.qt_ = 19;
+  // end remove those
+  encoderParams.dracoUsePosition_             = params.dracoUsePosition;
+  encoderParams.dracoUseUV_                   = params.dracoUseUV;
+  encoderParams.dracoMeshLossless_            = params.dracoMeshLossless;
+  encoderParams.predCoder_                    = params.predCoder;
+  encoderParams.topoCoder_                    = params.topoCoder;
+  encoderParams.baseMeshDeduplicatePositions_ = params.baseMeshDeduplicatePositions;
+
   TriangleMesh<MeshType> rec;
   std::vector<uint8_t>   geometryBitstream;
   auto encoder = GeometryEncoder<MeshType>::create(params.meshCodecId);
@@ -1489,14 +1501,17 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
     // Encode
     GeometryEncoderParameters encoderParams;
-    encoderParams.qp_                = params.qpPosition;
-    encoderParams.qt_                = params.qpTexCoord;
-    encoderParams.dracoUsePosition_  = params.dracoUsePosition;
-    encoderParams.dracoUseUV_        = params.dracoUseUV;
-    encoderParams.dracoMeshLossless_ = params.dracoMeshLossless;
+    encoderParams.qp_                           = params.qpPosition;
+    encoderParams.qt_                           = params.qpTexCoord;
+    encoderParams.dracoUsePosition_             = params.dracoUsePosition;
+    encoderParams.dracoUseUV_                   = params.dracoUseUV;
+    encoderParams.dracoMeshLossless_            = params.dracoMeshLossless;
+    encoderParams.predCoder_                    = params.predCoder;
+    encoderParams.topoCoder_                    = params.topoCoder;
+    encoderParams.baseMeshDeduplicatePositions_ = params.baseMeshDeduplicatePositions;
     TriangleMesh<MeshType> rec;
     std::vector<uint8_t>   geometryBitstream;
-    auto encoder = GeometryEncoder<MeshType>::create(GeometryCodecId::DRACO);
+    auto encoder = GeometryEncoder<MeshType>::create(params.meshCodecId);
     printf("BaseMeshEnco: use_position = %d use_uv = %d mesh_lossless = %d \n",
            encoderParams.dracoUsePosition_,
            encoderParams.dracoUseUV_,

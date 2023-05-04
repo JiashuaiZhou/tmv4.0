@@ -55,6 +55,23 @@ if ( BUILD_WRAPPER_APPS )
                                ${CMAKE_SOURCE_DIR}/source/wrapper/geometryDecoder
                                ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 
+  # EB Encoder/decoder
+  create_executable( NAME      ebEncode
+                     SOURCES   wrapper/ebEncode.cpp 
+                     LIBRARIES ebCommon ebEncoder
+                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/ebCommon
+							   ${CMAKE_SOURCE_DIR}/source/lib/ebEncoder
+							   ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies
+                               ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
+
+  create_executable( NAME      ebDecode
+                     SOURCES   wrapper/ebDecode.cpp 
+                     LIBRARIES ebCommon ebDecoder
+                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/ebCommon
+                               ${CMAKE_SOURCE_DIR}/source/lib/ebDecoder
+							   ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies
+                               ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
+
   # Video Encoder/decoder
   create_executable( NAME      encodeVideo 
                      SOURCES   wrapper/videoEncoder.cpp 

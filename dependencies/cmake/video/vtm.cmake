@@ -4,6 +4,16 @@ if ( USE_VTM_VIDEO_CODEC )
   set( VTM_DIR             ${CMAKE_SOURCE_DIR}/dependencies/vtm )
   set( VTM_LIB_SOURCE_DIR  ${VTM_DIR}/source/Lib )
 
+  # Building options
+  set(CMAKE_CXX_STANDARD             14)
+  set(CMAKE_CXX_STANDARD_REQUIRED    ON)
+  set(CMAKE_CXX_EXTENSIONS           OFF)
+  set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+  if (MSVC)
+    add_definitions("/W3 /D_CRT_SECURE_NO_WARNINGS /nologo /std:c++14")
+  endif()
+
   if( NOT EXISTS "${VTM_DIR}/CMakeLists.txt" )
     message("VTM clone: ${VTM_LIB_SOURCE_DIR}")
     execute_process( COMMAND git clone https://vcgit.hhi.fraunhofer.de/jvet/VVCSoftware_VTM.git/ ${VTM_DIR} RESULT_VARIABLE ret)   

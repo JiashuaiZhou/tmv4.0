@@ -439,6 +439,18 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.meshCodecId, 
       encParams.meshCodecId, 
       "Mesh codec id")
+    ("predCoder",
+        encParams.predCoder,
+        encParams.predCoder,
+        "EB pred coder")
+    ("topoCoder",
+        encParams.topoCoder,
+        encParams.topoCoder,
+        "EB topo coder")
+    ("baseMeshDeduplicatePositions",
+        encParams.baseMeshDeduplicatePositions,
+        encParams.baseMeshDeduplicatePositions,
+        "base mesh deduplicate positions")
     ("dracoUsePosition", 
       encParams.dracoUsePosition, 
       encParams.dracoUsePosition, 

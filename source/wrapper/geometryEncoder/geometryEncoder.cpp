@@ -34,6 +34,7 @@
 #include "geometryEncoder.hpp"
 
 #include "dracoGeometryEncoder.hpp"
+#include "mpegGeometryEncoder.hpp"
 
 namespace vmesh {
 
@@ -54,6 +55,7 @@ GeometryEncoder<T>::checkCodecId(GeometryCodecId codecId) {
 #ifdef USE_DRACO_GEOMETRY_CODEC
   case GeometryCodecId::DRACO: break;
 #endif
+  case GeometryCodecId::MPEG: break;
   default:
     printf("Error: codec id %d not supported \n", (int)codecId);
     return false;
@@ -71,6 +73,9 @@ GeometryEncoder<T>::create(GeometryCodecId codecId) {
     return std::make_shared<DracoGeometryEncoder<T>>();
     break;
 #endif
+  case GeometryCodecId::MPEG:
+      return std::make_shared<MpegGeometryEncoder<T>>();
+      break;
   default:
     printf("Error GeometryEncoder: codec id not supported ( %d ) \n",
            (int)codecId);

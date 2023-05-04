@@ -32,13 +32,11 @@ OPTION( BITSTREAM_TRACE           "Enable bitstream logs"                       
 SET( MESH_TYPE "double" CACHE STRING "Mesh coordinate type: float or double" )
 
 # Building options
-set(CMAKE_CXX_STANDARD             14)
-set(CMAKE_CXX_STANDARD_REQUIRED    ON)
-set(CMAKE_CXX_EXTENSIONS           OFF)
-set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+
 enable_language(C)
 if (MSVC)
-  add_definitions("/W3 /D_CRT_SECURE_NO_WARNINGS /nologo /std:c++14")
+  add_definitions("/W3 /D_CRT_SECURE_NO_WARNINGS /nologo")
 else ()
   add_compile_options( -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-deprecated-declarations)   
 endif()

@@ -58,6 +58,7 @@ namespace vmesh {
 enum GeometryCodecId {
 #if defined(USE_DRACO_GEOMETRY_CODEC)
   DRACO = 0,
+  MPEG = 1,
 #endif
   UNKNOWN_GEOMETRY_CODEC = 255
 };
@@ -74,6 +75,7 @@ operator>>(std::istream& in, GeometryCodecId& val) {
   printf("GeometryCodecId: here \n");
   if (str == "DRACO") { val = GeometryCodecId::DRACO; }
 #endif
+  if (str == "MPEG") { val = GeometryCodecId::MPEG; }
   if (val == GeometryCodecId::UNKNOWN_GEOMETRY_CODEC) {
     in.setstate(std::ios::failbit);
   }

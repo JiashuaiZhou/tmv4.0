@@ -169,7 +169,7 @@ VMCDecoder::decompressMotion(
           if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[1][k]) != 0) {
             value += 1
                      + arithmeticDecoder.decodeExpGolomb(
-                       0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
+                       0, ctx.ctxCoeffRemPrefix);
           }
           if (sign != 0) { value = -value; }
         }

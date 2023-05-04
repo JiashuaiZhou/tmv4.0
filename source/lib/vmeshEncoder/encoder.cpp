@@ -1189,7 +1189,7 @@ VMCEncoder::compressMotion(
         if (value == 0) { continue; }
         assert(value > 0);
         arithmeticEncoder.encodeExpGolomb(
-          --value, 0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
+          --value, 0, ctx.ctxCoeffRemPrefix);
       }
     }
   }

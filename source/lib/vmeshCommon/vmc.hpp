@@ -320,6 +320,7 @@ subdivideBaseMesh(VMCFrame&               frame,
 static int32_t
 applyDisplacements(
   VMCFrame&                           frame,
+  const int32_t bitDepthPosition,
   TriangleMesh<MeshType>&             rec,
   const DisplacementCoordinateSystem& displacementCoordinateSystem) {
   printf("apply displacements \n");
@@ -335,6 +336,10 @@ applyDisplacements(
       rec.point(v) += d[0] * n + d[1] * t + d[2] * b;
     } else {
       rec.point(v) += d;
+    }
+
+    for(int32_t i = 0; i < 3; ++i) {
+      assert(rec.point(v)[i] >= 0 && rec.point(v)[i] < (1 << bitDepthPosition));
     }
   }
   return 0;

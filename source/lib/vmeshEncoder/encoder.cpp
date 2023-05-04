@@ -1611,6 +1611,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                   params.liftingUpdateWeight,
                                   params.liftingSkipUpdate);
       applyDisplacements(frame,
+                         params.bitDepthPosition,
                          reconstruct.mesh(frameIndex),
                          params.displacementCoordinateSystem);
     }

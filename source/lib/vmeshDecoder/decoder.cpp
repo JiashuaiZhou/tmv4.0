@@ -525,7 +525,7 @@ VMCDecoder::decompress(const V3cBitstream&         syntax,
                                   ext.getLiftingPredictionWeight(),
                                   ext.getLiftingUpdateWeight(),
                                   ext.getLiftingSkipUpdate());
-      applyDisplacements(frame, rec, ext.getDisplacementCoordinateSystem());
+      applyDisplacements(frame, bitDepthPosition, rec, ext.getDisplacementCoordinateSystem());
     }
   }
 

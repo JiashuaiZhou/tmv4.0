@@ -58,10 +58,11 @@ if ( BUILD_WRAPPER_APPS )
   # EB Encoder/decoder
   create_executable( NAME      ebEncode
                      SOURCES   wrapper/ebEncode.cpp 
-                     LIBRARIES ebCommon ebEncoder
-                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/ebCommon
-							   ${CMAKE_SOURCE_DIR}/source/lib/ebEncoder
-							   ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies
+                     LIBRARIES ebCommon ebEncoder ebBitstream
+                     INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/ebBitstream
+                               ${CMAKE_SOURCE_DIR}/source/lib/ebCommon
+                               ${CMAKE_SOURCE_DIR}/source/lib/ebEncoder
+                               ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies
                                ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 
   create_executable( NAME      ebDecode
@@ -69,7 +70,7 @@ if ( BUILD_WRAPPER_APPS )
                      LIBRARIES ebCommon ebDecoder
                      INCLUDES  ${CMAKE_SOURCE_DIR}/source/lib/ebCommon
                                ${CMAKE_SOURCE_DIR}/source/lib/ebDecoder
-							   ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies
+                               ${CMAKE_SOURCE_DIR}/dependencies/mmetric/dependencies
                                ${CMAKE_SOURCE_DIR}/dependencies/tinyply/source )
 
   # Video Encoder/decoder

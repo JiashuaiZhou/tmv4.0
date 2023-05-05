@@ -8,6 +8,7 @@ file(GLOB SRC *.h *.cpp )
 
 include_directories( ${CMAKE_SOURCE_DIR}/dependencies 
                      ${CMAKE_SOURCE_DIR}/source/lib/vmeshCommon
+					 ${CMAKE_SOURCE_DIR}/source/lib/ebBitstream
 					 ${CMAKE_SOURCE_DIR}/source/lib/ebCommon
 					 ${CMAKE_SOURCE_DIR}/source/lib/ebEncoder
 					 ${CMAKE_SOURCE_DIR}/source/lib/ebDecoder

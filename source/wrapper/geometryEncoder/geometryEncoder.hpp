@@ -41,6 +41,7 @@ struct GeometryEncoderParameters {
   std::string srcFileName_   = {};
   std::string binFileName_   = {};
   std::string recFileName_   = {};
+  std::string logFileName_   = {};
   std::string encoderConfig_ = {};
   int32_t     qp_            = 11;  // quantization bits for the position attribute, default=11.
   int32_t     qt_            = 10;  // quantization bits for the texture coordinate attribute, default=10.

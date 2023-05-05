@@ -46,15 +46,16 @@
 
 // internal headers
 #include "ebIO.h"
+#include "ebChrono.h"
 #include "ebModel.h"
 #include "ebGeometry.h"
 #include "ebColor.h"
 
-// #include "mmEntropy.h"
-// #include "mmEntropyContext.h"
-
 #include "ebDecoder.h"
 #include "ebBasicDecoder.h"
+
+#include "ebReader.hpp"
+#include "syntaxElements/meshCoding.hpp"
 
 using namespace eb;
 
@@ -62,23 +63,36 @@ bool EBDecoder::load(std::string fileName) {
 
     delete _eb; _eb = 0;
 
-    std::ifstream in(fileName, std::ios::binary);
-    if (!in)
+    Bitstream bitstream;
+
+    auto t = now();
+    if (!bitstream.load(fileName)) // loads the full file content including format & method
         return false;
 
-    char method = 'b'; // b=basic
-    in >> method;
+    std::cout << "  File read time " << elapsed(t) << "sec" << std::endl;
 
-    if (method == 'b') {
+    std::cout << "  Loaded bistream byte size = " << bitstream.size() << std::endl;
+
+    t = now();
+    MeshCoding meshCoding; // Top level syntax element
+    EbReader   ebReader;
+    ebReader.read(bitstream, meshCoding);
+    std::cout << "  Parsing time " << elapsed(t) << "sec" << std::endl;
+
+    // Check codec variant
+    const auto& mch = meshCoding.getMeshCodingHeader();
+    const auto& method = mch.getMeshCodecType();
+    // single variant in this release
+    if (method == MeshCodecType::CODEC_TYPE_FORWARD) {
         _eb = new EBBasicDecoder;
     }
     else
-        std::cout << "Error: invalid method character " << method << std::endl;
+        std::cout << "Error: invalid mesh coding variant " << (uint8_t)(method) << std::endl;
 
-    // 
-    bool res = _eb->load(in);
-
-    in.close();
+    //
+    t = now();
+    bool res = _eb->unserialize(meshCoding);
+    std::cout << "  Unserialize time " << elapsed(t) << "sec" << std::endl;
     return res;
 }
 

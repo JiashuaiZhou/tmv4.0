@@ -58,8 +58,10 @@
 #include "ebRansCodecUtils.h"
 #include "ebRansSymbolCodec.h"
 #include "ebRansBinaryCodec.h"
-#include "ebBitstream.h"
 
+#include "ebBitstream.h"
+#include "ebWriter.hpp"
+#include "syntaxElements/meshCoding.hpp"
 
 using namespace eb;
 
@@ -698,136 +700,44 @@ uint32_t ConvertSignedIntToSymbol(int32_t val) {
 
 bool EBBasicEncoder::save(std::string fileName) {
 
-    std::ofstream out(fileName, std::ios::binary);
-    if (!out)
-        return false;
-
-    eb::Bitstream bs;
+    Bitstream bitstream;
 
     auto t = now();
-    if (!serialize(bs))
+    if (!serialize(bitstream))
         return false;
-    std::cout << "  AC coding time " << elapsed(t) << "sec" << std::endl;
+    std::cout << "  Serialize time " << elapsed(t) << "sec" << std::endl;
 
-    t = now();
-    bs.save(out);
-    out.close();
-    std::cout << "  File saving time " << elapsed(t) << "sec" << std::endl;
+    if (!bitstream.save(fileName)) {
+        std::cerr << "Error: can't save compressed bitstream!\n";
+        return false;
+    }
 
-    std::cout << "  Saved bitsream byte size = " << bs.size() << std::endl;
+    std::cout << "  Saved bitsream byte size = " << bitstream.size() << std::endl;
 
     return true;
 }
 
-// entroy encoding and serialization into a bitstream
-bool EBBasicEncoder::serialize(Bitstream& bs) {
+// entropy encoding and serialization into a bitstream
+bool EBBasicEncoder::serialize(Bitstream& bitstream) {
+
+
+    // AC coded buffers
+    std::vector<uint8_t> meshHandleIndexSecondShiftBuffer;
+    std::vector<uint8_t> meshClersSymbolBuffer;
+    std::vector<uint8_t> meshPositionIsDuplicateFlagBuffer;
+    std::vector<uint8_t> meshPositionResidualsBuffer;
+    std::vector<uint8_t> meshAttributeSeamBuffer;
+    std::vector<uint8_t> meshAttributeResidualBuffer;
+    std::vector<uint8_t> meshTexCoordStretchOrientationBuffer;
 
     if (_ovTable.uvcoords.empty()) // or sUVCoords or oUVCoords empy
         qt = -1; // override user setting if no uv in bitstream - used for decoding
 
-    bs.write('b'); // basic encoder
-    bs.write(uint8_t(cfg.posPred));
-    bs.write(uint8_t(cfg.uvPred));
-    bs.write(uint8_t(cfg.predCoder));
-    bs.write(uint8_t(cfg.topoCoder));
-
     const bool hasSeparateUvIndex = _ovTable.OTC.size();
 
-    const bool bopt0 = (cfg.optionFlags & (1 << 0));
-    const bool bopt1 = (cfg.optionFlags & (1 << 1));
-    const bool bopt2 = (cfg.optionFlags & (1 << 2));
-    const bool bopt3 = (cfg.optionFlags & (1 << 3));
-    const bool bopt4 = (cfg.optionFlags & (1 << 4));
-    uint8_t flags = (uint8_t(cfg.intAttr) << 0)
-        | (uint8_t(hasSeparateUvIndex) << 1)
-        | (uint8_t(cfg.deduplicate) << 2)
-        | (uint8_t(bopt0) << 3)
-        | (uint8_t(bopt1) << 4)
-        | (uint8_t(bopt2) << 5)
-        | (uint8_t(bopt3) << 6)
-        | (uint8_t(bopt4) << 7);
-
-    bs.write(flags);
-    bs.write(uint8_t(qp + 1));
-    bs.write(uint8_t(qt + 1));
-    bs.write(uint8_t(qn + 1));
-    bs.write(uint8_t(qc + 1));
-    bs.writeVarUint(oVertices.size());
-    bs.writeVarUint(oUVCoords.size());
-
-    if (qp >= 7 && !cfg.intAttr) {
-        bs.writeRaw(minPos.x);
-        bs.writeRaw(minPos.y);
-        bs.writeRaw(minPos.z);
-        bs.writeRaw(maxPos.x);
-        bs.writeRaw(maxPos.y);
-        bs.writeRaw(maxPos.z);
-    }
-    if (qt >= 7 && !_ovTable.uvcoords.empty() && !cfg.intAttr) {
-        bs.writeRaw(minUv.x);
-        bs.writeRaw(minUv.y);
-        bs.writeRaw(maxUv.x);
-        bs.writeRaw(maxUv.y);
-    }
-    //
-    bs.writeVarUint(numOfTriangles);
-    bs.writeVarUint(oClers.size());
-    bs.writeVarUint(ccCount);
-    bs.writeVarUint(oHandleSizes.size());
-    bs.writeVarUint(oDummies.size());
-
-    // Payload
-
-    // absolute start positions
-    if (cfg.posPred == EBConfig::PosPred::MPARA)
-    {
-        bs.writeVarUint(sVertices.size()); // not always redundant with cccount (when deduplication)
-        if (sVertices.size())
-        {
-            const auto aposStart = bs.buffer.size();
-            // CAUTION requires qp to be correctly set
-            std::vector<uint8_t> tempBS;
-            BitstreamRef test(tempBS);
-            for (auto i = 0; i < sVertices.size(); ++i)
-                for (auto k = 0; k < 3; ++k)
-                    test.write((int)sVertices[i][k], qp);
-
-            while (!test.byteAligned()) test.write(0, 1);
-            const auto aposLength = test.getPosition().bytes_;
-
-            const auto offset = bs.size();
-            bs.resize(offset + aposLength);
-            std::copy(test.buffer(), test.buffer() + aposLength, bs.buffer.begin() + offset);
-            std::cout << "  Absolute Positions bytes = " << aposLength << ", bpv = " << 8.0 * (float)aposLength / sVertices.size() << std::endl;
-        }
-    }
-    // absolute start uv coords
-    if ((qt >= 0) && cfg.uvPred == EBConfig::UvPred::STRETCH)
-    {
-        if (cfg.posPred != EBConfig::PosPred::MPARA || hasSeparateUvIndex)
-            bs.writeVarUint(sUVCoords.size());
-        if (sUVCoords.size())
-        {
-            const auto auvStart = bs.buffer.size();
-            // CAUTION requires qt to be correctly set
-            std::vector<uint8_t> tempBS;
-            BitstreamRef test(tempBS); // TODO replace with extended bitstream reader/writer
-            for (auto i = 0; i < sUVCoords.size(); ++i)
-                for (auto k = 0; k < 2; ++k)
-                    test.write((int)sUVCoords[i][k], qt);
-
-            while (!test.byteAligned()) test.write(0, 1);
-            const auto auvLength = test.getPosition().bytes_;
-
-            const auto offset = bs.size();
-            bs.resize(offset + auvLength);
-            std::copy(test.buffer(), test.buffer() + auvLength, bs.buffer.begin() + offset);
-            std::cout << "  Absolute UVCoords bytes = " << auvLength << ", bpv = " << 8.0 * (float)auvLength / sUVCoords.size() << std::endl;
-        }
-    }
-
     size_t posLength = 0;
-    if (cfg.predCoder == EBConfig::ECName::DIRAC) {
+    // cfg.predCoder == EBConfig::ECName::DIRAC - single alternative .. TO BE ADDED
+    {
         AdaptiveBitModel ctxCoeffRemPrefix[12];
         AdaptiveBitModel ctxCoeffRemSuffix[12];
         const auto bias = 3;
@@ -843,12 +753,7 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
         //for (auto i = 0; i < oVertices.size(); ++i) {
         for (int32_t k = 0; k < 3; ++k) {
             for (auto i = 0; i < oVertices.size(); ++i) { // may be better to use x then y then z, or use 3 sets of rem pref and suff
-                const bool basicStyle = bopt0;
-                if (basicStyle) {
-                    const int value = (int)(oVertices[i][k]);
-                    ac.encodeExpGolomb(ConvertSignedIntToSymbol(value), gshift, ctxCoeffRemPrefix, ctxCoeffRemSuffix);
-                }
-                else {
+                {
                     const int value = (int)(oVertices[i][k]);
                     int pval;
                     const bool isz = (value == 0);
@@ -875,37 +780,16 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
         }
         posLength = ac.stop();
         const auto byteCount = uint32_t(posLength);
-        bs.writeVarUint(byteCount);
-        bs.write((uint8_t)gshift);
-        const auto offset = bs.size();
-        bs.resize(offset + byteCount);
-        std::copy(ac.buffer(), ac.buffer() + byteCount, bs.buffer.begin() + offset);
-    }
-    else if (cfg.predCoder == EBConfig::ECName::RANS) {
-        std::vector<uint32_t> vertsUI32;
-        vertsUI32.reserve(3 * oVertices.size());
-        for (auto i = 0; i < oVertices.size(); ++i) {
-            for (int32_t k = 0; k < 3; ++k) {
-                const int value = (int)(oVertices[i][k]);
-                vertsUI32.push_back(ConvertSignedIntToSymbol(value));
-            }
-        }
-        rans::RansSymbolEncoder ransVertEncoder;
-        std::vector<uint8_t> ransVertEncodedBuffer;
-        ransVertEncoder.encode(&vertsUI32[0], (int)oVertices.size() * 3, ransVertEncodedBuffer, 2);
-        posLength = ransVertEncodedBuffer.size();
-        const auto byteCount = uint32_t(posLength);
-        bs.writeVarUint(byteCount);
-        const auto offset = bs.size();
-        bs.resize(offset + byteCount);
-        std::copy(ransVertEncodedBuffer.begin(), ransVertEncodedBuffer.begin() + byteCount, bs.buffer.begin() + offset);
+        // assign position residuals buffer
+        meshPositionResidualsBuffer.assign(ac.buffer(), ac.buffer() + byteCount);
     }
     std::cout << "  Positions bytes = " << posLength << ", bpv = " << 8.0 * (float)posLength / oVertices.size() << std::endl;
 
     size_t uvLength = 0;
     if (qt >= 0)
     {
-        if (cfg.predCoder == EBConfig::ECName::DIRAC) {
+        //cfg.predCoder == EBConfig::ECName::DIRAC - single alternative ..TO BE ADDED
+        {
             AdaptiveBitModel ctxCoeffRemPrefix[12];
             AdaptiveBitModel ctxCoeffRemSuffix[12];
             EntropyEncoder     ac;
@@ -920,12 +804,7 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
             bool islow = true;
             for (auto i = 0; i < oUVCoords.size(); ++i) { // no gain when using x then y or using separate ctx for those ?
                 for (int32_t k = 0; k < 2; ++k) {
-                    const bool basicStyle = bopt0;
-                    if (basicStyle) {
-                        const int value = (int)(oUVCoords[i][k]);
-                        ac.encodeExpGolomb(ConvertSignedIntToSymbol(value), gshift, ctxCoeffRemPrefix, ctxCoeffRemSuffix);
-                    }
-                    else {
+                    {
                         const int value = (int)(oUVCoords[i][k]);
                         int pval;
                         const bool isz = (value == 0);
@@ -952,31 +831,8 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
             }
             uvLength = ac.stop();
             const auto byteCount = uint32_t(uvLength);
-            bs.writeVarUint(byteCount);
-            bs.write((uint8_t)gshift);
-            const auto offset = bs.size();
-            bs.resize(offset + byteCount);
-            std::copy(ac.buffer(), ac.buffer() + byteCount, bs.buffer.begin() + offset);
-        }
-        else if (cfg.predCoder == EBConfig::ECName::RANS) {
-            std::vector<uint32_t> uvUI32;
-            uvUI32.reserve(2 * oUVCoords.size());
-            for (auto i = 0; i < oUVCoords.size(); ++i) {
-                for (int32_t k = 0; k < 2; ++k) {
-                    const int value = (int)(oUVCoords[i][k]);
-                    uvUI32.push_back(ConvertSignedIntToSymbol(value));
-                }
-            }
-
-            rans::RansSymbolEncoder ransUVEncoder;
-            std::vector<uint8_t> ransUVEncodedBuffer;
-            ransUVEncoder.encode(&uvUI32[0], oUVCoords.size() * 2, ransUVEncodedBuffer, 0);
-            uvLength = ransUVEncodedBuffer.size();
-            const auto byteCount = uint32_t(uvLength);
-            bs.writeVarUint(byteCount);
-            const auto offset = bs.size();
-            bs.resize(offset + byteCount);
-            std::copy(ransUVEncodedBuffer.begin(), ransUVEncodedBuffer.begin() + byteCount, bs.buffer.begin() + offset);
+            // assign attributes residuals buffer
+            meshAttributeResidualBuffer.assign(ac.buffer(), ac.buffer()+ byteCount);
         }
         std::cout << "  UVCoods bytes = " << uvLength << ", bpv = " << 8.0 * (float)uvLength / oUVCoords.size() << std::endl;
 
@@ -984,7 +840,7 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
         if (cfg.uvPred == EBConfig::UvPred::STRETCH)
         {
             size_t uvOrientationLength = 0;
-            { // no coder selection yet for uv orientation .. TO BE ADDED
+            { // single coder selection for uv orientation .. TO BE ADDED
                 std::vector<uint8_t> orientBuffer;
                 rans::RansBinaryEncoder orientEncoder;
                 for (auto it = orientations.begin(); it != orientations.end(); ++it) {
@@ -994,14 +850,8 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
                 uvOrientationLength = orientBuffer.size();
                 const auto byteCount = uint32_t(uvOrientationLength);
                 const auto nbOrientations = uint32_t(orientations.size());
-                bs.writeVarUint(nbOrientations);
-                if (nbOrientations)
-                {
-                    bs.writeVarUint(byteCount);
-                    const auto offset = bs.size();
-                    bs.resize(offset + byteCount);
-                    std::copy(orientBuffer.begin(), orientBuffer.begin() + byteCount, bs.buffer.begin() + offset);
-                }
+                // assign uv strech orientation buffr
+                meshTexCoordStretchOrientationBuffer = std::move(orientBuffer);
             }
             std::cout << "  UVCoods auxiliary orientation selection bytes = " << uvOrientationLength << ", bpv = " << 8.0 * (float)uvOrientationLength / oUVCoords.size() << std::endl;
         }
@@ -1010,7 +860,7 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
         if (hasSeparateUvIndex)
         {
             size_t uvSeamsLength = 0;
-            { // no coder selection yet for seams
+            { // single coder selection for seams.. TO BE ADDED
                 // using dirac
                 AdaptiveBitModel ctx;
                 EntropyEncoder   ac;
@@ -1022,14 +872,8 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
                 uvSeamsLength = ac.stop();
                 const auto byteCount = uint32_t(uvSeamsLength);
                 const auto nbSeams = uint32_t(seams.size());
-                bs.writeVarUint(nbSeams);
-                if (nbSeams)
-                {
-                    bs.writeVarUint(byteCount);
-                    const auto offset = bs.size();
-                    bs.resize(offset + byteCount);
-                    std::copy(ac.buffer(), ac.buffer() + byteCount, bs.buffer.begin() + offset);
-                }
+                // assign attribute seams buffer
+                meshAttributeSeamBuffer.assign(ac.buffer(), ac.buffer() + byteCount);
             }
             std::cout << "  UVCoords auxiliary seam bytes = " << uvSeamsLength << ", bpv = " << 8.0 * (float)uvSeamsLength / oUVCoords.size() << std::endl;
         }
@@ -1047,7 +891,8 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
         clersUI32.push_back(symb);
     }
     size_t topoLength = 0;
-    if (cfg.topoCoder == EBConfig::ECName::DIRAC) {
+    // cfg.topoCoder == EBConfig::ECName::DIRAC - single alternative ..TO BE ADDED
+    {
         // alternative using binary coding for clers symbols and three bit contexts
         // adding context selection based on previous symbol
         const auto       maxAcBufLent = oClers.size() + 1024;
@@ -1082,33 +927,15 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
         }
         topoLength = ac.stop();
         const auto byteCount = uint32_t(topoLength);
-        bs.writeVarUint(byteCount);
-        const auto offset = bs.size();
-        bs.resize(offset + byteCount);
-        std::copy(ac.buffer(), ac.buffer() + byteCount, bs.buffer.begin() + offset);
-    }
-    else if (cfg.topoCoder == EBConfig::ECName::RANS) {
-        rans::RansSymbolEncoder ransClersEncoder;
-        std::vector<uint8_t> buffer;
-        ransClersEncoder.encode(&clersUI32[0], clersUI32.size(), buffer, 0);
-        topoLength = buffer.size();
-        const auto byteCount = uint32_t(topoLength);
-        bs.writeVarUint(byteCount);
-        const auto offset = bs.size();
-        bs.resize(offset + byteCount);
-        std::copy(buffer.data(), buffer.data() + byteCount, bs.buffer.begin() + offset);
+        std::cout << "  Topology bytes = " << topoLength << ", bpf = " << 8.0 * (float)topoLength / oClers.size() << std::endl;
+        // assign topology symbols buffer
+        meshClersSymbolBuffer.assign(ac.buffer(), ac.buffer() + byteCount);
     }
 
-    std::cout << "  Topology bytes = " << topoLength << ", bpf = " << 8.0 * (float)topoLength / oClers.size() << std::endl;
 
     { // handles
-        const auto handleStart = bs.buffer.size();
         size_t handleOrientationLength = 0;
         if (oHandles.size()) {
-            for (auto i = 0; i < oHandleSizes.size() / 2; ++i) {
-                bs.writeVarUint(oHandleSizes[2 * i + 0] - (i ? oHandleSizes[2 * i - 2] : 0)); // cc offset
-                bs.writeVarUint(oHandleSizes[2 * i + 1] - (i ? oHandleSizes[2 * i - 1] : 0)); // handle index offset
-            }
             std::vector<uint8_t> handleBuffer;
             rans::RansBinaryEncoder handleEncoder;
             for (auto i = 0; i < oHandles.size() / 2; ++i) {
@@ -1117,38 +944,16 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
             handleEncoder.encode(handleBuffer);
             handleOrientationLength = handleBuffer.size();
             const auto byteCount = uint32_t(handleOrientationLength);
-            bs.writeVarUint(byteCount);
-            const auto offset = bs.size();
-            bs.resize(offset + byteCount);
-            std::copy(handleBuffer.begin(), handleBuffer.begin() + byteCount, bs.buffer.begin() + offset);
             std::cout << "  Handles auxiliary orientation selection bytes = " << handleOrientationLength << ", bph = " << 8.0 * (float)handleOrientationLength / oHandles.size() / 2 << std::endl;
+            // assign handle shift buffer
+            meshHandleIndexSecondShiftBuffer = std::move(handleBuffer);
         }
+    }
 
-        for (auto i = 0; i < oHandles.size() / 2; ++i)
-        {
-            int value;
-            value = (int)oHandles[2 * i + 0] / 3 - (i ? oHandles[2 * i - 2] / 3 : 0);
-            bs.writeVarUint(ConvertSignedIntToSymbol(value));
-            value = (int)oHandles[2 * i + 1] / 3 - (i ? oHandles[2 * i - 1] / 3 : 0);
-            bs.writeVarUint(ConvertSignedIntToSymbol(value));
-        }
-        const auto handleLength = bs.buffer.size() - handleStart;
-        std::cout << "  Handle bytes = " << handleLength << ", bph = " << 8.0 * (float)handleLength / oHandles.size() << std::endl;
-    }
-    for (auto i = 0; i < oDummies.size(); ++i) {
-        ;
-        const auto value = (i > 0) ? oDummies[i] - oDummies[i - 1] : oDummies[0];
-        bs.writeVarUint(value);
-    }
     if (cfg.deduplicate)
     {
-        const auto dupStart = bs.buffer.size();
-        bs.writeVarUint(oDuplicateSplitVertexIdx.size());
         if (oDuplicateSplitVertexIdx.size())
         {
-            for (auto i = 0; i < oDuplicateSplitVertexIdx.size(); ++i)
-                bs.writeVarUint(oDuplicateSplitVertexIdx[i]);
-
             AdaptiveBitModel ctx;
             EntropyEncoder   ac;
             ac.setBuffer(isVertexDup.size() + 10, nullptr); // to resize better
@@ -1158,17 +963,217 @@ bool EBBasicEncoder::serialize(Bitstream& bs) {
             }
             auto dupLength = ac.stop();
             const auto byteCount = uint32_t(dupLength);
-            bs.writeVarUint(byteCount);
-            const auto offset = bs.size();
-            bs.resize(offset + byteCount);
-            std::copy(ac.buffer(), ac.buffer() + byteCount, bs.buffer.begin() + offset);
-
             std::cout << "  binary signallisation of duplicate indices = " << byteCount << std::endl;
 
-            const auto totalDupLength = bs.buffer.size() - dupStart;
-            std::cout << "  Duplicates bytes = " << totalDupLength << std::endl;
+            // assign duplicate position information buffer
+            meshPositionIsDuplicateFlagBuffer.assign(ac.buffer(), ac.buffer() + byteCount);
         }
     }
+
+    // Using bitstream writer to fill syntax tables 
+    MeshCoding meshCoding; // Top level syntax element
+    EbWriter   ebWriter;
+
+    // Filling Mesh Coding Header
+    auto& mch = meshCoding.getMeshCodingHeader();
+    // Codec Variant
+    mch.getMeshCodecType() = MeshCodecType::CODEC_TYPE_FORWARD;
+    // Position Encoding Parameters
+    auto& mpep = mch.getMeshPositionEncodingParameters();
+    mpep.getMeshPositionBitDepthMinus1() = qp - 1;
+    mpep.getMeshClersSymbolsEncodingMethod() = MeshClersSymbolsEncodingMethod::MESH_CLERS_AC_DEFAULT;
+    mpep.getMeshPositionPredictionMethod() = MeshPositionPredictionMethod::MESH_POSITION_MPARA;
+    mpep.getMeshPositionResidualsEncodingMethod() = MeshPositionResidualsEncodingMethod::MESH_POSITION_AC_DEFAULT;
+    mpep.getMeshPositionDeduplicateMethod() = cfg.deduplicate ? MeshPositionDeduplicateMethod::MESH_POSITION_DEDUP_DEFAULT : MeshPositionDeduplicateMethod::MESH_POSITION_DEDUP_NONE;
+    // Position Dequantization
+    mch.getMeshPositionDequantizeFlag() = (qp >= 7 && !cfg.intAttr); // this condition to be modified through a more flexible ebEncode interface
+    if (mch.getMeshPositionDequantizeFlag())
+    {
+        auto& mpdp = mch.getMeshPositionDequantizeParameters();
+        mpdp.getMeshPositionMin(0) = minPos.x;
+        mpdp.getMeshPositionMin(1) = minPos.y;
+        mpdp.getMeshPositionMin(2) = minPos.z;
+        mpdp.getMeshPositionMax(0) = maxPos.x;
+        mpdp.getMeshPositionMax(1) = maxPos.y;
+        mpdp.getMeshPositionMax(2) = maxPos.z;
+    }
+    // Attributes
+    uint8_t attributeCount = (qt >= 0) ? 1 : 0; // only tex coords
+    mch.allocateAttributes(attributeCount);
+    mch.getMeshAttributeCount() = attributeCount;
+    for (auto i = 0; i < mch.getMeshAttributeCount(); i++)
+    {
+        mch.getMeshAttributeType()[i] = MeshAttributeType::MESH_ATTR_TEXCOORD; // TO BE MODIFIED - simplification as tex coord only considered now
+        auto& maep = mch.getMeshAttributesEncodingParameters(i);
+
+        maep.getMeshAttributeBitDepthMinus1() = qt - 1; // caution single attribute here
+        maep.getMeshAttributePerFaceFlag() = false;  // caution single attribute here
+        if (!maep.getMeshAttributePerFaceFlag())
+        {
+            maep.getMeshAttributeSeparateIndexFlag() = hasSeparateUvIndex; // caution single attribute here
+            if (!maep.getMeshAttributeSeparateIndexFlag())
+                maep.getMeshAttributeReferenceIndexPlus1() = 0; // we always use position as the principal attibute for now 
+        }
+        // !! something to revise to ba able to better write the following
+        maep.getMeshAttributePredictionMethod() = (uint8_t)MeshAttributePredictionMethod_TEXCOORD::MESH_TEXCOORD_STRETCH;
+        maep.getMeshAttributeResidualsEncodingMethod() = (uint8_t)MeshAttributeResidualsEncodingMethod_TEXCOORD::MESH_TEXCOORD_AC_DEFAULT;
+
+        mch.getMeshAttributeDequantizeFlag()[i] = (qt >= 7 && !_ovTable.uvcoords.empty() && !cfg.intAttr); // this condition to be modified through a more flexible ebEncode interface
+        if (mch.getMeshAttributeDequantizeFlag()[i])
+        {
+            auto& madp = mch.getMeshAttributesDequantizeParameters()[i];
+            /*
+            for (auto j = 0; j < mch.getNumComponents(i); j++)
+            {
+                madp.getMeshAttributeMin(j) = mmm;
+                madp.getMeshAttributeMax(j) = MMM;
+            }
+            */
+            madp.getMeshAttributeMin(0) = minUv.x;
+            madp.getMeshAttributeMin(1) = minUv.y;
+            madp.getMeshAttributeMax(0) = maxUv.x;
+            madp.getMeshAttributeMax(1) = maxUv.y;
+        }
+    }
+
+
+    // Payload
+
+    // Filling Mesh Position Coding Payload
+    auto& mpcp = meshCoding.getMeshPositionCodingPayload();
+
+    mpcp.getMeshVertexCount() = oVertices.size(); //!! check alignment with semantics
+    mpcp.getMeshClersCount() = oClers.size();
+    mpcp.getMeshCcCount() = ccCount;
+    mpcp.getMeshVirtualVertexCount() = oDummies.size();
+    mpcp.getMeshVirtualIndexDelta().resize(mpcp.getMeshVirtualVertexCount());
+    for (auto i = 0; i < mpcp.getMeshVirtualVertexCount(); ++i) {
+        mpcp.getMeshVirtualIndexDelta()[i] = (i > 0) ? oDummies[i] - oDummies[i - 1] : oDummies[0];
+    }
+    mpcp.getMeshCcWithHandlesCount() = oHandleSizes.size() >> 1;
+    mpcp.getMeshHandlesCcOffset().resize(mpcp.getMeshCcWithHandlesCount());
+    mpcp.getMeshHandlesCount().resize(mpcp.getMeshCcWithHandlesCount());
+    auto NumHandles = 0;
+    for (auto i = 0; i < mpcp.getMeshCcWithHandlesCount(); i++) {
+        mpcp.getMeshHandlesCcOffset()[i] = oHandleSizes[2 * i + 0] - (i ? oHandleSizes[2 * i - 2] : 0);
+        mpcp.getMeshHandlesCount()[i] = (oHandleSizes[2 * i + 1] - (i ? oHandleSizes[2 * i - 1] : 0))>>1;
+        NumHandles += mpcp.getMeshHandlesCount()[i];
+    }
+    mpcp.getMeshHandleIndexFirstDelta().resize(NumHandles);
+    mpcp.getMeshHandleIndexSecondDelta().resize(NumHandles);
+    for (auto i = 0; i < NumHandles; i++) {
+        mpcp.getMeshHandleIndexFirstDelta()[i] = (int)oHandles[2 * i + 0] / 3 - (i ? oHandles[2 * i - 2] / 3 : 0);
+        mpcp.getMeshHandleIndexSecondDelta()[i] = (int)oHandles[2 * i + 1] / 3 - (i ? oHandles[2 * i - 1] / 3 : 0);
+    }
+    mpcp.getMeshCodedHandleIndexSecondShiftSize() = meshHandleIndexSecondShiftBuffer.size();
+    mpcp.getMeshHandleIndexSecondShift() = meshHandleIndexSecondShiftBuffer;
+    mpcp.getMeshCodedClersSymbolsSize() = meshClersSymbolBuffer.size();
+    mpcp.getMeshClersSymbol() = meshClersSymbolBuffer;
+
+    auto NumPositionStart = 0;
+    auto& mpdi = mpcp.getMeshPositionDeduplicateInformation();
+
+    if (mpep.getMeshPositionDeduplicateMethod() == MeshPositionDeduplicateMethod::MESH_POSITION_DEDUP_DEFAULT) {
+        mpdi.getMeshPositionDeduplicateCount() = oDuplicateSplitVertexIdx.size();
+        unsigned int NumSplitVertex = 0;
+        if (mpdi.getMeshPositionDeduplicateCount() > 0)
+        {
+            mpdi.getMeshPositionDeduplicateIdx().resize(mpdi.getMeshPositionDeduplicateCount());
+            for (auto i = 0; i < mpdi.getMeshPositionDeduplicateCount(); ++i) {
+                mpdi.getMeshPositionDeduplicateIdx()[i] = oDuplicateSplitVertexIdx[i];
+                NumSplitVertex = std::max(NumSplitVertex, mpdi.getMeshPositionDeduplicateIdx()[i] + 1);
+            }
+            mpdi.getMeshPositionDeduplicateStartPositions() = sVertices.size(); // used, this is sVertices when different from ccount
+            NumPositionStart = mpdi.getMeshPositionDeduplicateStartPositions();
+            auto NumAddedDuplicatedVertex = mpdi.getMeshPositionDeduplicateCount() - NumSplitVertex;
+            auto NumVertices = isVertexDup.size();
+            auto NumVerticesCheck = mpcp.getMeshVertexCount()
+                + mpdi.getMeshPositionDeduplicateStartPositions() // should not be sVertices ?
+                + mpcp.getMeshVirtualVertexCount()
+                + NumAddedDuplicatedVertex;
+            // = iVertices.size() + sVertices.size() + iDummyVertices.size()+ NumAddedDuplicatedVertex ;
+            // where NumAddedDuplicatedVertex  = mpdi.getMeshPositionDeduplicateCount() - NumSplitVertex
+            // !! to check if we keep mesh_cc count as NumPositionStart always (coding start values for duplicactes on 1st corner of component)
+            // or if we use this vu(v) to store a delta that reduces
+            // !!! RECHECK IF HAVE CASES WITH DUPLICATES ON 1st CORNER OF CC AND HOW IT WORKS NOW
+            mpdi.getMeshPositionIsDuplicateSize() = meshPositionIsDuplicateFlagBuffer.size();
+            mpdi.getMeshPositionIsDuplicateFlag() = meshPositionIsDuplicateFlagBuffer;
+
+        }
+        else
+            NumPositionStart = mpcp.getMeshCcCount();
+    }
+    else
+        NumPositionStart = mpcp.getMeshCcCount();
+
+    mpcp.getMeshPositionStart().resize(NumPositionStart);
+    for (auto i = 0; i < NumPositionStart; i++) {
+        mpcp.getMeshPositionStart()[i].resize(3);
+        for (auto j = 0; j < 3; j++) {
+            mpcp.getMeshPositionStart()[i][j] = sVertices[i][j];
+        }
+    }
+
+    // !! is it true if we skip predictions and if vertex count not set to iVerts but total input verts ? 
+    auto NumPredictedPositions = mpcp.getMeshVertexCount() - mpcp.getMeshCcCount();
+
+    mpcp.getMeshCodedPositionResidualsSize() = meshPositionResidualsBuffer.size();
+    mpcp.getMeshPositionResidual() = meshPositionResidualsBuffer;
+
+
+    // Filling Mesh Attribute Coding Payload
+    auto& macp = meshCoding.getMeshAttributeCodingPayload();
+    macp.allocate(mch.getMeshAttributeCount());
+    for (auto i = 0; i < mch.getMeshAttributeCount(); i++) {
+        //macp.get
+        auto mesh_attribute_per_face_flag = mch.getMeshAttributesEncodingParameters(i).getMeshAttributePerFaceFlag();
+        auto mesh_attribute_separate_index_flag = mch.getMeshAttributesEncodingParameters(i).getMeshAttributeSeparateIndexFlag();
+        if (!mesh_attribute_per_face_flag && mesh_attribute_separate_index_flag) {
+            macp.getMeshAttributeSeamsCount()[i] = seams.size();
+            macp.getMeshCodedAttributeSeamsSize()[i] = meshAttributeSeamBuffer.size();
+            macp.getMeshAttributeSeam()[i] = meshAttributeSeamBuffer;
+        }
+
+        // TODO !! REWRITE SYNTAX
+        if (mesh_attribute_separate_index_flag)
+            macp.getMeshAttributeStartCount()[i] = sUVCoords.size();
+
+        // TO BE EXTENDED FOR CASES WITH MULTIPLE ATTRIBUTES
+        macp.getMeshAttributeStart()[i].resize(sUVCoords.size());
+        for (auto j = 0; j < sUVCoords.size(); j++) {
+            macp.getMeshAttributeStart()[i][j].resize(3);
+            for (auto k = 0; k < mch.getNumComponents(i); k++) {
+                macp.getMeshAttributeStart()[i][j][k] = sUVCoords[j][k];
+            }
+        }
+
+        macp.getMeshAttributeResidualsCount()[i] = oUVCoords.size();
+        macp.getMeshCodedAttributeResidualsSize()[i] = meshAttributeResidualBuffer.size();
+        macp.getMeshAttributeResidual()[i] = meshAttributeResidualBuffer;
+
+        if (mesh_attribute_separate_index_flag)
+        {
+            auto& madi = macp.getMeshAttributeDeduplicateInformation()[i]; //EMPTY 
+        }
+        {
+            auto& maed = macp.getMeshAttributeExtraData()[i];
+            if ((mch.getMeshAttributeType()[i] == MeshAttributeType::MESH_ATTR_TEXCOORD)
+                && (mch.getMeshAttributesEncodingParameters()[i].getMeshAttributePredictionMethod()
+                    == (uint8_t)MeshAttributePredictionMethod_TEXCOORD::MESH_TEXCOORD_STRETCH))
+            {
+                auto& mtced = maed.getMeshTexCoordStretchExtraData();
+
+                mtced.getMeshTexCoordStretchOrientationsCount() = orientations.size();
+                mtced.getMeshCodedTexCoordStretchOrientationsSize() = meshTexCoordStretchOrientationBuffer.size();
+                mtced.getMeshTexCoordStretchOrientation() = meshTexCoordStretchOrientationBuffer;
+            }
+        }
+
+    }
+
+    //serialize to bitstream
+    ebWriter.write(bitstream, meshCoding);
+
     return true;
 }
 

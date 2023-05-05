@@ -45,7 +45,10 @@
 #include "ebModel.h"
 #include "ebCTMesh.h"
 #include "ebConfig.h"
+
 #include "ebBitstream.h"
+#include "ebReader.hpp"
+#include "syntaxElements/meshCoding.hpp"
 
 namespace eb {
 
@@ -65,7 +68,7 @@ namespace eb {
             return false;
         }
 
-        virtual bool unserialize(Bitstream& bs) {
+        virtual bool unserialize(MeshCoding& meshCoding) {
             std::cout << "Error: decoder unserialize method is not implemented" << std::endl;
             return false;
         }

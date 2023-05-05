@@ -1509,6 +1509,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     encoderParams.predCoder_                    = params.predCoder;
     encoderParams.topoCoder_                    = params.topoCoder;
     encoderParams.baseMeshDeduplicatePositions_ = params.baseMeshDeduplicatePositions;
+    encoderParams.logFileName_                  = (params.keepIntermediateFiles) ? prefix : "";
     TriangleMesh<MeshType> rec;
     std::vector<uint8_t>   geometryBitstream;
     auto encoder = GeometryEncoder<MeshType>::create(params.meshCodecId);

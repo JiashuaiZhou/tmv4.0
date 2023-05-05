@@ -45,6 +45,7 @@
 #include "ebModel.h"
 #include "ebEncoder.h"
 #include "ebBasicEncoder.h"
+#include "ebBitstream.h"
 
 int main(int argc, char* argv[]) {
     
@@ -107,13 +108,13 @@ int main(int argc, char* argv[]) {
         // Analyse the options
         if (result.count("help") || result.arguments().size() == 0) {
             std::cout << options.help() << std::endl;
-            return false;
+            return -1;
         }
         // Analyse the options
         method = result["method"].as<std::string>();
         if (method != "basic") {
             std::cerr << "Error: invalid --method \"" << method << "\"" << std::endl;
-            return false;
+            return -1;
         }
 
         // allocates the encoder
@@ -149,7 +150,7 @@ int main(int argc, char* argv[]) {
         if (format != "binary")
         {
             std::cerr << "Error: invalid --format \"" << format << "\"" << std::endl;
-            return false;
+            return -1;
         }
 
         posPredStr = result["posPred"].as<std::string>();
@@ -160,7 +161,7 @@ int main(int argc, char* argv[]) {
         else
         {
             std::cerr << "Error: invalid --posPred \"" << posPredStr << "\"" << std::endl;
-            return false;
+            return -1;
         }
 
         uvPredStr = result["uvPred"].as<std::string>();
@@ -171,7 +172,7 @@ int main(int argc, char* argv[]) {
         else
         {
             std::cerr << "Error: invalid --uvPred \"" << uvPredStr << "\"" << std::endl;
-            return false;
+            return -1;
         }
 
         predCoderStr = result["predCoder"].as<std::string>();
@@ -182,18 +183,18 @@ int main(int argc, char* argv[]) {
         else
         {
             std::cerr << "Error: invalid --predCoder \"" << predCoderStr << "\"" << std::endl;
-            return false;
+            return -1;
         }
 
         topoCoderStr = result["topoCoder"].as<std::string>();
         if (topoCoderStr == "dirac")
             eb->cfg.topoCoder = eb::EBConfig::ECName::DIRAC;
-        else if (topoCoderStr == "RANS")
+        else if (topoCoderStr == "rans")
             eb->cfg.topoCoder = eb::EBConfig::ECName::RANS;
         else
         {
             std::cerr << "Error: invalid --topoCoder \"" << topoCoderStr << "\"" << std::endl;
-            return false;
+            return -1;
         }
 
         if (result.count("inputModel"))
@@ -201,7 +202,7 @@ int main(int argc, char* argv[]) {
         else {
             std::cerr << "Error: missing inputModel parameter" << std::endl;
             std::cout << options.help() << std::endl;
-            return false;
+            return -1;
         }
 
         //
@@ -213,7 +214,7 @@ int main(int argc, char* argv[]) {
     }
     catch (const cxxopts::OptionException& e) {
         std::cout << "error parsing options: " << e.what() << std::endl;
-        return false;
+        return -1;
     }
 
     // this is mandatory to print floats with full precision
@@ -223,15 +224,15 @@ int main(int argc, char* argv[]) {
     eb::Model inputModel;
 
     if (!eb::IO::loadModel(inputModelFilename, inputModel)) {
-        return false;
+        return -1;
     }
     if (inputModel.vertices.size() == 0) {
         std::cout << "Error: invalid input model (missing vertices) from " << inputModelFilename << std::endl;
-        return false;
+        return -1;
     }
     if (inputModel.triangles.size() == 0) {
         std::cout << "Error: invalid input model (not a mesh) from " << inputModelFilename << std::endl;
-        return false;
+        return -1;
     }
 
     // Perform the processings

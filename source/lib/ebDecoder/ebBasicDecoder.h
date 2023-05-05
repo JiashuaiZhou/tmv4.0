@@ -45,7 +45,6 @@
 #include "ebModel.h"
 #include "ebCTMesh.h"
 #include "ebDecoderBase.h"
-#include "ebBitstream.h"
 
 namespace eb {
 
@@ -55,8 +54,7 @@ namespace eb {
 
         EBBasicDecoder() {};
 
-        virtual bool load(std::ifstream& in);
-        virtual bool unserialize(Bitstream& bs);
+        virtual bool unserialize(MeshCoding& meshCoding);
         virtual bool decode(Model& output);
 
     private:

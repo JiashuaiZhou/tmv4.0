@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
         // Analyse the options
         if (result.count("help") || result.arguments().size() == 0) {
             std::cout << options.help() << std::endl;
-            return false;
+            return -1;
         }
 
         if (result.count("inputModel"))
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
         else {
             std::cerr << "Error: missing inputModel parameter" << std::endl;
             std::cout << options.help() << std::endl;
-            return false;
+            return -1;
         }
 
         //
@@ -86,13 +86,13 @@ int main(int argc, char* argv[]) {
         else {
             std::cerr << "Warning: missing outputModel parameter, compressed model will not be saved" << std::endl;
             // std::cout << options.help() << std::endl;
-            // return false;
+            // return -1;
         }
 
     }
     catch (const cxxopts::OptionException& e) {
         std::cout << "error parsing options: " << e.what() << std::endl;
-        return false;
+        return -1;
     }
 
     //
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 
     // load the bitstream
     if (!eb.load(inputModelFilename))
-        return false;
+        return -1;
 
     // the output
     eb::Model outputModel;
@@ -116,6 +116,6 @@ int main(int argc, char* argv[]) {
     std::cout << "Time on processing: " << ((float)(t2 - t1)) / CLOCKS_PER_SEC << " sec." << std::endl;
 
     // save the result, if success memory is handled by model store
-    return eb::IO::saveModel(outputModelFilename, outputModel);
+    return eb::IO::saveModel(outputModelFilename, outputModel) ? 0 : -1;
 
 }

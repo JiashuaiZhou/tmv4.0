@@ -1048,145 +1048,265 @@ int32_t ConvertSymbolToSignedInt(uint32_t val) {
     return ret;
 }
 
-bool EBBasicDecoder::load(std::ifstream& in) {
+bool EBBasicDecoder::unserialize(MeshCoding& meshCoding) {
 
-    if (!in)
-        return false;
+    auto NumVertices = 0;
+    auto NumPositionStart = 0;
+    auto NumPredictedPositions = 0;
 
-    // be sure to be at the beging before loading
-    in.seekg(0, std::ios_base::beg);
-
-    eb::Bitstream bs;
+    // Extracting Mesh Coding Header
+    auto& mch = meshCoding.getMeshCodingHeader();
     
-    auto t = now();
-    if (!bs.load(in)) // loads the full file content including format & method
-        return false;
-    std::cout << "  File read time " << elapsed(t) << "sec" << std::endl;
+    auto& method = (uint8_t&)mch.getMeshCodecType();
 
-    std::cout << "  Loaded bistream byte size = " << bs.size() << std::endl;
+    // Position Encoding Parameters
+    auto& mpep = mch.getMeshPositionEncodingParameters();
+    qp = mpep.getMeshPositionBitDepthMinus1() = qp + 1;
 
-    t = now();
-    if (!unserialize(bs))
-        return false;
-    std::cout << "  AC decoding time " << elapsed(t) << "sec" << std::endl;
-
-    return true;
-}
-
-bool EBBasicDecoder::unserialize(Bitstream& bs) {
-
-    minPos = glm::vec3(0, 0, 0);
-    maxPos = glm::vec3(0, 0, 0);
-    minUv = glm::vec2(0, 0);
-    maxUv = glm::vec2(0, 0);
-    
-    size_t byteCounter = 0;
-
-    uint8_t method;
-    bs.read(method, byteCounter);
-
-    size_t verticesSize;
-    size_t uvcoordsSize;
-    size_t clersSize;
-    size_t handlesSize;
-    size_t handleSizesSize;
-    size_t dummySize;
-    bs.read((uint8_t&)cfg.posPred, byteCounter);
-    bs.read((uint8_t&)cfg.uvPred, byteCounter);
-    bs.read((uint8_t&)cfg.predCoder, byteCounter);
-    bs.read((uint8_t&)cfg.topoCoder, byteCounter);
-    int8_t flags;
-    bs.read(flags, byteCounter);
-    cfg.intAttr =        flags & (1<<0);
-    hasSeparateUvIndex = flags & (1 << 1);
-    cfg.deduplicate =    flags & (1 << 2);
-    const bool bopt0 = flags & (1 << 3);
-    const bool bopt1 = flags & (1 << 4);
-    const bool bopt2 = flags & (1 << 5);
-    const bool bopt3 = flags & (1 << 6);
-    const bool bopt4 = flags & (1 << 7);
-    int8_t qval;
-    bs.read(qval, byteCounter); qp = --qval;
-    bs.read(qval, byteCounter); qt = --qval;
-    bs.read(qval, byteCounter); qn = --qval;
-    bs.read(qval, byteCounter); qc = --qval;
-    bs.readVarUint(verticesSize, byteCounter);
-    bs.readVarUint(uvcoordsSize, byteCounter);
-
-    if (qp >= 7 && !cfg.intAttr) {
-        bs.readRaw(minPos.x, byteCounter);
-        bs.readRaw(minPos.y, byteCounter);
-        bs.readRaw(minPos.z, byteCounter);
-        bs.readRaw(maxPos.x, byteCounter);
-        bs.readRaw(maxPos.y, byteCounter);
-        bs.readRaw(maxPos.z, byteCounter);
-    }
-    if (qt >= 7 && uvcoordsSize != 0 && !cfg.intAttr) {
-        bs.readRaw(minUv.x, byteCounter);
-        bs.readRaw(minUv.y, byteCounter);
-        bs.readRaw(maxUv.x, byteCounter);
-        bs.readRaw(maxUv.y, byteCounter);
-    }
-    bs.readVarUint(numOfTriangles, byteCounter);
-    bs.readVarUint(clersSize, byteCounter);
-    bs.readVarUint(ccCount, byteCounter);
-    bs.readVarUint(handleSizesSize, byteCounter);
-    bs.readVarUint(dummySize, byteCounter);
-
-    //payload
-
-    BitstreamRef bsbit(bs.vector()); // TODO replace with unified parser
-    BistreamPosition bpos; // caution not initialized
-
-    // absolute start positions
-    size_t sverticesSize;
-    if (cfg.posPred == EBConfig::PosPred::MPARA)
-    {        
-        bs.readVarUint(sverticesSize, byteCounter);
-        sVertices.resize(sverticesSize);
-
-        bpos.bytes_ = byteCounter;
-        bpos.bits_ = 0;
-        bsbit.setPosition(bpos);
-
-        for (auto& pos : sVertices) {
-            for (int32_t k = 0; k < 3; ++k) {
-                pos[k] = bsbit.read(qp);
-            }
-        }
-        while (!bsbit.byteAligned()) bsbit.read(1);
-        byteCounter = bsbit.getPosition().bytes_;
-    }
-    // absolute start uv coords
-    size_t suvcoordsSize;
-    if ((qt >= 0) && (cfg.uvPred == EBConfig::UvPred::STRETCH))
+    cfg.topoCoder = (EBConfig::ECName)mpep.getMeshClersSymbolsEncodingMethod();
+    cfg.predCoder = (EBConfig::ECName)mpep.getMeshPositionPredictionMethod();// UPDATE SPLIT PRED CODER FOR ATTRIBS
+    cfg.posPred = EBConfig::PosPred::MPARA; // UPDATE ENUMS(EBConfig::PosPred)mpep.getMeshPositionResidualsEncodingMethod();
+    cfg.deduplicate = !(mpep.getMeshPositionDeduplicateMethod() == MeshPositionDeduplicateMethod::MESH_POSITION_DEDUP_NONE);
+    // Position Dequantization
+    cfg.intAttr = !(mch.getMeshPositionDequantizeFlag());
+    if (mch.getMeshPositionDequantizeFlag())
     {
-        if (cfg.posPred != EBConfig::PosPred::MPARA || hasSeparateUvIndex)
-            bs.readVarUint(suvcoordsSize, byteCounter);
+        auto& mpdp = mch.getMeshPositionDequantizeParameters();
+        minPos.x = mpdp.getMeshPositionMin(0);
+        minPos.y = mpdp.getMeshPositionMin(1);
+        minPos.z = mpdp.getMeshPositionMin(2);
+        maxPos.x = mpdp.getMeshPositionMax(0);
+        maxPos.y = mpdp.getMeshPositionMax(1);
+        maxPos.z = mpdp.getMeshPositionMax(2);
+    }
+    // Attributes
+    for (auto i = 0; i < mch.getMeshAttributeCount(); i++)
+    {
+        mch.getMeshAttributeType()[i] = MeshAttributeType::MESH_ATTR_TEXCOORD; // TO BE MODIFIED - simplification as tex coord only considered now
+        auto& maep = mch.getMeshAttributesEncodingParameters(i);
+
+        qt = maep.getMeshAttributeBitDepthMinus1() + 1; // caution single attribute here
+
+        if (!maep.getMeshAttributePerFaceFlag()) // CAUTION always true in current version
+        {
+            hasSeparateUvIndex = maep.getMeshAttributeSeparateIndexFlag(); // caution single attribute here
+            if (!maep.getMeshAttributeSeparateIndexFlag())
+                maep.getMeshAttributeReferenceIndexPlus1();// CAUTION not used for now
+        }
+        // !! something to revise to ba able to better write the following
+        cfg.uvPred = EBConfig::UvPred::STRETCH; // TO BE UDATED MeshAttributePredictionMethod_TEXCOORD::MESH_TEXCOORD_STRETCH;
+        // TO ADD SPLIT AC METHOD PER ATTRIB MeshAttributeResidualsEncodingMethod_TEXCOORD::MESH_TEXCOORD_AC_DEFAULT;
+
+        // TODO SPLIT DEQUANT GLOBAL AND PER ATTRIBUTE COMPONENT
+        if (mch.getMeshAttributeDequantizeFlag()[i])
+        {
+            // CAUTION single UV attrib here
+            auto& madp = mch.getMeshAttributesDequantizeParameters()[i];
+            /*
+            for (auto j = 0; j < mch.getNumComponents(i); j++)
+            {
+                madp.getMeshAttributeMin(j) = mmm;
+                madp.getMeshAttributeMax(j) = MMM;
+            }
+            */
+            minUv.x = madp.getMeshAttributeMin(0);
+            minUv.y = madp.getMeshAttributeMin(1);
+            maxUv.x = madp.getMeshAttributeMax(0);
+            maxUv.y = madp.getMeshAttributeMax(1);
+        }
+    }
+
+
+    // Payload
+
+    // Extracting Mesh Position Coding Payload
+    auto& mpcp = meshCoding.getMeshPositionCodingPayload();
+
+    iVertices.resize(mpcp.getMeshVertexCount());//!! check alignment with semantics
+    ccCount = mpcp.getMeshCcCount();
+    iDummyVertices.resize(mpcp.getMeshVirtualVertexCount());
+    int shift = 0;
+    for (auto i = 0; i < mpcp.getMeshVirtualVertexCount(); ++i) {
+        shift += mpcp.getMeshVirtualIndexDelta()[i];
+        iDummyVertices[i] = shift;
+    }
+    auto NumHandles = 0;
+    int index = 0;
+    int size = 0;
+    iHandleSizes.resize(ccCount, 0);
+    for (auto i = 0; i < mpcp.getMeshCcWithHandlesCount(); i++) {
+        index += mpcp.getMeshHandlesCcOffset()[i];
+        NumHandles += mpcp.getMeshHandlesCount()[i];
+        iHandleSizes[index] = 2*NumHandles;
+    }
+    iHandles.resize(2*NumHandles);
+    uint32_t curHandle1 = 0;
+    uint32_t curHandle2 = 0;
+    mpcp.getMeshHandleIndexFirstDelta().resize(NumHandles);
+    mpcp.getMeshHandleIndexSecondDelta().resize(NumHandles);
+    if (NumHandles)
+    {
+        rans::RansBinaryDecoder ad;
+        ad.init(mpcp.getMeshHandleIndexSecondShift());
+        for (auto i = 0; i < NumHandles; i++) {
+            const bool orient = ad.decodeNextBit();
+            curHandle1 += mpcp.getMeshHandleIndexFirstDelta()[i];
+            curHandle2 += mpcp.getMeshHandleIndexSecondDelta()[i];
+            iHandles[2 * i + 0] = 3 * curHandle1 + 2;
+            iHandles[2 * i + 1] = 3 * curHandle2 + (orient ? 1 : 2);
+        }
+    }
+
+    {
+        const char codeToChar[8] = { 'C','S',0,'L',0,'R',0,'E' };
+        const uint32_t& topoByteCount = mpcp.getMeshCodedClersSymbolsSize();
+
+        EntropyDecoder   ad;
+        AdaptiveBitModel ctx_isNotC[32]; // not all 32 contexts used - code to be rewitten
+        AdaptiveBitModel ctx_bit1[32];
+        AdaptiveBitModel ctx_bit02[32];
+        AdaptiveBitModel ctx_bit12[32];
+        const auto* const  bufferPtr =
+            reinterpret_cast<const char*>(&mpcp.getMeshClersSymbol()[0]);
+        ad.setBuffer(topoByteCount, bufferPtr);
+        ad.start();
+        iClers.resize(mpcp.getMeshClersCount());
+        int pS = 0; //'C'
+        bool useExtended = (mpcp.getMeshClersCount() > 3000); // fixed threshold is this basic variant
+        for (auto i = 0; i < mpcp.getMeshClersCount(); ++i) {
+            int32_t value = ad.decode(ctx_isNotC[pS]);
+            if (value)
+            {
+                const auto bit1 = ad.decode(ctx_bit1[pS]);
+                const auto bit2 = ad.decode(bit1 ? ctx_bit12[pS] : ctx_bit02[pS]);
+                value |= bit1 << 1;
+                value |= bit2 << 2;
+
+            }
+            if (!useExtended)
+                pS = value; // 5 contexts
+            else
+                pS = value + ((pS & 1) << 3) + ((pS & 4) << 2); // extended contexts (4*5)
+
+            iClers[i] = codeToChar[value];
+        }
+    }
+
+    numOfTriangles = mpcp.getMeshClersCount() + mpcp.getMeshCcCount();
+    numSplitVert = 0;
+    numAddedDupVert = 0;
+    auto& mpdi = mpcp.getMeshPositionDeduplicateInformation();
+
+    // TODO - rewrite using globals from parsing to avoid code replication
+    if (mpep.getMeshPositionDeduplicateMethod() == MeshPositionDeduplicateMethod::MESH_POSITION_DEDUP_DEFAULT) {
+        iDuplicateSplitVertexIdx.resize(mpdi.getMeshPositionDeduplicateCount());
+        unsigned int NumSplitVertex = 0;
+        if (mpdi.getMeshPositionDeduplicateCount() > 0)
+        {
+            for (auto i = 0; i < mpdi.getMeshPositionDeduplicateCount(); ++i) {
+                iDuplicateSplitVertexIdx[i] = mpdi.getMeshPositionDeduplicateIdx()[i];
+                NumSplitVertex = std::max(NumSplitVertex, mpdi.getMeshPositionDeduplicateIdx()[i] + 1);
+            }
+            NumPositionStart = mpdi.getMeshPositionDeduplicateStartPositions();
+            auto NumAddedDuplicatedVertex = mpdi.getMeshPositionDeduplicateCount() - NumSplitVertex;
+            NumVertices = mpcp.getMeshVertexCount()
+                + mpdi.getMeshPositionDeduplicateStartPositions() // should not be sVertices ?
+                + mpcp.getMeshVirtualVertexCount()
+                + NumAddedDuplicatedVertex;
+            numSplitVert = NumSplitVertex;
+            numAddedDupVert = NumAddedDuplicatedVertex;
+        }
         else
-            suvcoordsSize = sverticesSize;
-        sUVCoords.resize(suvcoordsSize);
+            NumPositionStart = mpcp.getMeshCcCount();
+    }
+    else
+        NumPositionStart = mpcp.getMeshCcCount();
 
-        bpos.bytes_ = byteCounter;
-        bpos.bits_ = 0;
-        bsbit.setPosition(bpos);
-
-        for (auto& uv : sUVCoords) {
-            for (int32_t k = 0; k < 2; ++k) {
-                uv[k] = bsbit.read(qt);
-            }
+    sVertices.resize(NumPositionStart); // used, this is sVertices when different from ccount
+    for (auto i = 0; i < NumPositionStart; i++) {
+        mpcp.getMeshPositionStart()[i].resize(3);
+        for (auto j = 0; j < 3; j++) {
+            sVertices[i][j] = mpcp.getMeshPositionStart()[i][j];
         }
-        while (!bsbit.byteAligned()) bsbit.read(1);
-        byteCounter = bsbit.getPosition().bytes_;
     }
 
-    // decode position residuals
-    if (cfg.predCoder == EBConfig::ECName::DIRAC)
+    // !! is it true if we skip predictions and if vertex count not set to iVerts but total input verts ? 
+    NumPredictedPositions = mpcp.getMeshVertexCount() - mpcp.getMeshCcCount();
+
+    // Extracting Mesh Attribute Coding Payload
+
+    auto& macp = meshCoding.getMeshAttributeCodingPayload();
+    hasSeparateUvIndex = false;
+    auto& NumAttributeStart = meshCoding.getNumAttributeStart();
+    for (auto i = 0; i < mch.getMeshAttributeCount(); i++) {
+        //macp.get
+        auto mesh_attribute_per_face_flag = mch.getMeshAttributesEncodingParameters(i).getMeshAttributePerFaceFlag();
+        auto mesh_attribute_separate_index_flag = mch.getMeshAttributesEncodingParameters(i).getMeshAttributeSeparateIndexFlag();
+        if (!mesh_attribute_per_face_flag && mesh_attribute_separate_index_flag) {
+            hasSeparateUvIndex = true;
+            auto& nbSeams = macp.getMeshAttributeSeamsCount()[i];
+            iSeams.resize(macp.getMeshAttributeSeamsCount()[i]);
+            AdaptiveBitModel ctx;
+            EntropyDecoder     ad;
+            const auto* const  bufferPtr =
+                reinterpret_cast<const char*>(&macp.getMeshAttributeSeam()[i][0]);
+            ad.setBuffer(macp.getMeshCodedAttributeSeamsSize()[i], bufferPtr);
+            ad.start();
+            for (uint32_t j = 0; j < nbSeams; j++)
+                iSeams[j] = ad.decode(ctx);
+        }
+
+        sUVCoords.resize(NumAttributeStart[i]);
+        for (auto j = 0; j < NumAttributeStart[i]; j++) {
+            macp.getMeshAttributeStart()[i][j].resize(3);
+            for (auto k = 0; k < mch.getNumComponents(i); k++) {
+                sUVCoords[j][k] = macp.getMeshAttributeStart()[i][j][k];
+            }
+        }
+
+        iUVCoords.resize(macp.getMeshAttributeResidualsCount()[i]);
+
+        if (mesh_attribute_separate_index_flag)
+        {
+            auto& madi = macp.getMeshAttributeDeduplicateInformation()[i]; //EMPTY 
+        }
+
+        {
+            auto& maed = macp.getMeshAttributeExtraData()[i];
+            if ((mch.getMeshAttributeType()[i] == MeshAttributeType::MESH_ATTR_TEXCOORD)
+                && (mch.getMeshAttributesEncodingParameters()[i].getMeshAttributePredictionMethod()
+                    == (uint8_t)MeshAttributePredictionMethod_TEXCOORD::MESH_TEXCOORD_STRETCH))
+            {
+                auto& mtced = maed.getMeshTexCoordStretchExtraData();
+                auto& nbOrientations = mtced.getMeshTexCoordStretchOrientationsCount();
+                iOrientations.resize(nbOrientations);
+                rans::RansBinaryDecoder ad;
+                ad.init(mtced.getMeshTexCoordStretchOrientation());
+                for (uint32_t j = 0; j < nbOrientations; j++)
+                    iOrientations[j] = ad.decodeNextBit();
+            }
+        }
+
+    }
+
+    // Decode deduplication info
+    numOfVertices = NumVertices;
+    isVertexDup.resize(NumVertices);
+    if (NumVertices)
     {
-        uint32_t posByteCount = 0;
-        bs.readVarUint(posByteCount, byteCounter);
-        uint8_t gshift = 0;
-        bs.read(gshift, byteCounter);
+        AdaptiveBitModel ctx;
+        EntropyDecoder     ad;
+        const auto* const  bufferPtr =
+            reinterpret_cast<const char*>(&mpdi.getMeshPositionIsDuplicateFlag()[0]);
+        ad.setBuffer(mpdi.getMeshPositionIsDuplicateSize(), bufferPtr);
+        ad.start();
+        for (uint32_t i = 0; i < numOfVertices; i++)
+            isVertexDup[i] = ad.decode(ctx);
+    }
+    // Decode position info
+    {
+        uint32_t posByteCount = mpcp.getMeshCodedPositionResidualsSize();
+        uint8_t gshift = 2;
         AdaptiveBitModel ctxCoeffRemPrefix[12];
         AdaptiveBitModel ctxCoeffRemSuffix[12];
         const auto bias = 3;
@@ -1195,22 +1315,15 @@ bool EBBasicDecoder::unserialize(Bitstream& bs) {
         AdaptiveBitModel ctxs;
         AdaptiveBitModel ctxlb[2][bctx];
         EntropyDecoder     ad;
-        const auto* const  bufferPtr = reinterpret_cast<const char*>(bs.buffer.data() + byteCounter);
-        byteCounter += posByteCount;
+        const auto* const  bufferPtr = reinterpret_cast<const char*>(&mpcp.getMeshPositionResidual()[0]);
         ad.setBuffer(posByteCount, bufferPtr);
         ad.start();
         const auto biasExp = 2;
-        iVertices.resize(verticesSize);
         bool islow = true;
         //for (auto i = 0; i < verticesSize; ++i) {
         for (int32_t k = 0; k < 3; ++k) { // better in this case to loop through all x then y then z ... or use sep ctx for those
-            for (auto i = 0; i < verticesSize; ++i) {
-                const bool basicStyle = bopt0;
+            for (auto i = 0; i < iVertices.size(); ++i) {
                 int value = 0;
-                if (basicStyle) {
-                    value = ConvertSymbolToSignedInt(ad.decodeExpGolomb(gshift, ctxCoeffRemPrefix, ctxCoeffRemSuffix));
-                }
-                else
                 {
                     bool ispos = true;
                     if (!ad.decode(ctxz))
@@ -1237,301 +1350,52 @@ bool EBBasicDecoder::unserialize(Bitstream& bs) {
         }
         ad.stop();
     }
-    else
+
+    // Decode uv info
     {
-        uint32_t posByteCount = 0;
-        bs.readVarUint(posByteCount, byteCounter);
+        uint32_t uvByteCount = macp.getMeshCodedAttributeResidualsSize()[0];
+        uint8_t gshift = 2;
 
-        std::vector<uint8_t> buffer;
-        buffer.resize(posByteCount);
-        std::copy((const char*)bs.buffer.data() + byteCounter, (const char*)bs.buffer.data() + byteCounter + posByteCount, buffer.begin());
-        byteCounter += posByteCount;
-
-        rans::RansSymbolDecoder ad;
-        ad.init(buffer);
-        iVertices.resize(verticesSize);
-        for (auto i = 0; i < verticesSize; ++i) {
-            for (int32_t k = 0; k < 3; ++k) {
-                uint32_t value = ad.decodeNextSymbol();
-                iVertices[i][k] = ConvertSymbolToSignedInt(value);
-            }
-        }
-    }
-
-    // decode uv residuals
-    if (qt >= 0)
-    {
-        if (cfg.predCoder == EBConfig::ECName::DIRAC)
-        {
-            uint32_t uvByteCount = 0;
-            bs.readVarUint(uvByteCount, byteCounter);
-            uint8_t gshift = 0;
-            bs.read(gshift, byteCounter);
-
-            AdaptiveBitModel ctxCoeffRemPrefix[12];
-            AdaptiveBitModel ctxCoeffRemSuffix[12];
-            EntropyDecoder     ad;
-            const auto bias = 3;
-            const auto bctx = 2;
-            AdaptiveBitModel ctxz;
-            AdaptiveBitModel ctxs;
-            AdaptiveBitModel ctxlb[2][bctx];
-            const auto* const  bufferPtr = reinterpret_cast<const char*>(bs.buffer.data() + byteCounter);
-            byteCounter += uvByteCount;
-            ad.setBuffer(uvByteCount, bufferPtr);
-            ad.start();
-            iUVCoords.resize(uvcoordsSize);
-            bool islow = true;
-            for (auto i = 0; i < uvcoordsSize; ++i) {
-                for (int32_t k = 0; k < 2; ++k) {
-                    const bool basicStyle = bopt0;
-                    int value = 0;
-                    if (basicStyle) {
-                        value = ConvertSymbolToSignedInt(ad.decodeExpGolomb(gshift, ctxCoeffRemPrefix, ctxCoeffRemSuffix));
+        AdaptiveBitModel ctxCoeffRemPrefix[12];
+        AdaptiveBitModel ctxCoeffRemSuffix[12];
+        EntropyDecoder     ad;
+        const auto bias = 3;
+        const auto bctx = 2;
+        AdaptiveBitModel ctxz;
+        AdaptiveBitModel ctxs;
+        AdaptiveBitModel ctxlb[2][bctx];
+        const auto* const  bufferPtr = reinterpret_cast<const char*>(&macp.getMeshAttributeResidual()[0][0]);
+        ad.setBuffer(uvByteCount, bufferPtr);
+        ad.start();
+        bool islow = true;
+        for (auto i = 0; i < iUVCoords.size(); ++i) {
+            for (int32_t k = 0; k < 2; ++k) {
+                int value = 0;
+                {
+                    bool ispos = true;
+                    if (!ad.decode(ctxz))
+                    {
+                        ++value; // implied by not is z
+                        ispos = !ad.decode(ctxs);
+                        for (int k = 0; k < bias; ++k)
+                        {
+                            const auto ctx = std::min(k, bctx - 1);
+                            if (!ad.decode(ctxlb[islow][ctx]))
+                                break;
+                            ++value;
+                        }
+                        islow = value < (bias + 1); // +1 cause by +1 as not Z
                     }
                     else
-                    {
-                        bool ispos = true;
-                        if (!ad.decode(ctxz))
-                        {
-                            ++value; // implied by not is z
-                            ispos = !ad.decode(ctxs);
-                            for (int k = 0; k < bias; ++k)
-                            {
-                                const auto ctx = std::min(k, bctx - 1);
-                                if (!ad.decode(ctxlb[islow][ctx]))
-                                    break;
-                                ++value;
-                            }
-                            islow = value < (bias + 1); // +1 cause by +1 as not Z
-                        }
-                        else
-                            islow = true;
-                        if (value == (bias + 1))
-                            value += ad.decodeExpGolomb(gshift, ctxCoeffRemPrefix, ctxCoeffRemSuffix);
-                        value = ispos ? value : -value;
-                    }
-                    iUVCoords[i][k] = value;
+                        islow = true;
+                    if (value == (bias + 1))
+                        value += ad.decodeExpGolomb(gshift, ctxCoeffRemPrefix, ctxCoeffRemSuffix);
+                    value = ispos ? value : -value;
                 }
-            }
-            ad.stop();
-        }
-        else
-        {
-            uint32_t uvByteCount = 0;
-            bs.readVarUint(uvByteCount, byteCounter);
-
-            std::vector<uint8_t> buffer;
-            buffer.resize(uvByteCount);
-            std::copy((const char*)bs.buffer.data() + byteCounter, (const char*)bs.buffer.data() + byteCounter + uvByteCount, buffer.begin());
-            byteCounter += uvByteCount;
-
-            rans::RansSymbolDecoder ad;
-            ad.init(buffer);
-            iUVCoords.resize(uvcoordsSize);
-            for (auto i = 0; i < uvcoordsSize; ++i) {
-                for (int32_t k = 0; k < 2; ++k) {
-                    uint32_t value = ad.decodeNextSymbol();
-                    iUVCoords[i][k] = ConvertSymbolToSignedInt(value);
-                }
+                iUVCoords[i][k] = value;
             }
         }
-
-        // extra data for mpara 
-        if (cfg.uvPred == EBConfig::UvPred::STRETCH)
-        {
-            {// no coder selection yet for uv orientation
-                uint32_t nbOrientations = 0;
-                bs.readVarUint(nbOrientations, byteCounter);
-                if (nbOrientations)
-                {
-                    uint32_t uvOrientationByteCount = 0;
-                    bs.readVarUint(uvOrientationByteCount, byteCounter);
-
-                    std::vector<uint8_t> buffer;
-                    buffer.resize(uvOrientationByteCount);
-                    std::copy((const char*)bs.buffer.data() + byteCounter, (const char*)bs.buffer.data() + byteCounter + uvOrientationByteCount, buffer.begin());
-                    byteCounter += uvOrientationByteCount;
-
-                    rans::RansBinaryDecoder ad;
-                    ad.init(buffer);
-                    for (uint32_t i = 0; i < nbOrientations; i++)
-                        iOrientations.push_back(ad.decodeNextBit());
-                }
-            }
-        }
-        // extra data when separate uv indices 
-        if (hasSeparateUvIndex)
-        {
-            {// no coder selection yet for uv seams
-                uint32_t nbSeams = 0;
-                bs.readVarUint(nbSeams, byteCounter);
-                if (nbSeams)
-                {
-                    uint32_t uvSeamsByteCount = 0;
-                    bs.readVarUint(uvSeamsByteCount, byteCounter);
-
-                    AdaptiveBitModel ctx;
-                    EntropyDecoder     ad;
-                    const auto* const  bufferPtr =
-                        reinterpret_cast<const char*>(bs.buffer.data() + byteCounter);
-                    byteCounter += uvSeamsByteCount;
-                    ad.setBuffer(uvSeamsByteCount, bufferPtr);
-                    ad.start();
-                    for (uint32_t i = 0; i < nbSeams; i++)
-                        iSeams.push_back(ad.decode(ctx));
-                }
-            }
-        }
-    }
-
-    const char codeToChar[8] = { 'C','S',0,'L',0,'R',0,'E' };
-
-    if (cfg.topoCoder == EBConfig::ECName::DIRAC)
-    {
-        uint32_t topoByteCount = 0;
-        bs.readVarUint(topoByteCount, byteCounter);
-
-        EntropyDecoder   ad;
-        AdaptiveBitModel ctx_isNotC[32]; // not all 32 contexts used - code to be rewitten
-        AdaptiveBitModel ctx_bit1[32];
-        AdaptiveBitModel ctx_bit02[32];
-        AdaptiveBitModel ctx_bit12[32];
-        const auto* const  bufferPtr =
-            reinterpret_cast<const char*>(bs.buffer.data() + byteCounter);
-        byteCounter += topoByteCount;
-        ad.setBuffer(topoByteCount, bufferPtr);
-        ad.start();
-        iClers.resize(clersSize);
-        int pS = 0; //'C'
-        bool useExtended = (clersSize > 3000); // fixed threshold is this basic variant
-        for (auto i = 0; i < clersSize; ++i) {
-            int32_t value = ad.decode(ctx_isNotC[pS]);
-            if (value)
-            {
-                const auto bit1 = ad.decode(ctx_bit1[pS]);
-                const auto bit2 = ad.decode(bit1 ? ctx_bit12[pS] : ctx_bit02[pS]);
-                value |= bit1 << 1;
-                value |= bit2 << 2;
-
-            }
-            if (!useExtended)
-                pS = value; // 5 contexts
-            else
-                pS = value + ((pS & 1) << 3) + ((pS & 4) << 2); // extended contexts (4*5)
-
-            iClers[i] = codeToChar[value];
-        }
-    }
-    else if (cfg.topoCoder == EBConfig::ECName::RANS)
-    {
-        uint32_t topoByteCount = 0;
-        bs.readVarUint(topoByteCount, byteCounter);
-
-        std::vector<uint8_t> buffer;
-        buffer.resize(topoByteCount);
-        std::copy((const char*)bs.buffer.data() + byteCounter, (const char*)bs.buffer.data() + byteCounter + topoByteCount, buffer.begin());
-        byteCounter += topoByteCount;
-
-        rans::RansSymbolDecoder ad;
-        ad.init(buffer);
-        iClers.resize(clersSize);
-        for (auto i = 0; i < clersSize; ++i) {
-            const int32_t value = ad.decodeNextSymbol();
-            assert(value <= 7);
-            iClers[i] = codeToChar[value];
-        }
-
-    }
-    else {
-        return false;
-    }
-
-    iHandleSizes.resize(ccCount, 0);
-    handlesSize = 0;
-    int index=0;
-    int size=0;
-    for (auto i = 0; i < handleSizesSize / 2; ++i) {
-        int dindex;
-        int dsize;
-        bs.readVarUint(dindex, byteCounter);
-        bs.readVarUint(dsize, byteCounter);
-        index += dindex;
-        size += dsize;
-        handlesSize = size;
-        iHandleSizes[index] = handlesSize;
-    }
-
-    if (handlesSize)
-    {
-        iHandles.resize(handlesSize);
-        uint32_t curHandle0 = 0;
-        uint32_t curHandle1 = 0;
-
-        uint32_t handleOrientationByteCount = 0;
-        bs.readVarUint(handleOrientationByteCount, byteCounter);
-
-        std::vector<uint8_t> buffer;
-        buffer.resize(handleOrientationByteCount);
-        std::copy((const char*)bs.buffer.data() + byteCounter, (const char*)bs.buffer.data() + byteCounter + handleOrientationByteCount, buffer.begin());
-        byteCounter += handleOrientationByteCount;
-
-        rans::RansBinaryDecoder ad;
-        ad.init(buffer);
-        for (uint32_t i = 0; i < handlesSize / 2; i++)
-        {
-            const bool orient = ad.decodeNextBit();
-            uint32_t value;
-            bs.readVarUint(value, byteCounter);
-            curHandle0 += ConvertSymbolToSignedInt(value);
-            iHandles[2 * i + 0] = 3 * curHandle0 + 2;
-            bs.readVarUint(value, byteCounter);
-            curHandle1 += ConvertSymbolToSignedInt(value);
-            iHandles[2 * i + 1] = 3* curHandle1 + (orient ? 1 : 2);
-        }
-    }
-
-    iDummyVertices.resize(dummySize);
-    int shift = 0;
-    int delta;
-    for (auto i = 0; i < iDummyVertices.size(); ++i) {
-        bs.readVarUint(delta, byteCounter);
-        shift += delta;
-        iDummyVertices[i] = shift;
-    }
-    
-    numSplitVert = 0;
-    numAddedDupVert = 0;
-    if (cfg.deduplicate)
-    {       
-        size_t numDuplicatedVertices;
-        bs.readVarUint(numDuplicatedVertices, byteCounter);
-        iDuplicateSplitVertexIdx.resize(numDuplicatedVertices);
-        if (iDuplicateSplitVertexIdx.size())
-        {
-            for (auto i = 0; i < numDuplicatedVertices; ++i)
-            {
-                uint32_t value;
-                bs.readVarUint(value, byteCounter);
-                iDuplicateSplitVertexIdx[i] = value;
-                numSplitVert = std::max(numSplitVert, (int)value + 1);
-            }
-            numAddedDupVert = numDuplicatedVertices - numSplitVert;
-            uint32_t isdupByteCount = 0;
-            bs.readVarUint(isdupByteCount, byteCounter);
-
-            AdaptiveBitModel ctx;
-            EntropyDecoder     ad;
-            const auto* const  bufferPtr =
-                reinterpret_cast<const char*>(bs.buffer.data() + byteCounter);
-            byteCounter += isdupByteCount;
-            ad.setBuffer(isdupByteCount, bufferPtr);
-            ad.start();
-            const auto numOfVertices = iVertices.size() + sVertices.size() + iDummyVertices.size()+ numAddedDupVert;
-            isVertexDup.resize(numOfVertices);
-            for (uint32_t i = 0; i < numOfVertices; i++)
-                isVertexDup[i]=ad.decode(ctx);
-        }
+        ad.stop();
     }
 
     return true;

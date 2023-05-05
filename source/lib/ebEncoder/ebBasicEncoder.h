@@ -56,7 +56,7 @@ namespace eb {
         EBBasicEncoder() {};
 
         virtual void encode(const Model& input);
-        virtual bool serialize(Bitstream& bs);
+        virtual bool serialize(Bitstream& bitstream);
         virtual bool save(std::string fileName);
 
     private:

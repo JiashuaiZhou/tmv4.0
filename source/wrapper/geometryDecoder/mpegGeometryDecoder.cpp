@@ -37,6 +37,8 @@
 #include "ebModel.h"
 #include "ebBasicDecoder.h"
 
+#include "ebReader.hpp"
+
 namespace vmesh {
 
 template<typename T>
@@ -108,13 +110,23 @@ MpegGeometryDecoder<T>::decode(const std::vector<uint8_t>& bitstream,
     // mm bitstream
     eb::Bitstream bs;
     // init buffer from input
-    std::swap(const_cast<std::vector<uint8_t>&>(bitstream), bs.buffer);
+    std::swap(const_cast<std::vector<uint8_t>&>(bitstream), bs.vector());
+    //bs.initialize(bitstream); // init without copy to add
 
-    // instanciate decoder
+    // parsing 
+    eb::MeshCoding meshCoding; // Top level syntax element
+    eb::EbReader   ebReader;
+    ebReader.read(bs, meshCoding);
+
+    const auto& mch = meshCoding.getMeshCodingHeader();
+    // Codec Variant
+    const auto& method = mch.getMeshCodecType();
+
+    // instanciate decoder - single variant - will be moved inside the library
     eb::EBBasicDecoder decoder;
 
     // deserialize the bitstream
-    decoder.unserialize(bs);
+    decoder.unserialize(meshCoding);
 
     // decode to model
     eb::Model decModel;
@@ -124,7 +136,8 @@ MpegGeometryDecoder<T>::decode(const std::vector<uint8_t>& bitstream,
     convert(decModel, dec);
 
     // revert bitstream
-    std::swap(const_cast<std::vector<uint8_t>&>(bitstream), bs.buffer);
+    std::swap(const_cast<std::vector<uint8_t>&>(bitstream), bs.vector());
+    //bitstream.resize(bs.size()); // assumes the bitstream is byte aligned
 }
 
 template class MpegGeometryDecoder<float>;

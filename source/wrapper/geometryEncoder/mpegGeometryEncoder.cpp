@@ -169,17 +169,18 @@ MpegGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
   encoder.cfg.predCoder = eb::EBConfig::ECName::DIRAC;
   encoder.cfg.topoCoder = eb::EBConfig::ECName::DIRAC;
 
+  // No alternative AC coders in this first release aligned with the syntax
   if (params.predCoder_ == "dirac")
       encoder.cfg.predCoder = eb::EBConfig::ECName::DIRAC;
-  else if (params.predCoder_ == "rans")
-      encoder.cfg.predCoder = eb::EBConfig::ECName::RANS;
+  //else if (params.predCoder_ == "rans")
+  //    encoder.cfg.predCoder = eb::EBConfig::ECName::RANS;
   else // default
       encoder.cfg.predCoder = eb::EBConfig::ECName::DIRAC;
 
   if (params.topoCoder_ == "dirac")
       encoder.cfg.topoCoder = eb::EBConfig::ECName::DIRAC;
-  else if (params.topoCoder_ == "rans")
-      encoder.cfg.topoCoder = eb::EBConfig::ECName::RANS;
+  //else if (params.topoCoder_ == "rans")
+  //    encoder.cfg.topoCoder = eb::EBConfig::ECName::RANS;
   else // default
       encoder.cfg.topoCoder = eb::EBConfig::ECName::DIRAC;
 
@@ -191,11 +192,43 @@ MpegGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
   
   // serialize to bitstream
   eb::Bitstream bs;
+#if defined(BITSTREAM_TRACE)
+  eb::Logger loggerMeb;
+  if (!params.logFileName_.empty())
+  {
+      loggerMeb.initilalize(params.logFileName_ + "_meb", true);
+      bs.setLogger(loggerMeb);
+      bs.setTrace(true);
+  }
+#endif
   encoder.serialize(bs);
 
   // Decode for rec
+  // parsing 
+  bs.beginning();
+  eb::MeshCoding meshCoding; // Top level syntax element
+  eb::EbReader   ebReader;
+#if defined(BITSTREAM_TRACE)
+  eb::Logger loggerMebDec;
+  if (!params.logFileName_.empty())
+  {
+      loggerMebDec.initilalize(params.logFileName_ + "_meb");
+      bs.setLogger(loggerMebDec);
+  }
+#endif
+  ebReader.read(bs, meshCoding);
+
+  const auto& mch = meshCoding.getMeshCodingHeader();
+  // Codec Variant
+  const auto& method = mch.getMeshCodecType();
+
+  // instanciate decoder - single variant - will be moved inside the library
   eb::EBBasicDecoder decoder;
-  decoder.unserialize(bs);
+
+  // deserialize the bitstream
+  decoder.unserialize(meshCoding);
+
+  // decode to model
   eb::Model recModel;
   decoder.decode(recModel);
 
@@ -203,7 +236,8 @@ MpegGeometryEncoder<T>::encode(TriangleMesh<T>&           src,
   convert(recModel, rec);
 
 // set bitstream
-  std::swap(bitstream, bs.buffer);
+  std::swap(bitstream, bs.vector());
+  bitstream.resize(bs.size()); // assumes the bitstream is byte aligned
 }
 
 template class MpegGeometryEncoder<float>;

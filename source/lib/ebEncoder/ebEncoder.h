@@ -64,7 +64,7 @@ namespace eb {
 
         virtual void encode(const Model& input) = 0;
         virtual bool save(std::string fileName) = 0;
-        virtual bool serialize(Bitstream& bs) = 0;
+        virtual bool serialize(Bitstream& bitstream) = 0;
 
     protected:
         

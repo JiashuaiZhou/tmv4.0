@@ -600,6 +600,7 @@ V3CReader::aspsVdmcExtension(Bitstream&                     bitstream,
   }
   READ_CODE(ext.getInterpolateDisplacementNormals(), 1);  //u1
   READ_CODE(ext.getAddReconstructedNormals(), 1);         //u1
+  READ_CODE(ext.getDisplacement1D(), 1);                  //u1
   READ_CODE(ext.getDisplacementReversePacking(), 1);      //u1
   READ_CODE(ext.getWidthDispVideo(), 16);                 //u16
   READ_CODE(ext.getHeightDispVideo(), 16);                //u16

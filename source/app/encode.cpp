@@ -493,6 +493,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.displacementReversePacking,
       encParams.displacementReversePacking,
       "Displacement reverse packing")
+    ("displacementUse420",
+      encParams.displacementUse420,
+      encParams.displacementUse420,
+      "Displacement use 4:2:0 encoding")
       
   (po::Section("Transfer texture"))    
     ("textureTransferEnable", 
@@ -558,6 +562,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("textureTransferMapNumPoints", 
       encParams.textureTransferMapNumPoints, 
       encParams.textureTransferMapNumPoints,
+      "textureTransferMapNumPoints")
+    ("textureTransferCopyBackground",
+      encParams.textureTransferCopyBackground,
+      encParams.textureTransferCopyBackground,
       "textureTransferMapNumPoints")
 
   (po::Section("Texture video"))

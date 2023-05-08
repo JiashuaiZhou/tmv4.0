@@ -1087,6 +1087,33 @@ VMCEncoder::chooseSkipOrInter(const std::vector<Vec3<int32_t>>& current,
 
 //----------------------------------------------------------------------------
 
+BaseMeshType
+VMCEncoder::chooseSkipOrInter(const std::vector<Vec3<int32_t>>& current,
+                              const std::vector<Vec3<int32_t>>& reference) {
+  const auto         pointCount = int32_t(current.size());
+  VMCMotionACContext ctx;
+  float              cost_inter = 0.0;
+  float              cost_skip  = 0.0;
+  float              lamda      = 6.25 * pointCount;
+  for (int vindex = 0; vindex < pointCount; ++vindex) {
+    const auto motion = current[vindex] - reference[vindex];
+    for (int32_t k = 0; k < 3; ++k) {
+      cost_skip += motion[k] > 0 ? float(motion[k]) : float(-motion[k]);
+    }
+    const auto res0  = motion;
+    const auto bits0 = ctx.estimateBits(res0, 0);
+    cost_inter += float(bits0);
+  }
+  cost_skip *= lamda;
+  if (cost_skip > cost_inter) {
+    return P_BASEMESH;
+  } else {
+    return SKIP_BASEMESH;
+  }
+}
+
+//----------------------------------------------------------------------------
+
 bool
 VMCEncoder::compressMotion(
   const std::vector<Vec3<int32_t>>& triangles,
@@ -1389,13 +1416,39 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       base.point(v) = qpositions[v];
     }
-    if (params.motionWithoutDuplicatedVertices) {
-      compressMotion(refFrame.baseClean.triangles(),
-                     refFrame.baseClean.points(),
-                     refFrame.baseIntegrateIndices,
-                     qpositions,
-                     bmtl,
-                     params);
+
+    // decide to use P_BASEMESH or SKIP_BASEMESH
+    auto        frameInfoInterOrSkip = frameInfo;
+    frameInfoInterOrSkip.type =
+      chooseSkipOrInter(qpositions, refFrame.qpositions);
+    bmth.getBaseMeshType() = frameInfoInterOrSkip.type;
+
+    if (frameInfoInterOrSkip.type == P_BASEMESH) {
+      printf("Inter: index = %d ref = %d \n",
+             frameInfo.frameIndex,
+             frameInfo.referenceFrameIndex);
+      fflush(stdout);
+
+      if (params.motionWithoutDuplicatedVertices) {
+        compressMotion(refFrame.baseClean.triangles(),
+                       refFrame.baseClean.points(),
+                       refFrame.baseIntegrateIndices,
+                       qpositions,
+                       bmtl,
+                       params);
+      } else {
+        compressMotion(
+          base.triangles(), refFrame.qpositions, {}, qpositions, bmtl, params);
+      }
+
+      // bmth.getReferenceFrameIndex() =
+      //   frameInfo.frameIndex - frameInfo.referenceFrameIndex - 1;
+      auto& refList = bmth.getRefListStruct();
+      refList.allocate(1);
+      refList.getAbsDeltaAfocSt(0) =
+        frameInfo.frameIndex - frameInfo.referenceFrameIndex;
+      refList.getStrafEntrySignFlag(0)  = false;
+      refList.getStRefAtlasFrameFlag(0) = true;
     } else {
       printf("Skip: index = %d ref = %d \n",
              frameInfo.frameIndex,

@@ -61,11 +61,26 @@ public:
   }
   auto& getLiftingQPs() const { return liftingQPs; }
   auto& getLiftingQPs(uint8_t index) const { return liftingQPs[index]; }
+  auto& getLiftingLevelOfDetailInverseScale() const {
+    return liftingLevelOfDetailInverseScale;
+  }
+  auto& getLiftingLevelOfDetailInverseScale(uint8_t index) const {
+    return liftingLevelOfDetailInverseScale[index];
+  }
+  auto& getLiftingQuantizationParametersPerLevelOfDetails() const {
+    return liftingQuantizationParametersPerLevelOfDetails;
+  }
   auto& getInterpolateDisplacementNormals() const {
     return interpolateDisplacementNormals;
   }
   auto& getDisplacementReversePacking() const {
     return displacementReversePacking;
+  }
+  auto& getDisplacement1D() const {
+      return displacement1D;
+  }
+  auto& getLodDisplacementQuantizationFlag() const {
+    return lodDisplacementQuantizationFlag;
   }
 
   auto& getWidthDispVideo() { return widthDispVideo; }
@@ -76,10 +91,23 @@ public:
   auto& getSubdivisionIterationCount() { return subdivisionIterationCount; }
   auto& getLiftingQPs() { return liftingQPs; }
   auto& getLiftingQPs(uint8_t index) { return liftingQPs[index]; }
+  auto& getLiftingLevelOfDetailInverseScale() {
+    return liftingLevelOfDetailInverseScale;
+  }
+  auto& getLiftingLevelOfDetailInverseScale(uint8_t index) {
+    return liftingLevelOfDetailInverseScale[index];
+  }
+  auto& getLiftingQuantizationParametersPerLevelOfDetails() {
+    return liftingQuantizationParametersPerLevelOfDetails;
+  }
   auto& getInterpolateDisplacementNormals() {
     return interpolateDisplacementNormals;
   }
   auto& getDisplacementReversePacking() { return displacementReversePacking; }
+  auto& getDisplacement1D() { return displacement1D; }
+  auto& getLodDisplacementQuantizationFlag() {
+    return lodDisplacementQuantizationFlag;
+  }
 
   auto& getMaxNumNeighborsMotion() const {
       return maxNumNeighborsMotion;
@@ -88,10 +116,6 @@ public:
 
   auto getDisplacementCoordinateSystem() const {
     return displacementCoordinateSystem;
-  }
-
-  auto& getLiftingLevelOfDetailInverseScale() const {
-    return liftingLevelOfDetailInverseScale;
   }
 
   auto& getLiftingSkipUpdate() const { return liftingSkipUpdate; }
@@ -103,7 +127,9 @@ private:
   uint16_t widthDispVideo             = 0;
   uint16_t heightDispVideo            = 0;
   bool     displacementReversePacking = false;
+  bool     displacement1D             = true;
   bool     addReconstructedNormals    = true;
+  bool     lodDisplacementQuantizationFlag = true;
 
   // Motion
   int32_t maxNumNeighborsMotion       = 3;
@@ -112,6 +138,10 @@ private:
   uint8_t subdivisionIterationCount      = 0;
   bool    interpolateDisplacementNormals = false;
   int32_t liftingQPs[3]                  = {0, 0, 0};
+  std::vector<std::array<int32_t, 3>>
+    liftingQuantizationParametersPerLevelOfDetails = {{16, 28, 28},
+                                                      {22, 34, 34},
+                                                      {28, 40, 40}};
 
   // Not coded
   SubdivisionMethod subdivisionMethod = SubdivisionMethod::MID_POINT;

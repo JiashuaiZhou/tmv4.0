@@ -820,7 +820,7 @@ The following subsections contain input parameters for encoding, decoding, and m
 | --subdivInter=0 | Subdiv inter | 
 | --subdivInterWithMapping=0 | Subdiv inter with mapping | 
 | --maxAllowedD2PSNRLoss=1 | Maximum allowed D2 PSNR Loss | 
-| --normalCalcModificationEnable=0 |  0: Calculate normal of cloudB from cloudA, 1: Use normal of cloudB(default) | 
+| --normalCalcModificationEnable=1 |  0: Calculate normal of cloudB from cloudA, 1: Use normal of cloudB(default) | 
 ||| 
 | **Intra geometry parametrization** || 
 | --ai_sdeform=1 | Apply deformation refinement stage | 

@@ -56,7 +56,7 @@ tools:
           - ld_deformNNCount: 1
           - ld_deformNormalThres: -2.0
         # Choose geometry parametrization
-        - maxAllowedD2PSNRLoss: 1.0 
+        - maxAllowedD2PSNRLoss: 3.0
   
       # Common options
       - invertOrientation:   0

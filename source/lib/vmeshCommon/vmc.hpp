@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <chrono>
@@ -57,7 +58,9 @@ enum class DisplacementCoordinateSystem {
 enum class PaddingMethod {
   NONE          = 0,
   PUSH_PULL     = 1,
-  SPARSE_LINEAR = 2
+  SPARSE_LINEAR = 2,
+  SMOOTHED_PUSH_PULL = 3,
+  HARMONIC_FILL = 4
 };
 
 //============================================================================
@@ -246,7 +249,9 @@ reconstructDisplacementFromVideoFrame(
   const TriangleMesh<MeshType>& rec,
   const int32_t                 displacementVideoBlockSize,
   const int32_t                 geometryVideoBitDepth,
-  const int32_t                 displacementReversePacking) {
+  const bool                    oneDimensionalDisplacement,
+  const int32_t                 displacementReversePacking,
+  const bool                    is420=true ) {
   printf("Reconstruct displacements from video frame \n");
   fflush(stdout);
   const auto displacementVideoWidthInBlocks =
@@ -257,7 +262,13 @@ reconstructDisplacementFromVideoFrame(
   const auto    planeCount = dispVideoFrame.planeCount();
   const auto    pointCount = rec.pointCount();
   auto&         disp       = frame.disp;
-  const int32_t start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
+  const auto blockCount =
+    (pointCount + pixelsPerBlock - 1) / pixelsPerBlock;
+  const auto displacementVideoHeightInBlocks =
+    (blockCount + displacementVideoWidthInBlocks - 1) / displacementVideoWidthInBlocks;
+  const auto origHeight = displacementVideoHeightInBlocks * displacementVideoBlockSize;
+  const int32_t start = dispVideoFrame.width() * origHeight - 1;
+  const int32_t dispDim = oneDimensionalDisplacement ? 1:3;
   disp.assign(pointCount, Vec3<double>(0));
   for (int32_t v = 0; v < pointCount; ++v) {
     // to do: optimize power of 2
@@ -276,9 +287,15 @@ reconstructDisplacementFromVideoFrame(
     const auto x1 = x0 + x;
     const auto y1 = y0 + y;
     auto&      d  = disp[v];
-    for (int32_t p = 0; p < planeCount; ++p) {
-      const auto& plane = dispVideoFrame.plane(p);
-      d[p]              = double(plane.get(y1, x1)) - shift;
+    for (int32_t p = 0; p < dispDim; ++p) {
+      if (is420) {
+        const auto& plane = dispVideoFrame.plane(0);
+        d[p] = double(plane.get(p * origHeight + y1, x1)) - shift;
+      }
+      else {
+        const auto& plane = dispVideoFrame.plane(p);
+        d[p] = double(plane.get(y1, x1)) - shift;
+      }
     }
   }
   return 0;
@@ -320,6 +337,7 @@ subdivideBaseMesh(VMCFrame&               frame,
 static int32_t
 applyDisplacements(
   VMCFrame&                           frame,
+  const int32_t bitDepthPosition,
   TriangleMesh<MeshType>&             rec,
   const DisplacementCoordinateSystem& displacementCoordinateSystem) {
   printf("apply displacements \n");
@@ -335,6 +353,10 @@ applyDisplacements(
       rec.point(v) += d[0] * n + d[1] * t + d[2] * b;
     } else {
       rec.point(v) += d;
+    }
+
+    for(int32_t i = 0; i < 3; ++i) {
+      assert(rec.point(v)[i] >= 0 && rec.point(v)[i] < (1 << bitDepthPosition));
     }
   }
   return 0;
@@ -370,6 +392,36 @@ inverseQuantizeDisplacements(
     }
     vcount0 = vcount1;
     for (int32_t k = 0; k < 3; ++k) { iscale[k] *= ilodScale[k]; }
+  }
+  return 0;
+}
+
+static int32_t
+inverseQuantizeDisplacements(
+  VMCFrame&     frame,
+  const int32_t bitDepthPosition,
+  const std::vector<std::array<int32_t, 3>>&
+    liftingQuantizationParametersPerLevelOfDetails) {
+  const auto& infoLevelOfDetails = frame.subdivInfoLevelOfDetails;
+  const auto  lodCount           = int32_t(infoLevelOfDetails.size());
+  assert(lodCount > 0);
+  assert(lodCount
+         == static_cast<int32_t>(
+           liftingQuantizationParametersPerLevelOfDetails.size()));
+  auto& disp = frame.disp;
+  for (int32_t it = 0, vcount0 = 0; it < lodCount; ++it) {
+    double iscale[3];
+    for (int32_t k = 0; k < 3; ++k) {
+      const auto qp = liftingQuantizationParametersPerLevelOfDetails[it][k];
+      iscale[k] =
+        qp >= 0 ? pow(0.5, 16 - bitDepthPosition + (4 - qp) / 6.0) : 0.0;
+    }
+    const auto vcount1 = infoLevelOfDetails[it].pointCount;
+    for (int32_t v = vcount0; v < vcount1; ++v) {
+      auto& d = disp[v];
+      for (int32_t k = 0; k < 3; ++k) { d[k] *= iscale[k]; }
+    }
+    vcount0 = vcount1;
   }
   return 0;
 }

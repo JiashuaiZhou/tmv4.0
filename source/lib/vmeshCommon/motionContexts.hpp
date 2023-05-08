@@ -48,8 +48,7 @@ struct VMCMotionACContext {
   AdaptiveBitModel ctxPred;
   AdaptiveBitModel ctxSign[3];
   AdaptiveBitModel ctxCoeffGtN[2][3];
-  AdaptiveBitModel ctxCoeffRemPrefix[3][7];
-  AdaptiveBitModel ctxCoeffRemSuffix[3][7];
+  AdaptiveBitModel ctxCoeffRemPrefix[2];
 
   int32_t estimateBits(const Vec3<int32_t>& residual,
                        const int32_t        predIndex) const {

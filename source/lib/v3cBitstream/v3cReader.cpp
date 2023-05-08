@@ -576,12 +576,31 @@ V3CReader::aspsVdmcExtension(Bitstream&                     bitstream,
                              AtlasSequenceParameterSetRbsp& asps,
                              AspsVdmcExtension&             ext) {
   TRACE_BITSTREAM_IN("%s", __func__);
-  READ_CODE(ext.getSubdivisionIterationCount(), 4);       //u4
-  READ_CODE(ext.getLiftingQPs(0), 8);                     //u8
-  READ_CODE(ext.getLiftingQPs(1), 8);                     //u8
-  READ_CODE(ext.getLiftingQPs(2), 8);                     //u8
+  READ_CODE(ext.getSubdivisionIterationCount(), 4);        //u4
+  READ_CODE(ext.getLodDisplacementQuantizationFlag(), 1);  //u1
+  ext.getLiftingQuantizationParametersPerLevelOfDetails().clear();
+  if (ext.getLodDisplacementQuantizationFlag()) {
+    auto lodCount = ext.getSubdivisionIterationCount() + 1;
+    ext.getLiftingQuantizationParametersPerLevelOfDetails().resize(lodCount);
+    for (int32_t it = 0; it < lodCount; ++it) {
+      READ_CODE(ext.getLiftingQuantizationParametersPerLevelOfDetails()[it][0],
+                8);  //u8
+      READ_CODE(ext.getLiftingQuantizationParametersPerLevelOfDetails()[it][1],
+                8);  //u8
+      READ_CODE(ext.getLiftingQuantizationParametersPerLevelOfDetails()[it][2],
+                8);  //u8
+    }
+  } else {
+    READ_CODE(ext.getLiftingQPs(0), 8);                         //u8
+    READ_CODE(ext.getLiftingQPs(1), 8);                         //u8
+    READ_CODE(ext.getLiftingQPs(2), 8);                         //u8
+    READ_CODE(ext.getLiftingLevelOfDetailInverseScale(0), 64);  //f64
+    READ_CODE(ext.getLiftingLevelOfDetailInverseScale(1), 64);  //f64
+    READ_CODE(ext.getLiftingLevelOfDetailInverseScale(2), 64);  //f64
+  }
   READ_CODE(ext.getInterpolateDisplacementNormals(), 1);  //u1
   READ_CODE(ext.getAddReconstructedNormals(), 1);         //u1
+  READ_CODE(ext.getDisplacement1D(), 1);                  //u1
   READ_CODE(ext.getDisplacementReversePacking(), 1);      //u1
   READ_CODE(ext.getMaxNumNeighborsMotion(), 8);           //u8
   READ_CODE(ext.getWidthDispVideo(), 16);                 //u16

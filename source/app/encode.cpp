@@ -70,12 +70,13 @@ struct Parameters {
 
 static bool
 parseParameters(int argc, char* argv[], Parameters& params) try {
-  namespace po         = df::program_options_lite;
-  bool  print_help     = false;
-  auto& encParams      = params.encParams;
-  auto& metParams      = params.metParams;
-  auto& intraGeoParams = params.encParams.intraGeoParams;
-  auto& interGeoParams = params.encParams.interGeoParams;
+  namespace po                        = df::program_options_lite;
+  bool                 print_help     = false;
+  auto&                encParams      = params.encParams;
+  auto&                metParams      = params.metParams;
+  auto&                intraGeoParams = params.encParams.intraGeoParams;
+  auto&                interGeoParams = params.encParams.interGeoParams;
+  std::vector<int32_t> liftingQP2;
   /* clang-format off */
   po::Options opts;
   opts.addOptions()
@@ -392,18 +393,30 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Apply smoothing to motion instead of vertex positions")
 
   (po::Section("Lifting"))
-    ("liftingIterationCount", 
-      encParams.liftingSubdivisionIterationCount, 
-      encParams.liftingSubdivisionIterationCount,       
+    ("liftingIterationCount",
+      encParams.liftingSubdivisionIterationCount,
+      encParams.liftingSubdivisionIterationCount,
       "Lifting subdivision iteration count")
-    ("liftingQP", 
-      encParams.liftingQP, 
+    ("liftingLevelOfDetailInverseScale",
+      encParams.liftingLevelOfDetailInverseScale,
+       {2.0, 2.0, 2.0},
+      "Quantization LoD inverse scale for displacements")
+    ("liftingQP",
+      encParams.liftingQP,
        {16, 28, 28},
       "Quantization parameter for displacements")
-    ("liftingBias", 
+    ("liftingBias",
       encParams.liftingBias,
       {1./3., 1./3., 1./3},
       "Quantization bias for displacements")
+    ("lodDisplacementQuantizationFlag",
+      encParams.lodDisplacementQuantizationFlag,
+      encParams.lodDisplacementQuantizationFlag,
+      "Use quantization parameter per LoD for displacements")
+    ("liftingQP2",
+      liftingQP2,
+      {16, 28, 28, 22, 34, 34, 28, 40, 40},
+      "Quantization parameter for displacements")
   
   (po::Section("Base mesh"))
     ("baseMeshPositionBitDepth", 
@@ -480,6 +493,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       encParams.displacementReversePacking,
       encParams.displacementReversePacking,
       "Displacement reverse packing")
+    ("displacementUse420",
+      encParams.displacementUse420,
+      encParams.displacementUse420,
+      "Displacement use 4:2:0 encoding")
       
   (po::Section("Transfer texture"))    
     ("textureTransferEnable", 
@@ -545,6 +562,10 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("textureTransferMapNumPoints", 
       encParams.textureTransferMapNumPoints, 
       encParams.textureTransferMapNumPoints,
+      "textureTransferMapNumPoints")
+    ("textureTransferCopyBackground",
+      encParams.textureTransferCopyBackground,
+      encParams.textureTransferCopyBackground,
       "textureTransferMapNumPoints")
   (po::Section("Motion coding"))
     ("maxNumNeighborsMotion",
@@ -688,6 +709,22 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
 
   if (encParams.textureVideoEncoderConfig.empty()) {
     err.error() << "texture video encoder config not specified\n";
+  }
+
+  if (encParams.lodDisplacementQuantizationFlag) {
+    auto lodCount        = encParams.liftingSubdivisionIterationCount + 1;
+    auto liftingQP2Count = static_cast<int32_t>(liftingQP2.size());
+    if (liftingQP2.empty()) {
+      err.error() << "liftingQP2 not specified\n";
+    } else if (liftingQP2Count != lodCount * 3) {
+      err.error() << "the length of liftingQP2 not " << lodCount * 3 << "\n";
+    } else {
+      encParams.liftingQuantizationParametersPerLevelOfDetails.clear();
+      for (int32_t i = 0; i < liftingQP2Count; i += 3) {
+        encParams.liftingQuantizationParametersPerLevelOfDetails.push_back(
+          {liftingQP2[i + 0], liftingQP2[i + 1], liftingQP2[i + 2]});
+      }
+    }
   }
 
   if (err.is_errored) { return false; }

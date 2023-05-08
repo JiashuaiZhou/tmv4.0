@@ -247,7 +247,7 @@ VMCDecoder::decompressMotion(
           if (arithmeticDecoder.decode(ctx.ctxCoeffGtN[1][k]) != 0) {
             value += 1
                      + arithmeticDecoder.decodeExpGolomb(
-                       0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
+                       0, ctx.ctxCoeffRemPrefix);
           }
           if (sign != 0) { value = -value; }
         }
@@ -387,7 +387,7 @@ VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
                      + "_baseClean.obj");
     }
     createVertexAdjTableMotion = true;
-  } else {
+  } else if (frameInfo.type == P_BASEMESH) {
     // frameInfo.referenceFrameIndex =
     //   frameInfo.frameIndex - 1 - int32_t(bmth.getReferenceFrameIndex());
     const auto& refFrame = gof.frame(frameInfo.referenceFrameIndex);
@@ -406,7 +406,18 @@ VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
     }
     // Duplicated Vertex Reduction
     removeDuplicatedVertices(frame, umapping, frameInfo.type == I_BASEMESH);
+  } else {
+    const auto& refFrame = gof.frame(frameInfo.referenceFrameIndex);
+    base                 = refFrame.base;
+    qpositions           = refFrame.qpositions;
+    for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
+      base.point(v) = qpositions[v];
+    }
+    // Duplicated Vertex Reduction
+    frame.baseClean            = refFrame.baseClean;
+    frame.baseIntegrateIndices = refFrame.baseIntegrateIndices;
   }
+
 
   auto& atlas = syntax.getAtlas();
   auto& asps  = atlas.getAtlasSequenceParameterSet(0);
@@ -565,6 +576,8 @@ VMCDecoder::decompress(const V3cBitstream&         syntax,
       else
         frameInfo.referenceFrameIndex =
           frameInfo.frameIndex - refList.getAbsDeltaAfocSt(0);
+    } else if (bmth.getBaseMeshType() == SKIP_BASEMESH) {
+      frameInfo.referenceFrameIndex = frameInfo.frameIndex - 1; 
     }
     printf("Frame %4d: type = %s ReferenceFrame = %4d \n",
            frameInfo.frameIndex,
@@ -586,20 +599,28 @@ VMCDecoder::decompress(const V3cBitstream&         syntax,
         rec,
         1 << asps.getLog2PatchPackingBlockSize(),
         gi.getGeometry2dBitdepthMinus1() + 1,
+        ext.getDisplacement1D(),
         ext.getDisplacementReversePacking());
 
       const auto bitDepthPosition = asps.getGeometry3dBitdepthMinus1() + 1;
-      inverseQuantizeDisplacements(frame,
-                                   bitDepthPosition,
-                                   ext.getLiftingLevelOfDetailInverseScale(),
-                                   ext.getLiftingQPs());
+      if (ext.getLodDisplacementQuantizationFlag()) {
+        inverseQuantizeDisplacements(
+          frame,
+          bitDepthPosition,
+          ext.getLiftingQuantizationParametersPerLevelOfDetails());
+      } else {
+        inverseQuantizeDisplacements(frame,
+                                     bitDepthPosition,
+                                     ext.getLiftingLevelOfDetailInverseScale(),
+                                     ext.getLiftingQPs());
+      }
       computeInverseLinearLifting(frame.disp,
                                   frame.subdivInfoLevelOfDetails,
                                   frame.subdivEdges,
                                   ext.getLiftingPredictionWeight(),
                                   ext.getLiftingUpdateWeight(),
                                   ext.getLiftingSkipUpdate());
-      applyDisplacements(frame, rec, ext.getDisplacementCoordinateSystem());
+      applyDisplacements(frame, bitDepthPosition, rec, ext.getDisplacementCoordinateSystem());
     }
   }
 

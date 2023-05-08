@@ -156,11 +156,20 @@ initialize(V3cBitstream&               syntax,
   ext.getLiftingQPs(0) = uint8_t(params.liftingQP[0]);
   ext.getLiftingQPs(1) = uint8_t(params.liftingQP[1]);
   ext.getLiftingQPs(2) = uint8_t(params.liftingQP[2]);
+  ext.getLiftingLevelOfDetailInverseScale(0) =
+    params.liftingLevelOfDetailInverseScale[0];
+  ext.getLiftingLevelOfDetailInverseScale(1) =
+    params.liftingLevelOfDetailInverseScale[1];
+  ext.getLiftingLevelOfDetailInverseScale(2) =
+    params.liftingLevelOfDetailInverseScale[2];
   ext.getInterpolateDisplacementNormals() =
     params.interpolateDisplacementNormals;
   ext.getDisplacementReversePacking() = params.displacementReversePacking;
+  ext.getLodDisplacementQuantizationFlag() =
+    params.lodDisplacementQuantizationFlag;
+  ext.getLiftingQuantizationParametersPerLevelOfDetails() =
+    params.liftingQuantizationParametersPerLevelOfDetails;
   ext.getMaxNumNeighborsMotion() = params.maxNumNeighborsMotion;
-
   // Atlas frame parameter set
   auto& afps                            = atlas.addAtlasFrameParameterSet();
   afps.getAtlasSequenceParameterSetId() = aspsId;
@@ -1051,6 +1060,31 @@ VMCEncoder::computeVertexAdjTableMotion(
     return true;
 }
 
+BaseMeshType
+VMCEncoder::chooseSkipOrInter(const std::vector<Vec3<int32_t>>& current,
+                              const std::vector<Vec3<int32_t>>& reference) {
+  const auto         pointCount = int32_t(current.size());
+  VMCMotionACContext ctx;
+  float              cost_inter = 0.0;
+  float              cost_skip  = 0.0;
+  float              lamda      = 6.25 * pointCount;
+  for (int vindex = 0; vindex < pointCount; ++vindex) {
+    const auto motion = current[vindex] - reference[vindex];
+    for (int32_t k = 0; k < 3; ++k) {
+      cost_skip += motion[k] > 0 ? float(motion[k]) : float(-motion[k]);
+    }
+    const auto res0  = motion;
+    const auto bits0 = ctx.estimateBits(res0, 0);
+    cost_inter += float(bits0);
+  }
+  cost_skip *= lamda;
+  if (cost_skip > cost_inter) {
+    return P_BASEMESH;
+  } else {
+    return SKIP_BASEMESH;
+  }
+}
+
 //----------------------------------------------------------------------------
 
 bool
@@ -1234,7 +1268,7 @@ VMCEncoder::compressMotion(
         if (value == 0) { continue; }
         assert(value > 0);
         arithmeticEncoder.encodeExpGolomb(
-          --value, 0, ctx.ctxCoeffRemPrefix[k], ctx.ctxCoeffRemSuffix[k]);
+          --value, 0, ctx.ctxCoeffRemPrefix);
       }
     }
   }
@@ -1267,7 +1301,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
   auto&      subdiv         = frame.subdiv;
   auto&      bmth           = bmtl.getHeader();
   auto&      bmtdu          = bmtl.getDataUnit();
-  bmth.getBaseMeshType()    = frameInfo.type;
+  if (frameInfo.type == I_BASEMESH) bmth.getBaseMeshType()    = frameInfo.type;
 
   // Save intermediate files
   std::string prefix = "";
@@ -1340,11 +1374,6 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     }
     createVertexAdjTableMotion = true;
   } else {
-    printf("Inter: index = %d ref = %d \n",
-           frameInfo.frameIndex,
-           frameInfo.referenceFrameIndex);
-    fflush(stdout);
-
     // quantize base mesh
     const auto& refFrame   = gof.frame(frameInfo.referenceFrameIndex);
     auto&       mapping    = frame.mapping;
@@ -1368,18 +1397,22 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
                      bmtl,
                      params);
     } else {
-      compressMotion(
-        base.triangles(), refFrame.qpositions, {}, qpositions, bmtl, params);
-    }
+      printf("Skip: index = %d ref = %d \n",
+             frameInfo.frameIndex,
+             frameInfo.referenceFrameIndex);
+      fflush(stdout);
 
-    // bmth.getReferenceFrameIndex() =
-    //   frameInfo.frameIndex - frameInfo.referenceFrameIndex - 1;
-    auto& refList = bmth.getRefListStruct();
-    refList.allocate(1);
-    refList.getAbsDeltaAfocSt(0) =
-      frameInfo.frameIndex - frameInfo.referenceFrameIndex;
-    refList.getStrafEntrySignFlag(0)  = false;
-    refList.getStRefAtlasFrameFlag(0) = true;
+      // copy and quantize base mesh
+      qpositions = refFrame.qpositions;
+      base                   = refFrame.base;
+      for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
+        base.point(v) = qpositions[v];
+      }
+
+      // bmth.getReferenceFrameIndex() =
+      //   frameInfo.frameIndex - frameInfo.referenceFrameIndex - 1;
+      // no reference frame index is written to bitstream
+    }
   }
   // Duplicated Vertex Reduction
   if (params.motionWithoutDuplicatedVertices) {
@@ -1447,17 +1480,39 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
   const auto  lodCount           = int32_t(infoLevelOfDetails.size());
   assert(lodCount > 0);
   const auto dispDimensions = params.applyOneDimensionalDisplacement ? 1 : 3;
-  std::vector<double> scale(dispDimensions);
-  std::vector<double> lodScale(dispDimensions);
-  for (int32_t k = 0; k < dispDimensions; ++k) {
-    const auto qp = params.liftingQP[k];
-    scale[k] =
-      qp >= 0 ? pow(2.0, 16 - params.bitDepthPosition + (4 - qp) / 6.0) : 0.0;
-    lodScale[k] = 1.0 / params.liftingLevelOfDetailInverseScale[k];
+  std::vector<std::vector<double>> scales(
+    lodCount, std::vector<double>(dispDimensions, 0));
+  if (params.lodDisplacementQuantizationFlag) {
+    for (int32_t it = 0; it < lodCount; ++it) {
+      auto& scale = scales[it];
+      for (int32_t k = 0; k < dispDimensions; ++k) {
+        const auto qp =
+          params.liftingQuantizationParametersPerLevelOfDetails[it][k];
+        scale[k] = qp >= 0
+                     ? pow(2.0, 16 - params.bitDepthPosition + (4 - qp) / 6.0)
+                     : 0.0;
+      }
+    }
+  } else {
+    std::vector<double> lodScale(dispDimensions);
+    auto&               scale = scales[0];
+    for (int32_t k = 0; k < dispDimensions; ++k) {
+      const auto qp = params.liftingQP[k];
+      scale[k]      = qp >= 0
+                        ? pow(2.0, 16 - params.bitDepthPosition + (4 - qp) / 6.0)
+                        : 0.0;
+      lodScale[k]   = 1.0 / params.liftingLevelOfDetailInverseScale[k];
+    }
+    for (int32_t it = 1; it < lodCount; ++it) {
+      for (int32_t k = 0; k < dispDimensions; ++k) {
+        scales[it][k] = scales[it - 1][k] * lodScale[k];
+      }
+    }
   }
   auto& disp = frame.disp;
   for (int32_t it = 0, vcount0 = 0; it < lodCount; ++it) {
-    const auto vcount1 = infoLevelOfDetails[it].pointCount;
+    const auto& scale   = scales[it];
+    const auto  vcount1 = infoLevelOfDetails[it].pointCount;
     for (int32_t v = vcount0; v < vcount1; ++v) {
       auto& d = disp[v];
       for (int32_t k = 0; k < dispDimensions; ++k) {
@@ -1467,7 +1522,6 @@ VMCEncoder::quantizeDisplacements(VMCFrame&                   frame,
       }
     }
     vcount0 = vcount1;
-    for (int32_t k = 0; k < dispDimensions; ++k) { scale[k] *= lodScale[k]; }
   }
   return true;
 }
@@ -1488,7 +1542,13 @@ VMCEncoder::computeDisplacementVideoFrame(
   for (int32_t p = 0; p < planeCount; ++p) {
     dispVideoFrame.plane(p).fill(shift);
   }
-  const int32_t start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
+  int32_t start;
+  if (params.displacementUse420 && (!params.applyOneDimensionalDisplacement)) {
+    start = dispVideoFrame.width() * dispVideoFrame.height() / 3 - 1;
+  }
+  else {
+    start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
+  }
   for (int32_t v = 0, vcount = int32_t(disp.size()); v < vcount; ++v) {
     // to do: optimize power of 2
     const auto& d          = disp[v];
@@ -1499,6 +1559,7 @@ VMCEncoder::computeDisplacementVideoFrame(
                     * params.displacementVideoBlockSize;
     const auto y0 = (blockIndex / params.geometryVideoWidthInBlocks)
                     * params.displacementVideoBlockSize;
+    const int32_t dispDim = params.applyOneDimensionalDisplacement ? 1 : 3;
     int32_t x = 0;
     int32_t y = 0;
     computeMorton2D(indexWithinBlock, x, y);
@@ -1507,10 +1568,15 @@ VMCEncoder::computeDisplacementVideoFrame(
 
     const auto x1 = x0 + x;
     const auto y1 = y0 + y;
-    for (int32_t p = 0; p < planeCount; ++p) {
+    for (int32_t p = 0; p < dispDim; ++p) {
       const auto dshift = int32_t(shift + d[p]);
       assert(dshift >= 0 && dshift < (1 << params.geometryVideoBitDepth));
-      dispVideoFrame.plane(p).set(y1, x1, uint16_t(dshift));
+      if (params.displacementUse420) {
+        dispVideoFrame.plane(0).set(p * dispVideoFrame.height() / 3 + y1, x1, uint16_t(dshift));
+      }
+      else {
+        dispVideoFrame.plane(p).set(y1, x1, uint16_t(dshift));
+      }
     }
   }
   return true;
@@ -1594,9 +1660,10 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   const auto widthDispVideo =
     params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
   auto       heightDispVideo      = 0;
-  const auto colourSpaceDispVideo = params.applyOneDimensionalDisplacement
-                                      ? ColourSpace::YUV400p
-                                      : ColourSpace::YUV444p;
+  auto colourSpaceDispVideo = ColourSpace::YUV420p;
+  if (!params.displacementUse420) {
+    colourSpaceDispVideo = params.applyOneDimensionalDisplacement ? ColourSpace::YUV400p : ColourSpace::YUV444p;
+  }
   FrameSequence<uint16_t> dispVideo;
   dispVideo.resize(0, 0, colourSpaceDispVideo, frameCount);
 
@@ -1623,8 +1690,11 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
         / params.geometryVideoWidthInBlocks;
       const auto width =
         params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
-      const auto height =
+      auto height =
         geometryVideoHeightInBlocks * params.displacementVideoBlockSize;
+      if (params.displacementUse420 && (!params.applyOneDimensionalDisplacement)) {
+        height *= 3;
+      }
       dispVideoFrame.resize(width, height, colourSpaceDispVideo);
       computeDisplacements(frame, rec, params);
       computeForwardLinearLifting(frame.disp,
@@ -1640,8 +1710,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   // resize all the frame to the same resolution
   if (params.encodeDisplacementsVideo) {
     const auto padding = uint16_t((1 << params.geometryVideoBitDepth) >> 1);
-    dispVideo.standardizeFrameSizes(!params.displacementReversePacking,
-                                    padding);
+    dispVideo.standardizeFrameSizes(true, padding);
     auto& atlas              = syntax.getAtlas();
     auto& asps               = atlas.getAtlasSequenceParameterSet(0);
     auto& ext                = asps.getAspsVdmcExtension();
@@ -1672,11 +1741,19 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                             reconstruct.mesh(frameIndex),
                                             params.displacementVideoBlockSize,
                                             params.geometryVideoBitDepth,
+                                            params.applyOneDimensionalDisplacement,
                                             params.displacementReversePacking);
-      inverseQuantizeDisplacements(frame,
-                                   params.bitDepthPosition,
-                                   params.liftingLevelOfDetailInverseScale,
-                                   params.liftingQP);
+      if (params.lodDisplacementQuantizationFlag) {
+        inverseQuantizeDisplacements(
+          frame,
+          params.bitDepthPosition,
+          params.liftingQuantizationParametersPerLevelOfDetails);
+      } else {
+        inverseQuantizeDisplacements(frame,
+                                     params.bitDepthPosition,
+                                     params.liftingLevelOfDetailInverseScale,
+                                     params.liftingQP);
+      }
       computeInverseLinearLifting(frame.disp,
                                   frame.subdivInfoLevelOfDetails,
                                   frame.subdivEdges,
@@ -1684,16 +1761,30 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
                                   params.liftingUpdateWeight,
                                   params.liftingSkipUpdate);
       applyDisplacements(frame,
+                         params.bitDepthPosition,
                          reconstruct.mesh(frameIndex),
                          params.displacementCoordinateSystem);
     }
     tic("ColorTransfer");
     if (params.encodeTextureVideo && params.textureTransferEnable) {
       TransferColor transferColor;
-      if (!transferColor.transfer(source.mesh(frameIndex),
-                                  source.texture(frameIndex),
-                                  reconstruct.mesh(frameIndex),
-                                  reconstruct.texture(frameIndex),
+      auto& refMesh = source.mesh(frameIndex);
+      auto& refTexture = source.texture(frameIndex);
+      auto& targetMesh = reconstruct.mesh(frameIndex);
+      auto& targetTexture = reconstruct.texture(frameIndex);
+      Frame<uint8_t> pastTexture;
+      bool usePastTexture = false;
+      if (params.textureTransferCopyBackground && frameIndex > 0 && gofInfo.frameInfo(frameIndex).type == P_BASEMESH) {
+          //occupancy map will be the same as the reference, so use the background from reference as well
+          pastTexture = reconstruct.texture(gofInfo.frameInfo(frameIndex).referenceFrameIndex);
+          usePastTexture = true;
+      }
+      if (!transferColor.transfer(refMesh,
+                                  refTexture,
+                                  targetMesh,
+                                  targetTexture,
+                                  usePastTexture,
+                                  pastTexture,
                                   params)) {
         return false;
       }

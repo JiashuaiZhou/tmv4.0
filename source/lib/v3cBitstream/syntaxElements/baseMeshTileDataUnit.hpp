@@ -44,12 +44,14 @@ public:
   BaseMeshTileDataUnit& operator=(const BaseMeshTileDataUnit&) = default;
 
   auto& getData() const { return data_; }
+  auto  getMotionIntegrateMV() const { return motionIntegrateMV; }
   auto  getMotionSkipCount() const { return motionSkipCount; }
   auto  getMotionSkipFlag() const { return motionSkipFlag; }
   auto  getMotionSkipAll() const { return motionSkipAll; }
   auto  getMotionSkipVextexIndices() const { return motionSkipVextexIndices; }
 
   auto& getData() { return data_; }
+  auto& getMotionIntegrateMV() { return motionIntegrateMV; }
   auto& getMotionSkipCount() { return motionSkipCount; }
   auto& getMotionSkipFlag() { return motionSkipFlag; }
   auto& getMotionSkipAll() { return motionSkipAll; }
@@ -59,6 +61,7 @@ public:
   }
 
 private:
+  uint8_t              motionIntegrateMV = 0;
   bool                 motionSkipAll   = false;
   bool                 motionSkipFlag  = false;
   uint8_t              motionSkipCount = 0;

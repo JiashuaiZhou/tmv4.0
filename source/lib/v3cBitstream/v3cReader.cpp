@@ -509,14 +509,27 @@ V3CReader::baseMeshInterTileDataUnit(BaseMeshTileDataUnit& bmtdu,
                                      Bitstream&            bitstream) {
   TRACE_BITSTREAM_IN("%s", __func__);
   auto& bistreamStat = syntax.getBitstreamStat();
-  READ_CODE(bmtdu.getMotionSkipFlag(), 1);  //u1
+  READ_CODE(bmtdu.getMotionIntegrateMV(), 8);  //u8
+  if (bmtdu.getMotionIntegrateMV() == 255) {
+    bmtdu.getMotionSkipFlag() = false;
+    bmtdu.getMotionSkipCount() = 0;
+  } else if (bmtdu.getMotionIntegrateMV() == 128) {
+    bmtdu.getMotionSkipFlag() = true;
+    bmtdu.getMotionSkipAll() = true;
+    bmtdu.getMotionSkipCount() = 0;
+  } else {
+    bmtdu.getMotionSkipFlag() = true;
+    bmtdu.getMotionSkipAll() = false;
+    bmtdu.getMotionSkipCount() = bmtdu.getMotionIntegrateMV();
+  }
+  // READ_CODE(bmtdu.getMotionSkipFlag(), 1);  //u1
   if (bmtdu.getMotionSkipFlag()) {
-    READ_CODE(bmtdu.getMotionSkipAll(), 1);  //u1
+    // READ_CODE(bmtdu.getMotionSkipAll(), 1);  //u1
     if (!bmtdu.getMotionSkipAll()) {
-      READ_CODE(bmtdu.getMotionSkipCount(), 7);  //u7
+      // READ_CODE(bmtdu.getMotionSkipCount(), 7);  //u7
       bmtdu.getMotionSkipVextexIndices().resize(bmtdu.getMotionSkipCount());
       for (size_t i = 0; i < bmtdu.getMotionSkipCount(); i++)
-        READ_CODE(bmtdu.getMotionSkipVextexIndices(i), 7);  //u7
+        READ_CODE(bmtdu.getMotionSkipVextexIndices(i), 8);  //u8
     }
   }
   lengthAlignment(bitstream);

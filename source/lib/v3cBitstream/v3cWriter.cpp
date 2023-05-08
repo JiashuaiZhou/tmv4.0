@@ -592,13 +592,23 @@ V3CWriter::baseMeshInterTileDataUnit(BaseMeshTileDataUnit& bmtdu,
                                      Bitstream&            bitstream) {
   TRACE_BITSTREAM_IN("%s", __func__);
   auto& bistreamStat = syntax.getBitstreamStat();
-  WRITE_CODE(bmtdu.getMotionSkipFlag(), 1);  //u1
   if (bmtdu.getMotionSkipFlag()) {
-    WRITE_CODE(bmtdu.getMotionSkipAll(), 1);  //u1
+    if (bmtdu.getMotionSkipAll()) {
+      bmtdu.getMotionIntegrateMV() = 128;
+    } else {
+      bmtdu.getMotionIntegrateMV() = bmtdu.getMotionSkipCount();
+    }
+  } else {
+    bmtdu.getMotionIntegrateMV() = 255;
+  }
+  WRITE_CODE(bmtdu.getMotionIntegrateMV(), 8);  //u8
+  // WRITE_CODE(bmtdu.getMotionSkipFlag(), 1);  //u1
+  if (bmtdu.getMotionSkipFlag()) {
+    // WRITE_CODE(bmtdu.getMotionSkipAll(), 1);  //u1
     if (!bmtdu.getMotionSkipAll()) {
-      WRITE_CODE(bmtdu.getMotionSkipCount(), 7);  //u7
+      // WRITE_CODE(bmtdu.getMotionSkipCount(), 7);  //u7
       for (size_t i = 0; i < bmtdu.getMotionSkipCount(); i++)
-        WRITE_CODE(bmtdu.getMotionSkipVextexIndices(i), 7);  //u7
+        WRITE_CODE(bmtdu.getMotionSkipVextexIndices(i), 8);  //u8
     }
   }
   lengthAlignment(bitstream);

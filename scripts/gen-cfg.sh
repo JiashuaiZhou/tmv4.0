@@ -57,7 +57,7 @@ cfg_all=(
 	cfg-cond-ai-ll.yaml
 	cfg-cond-ai.yaml
 	cfg-cond-ld.yaml
-	cfg-liftingQP2.yaml
+	informative-liftingQP.yaml
 )
 
 # Check parameters

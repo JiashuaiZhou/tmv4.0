@@ -247,7 +247,7 @@ struct VMCEncoderParameters {
   bool addReconstructedNormals         = true;
   bool displacementReversePacking      = true;
   bool displacementUse420              = true;
-  bool lodDisplacementQuantizationFlag = true;
+  bool lodDisplacementQuantizationFlag = false;
   int32_t subBlockSize                 = 100;
 
   // Motion

@@ -333,6 +333,7 @@ VMCDecoder::decompressMotion(
 bool
 VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
                                const BaseMeshTileLayer&    bmtl,
+                               const AtlasTileLayerRbsp&   atl,
                                const VMCGroupOfFrames&     gof,
                                VMCFrameInfo&               frameInfo,
                                VMCFrame&                   frame,
@@ -349,6 +350,16 @@ VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
   auto& base       = frame.base;
   auto& qpositions = frame.qpositions;
   frameInfo.type   = bmth.getBaseMeshType();
+  auto& atlas = syntax.getAtlas();
+  auto& asps = atlas.getAtlasSequenceParameterSet(0);
+  auto& ext = asps.getAspsVdmcExtension();
+  printf("Scale position: Frame = %d \n", frameInfo.frameIndex);
+  fflush(stdout);
+  const auto bitDepthPosition = asps.getGeometry3dBitdepthMinus1() + 1;
+  printf("BitDepthPosition = %u \n", bitDepthPosition);
+  const auto scalePosition = ((1 << (bmsps.getQpPositionMinus1() + 1)) - 1.0)
+      / ((1 << (bitDepthPosition)) - 1.0);
+  const auto iscalePosition = 1.0 / scalePosition;
   if (frameInfo.type == I_BASEMESH) {
     printf("Intra index = %d \n", frameInfo.frameIndex);
 
@@ -360,6 +371,178 @@ VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
     decoder->decode(bmtdu.getData().vector(), decoderParams, base);
     printf("BaseMeshDeco: done \n");
     fflush(stdout);
+
+    // orthoAtlas
+    const auto& ath = atl.getHeader();
+    if (ath.getType() == I_TILE) {
+        const auto& atdu = atl.getDataUnit();
+        const auto& mpdu = atdu.getPatchInformationData()[0].getMeshPatchDataUnit(); // currently only contains one single patch
+        const auto& afps = syntax.getAtlas().getAtlasFrameParameterSet(ath.getAtlasFrameParameterSetId());
+        const auto& afpsVmcExt = afps.getAfpsVdmcExtension();
+        const auto& asps = syntax.getAtlas().getAtlasSequenceParameterSet(afps.getAtlasSequenceParameterSetId());
+        const auto& aspsVmcExt = asps.getAspsVdmcExtension();
+        // adjust the UV coordinates of the decoded mesh if indicated by SPS
+        if (aspsVmcExt.getProjectionTextCoordEnableFlag()) {
+            if (afpsVmcExt.getProjectionTextcoordPresentFlag(mpdu.getSubmeshId())) {
+                // create the connected components
+                int numCC = mpdu.getProjectionTextcoordSubpatchCountMinus1() + 1;
+                std::vector<vmesh::ConnectedComponent<double>> connectedComponents;
+                std::vector<vmesh::Box2<double>> bbBoxes;
+                std::vector<int> trianglePartition;
+                connectedComponents.resize(numCC);
+                bbBoxes.resize(numCC);
+                trianglePartition.resize(base.triangleCount(), -1);
+                switch (aspsVmcExt.getProjectionTextCoordMappingMethod()) {
+                default:
+                case 0: // uv coordinate is being used for transmitting the triangle to patch mapping
+                {
+                    for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                        auto tri = base.triangle(triIdx);
+                        auto texTri = base.texCoordTriangle(triIdx);
+                        int idxCC = base.texCoord(texTri[0])[0];
+                        //now add the points
+                        trianglePartition[triIdx] = idxCC;
+                        for (int i = 0; i < 3; i++) {
+                            connectedComponents[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+                        }
+                        connectedComponents[idxCC].addTriangle(connectedComponents[idxCC].points().size() - 3, connectedComponents[idxCC].points().size() - 2, connectedComponents[idxCC].points().size() - 1);
+                    }
+                    // remove the UVs
+                    base.texCoords().clear();
+                    base.texCoordTriangles().clear();
+                    break;
+                }
+                case 1: // face ID is being used for transmitting the triangle to patch mapping
+                {
+                    for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                        auto tri = base.triangle(triIdx);
+                        auto idxCC = base.faceId(triIdx);
+                        //now add the points
+                        trianglePartition[triIdx] = idxCC;
+                        for (int i = 0; i < 3; i++) {
+                            connectedComponents[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+                        }
+                        connectedComponents[idxCC].addTriangle(connectedComponents[idxCC].points().size() - 3, connectedComponents[idxCC].points().size() - 2, connectedComponents[idxCC].points().size() - 1);
+                    }
+                    break;
+                }
+                case 2: // connected components is being used for implicit triangle to patch mapping
+                {
+                    std::vector<int> partition;
+                    ExtractConnectedComponents(base.triangles(), base.pointCount(), base, partition);
+                    std::vector<vmesh::ConnectedComponent<double>> unsortedConnectedComponents;
+                    unsortedConnectedComponents.resize(connectedComponents.size());
+                    for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                        auto tri = base.triangle(triIdx);
+                        int idxCC = partition[triIdx];
+                        //now add the points
+                        trianglePartition[triIdx] = idxCC;
+                        for (int i = 0; i < 3; i++) {
+                            unsortedConnectedComponents[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+                        }
+                        unsortedConnectedComponents[idxCC].addTriangle(unsortedConnectedComponents[idxCC].points().size() - 3, unsortedConnectedComponents[idxCC].points().size() - 2, unsortedConnectedComponents[idxCC].points().size() - 1);
+                    }
+                    // index sorting
+                    std::vector<int> sortedIndex(numCC);
+                    for (int val = 0; val < numCC; val++) sortedIndex[val] = val;
+                    std::sort(sortedIndex.begin(), sortedIndex.end(), [&](int a, int b) {
+                        return (unsortedConnectedComponents[a].area() > unsortedConnectedComponents[b].area());
+                        });
+                    for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                        int idxCC = partition[triIdx];
+                        //now add the points
+                        trianglePartition[triIdx] = std::find(sortedIndex.begin(), sortedIndex.end(), idxCC) - sortedIndex.begin();
+                    }
+                    for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                        auto tri = base.triangle(triIdx);
+                        int idxCC = trianglePartition[triIdx];
+                        //now add the points
+                        for (int i = 0; i < 3; i++) {
+                            connectedComponents[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+                        }
+                        connectedComponents[idxCC].addTriangle(connectedComponents[idxCC].points().size() - 3, connectedComponents[idxCC].points().size() - 2, connectedComponents[idxCC].points().size() - 1);
+                    }
+                    // now remove duplicate points for the base mesh to recover the correct normal
+                    std::vector<Vec3<MeshType>> pointsOutput;
+                    std::vector<Triangle> trianglesOutput;
+                    std::vector<int32_t> mapping;
+                    UnifyVertices(base.points(), base.triangles(), pointsOutput, trianglesOutput, mapping);
+                    swap(base.points(), pointsOutput);
+                    swap(base.triangles(), trianglesOutput);
+                    RemoveDegeneratedTriangles(base);
+                    break;
+                }
+                }
+                // create the homography transform
+                for (int idxCC = 0; idxCC < numCC; idxCC++) {
+                    connectedComponents[idxCC].setProjection(mpdu.getProjectionTextcoordProjectionId(idxCC));
+                    connectedComponents[idxCC].setOrientation(mpdu.getProjectionTextcoordOrientationId(idxCC));
+                    connectedComponents[idxCC].setU0(mpdu.getProjectionTextcoord2dPosX(idxCC));
+                    connectedComponents[idxCC].setV0(mpdu.getProjectionTextcoord2dPosY(idxCC));
+                    connectedComponents[idxCC].setSizeU(mpdu.getProjectionTextcoord2dSizeXMinus1(idxCC) + 1);
+                    connectedComponents[idxCC].setSizeV(mpdu.getProjectionTextcoord2dSizeYMinus1(idxCC) + 1);
+                    double patchScale = mpdu.getProjectionTextcoordFrameScale();
+                    if (mpdu.getProjectionTextcoordScalePresentFlag(idxCC)) {
+                        for (int i = 0; i <= mpdu.getProjectionTextcoordSubpatchScale(idxCC); i++)
+                            patchScale *= aspsVmcExt.getProjectionTextCoordScaleFactor();
+                    }
+                    connectedComponents[idxCC].setScale(patchScale);
+                    // calculate the bounding box
+                    bbBoxes[idxCC] = connectedComponents[idxCC].boundingBoxProjected(connectedComponents[idxCC].getProjection());
+#ifdef DEBUG_ORTHO
+                    if (params.keepIntermediateFiles) {
+                        auto prefix = _keepFilesPathPrefix + "_transmitted_CC#" + std::to_string(idxCC);
+                        connectedComponents[idxCC].save(prefix + "_DEC.obj");
+                    }
+#endif
+                }
+                // create the (u,v) coordinate from (x,y,z) and the corresponding homography transform
+                base.texCoordTriangles().resize(base.triangleCount());
+                for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                    auto tri = base.triangle(triIdx);
+                    int idxCC = trianglePartition[triIdx];
+                    int uvIdx[3];
+                    for (int i = 0; i < 3; i++) {
+                        auto newUV = connectedComponents[idxCC].convert(base.point(tri[i]) * iscalePosition,
+                            bbBoxes[idxCC],
+                            afpsVmcExt.getProjectionTextcoordWidth(mpdu.getSubmeshId()),
+                            afpsVmcExt.getProjectionTextcoordHeight(mpdu.getSubmeshId()),
+                            afpsVmcExt.getProjectionTextcoordGutter(mpdu.getSubmeshId()),
+                            1 << asps.getLog2PatchPackingBlockSize()); //we are using the same block size as the geometry, should we change and use a specific one for the projection???
+                        //check if the newUV already exist
+                        auto pos = std::find(base.texCoords().begin(), base.texCoords().end(), newUV);
+                        if (pos == base.texCoords().end()) {
+                            uvIdx[i] = base.texCoords().size();
+                            base.addTexCoord(newUV);
+                        }
+                        else {
+                            uvIdx[i] = pos - base.texCoords().begin();
+                        }
+                    }
+                    //for degenerate triangles in 2D, since it can happen, but the saveOBJ function complains, we will create a new UV coordinate
+                    if (uvIdx[0] == uvIdx[1] && uvIdx[0] == uvIdx[2]) {
+                        uvIdx[1] = base.texCoords().size();
+                        base.addTexCoord(base.texCoords()[uvIdx[0]]);
+                        uvIdx[2] = base.texCoords().size();
+                        base.addTexCoord(base.texCoords()[uvIdx[0]]);
+                    }
+                    else if (uvIdx[0] == uvIdx[1]) {
+                        uvIdx[1] = base.texCoords().size();
+                        base.addTexCoord(base.texCoords()[uvIdx[0]]);
+                    }
+                    else if (uvIdx[0] == uvIdx[2]) {
+                        uvIdx[2] = base.texCoords().size();
+                        base.addTexCoord(base.texCoords()[uvIdx[0]]);
+                    }
+                    else if (uvIdx[1] == uvIdx[2]) {
+                        uvIdx[2] = base.texCoords().size();
+                        base.addTexCoord(base.texCoords()[uvIdx[1]]);
+                    }
+                    base.setTexCoordTriangle(triIdx, vmesh::Triangle(uvIdx[0], uvIdx[1], uvIdx[2]));
+                }
+            }
+        }
+    }
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -419,17 +602,6 @@ VMCDecoder::decompressBaseMesh(const V3cBitstream&         syntax,
     frame.baseIntegrateIndices = refFrame.baseIntegrateIndices;
   }
 
-
-  auto& atlas = syntax.getAtlas();
-  auto& asps  = atlas.getAtlasSequenceParameterSet(0);
-  auto& ext   = asps.getAspsVdmcExtension();
-  printf("Scale position: Frame = %d \n", frameInfo.frameIndex);
-  fflush(stdout);
-  const auto bitDepthPosition = asps.getGeometry3dBitdepthMinus1() + 1;
-  printf("BitDepthPosition = %u \n", bitDepthPosition);
-  const auto scalePosition = ((1 << (bmsps.getQpPositionMinus1() + 1)) - 1.0)
-                             / ((1 << (bitDepthPosition)) - 1.0);
-  const auto iscalePosition = 1.0 / scalePosition;
   for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
     base.point(v) *= iscalePosition;
   }
@@ -685,6 +857,7 @@ VMCDecoder::decompress(const V3cBitstream&         syntax,
     auto& frameInfo      = gofInfo.framesInfo_[frameIndex];
     auto& frame          = gof.frame(frameIndex);
     auto& rec            = reconstruct.mesh(frameIndex);
+    auto& atl            = atlas.getAtlasTileLayer(frameIndex); // frameIndex and tileIndex are the same in this case, since we only have one tile per frame?
     frameInfo.frameIndex = frameIndex;
     frameInfo.type       = bmth.getBaseMeshType();
     if (bmth.getBaseMeshType() == P_BASEMESH) {
@@ -701,7 +874,7 @@ VMCDecoder::decompress(const V3cBitstream&         syntax,
            frameInfo.frameIndex,
            toString(frameInfo.type).c_str(),
            frameInfo.referenceFrameIndex);
-    decompressBaseMesh(syntax, bmtl, gof, frameInfo, frame, rec, params);
+    decompressBaseMesh(syntax, bmtl, atl, gof, frameInfo, frame, rec, params);
   }
   if (ext.getEncodeDisplacements() == 1) {
     decompressDisplacementsAC(syntax, gof, gofInfo, ext.getSubBlockSize());

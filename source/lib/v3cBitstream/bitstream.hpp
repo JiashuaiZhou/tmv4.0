@@ -78,11 +78,17 @@ public:
   size_t getV3CUnitSize(V3CUnitType type) { return v3cUnitSize_[type]; }
   size_t getVideoBinSize(VideoType type) { return videoBinSize_[type]; }
   BitstreamGofStat& operator+=(const BitstreamGofStat& other) {
-    v3cUnitSize_     = other.v3cUnitSize_;
-    videoBinSize_    = other.videoBinSize_;
-    baseMeshBinSize_ = other.baseMeshBinSize_;
-    displacementBinSize_ = other.displacementBinSize_;
-    faceCount        = other.faceCount;
+    for (int i = 0; i < NUM_V3C_UNIT_TYPE; i++) {
+        v3cUnitSize_[i] += other.v3cUnitSize_[i];
+    }
+    for (int i = 0; i < NUM_VIDEO_TYPE; i++) {
+        videoBinSize_[i] += other.videoBinSize_[i];
+    }
+    for (int i = 0; i < RESERVED_BASEMESH + 1; i++) {
+        baseMeshBinSize_[i] += other.baseMeshBinSize_[i];
+    }
+    displacementBinSize_ += other.displacementBinSize_;
+    faceCount        += other.faceCount;
     return *this;
   }
   size_t getTotal() {
@@ -403,6 +409,26 @@ public:
     return value;
   }
 
+  inline void writeDouble(double value) {
+      uint64_t buffer64;
+      memcpy(&buffer64, &value, sizeof(double));
+      uint32_t buffer32Low = buffer64 & 0xFFFFFFFF;
+      write(buffer32Low, 32);
+      uint32_t  buffer32High = (buffer64 >> 32) & 0xFFFFFFFF;
+      write(buffer32High, 32);
+  }
+
+  inline double readDouble() {
+      uint32_t buffer32Low = read(32);
+      uint32_t buffer32High = read(32);
+      uint64_t buffer64;
+      buffer64 = buffer32High;
+      buffer64 = buffer64 << 32;
+      buffer64 += buffer32Low;
+      double value = 0;
+      memcpy(&value, &buffer64, sizeof(double));
+      return value;
+  }
 #if defined(BITSTREAM_TRACE)
   void traceBitFloat(const std::string& name,
                      float              value,
@@ -417,6 +443,20 @@ public:
       logger_->traceStream(
         "%s %s = %-6f %s \n", str.c_str(), dots + len, value, type.c_str());
     }
+  }
+  void traceBitDouble(const std::string& name,
+      double              value,
+      const std::string& type) {
+      if (trace_) {
+          logger_->traceStream("[%6llu-%1u]", position_.bytes_, position_.bits_);
+          logger_->traceStreamIndent();
+          auto              str = name.substr(0, 50 - logger_->getIndent());
+          static const char dots[] =
+              "..................................................";
+          auto len = (std::min)(logger_->getIndent() + str.length(), (size_t)50);
+          logger_->traceStream(
+              "%s %s = %-6f %s \n", str.c_str(), dots + len, value, type.c_str());
+      }
   }
   void traceBitStr(const std::string& name,
                    const std::string& value,

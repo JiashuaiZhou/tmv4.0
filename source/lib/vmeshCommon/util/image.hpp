@@ -446,6 +446,14 @@ public:
     }
   }
 
+  bool append(const std::string& fout) const
+  {
+      std::ofstream os(fout, std::ios::binary | std::ios::app);
+      if (!os.is_open()) { return false; }
+      save(os);
+      return true;
+  }
+  
   bool load(const std::string& fileName, const int32_t frameIndex);
   bool save(const std::string& fileName, const int32_t frameIndex) const;
   bool load(const std::string& fileName);

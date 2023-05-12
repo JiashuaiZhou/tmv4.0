@@ -173,11 +173,34 @@ initialize(V3cBitstream&               syntax,
     params.liftingQuantizationParametersPerLevelOfDetails;
   ext.getSubBlockSize() = params.subBlockSize;
   ext.getMaxNumNeighborsMotion() = params.maxNumNeighborsMotion;
+  // orthoAtlas parameters
+  ext.getProjectionTextCoordEnableFlag() = (params.iDeriveTextCoordFromPos > 0);
+  if (ext.getProjectionTextCoordEnableFlag()) {
+      ext.getProjectionTextCoordMappingMethod() = params.iDeriveTextCoordFromPos - 1;
+      ext.getProjectionTextCoordScaleFactor() = params.packingScaling;
+  }
 
   // Atlas frame parameter set
   auto& afps                            = atlas.addAtlasFrameParameterSet();
   afps.getAtlasSequenceParameterSetId() = aspsId;
   afps.getAtlasFrameParameterSetId()    = afpsId;
+  afps.getExtensionFlag() = true;
+  afps.getVmcExtensionFlag() = true;
+  auto& afpsVdmcExt = afps.getAfpsVdmcExtension();
+  auto& meshInfo = afpsVdmcExt.getAtlasFrameMeshInformation();
+  meshInfo.getSingleMeshInAtlasFrameFlag() = true;
+  meshInfo.getNumSubmeshesInAtlasFrameMinus1() = 0;
+  meshInfo.getSignalledSubmeshIdFlag() = false;
+  if (ext.getProjectionTextCoordEnableFlag()) {
+      for (int i = 0; i < meshInfo.getNumSubmeshesInAtlasFrameMinus1() + 1; i++) {
+          afpsVdmcExt.getProjectionTextcoordPresentFlag(i) = true;
+          if (afpsVdmcExt.getProjectionTextcoordPresentFlag(i)) {
+              afpsVdmcExt.getProjectionTextcoordWidth(i) = params.width;
+              afpsVdmcExt.getProjectionTextcoordHeight(i) = params.height;
+              afpsVdmcExt.getProjectionTextcoordGutter(i) = params.gutter;
+          }
+      }
+  }
 
   // Atlas frame tile information
   auto& afti                           = afps.getAtlasFrameTileInformation();
@@ -217,6 +240,10 @@ initialize(V3cBitstream&               syntax,
   bmsps.getBaseMeshCodecId()  = params.meshCodecId;
   bmsps.getQpPositionMinus1() = params.qpPosition - 1;
   bmsps.getQpTexCoordMinus1() = params.qpTexCoord - 1;
+  // TODO - indicate the attribute that will be used for orthoAtlas (UV with QP=0 or FaceID/generic? or no attributest)
+  if (params.iDeriveTextCoordFromPos > 0) {
+      bmsps.getQpTexCoordMinus1() = 0;
+  }
 
   // Base mesh frame parameter set
   auto& bmfps = baseMesh.addBaseMeshFrameParameterSet(bmfpsId);
@@ -470,14 +497,15 @@ VMCEncoder::removeDegeneratedTrianglesCrossProduct(
 void
 VMCEncoder::textureParametrization(VMCFrame&                   frame,
                                    TriangleMesh<MeshType>&     decimate,
-                                   const VMCEncoderParameters& params) {
+                                   const VMCEncoderParameters& params,
+                                   VMCFrame& previousFrame) {
   auto prefix =
     _keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex);
   std::cout << "Texture parametrization \n";
 
   // Load cache files
   bool skipUVAtlas = false;
-  if (params.cachingPoint >= CachingPoint::UVATLAS) {
+  if (params.cachingPoint >= CachingPoint::TEXGEN) {
     if (loadCache(params,
                   frame.decimateTexture,
                   "decimateTexture",
@@ -494,7 +522,12 @@ VMCEncoder::textureParametrization(VMCFrame&                   frame,
     removeDegeneratedTrianglesCrossProduct(decimate, frame.frameIndex);
 
     TextureParametrization textureParametrization;
-    textureParametrization.generate(decimate, frame.decimateTexture, params);
+    textureParametrization.generate(decimate,
+        frame.decimateTexture,
+        params,
+        frame.packedCCList,
+        previousFrame.packedCCList,
+        prefix);
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -502,7 +535,7 @@ VMCEncoder::textureParametrization(VMCFrame&                   frame,
     }
 
     // Save cache files
-    if (params.cachingPoint >= CachingPoint::UVATLAS) {
+    if (params.cachingPoint >= CachingPoint::TEXGEN) {
       saveCache(params,
                 frame.decimateTexture,
                 "decimateTexture",
@@ -1028,28 +1061,44 @@ VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
 //----------------------------------------------------------------------------
 
 bool
-VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
-                                std::vector<int32_t>&       mapping,
-                                const int32_t               frameIndex,
-                                const VMCEncoderParameters& params) const {
+VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      origBase, 
+                                TriangleMesh<MeshType>      modifiedBase,
+                                VMCFrame&                   frame,
+                                const VMCEncoderParameters& params,
+                                bool removeDuplicateVerticesFlag) const {
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    base.save(_keepFilesPathPrefix + "fr_" + std::to_string(frameIndex)
-              + "_mapping_src.ply");
+      origBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
+          + "_mapping_base_original.ply");
+      modifiedBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
+          + "_mapping_base_modified.ply");
   }
+  auto compressBase = modifiedBase;
   // Scale
   const auto scalePosition = 1 << (18 - params.bitDepthPosition);
   const auto scaleTexCoord = 1 << 18;
-  for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-    base.setPoint(v, Round(base.point(v) * scalePosition));
+  for (int32_t v = 0, vcount = origBase.pointCount(); v < vcount; ++v) {
+      origBase.setPoint(v, Round(origBase.point(v) * scalePosition));
   }
-  for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
-    base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
+  if (origBase.texCoordCount() > 0) {
+      for (int32_t tc = 0, tccount = origBase.texCoordCount(); tc < tccount; ++tc) {
+          origBase.setTexCoord(tc, Round(origBase.texCoord(tc) * scaleTexCoord));
+      }
+  }
+  for (int32_t v = 0, vcount = modifiedBase.pointCount(); v < vcount; ++v) {
+      modifiedBase.setPoint(v, Round(modifiedBase.point(v) * scalePosition));
+  }
+  if (modifiedBase.texCoordCount() > 0 && (params.iDeriveTextCoordFromPos == 0)) {
+      for (int32_t tc = 0, tccount = modifiedBase.texCoordCount(); tc < tccount; ++tc) {
+          modifiedBase.setTexCoord(tc, Round(modifiedBase.texCoord(tc) * scaleTexCoord));
+      }
   }
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    base.save(_keepFilesPathPrefix + "fr_" + std::to_string(frameIndex)
-              + "_mapping_scale.ply");
+      origBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
+          + "_mapping_scale_original.ply");
+      modifiedBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
+          + "_mapping_scale_modified.ply");
   }
 
   // Encode
@@ -1076,22 +1125,32 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
          encoderParams.dracoUsePosition_,
          encoderParams.dracoUseUV_,
          encoderParams.dracoMeshLossless_);
-  encoder->encode(base, encoderParams, geometryBitstream, rec);
+  encoder->encode(modifiedBase, encoderParams, geometryBitstream, rec);
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
     auto prefix =
-      _keepFilesPathPrefix + "fr_" + std::to_string(frameIndex) + "_mapping";
-    base.save(prefix + "_enc.ply");
+      _keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex) + "_mapping";
+    if (params.iDeriveTextCoordFromPos == 2) {
+        modifiedBase.saveToOBJUsingFidAsColor(prefix + "_mapping_enc");
+        rec.saveToOBJUsingFidAsColor(prefix + "_mapping_rec");
+    }
+    else {
+        modifiedBase.save(prefix + "_enc.ply");
     rec.save(prefix + "_rec.ply");
+    }
     save(prefix + ".drc", geometryBitstream);
   }
 
-  // Geometry parametrisation base
-  auto fsubdiv0 = base;
+  // Geometry parametrisation base (before compression)
+  auto fsubdiv0 = (origBase.pointCount() != modifiedBase.pointCount()) ? origBase : modifiedBase;
   fsubdiv0.subdivideMidPoint(params.liftingSubdivisionIterationCount);
+  if (params.keepIntermediateFiles) {
+      fsubdiv0.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
+          + "_mapping_fsubdiv0.ply");
+  }
   std::vector<int32_t> texCoordToPoint0;
-  fsubdiv0.computeTexCoordToPointMapping(texCoordToPoint0);
+  if (fsubdiv0.texCoordCount() > 0) fsubdiv0.computeTexCoordToPointMapping(texCoordToPoint0);
   struct ArrayHasher {
     std::size_t operator()(const std::array<double, 5>& a) const {
       std::size_t h = 0;
@@ -1103,36 +1162,140 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      base,
   };
   std::map<std::array<double, 5>, int32_t> map0;
   const auto texCoordCount0 = fsubdiv0.texCoordCount();
-  for (int32_t v = 0; v < texCoordCount0; ++v) {
-    const auto& point0    = fsubdiv0.point(std::max(0, texCoordToPoint0[v]));
-    const auto& texCoord0 = fsubdiv0.texCoord(v);
+  const auto coordCount0 = fsubdiv0.pointCount();
+  int32_t vCount = texCoordCount0 > 0 ? texCoordCount0 : coordCount0;
+  for (int32_t v = 0; v < vCount; ++v) {
+      const auto& point0 = texCoordCount0 > 0 ? fsubdiv0.point(std::max(0, texCoordToPoint0[v])) : fsubdiv0.point(v);
+      const auto& texCoord0 = texCoordCount0 > 0 ? fsubdiv0.texCoord(v) : Vec2<MeshType>(0.0);
     const std::array<double, 5> vertex0{
       point0[0], point0[1], point0[2], texCoord0[0], texCoord0[1]};
-    map0[vertex0] = texCoordToPoint0[v];
+    map0[vertex0] = texCoordCount0 > 0 ? texCoordToPoint0[v] : v;
   }
 
-  // Geometry parametrisation rec
+  // Geometry parametrisation rec (after compression)
   auto fsubdiv1 = rec;
+  if (removeDuplicateVerticesFlag) {
+      TriangleMesh<MeshType> recCompress;
+      std::vector<uint8_t>   geometryBitstreamCompress;
+      // Scaling to QP/QT bits
+      const auto scalePositionCompress =
+          ((1 << params.qpPosition) - 1.0) / ((1 << params.bitDepthPosition) - 1.0);
+      const auto scaleTexCoordCompress = std::pow(2.0, params.qpTexCoord) - 1.0;
+      for (int32_t v = 0, vcount = compressBase.pointCount(); v < vcount; ++v) {
+          compressBase.setPoint(v, Round(compressBase.point(v) * scalePositionCompress));
+      }
+      if (compressBase.texCoordCount() > 0 && (params.iDeriveTextCoordFromPos == 0)) {
+          for (int32_t tc = 0, tccount = compressBase.texCoordCount(); tc < tccount; ++tc) {
+              compressBase.setTexCoord(tc, Round(compressBase.texCoord(tc) * scaleTexCoordCompress));
+          }
+      }
+      // Save intermediate files
+      if (params.keepIntermediateFiles) {
+          compressBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
+              + "_mapping_scale_base_compress.ply");
+      }
+      // Encode with QP/QT bits
+      // remove this one ??
+      encoderParams.cl_ = 10; // this is the default for draco
+      encoderParams.qp_ = params.qpPosition;
+      encoderParams.qt_ = params.qpTexCoord;
+      encoderParams.qg_ = -1;
+      if (params.iDeriveTextCoordFromPos == 1) {
+          encoderParams.qt_ = std::ceil(std::log2(frame.packedCCList.size()));
+          encoderParams.qg_ = -1;
+      }
+      else if (params.iDeriveTextCoordFromPos == 2) {
+          encoderParams.qt_ = -1;
+          encoderParams.qg_ = std::ceil(std::log2(frame.packedCCList.size()));
+      }
+      encoderParams.dracoUsePosition_ = params.dracoUsePosition;
+      encoderParams.dracoUseUV_ = params.dracoUseUV;
+      encoderParams.dracoMeshLossless_ = params.dracoMeshLossless;
+      encoderParams.predCoder_ = params.predCoder;
+      encoderParams.topoCoder_ = params.topoCoder;
+      encoderParams.baseMeshDeduplicatePositions_ = params.baseMeshDeduplicatePositions;
+      printf("DracoMapping: use_position = %d use_uv = %d mesh_lossless = %d \n",
+          encoderParams.dracoUsePosition_,
+          encoderParams.dracoUseUV_,
+          encoderParams.dracoMeshLossless_);
+      encoder->encode(compressBase, encoderParams, geometryBitstreamCompress, recCompress);
+      // Save intermediate files
+      if (params.keepIntermediateFiles) {
+          auto prefix =
+              _keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex) + "_mapping";
+          if (params.iDeriveTextCoordFromPos == 2) {
+              compressBase.saveToOBJUsingFidAsColor(prefix + "_mapping_enc_original");
+              recCompress.saveToOBJUsingFidAsColor(prefix + "_mapping_rec_original");
+          }
+          else {
+              compressBase.save(prefix + "_enc_compress.ply");
+              recCompress.save(prefix + "_rec_compress.ply");
+          }
+          save(prefix + "_compress.drc", geometryBitstreamCompress);
+      }
+      //unify vertices first
+      std::vector<Vec3<MeshType>> pointsOutput;
+      std::vector<Triangle> trianglesOutput;
+      std::vector<int32_t> mappingUnify;
+      UnifyVertices(recCompress.points(), recCompress.triangles(), pointsOutput, trianglesOutput, mappingUnify);
+      //now we unify the vertices for the mapping like in the compress function
+      for (int coordIdx = 0; coordIdx < fsubdiv1.pointCount(); coordIdx++) pointsOutput[mappingUnify[coordIdx]] = fsubdiv1.point(coordIdx);
+      for (int triIdx = 0; triIdx < fsubdiv1.triangleCount(); triIdx++)
+          for (int cornerIdx = 0; cornerIdx < 3; cornerIdx++) trianglesOutput[triIdx][cornerIdx] = mappingUnify[fsubdiv1.triangle(triIdx)[cornerIdx]];
+      swap(fsubdiv1.points(), pointsOutput);
+      swap(fsubdiv1.triangles(), trianglesOutput);
+      RemoveDegeneratedTriangles(fsubdiv1);
+  }
   fsubdiv1.subdivideMidPoint(params.liftingSubdivisionIterationCount);
+  if (params.keepIntermediateFiles) {
+      fsubdiv1.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
+          + "_mapping_fsubdiv1.ply");
+  }
   const auto pointCount1 = fsubdiv1.pointCount();
-  mapping.resize(pointCount1, -1);
+  frame.mapping.resize(pointCount1, -1);
   std::vector<bool> tags(pointCount1, false);
   for (int32_t t = 0, tcount = fsubdiv1.triangleCount(); t < tcount; ++t) {
     const auto& tri   = fsubdiv1.triangle(t);
-    const auto& triUV = fsubdiv1.texCoordTriangle(t);
+    const auto& triUV = fsubdiv1.texCoordCount() > 0 ? fsubdiv1.texCoordTriangle(t) : tri;
     for (int32_t k = 0; k < 3; ++k) {
       const auto indexPos = tri[k];
       if (tags[indexPos]) { continue; }
       tags[indexPos]                            = true;
       const auto                  indexTexCoord = triUV[k];
       const auto&                 point1        = fsubdiv1.point(indexPos);
-      const auto&                 texCoord1 = fsubdiv1.texCoord(indexTexCoord);
+      const auto& texCoord1 = fsubdiv1.texCoordCount() > 0 ? fsubdiv1.texCoord(indexTexCoord) : Vec2<MeshType>(0.0);
       const std::array<double, 5> vertex1   = {
         point1[0], point1[1], point1[2], texCoord1[0], texCoord1[1]};
       const auto it = map0.find(vertex1);
       if (it != map0.end()) {
-        mapping[indexPos] = map0[vertex1];
-      } else {
+        frame.mapping[indexPos] = map0[vertex1];
+      }
+      else {
+          if (removeDuplicateVerticesFlag) {
+              if (fsubdiv1.texCoordCount() > 0) {
+                  //find all points with the same textCoord and select the closest one
+                  double dist = std::numeric_limits<double>::max();
+                  for (int32_t v = 0; v < texCoordCount0; ++v) {
+                      const auto& texCoord0 = fsubdiv0.texCoord(v);
+                      if (texCoord0 == texCoord1) {
+                          const auto& point0 = fsubdiv0.point(std::max(0, texCoordToPoint0[v]));
+                          if ((point0 - point1).norm2() < dist) {
+                              dist = (point0 - point1).norm2();
+                              frame.mapping[indexPos] = texCoordToPoint0[v];
+                          }
+                      }
+                  }
+              }
+              else {
+                  //could not find matching index, because surface has changed due to quantization, so lets use the closest point
+                  KdTree<MeshType> kdtreeTarget(3, fsubdiv0.points(), 10);  // dim, cloud, max leaf
+                  std::vector<int32_t> indexes(1);
+                  std::vector<MeshType>       sqrDists(1);
+                  kdtreeTarget.query(point1.data(), 1, indexes.data(), sqrDists.data());
+                  frame.mapping[indexPos] = indexes[0];
+              }
+          }
+          else
         assert(0);
       }
     }
@@ -1450,6 +1613,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
                              VMCFrame&                   frame,
                              TriangleMesh<MeshType>&     rec,
                              BaseMeshTileLayer&          bmtl,
+                             AtlasTileLayerRbsp& atl,
                              const VMCEncoderParameters& params) {
   // if (!encodeFrameHeader(frameInfo, bitstream)) { return false; }
   const auto scalePosition =
@@ -1462,6 +1626,8 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
   auto&      bmth           = bmtl.getHeader();
   auto&      bmtdu          = bmtl.getDataUnit();
   if (frameInfo.type == I_BASEMESH) bmth.getBaseMeshType()    = frameInfo.type;
+  auto&      ath            = atl.getHeader();
+  auto&      atdu           = atl.getDataUnit();
 
   // Save intermediate files
   std::string prefix = "";
@@ -1482,7 +1648,71 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
         base.setTexCoord(tc, base.texCoord(tc) * scale);
       }
     }
-    computeDracoMapping(base, frame.mapping, frameInfo.frameIndex, params);
+    auto oBase = base;
+    bool removeDuplicateVertices = (params.iDeriveTextCoordFromPos == 3);
+    //alter the base mesh in case we are deriving text coordinates at decoder
+    if (params.iDeriveTextCoordFromPos > 0) {
+        switch (params.iDeriveTextCoordFromPos) {
+        default:
+        case 1: // using UV coordinates
+        {
+            int idxCC = 0;
+            int idxTri = 0;
+            for (auto& cc : frame.packedCCList) {
+                for (int idxTriCC = 0; idxTriCC < cc.triangleCount(); idxTriCC++) {
+                    auto triTex = base.texCoordTriangle(idxTri + idxTriCC);
+                    for (int i = 0; i < 3; i++) {
+                        int32_t tc = triTex[i];
+                        base.setTexCoord(tc, Vec2<double>(idxCC, 0));
+                    }
+                }
+                idxTri += cc.triangleCount();
+                idxCC++;
+            }
+            oBase = base;
+            break;
+        }
+        case 2: // using FaceID
+        {
+            int idxCC = 0;
+            int idxTri = 0;
+            base.resizeFaceIds(base.triangleCount());
+            base.texCoords().clear();
+            base.texCoordTriangles().clear();
+            for (auto& cc : frame.packedCCList) {
+                for (int idxTriCC = 0; idxTriCC < cc.triangleCount(); idxTriCC++) {
+                    base.setFaceId(idxTri + idxTriCC, idxCC);
+                }
+                idxTri += cc.triangleCount();
+                idxCC++;
+            }
+            oBase = base;
+            break;
+        }
+        case 3: // using connected components -> connectivity from texture coordinates
+        {
+            auto coordList = base.points();
+            base.points().clear();
+            base.points().resize(base.texCoords().size(), Vec3<double>(0));
+            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                auto triangle = base.triangle(triIdx);
+                auto texTriangle = base.texCoordTriangle(triIdx);
+                for (int i = 0; i < 3; i++) {
+                    base.points()[texTriangle[i]] = coordList[triangle[i]];
+                }
+            }
+            base.triangles().clear();
+            base.triangles() = base.texCoordTriangles();
+            base.texCoords().clear();
+            base.texCoordTriangles().clear();
+            oBase.texCoords().clear();
+            oBase.texCoordTriangles().clear();
+            break;
+        }
+        }
+    }
+    //now do the mapping
+    computeDracoMapping(oBase, base, frame, params, removeDuplicateVertices);
     if (params.keepIntermediateFiles) {
       base.save(prefix + "_post_mapping_base.ply");
     }
@@ -1490,10 +1720,11 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       base.setPoint(v, Round(base.point(v) * scalePosition));
     }
-    for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
-      base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
+    if (params.iDeriveTextCoordFromPos == 0) {
+        for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
+            base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
+        }
     }
-
     // Save intermediate files
     if (params.keepIntermediateFiles) {
       base.save(prefix + "_post_mapping_base_quant.ply");
@@ -1503,6 +1734,14 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     GeometryEncoderParameters encoderParams;
     encoderParams.qp_                           = params.qpPosition;
     encoderParams.qt_                           = params.qpTexCoord;
+    encoderParams.qg_ = -1;
+    if (params.iDeriveTextCoordFromPos == 1) {
+        encoderParams.qt_ = std::ceil(std::log2(frame.packedCCList.size()));
+        encoderParams.qg_ = -1;
+    } else if (params.iDeriveTextCoordFromPos == 2) {
+        encoderParams.qt_ = -1;
+        encoderParams.qg_ = std::ceil(std::log2(frame.packedCCList.size()));
+    }
     encoderParams.dracoUsePosition_             = params.dracoUsePosition;
     encoderParams.dracoUseUV_                   = params.dracoUseUV;
     encoderParams.dracoMeshLossless_            = params.dracoMeshLossless;
@@ -1533,8 +1772,250 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
       qpositions[v] = base.point(v).round();
     }
-    for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
-      base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
+    // reconstruct UV coordinates
+    if (params.iDeriveTextCoordFromPos > 0) {
+        // check the number of connected components
+        int numCC = frame.packedCCList.size();
+        // create the connected components
+        std::vector<vmesh::ConnectedComponent<MeshType>> decodedCC;
+        std::vector<vmesh::Box2<MeshType>> bbBoxes;
+        std::vector<int> trianglePartition;
+        decodedCC.resize(numCC);
+        bbBoxes.resize(numCC);
+        trianglePartition.resize(base.triangleCount(), -1);
+        switch (params.iDeriveTextCoordFromPos) {
+        default:
+        case 1: // using UV coordinates
+        {
+            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                auto tri = base.triangle(triIdx);
+                auto texTri = base.texCoordTriangle(triIdx);
+                int idxCC = base.texCoord(texTri[0])[0];
+                //now add the points
+                trianglePartition[triIdx] = idxCC;
+                for (int i = 0; i < 3; i++) {
+                    decodedCC[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+                }
+                decodedCC[idxCC].addTriangle(decodedCC[idxCC].points().size() - 3, decodedCC[idxCC].points().size() - 2, decodedCC[idxCC].points().size() - 1);
+            }
+            base.texCoords().clear();
+            base.texCoordTriangles().clear();
+            break;
+        }
+        case 2: // using FaceID
+        {
+            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                auto tri = base.triangle(triIdx);
+                auto idxCC = base.faceId(triIdx);
+                //now add the points
+                trianglePartition[triIdx] = idxCC;
+                for (int i = 0; i < 3; i++) {
+                    decodedCC[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+                }
+                decodedCC[idxCC].addTriangle(decodedCC[idxCC].points().size() - 3, decodedCC[idxCC].points().size() - 2, decodedCC[idxCC].points().size() - 1);
+            }
+            break;
+        }
+        case 3: // using connected components -> connectivity from texture coordinates
+        {
+            std::vector<int> partition;
+            numCC = ExtractConnectedComponents(base.triangles(), base.pointCount(), base, partition);
+            decodedCC.resize(numCC);
+            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                auto tri = base.triangle(triIdx);
+                int idxCC = partition[triIdx];
+                //now add the points
+                for (int i = 0; i < 3; i++) {
+                    decodedCC[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+                }
+                decodedCC[idxCC].addTriangle(decodedCC[idxCC].points().size() - 3, decodedCC[idxCC].points().size() - 2, decodedCC[idxCC].points().size() - 1);
+            }
+            // index sorting
+            std::vector<int> sortedIndex(numCC);
+            for (int val = 0; val < numCC; val++) sortedIndex[val] = val;
+            std::sort(sortedIndex.begin(), sortedIndex.end(), [&](int a, int b) {
+                return (decodedCC[a].area() > decodedCC[b].area());
+                });
+            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+                int idxCC = partition[triIdx];
+                //now add the points
+                trianglePartition[triIdx] = std::find(sortedIndex.begin(), sortedIndex.end(), idxCC) - sortedIndex.begin();
+            }
+            // vector sorting
+            std::sort(decodedCC.begin(), decodedCC.end(), [&](ConnectedComponent<MeshType> a, ConnectedComponent<MeshType> b) {
+                return (a.area() > b.area());
+                });
+            //now search for the packedList that is corresponding to the decodedCC
+            std::vector<vmesh::ConnectedComponent<MeshType>> reorderedPackedCCList;
+            for (int idxCC = 0; idxCC < numCC; idxCC++) {
+                double bestIntersectVolume = 0.0;
+                double bestAreaDiff = std::numeric_limits<double>::max();
+                int foundIdx = -1;
+                int foundIdxByVolume = -1;
+                int foundIdxByArea = -1;
+                auto decBB = decodedCC[idxCC].boundingBox();
+                auto decArea = decodedCC[idxCC].area();
+                for (int idxPackedCCList = 0; idxPackedCCList < frame.packedCCList.size(); idxPackedCCList++) {
+                    //they have to have the same number of triangles
+                    if (frame.packedCCList[idxPackedCCList].triangleCount() != decodedCC[idxCC].triangleCount())
+                        continue;
+                    //bounding boxes should intersect
+                    auto packedListBB = frame.packedCCList[idxPackedCCList].boundingBox();
+                    if (decBB.intersects(packedListBB)) {
+                        //the match will be the one with the higher intersection volume
+                        auto intersectVolume = (decBB & packedListBB).volume();
+                        if (intersectVolume > bestIntersectVolume) {
+                            bestIntersectVolume = intersectVolume;
+                            foundIdxByVolume = idxPackedCCList;
+                        }
+                    }
+                    auto areaDiff = std::abs(frame.packedCCList[idxPackedCCList].area() - decArea);
+                    if (areaDiff < bestAreaDiff) {
+                        bestAreaDiff = areaDiff;
+                        foundIdxByArea = idxPackedCCList;
+                    }
+                }
+                if (foundIdxByVolume != foundIdxByArea) {
+                    if (foundIdxByVolume == -1) {
+                        //case of degenerate bounding box (plane), so we need to use the area
+                        foundIdx = foundIdxByArea;
+                    }
+                    else {
+                        //choose intersection of volume over area
+                        foundIdx = foundIdxByVolume;
+                    }
+                }
+                else {
+                    foundIdx = foundIdxByVolume;
+                }
+                reorderedPackedCCList.push_back(frame.packedCCList[foundIdx]);
+                frame.packedCCList.erase(frame.packedCCList.begin() + foundIdx);
+            }
+            //now save the reordered list in the frame structure 
+            frame.packedCCList = reorderedPackedCCList;
+            // now remove duplicate points for the base mesh to recover the correct normal
+            std::vector<Vec3<MeshType>> pointsOutput;
+            std::vector<Triangle> trianglesOutput;
+            std::vector<int32_t> mapping;
+            UnifyVertices(base.points(), base.triangles(), pointsOutput, trianglesOutput, mapping);
+            swap(base.points(), pointsOutput);
+            swap(base.triangles(), trianglesOutput);
+            RemoveDegeneratedTriangles(base);
+            //regenerate qpositions
+            auto& qpositions = frame.qpositions;
+            qpositions.resize(base.pointCount());
+            for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
+                qpositions[v] = base.point(v).round();
+            }
+            break;
+        }
+        }
+        // create the homography transform
+        for (int idxCC = 0; idxCC < numCC; idxCC++) {
+            // load the parameters from the bitstream (orientation, projection direction, etc.)
+            decodedCC[idxCC].setProjection(frame.packedCCList[idxCC].getProjection());
+            decodedCC[idxCC].setOrientation(frame.packedCCList[idxCC].getOrientation());
+            decodedCC[idxCC].setU0(frame.packedCCList[idxCC].getU0());
+            decodedCC[idxCC].setV0(frame.packedCCList[idxCC].getV0());
+            decodedCC[idxCC].setSizeU(frame.packedCCList[idxCC].getSizeU());
+            decodedCC[idxCC].setSizeV(frame.packedCCList[idxCC].getSizeV());
+            decodedCC[idxCC].setScale(frame.packedCCList[idxCC].getScale());
+            // calculate the bounding box
+            bbBoxes[idxCC] = decodedCC[idxCC].boundingBoxProjected(frame.packedCCList[idxCC].getProjection());
+#if DEBUG_ORTHO
+            if (params.keepIntermediateFiles) {
+                auto prefixDEBUG = prefix + "_transmitted_CC#" + std::to_string(idxCC);
+                decodedCC[idxCC].save(prefixDEBUG + "_ENC.obj");
+            }
+#endif
+        }
+        // create the (u,v) coordinate from (x,y,z) and the corresponding homography transform
+        base.texCoordTriangles().resize(base.triangleCount());
+        for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+            auto tri = base.triangle(triIdx);
+            int idxCC = trianglePartition[triIdx];
+            int uvIdx[3];
+            int texParamWidth = params.width;
+            int texParamHeight = params.height;
+            for (int i = 0; i < 3; i++) {
+                auto newUV = decodedCC[idxCC].convert(base.point(tri[i]) * iscalePosition,
+                    bbBoxes[idxCC],
+                    texParamWidth,
+                    texParamHeight,
+                    params.gutter,
+                    params.displacementVideoBlockSize);
+                //check if the newUV already exist
+                auto pos = std::find(base.texCoords().begin(), base.texCoords().end(), newUV);
+                if (pos == base.texCoords().end()) {
+                    uvIdx[i] = base.texCoords().size();
+                    base.addTexCoord(newUV);
+                }
+                else {
+                    uvIdx[i] = pos - base.texCoords().begin();
+                }
+            }
+            //for degenerate triangles in 2D, since it can happen, but the saveOBJ function complains, we will create a new UV coordinate
+            if (uvIdx[0] == uvIdx[1] && uvIdx[0] == uvIdx[2]) {
+                uvIdx[1] = base.texCoords().size();
+                base.addTexCoord(base.texCoords()[uvIdx[0]]);
+                uvIdx[2] = base.texCoords().size();
+                base.addTexCoord(base.texCoords()[uvIdx[0]]);
+            }
+            else if (uvIdx[0] == uvIdx[1]) {
+                uvIdx[1] = base.texCoords().size();
+                base.addTexCoord(base.texCoords()[uvIdx[0]]);
+            }
+            else if (uvIdx[0] == uvIdx[2]) {
+                uvIdx[2] = base.texCoords().size();
+                base.addTexCoord(base.texCoords()[uvIdx[0]]);
+            }
+            else if (uvIdx[1] == uvIdx[2]) {
+                uvIdx[2] = base.texCoords().size();
+                base.addTexCoord(base.texCoords()[uvIdx[1]]);
+            }
+            base.setTexCoordTriangle(triIdx, vmesh::Triangle(uvIdx[0], uvIdx[1], uvIdx[2]));
+        }
+        // Save intermediate files
+        if (params.keepIntermediateFiles) {
+            base.save(prefix + "_base_recon_uv.ply");
+        }
+        // create atlas elements --> THIS COULD BE DONE SOMEWHERE ELSE
+        ath.getType() = I_TILE; // currently we only have one INTRA frame/tile
+        uint8_t patchType = static_cast<uint8_t>((ath.getType() == I_TILE) ? I_MESH : P_MESH);
+        auto& pid = atdu.addPatchInformationData(patchType);
+        auto& mpdu = pid.getMeshPatchDataUnit();
+        auto& subpatches = frame.packedCCList;
+        mpdu.getProjectionTextcoordFrameScale() = subpatches[0].getFrameScale();
+        mpdu.allocateSubPatches(subpatches.size());
+        for (int i = 0; i < subpatches.size(); i++) {
+            auto& subpatch = subpatches[i];
+            mpdu.getProjectionTextcoordProjectionId(i) = subpatch.getProjection();
+            mpdu.getProjectionTextcoordOrientationId(i) = subpatch.getOrientation();
+            mpdu.getProjectionTextcoord2dPosX(i) = subpatch.getU0();
+            mpdu.getProjectionTextcoord2dPosY(i) = subpatch.getV0();
+            mpdu.getProjectionTextcoord2dSizeXMinus1(i) = subpatch.getSizeU() - 1;
+            mpdu.getProjectionTextcoord2dSizeYMinus1(i) = subpatch.getSizeV() - 1;
+            if (subpatch.getScale() != subpatch.getFrameScale()) {
+                mpdu.getProjectionTextcoordScalePresentFlag(i) = true;
+                uint8_t n = 0;
+                auto ratio = subpatch.getScale() / subpatch.getFrameScale();
+                double num = log(ratio);
+                double den = log(params.packingScaling);
+                double nDbl = num / den;
+                n = round(nDbl) - 1;
+                mpdu.getProjectionTextcoordSubpatchScale(i) = n;
+            }
+            else
+                mpdu.getProjectionTextcoordScalePresentFlag(i) = false;
+        }
+        // only one single patch for the moment
+        patchType = static_cast<uint8_t>((ath.getType() == I_TILE) ? I_END : P_END);
+        atdu.addPatchInformationData(patchType);
+    }
+    else {
+      for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
+        base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
+      }
     }
     createVertexAdjTableMotion = true;
   } else {
@@ -1793,6 +2274,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   fflush(stdout);
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     auto& frame = gof.frame(frameIndex);
+    VMCFrame previousFrame;
+    previousFrame.frameIndex = -1;
+    if (params.bTemporalStabilization && (frameIndex > 0)) {
+        previousFrame = gof.frame(frameIndex - 1);
+        previousFrame.frameIndex = frameIndex - 1;
+    }
     if (params.baseIsSrc && params.subdivIsBase) {
       if (params.baseIsSrc) { frame.base = source.mesh(frameIndex); }
       if (params.subdivIsBase) {
@@ -1805,7 +2292,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     } else {
       TriangleMesh<MeshType> decimate;
       decimateInput(source.mesh(frameIndex), frame, decimate, params);
-      textureParametrization(frame, decimate, params);
+      textureParametrization(frame, decimate, params, previousFrame);
       decimate.clear();
       geometryParametrization(gof,
                               gofInfo,
@@ -1859,6 +2346,7 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
 
   printf("frameCount = %zu \n", frameCount);
   auto& baseMesh = syntax.getBaseMesh();
+  auto& atlas    = syntax.getAtlas();
   // auto& msdu = atlas.getMeshSequenceDataUnit(0);
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
     const auto& frameInfo      = gofInfo.frameInfo(frameIndex);
@@ -1866,11 +2354,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     auto&       dispVideoFrame = dispVideo.frame(frameIndex);
     auto&       rec            = reconstruct.mesh(frameIndex);
     auto&       bmtl           = baseMesh.getBaseMeshTileLayer(frameIndex);
+    auto&       atl            = atlas.getAtlasTileLayer(frameIndex); // frameIndex and tileIndex are the same in this case, since we only have one tile per frame?
     printf("Frame %4d: type = %s ReferenceFrame = %4d \n",
            frameInfo.frameIndex,
            toString(frameInfo.type).c_str(),
            frameInfo.referenceFrameIndex);
-    compressBaseMesh(gof, frameInfo, frame, rec, bmtl, params);
+    compressBaseMesh(gof, frameInfo, frame, rec, bmtl, atl, params);
     const auto vertexCount = frame.subdiv.pointCount();
     if (params.encodeDisplacements) {
       computeDisplacements(frame, rec, params);

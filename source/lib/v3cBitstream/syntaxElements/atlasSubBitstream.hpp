@@ -315,7 +315,9 @@ public:
   AtlasTileLayerRbsp& getAtlasTileLayer(size_t frameIndex, size_t tileIndex) {
     return atlasTileLayer_[getAtlasTileLayerIndex(frameIndex, tileIndex)];
   }
-
+  const AtlasTileLayerRbsp& getAtlasTileLayer(size_t atglIndex) const {
+      return atlasTileLayer_[atglIndex];
+  }
   size_t getFrameCount(const AtlasSequenceParameterSetRbsp& asps,
                        const AtlasFrameParameterSetRbsp&    afps) const {
     size_t frameCount          = 0;

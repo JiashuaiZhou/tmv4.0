@@ -82,6 +82,11 @@ format(const std::string& var) {
       bitstream.writeFloat(VAR); \
       bitstream.traceBitFloat(format(#VAR), VAR, "f(32)"); \
     }
+#  define WRITE_DOUBLE(VAR) \
+    { \
+      bitstream.writeDouble(VAR); \
+      bitstream.traceBitDouble(format(#VAR), VAR, "f(64)"); \
+    }
 #  define WRITE_STRING(VAR) \
     { \
       bitstream.writeString(VAR); \
@@ -108,6 +113,7 @@ format(const std::string& var) {
 #  define WRITE_UVLC(VAR) bitstream.writeUvlc(VAR);
 #  define WRITE_SVLC(VAR) bitstream.writeSvlc(VAR);
 #  define WRITE_FLOAT(VAR) bitstream.writeFloat(VAR);
+#  define WRITE_DOUBLE(VAR) bitstream.writeDouble(VAR);
 #  define WRITE_STRING(VAR) bitstream.writeString(VAR);
 #  define WRITE_VECTOR(VAR) bitstream.write(VAR);
 #  define WRITE_VIDEO(VAR) bitstream.write(VAR);
@@ -717,13 +723,34 @@ V3CWriter::aspsVdmcExtension(Bitstream&                     bitstream,
   // WRITE_CODE(ext.getWidthDispVideo(), 16);   //u16
   // WRITE_CODE(ext.getHeightDispVideo(), 16);  //u16
   // }
+
+  // orthoAtlas
+  WRITE_CODE(ext.getProjectionTextCoordEnableFlag(), 1);        //u1
+  if (ext.getProjectionTextCoordEnableFlag()) {
+      WRITE_CODE(ext.getProjectionTextCoordMappingMethod(), 2); //u2
+      WRITE_DOUBLE(ext.getProjectionTextCoordScaleFactor());    //fl64
+  }
   TRACE_BITSTREAM_OUT("%s", __func__);
 }
 
 // AFPS V-DMC extension syntax
 void
-V3CWriter::afpsVdmcExtension(Bitstream& bitstream, AfpsVdmcExtension& ext) {
+V3CWriter::afpsVdmcExtension(Bitstream& bitstream,
+    AtlasSequenceParameterSetRbsp& asps,
+    AfpsVdmcExtension& ext) {
   TRACE_BITSTREAM_IN("%s", __func__);
+    atlasFrameMeshInformation(ext.getAtlasFrameMeshInformation(), bitstream);
+    if (asps.getAspsVdmcExtension().getProjectionTextCoordEnableFlag()) {
+        auto numSubmeshes = ext.getAtlasFrameMeshInformation().getNumSubmeshesInAtlasFrameMinus1() + 1;
+        for (int i = 0; i < numSubmeshes; i++) {
+            WRITE_CODE(ext.getProjectionTextcoordPresentFlag(i), 1);
+            if (ext.getProjectionTextcoordPresentFlag(i)) {
+                WRITE_UVLC(ext.getProjectionTextcoordWidth(i));
+                WRITE_UVLC(ext.getProjectionTextcoordHeight(i));
+                WRITE_UVLC(ext.getProjectionTextcoordGutter(i));
+            }
+        }
+    }
   TRACE_BITSTREAM_OUT("%s", __func__);
 }
 
@@ -1206,9 +1233,27 @@ V3CWriter::atlasFrameParameterSetRbsp(AtlasFrameParameterSetRbsp& afps,
   WRITE_CODE(afps.getRaw3dOffsetBitCountExplicitModeFlag(), 1);  // u(1)
   WRITE_CODE(afps.getExtensionFlag(), 1);                        // u(1)
   if (afps.getExtensionFlag()) {
-    WRITE_CODE(afps.getExtension8Bits(), 8);  // u(8)
+    WRITE_CODE(afps.getMivExtensionFlag(), 1);  // u(1)
+    WRITE_CODE(afps.getVmcExtensionFlag(), 1);  // u(1)
+    WRITE_CODE(afps.getExtension6Bits(), 6);  // u(6)
   }
-  if (afps.getExtension8Bits()) {
+  if (afps.getVmcExtensionFlag()) {
+      auto& afpsVdmcExt = afps.getAfpsVdmcExtension();
+      auto& meshInfo = afpsVdmcExt.getAtlasFrameMeshInformation();
+      atlasFrameMeshInformation(meshInfo, bitstream);
+      if (asps.getAspsVdmcExtension().getProjectionTextCoordEnableFlag()) {
+          auto numSubmeshes = meshInfo.getNumSubmeshesInAtlasFrameMinus1() + 1;
+          for (int i = 0; i < numSubmeshes; i++) {
+              WRITE_CODE(afpsVdmcExt.getProjectionTextcoordPresentFlag(i), 1);
+              if (afpsVdmcExt.getProjectionTextcoordPresentFlag(i)) {
+                  WRITE_UVLC(afpsVdmcExt.getProjectionTextcoordWidth(i));
+                  WRITE_UVLC(afpsVdmcExt.getProjectionTextcoordHeight(i));
+                  WRITE_UVLC(afpsVdmcExt.getProjectionTextcoordGutter(i));
+              }
+          }
+      }
+  }
+  if (afps.getExtension6Bits()) {
     while (moreRbspData(bitstream)) { WRITE_CODE(0, 1); }  // u(1)
   }
   rbspTrailingBits(bitstream);
@@ -1266,6 +1311,26 @@ V3CWriter::atlasFrameTileInformation(AtlasFrameTileInformation&     afti,
     }
   }
   TRACE_BITSTREAM_OUT("%s", __func__);
+}
+
+// 8.3.6.2.5 Atlas frame mesh information syntax
+void
+V3CWriter::atlasFrameMeshInformation(AtlasFrameMeshInformation& afmi,
+                                     Bitstream& bitstream) {
+    TRACE_BITSTREAM_IN("%s", __func__);
+    WRITE_CODE(afmi.getSingleMeshInAtlasFrameFlag(), 1);  // u(1)
+    if (!afmi.getSingleMeshInAtlasFrameFlag()) {
+       WRITE_CODE(afmi.getNumSubmeshesInAtlasFrameMinus1(),8);  // u(8)
+    }
+    WRITE_CODE(afmi.getSignalledSubmeshIdFlag(), 1);  // u(1)
+    if (afmi.getSignalledSubmeshIdFlag()) {
+        WRITE_UVLC(afmi.getSignalledSubmeshIdLengthMinus1());  // ue(v)
+        for (size_t i = 0; i <= afmi.getNumSubmeshesInAtlasFrameMinus1(); i++) {
+            uint8_t bitCount = afmi.getNumSubmeshesInAtlasFrameMinus1() + 1;
+            WRITE_CODE(afmi.getSubmeshId(i), bitCount);  // u(v)
+        }
+    }
+    TRACE_BITSTREAM_OUT("%s", __func__);
 }
 
 // 8.3.6.3	Atlas adaptation parameter set RBSP syntax
@@ -1551,6 +1616,11 @@ V3CWriter::patchInformationData(PatchInformationData& pid,
       epdu.getTileIndex()  = pid.getTileOrder();
       epdu.getPatchIndex() = pid.getPatchIndex();
       eomPatchDataUnit(epdu, ath, syntax, bitstream);
+    } else if (patchMode == I_MESH) {
+        auto& mpdu = pid.getMeshPatchDataUnit();
+        mpdu.getTileOrder() = pid.getTileOrder();
+        mpdu.getPatchIndex() = pid.getPatchIndex();
+        meshPatchDataUnit(mpdu, ath, syntax, bitstream);
     }
   }
 }
@@ -1741,6 +1811,55 @@ V3CWriter::eomPatchDataUnit(EOMPatchDataUnit& epdu,
     WRITE_UVLC(epdu.getPoints(i));                //  ue(v)
   }
   TRACE_BITSTREAM_OUT("%s", __func__);
+}
+
+// 8.3.6.x Mesh patch data unit syntax
+void
+V3CWriter::meshPatchDataUnit(MeshPatchDataUnit& mpdu,
+    AtlasTileHeader& ath,
+    V3cBitstream& syntax,
+    Bitstream& bitstream) {
+    TRACE_BITSTREAM_IN("%s", __func__);
+    auto& atlas = syntax.getAtlas();
+    size_t  afpsId = ath.getAtlasFrameParameterSetId();
+    auto& afps = atlas.getAtlasFrameParameterSet(afpsId);
+    auto& afpsVdmcExt = afps.getAfpsVdmcExtension();
+    auto& afmi = afpsVdmcExt.getAtlasFrameMeshInformation();
+    size_t  aspsId = afps.getAtlasSequenceParameterSetId();
+    auto& asps = atlas.getAtlasSequenceParameterSet(aspsId);
+    auto& aspsVdmcExt = asps.getAspsVdmcExtension();
+    // sub-mesh ID
+    if (afmi.getSignalledSubmeshIdFlag()) {
+        WRITE_CODE(mpdu.getSubmeshId(), afmi.getSignalledSubmeshIdLengthMinus1() + 1);  // u(v)
+    }
+    else {
+        if (afmi.getNumSubmeshesInAtlasFrameMinus1() != 0) {
+            WRITE_CODE(mpdu.getSubmeshId(),
+                ceilLog2(afmi.getNumSubmeshesInAtlasFrameMinus1() + 1));  // u(v)
+        }
+    }
+
+    //orthoAtlas HLS
+    if (aspsVdmcExt.getProjectionTextCoordEnableFlag()) {
+        if (afpsVdmcExt.getProjectionTextcoordPresentFlag(mpdu.getSubmeshId()))
+        {
+            WRITE_DOUBLE(mpdu.getProjectionTextcoordFrameScale());                                                         // fl(64)
+            size_t numSubpatchMinus1 = mpdu.getProjectionTextcoordSubpatchCountMinus1();
+            WRITE_UVLC(numSubpatchMinus1);                                                                                 // ue(v)
+            for (int idx = 0; idx < mpdu.getProjectionTextcoordSubpatchCountMinus1() + 1; idx++) {
+                WRITE_CODE(mpdu.getProjectionTextcoordProjectionId(idx), asps.getExtendedProjectionEnabledFlag() ? 5 : 3); // u(v)
+                WRITE_CODE(mpdu.getProjectionTextcoordOrientationId(idx), 2);                                              // u(2)
+                WRITE_UVLC(mpdu.getProjectionTextcoord2dPosX(idx));                                                        // ue(v)
+                WRITE_UVLC(mpdu.getProjectionTextcoord2dPosY(idx));                                                        // ue(v)
+                WRITE_UVLC(mpdu.getProjectionTextcoord2dSizeXMinus1(idx));                                                 // ue(v)
+                WRITE_UVLC(mpdu.getProjectionTextcoord2dSizeYMinus1(idx));                                                 // ue(v)
+                WRITE_CODE(mpdu.getProjectionTextcoordScalePresentFlag(idx), 1);                                           // u(1)
+                if (mpdu.getProjectionTextcoordScalePresentFlag(idx)) {
+                    WRITE_UVLC(mpdu.getProjectionTextcoordSubpatchScale(idx));                                             // ue(v)
+                }
+            }
+        }
+    }
 }
 
 // 8.3.7.9 Point local reconstruction data syntax
@@ -2603,9 +2722,7 @@ V3CWriter::decodedAtlasInformationHash(Bitstream& bitstream,
         WRITE_CODE(sei.getTileId(t),
                    sei.getTileIdLenMinus1() + 1);  // u(v)
       }
-      while (!bitstream.byteAligned()) {
-        WRITE_CODE(1, 1);  // f(1): equal to 1
-      }
+      byteAlignment(bitstream);
       for (size_t t = 0; t <= sei.getNumTilesMinus1(); t++) {
         size_t j = sei.getTileId(t);
         if (sei.getDecodedAtlasTilesHashPresentFlag()) {
@@ -3002,7 +3119,7 @@ V3CWriter::aspsVpccExtension(Bitstream&                     bitstream,
   TRACE_BITSTREAM_IN("%s", __func__);
   WRITE_CODE(ext.getRemoveDuplicatePointEnableFlag(), 1);  // u(1)
   if (asps.getPixelDeinterleavingFlag() || asps.getPLREnabledFlag()) {
-    WRITE_CODE(ext.getSurfaceThicknessMinus1(), 7);  // u(?)
+    WRITE_UVLC(ext.getSurfaceThicknessMinus1());  // ue(v)
   }
   TRACE_BITSTREAM_OUT("%s", __func__);
 }

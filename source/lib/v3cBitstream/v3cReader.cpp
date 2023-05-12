@@ -95,6 +95,12 @@ format(const std::string& var) {
       bitstream.traceBitFloat(format(#VAR), VAR, "f(32)"); \
     }
 
+#  define READ_DOUBLE(VAR) \
+    { \
+      VAR = bitstream.readDouble(); \
+      bitstream.traceBitDouble(format(#VAR), VAR, "f(64)"); \
+    }
+
 #  define READ_STRING(VAR) \
     { \
       VAR = bitstream.readString(); \
@@ -124,6 +130,7 @@ format(const std::string& var) {
     VAR = static_cast<CAST>(bitstream.readUvlc());
 #  define READ_SVLC(VAR) VAR = bitstream.readSvlc();
 #  define READ_FLOAT(VAR) VAR = bitstream.readFloat();
+#  define READ_DOUBLE(VAR) VAR = bitstream.readDouble();
 #  define READ_STRING(VAR) VAR = bitstream.readString();
 #  define READ_VECTOR(VAR, SIZE) bitstream.read(VAR, SIZE);
 #  define READ_VIDEO(VAR, SIZE) bitstream.read(VAR, SIZE);
@@ -640,13 +647,33 @@ V3CReader::aspsVdmcExtension(Bitstream&                     bitstream,
     READ_CODE(ext.getHeightDispVideo(), 16);              //u16
   }
   READ_CODE(ext.getMaxNumNeighborsMotion(), 8);           //u8
+  // orthoAtlas
+  READ_CODE(ext.getProjectionTextCoordEnableFlag(), 1);   //u1
+  if (ext.getProjectionTextCoordEnableFlag()) {
+      READ_CODE(ext.getProjectionTextCoordMappingMethod(), 2);//u2
+      READ_DOUBLE(ext.getProjectionTextCoordScaleFactor());    //fl64
+  }
   TRACE_BITSTREAM_OUT("%s", __func__);
 }
 
 // AFPS V-DMC extension syntax
 void
-V3CReader::afpsVdmcExtension(Bitstream& bitstream, AfpsVdmcExtension& ext) {
+V3CReader::afpsVdmcExtension(Bitstream& bitstream,
+                             AtlasSequenceParameterSetRbsp& asps, 
+                             AfpsVdmcExtension& ext) {
   TRACE_BITSTREAM_IN("%s", __func__);
+  atlasFrameMeshInformation(ext.getAtlasFrameMeshInformation(), bitstream);
+  if (asps.getAspsVdmcExtension().getProjectionTextCoordEnableFlag()) {
+      auto numSubmeshes = ext.getAtlasFrameMeshInformation().getNumSubmeshesInAtlasFrameMinus1() + 1;
+      for (int i = 0; i < numSubmeshes; i++) {
+          READ_CODE(ext.getProjectionTextcoordPresentFlag(i), 1);
+          if (ext.getProjectionTextcoordPresentFlag(i)) {
+              READ_UVLC(ext.getProjectionTextcoordWidth(i));
+              READ_UVLC(ext.getProjectionTextcoordHeight(i));
+              READ_UVLC(ext.getProjectionTextcoordGutter(i));
+          }
+      }
+  }
   TRACE_BITSTREAM_OUT("%s", __func__);
 }
 
@@ -1090,9 +1117,29 @@ V3CReader::atlasFrameParameterSetRbsp(AtlasFrameParameterSetRbsp& afps,
   READ_CODE(afps.getRaw3dOffsetBitCountExplicitModeFlag(), 1);  // u(1)
   READ_CODE(afps.getExtensionFlag(), 1);                        // u(1)
   if (afps.getExtensionFlag()) {
-    READ_CODE(afps.getExtension8Bits(), 8);  // u(8)
+      READ_CODE(afps.getMivExtensionFlag(), 1);  // u(1)
+      READ_CODE(afps.getVmcExtensionFlag(), 1);  // u(1)
+      READ_CODE(afps.getExtension6Bits(), 6);  // u(6)
   }
-  if (afps.getExtension8Bits()) {
+  if (afps.getVmcExtensionFlag()) {
+      auto& afpsVdmcExt = afps.getAfpsVdmcExtension();
+      auto& meshInfo = afpsVdmcExt.getAtlasFrameMeshInformation();
+      atlasFrameMeshInformation(meshInfo, bitstream);
+      if (asps.getAspsVdmcExtension().getProjectionTextCoordEnableFlag()) {
+          auto numSubmeshes = meshInfo.getNumSubmeshesInAtlasFrameMinus1() + 1;
+          for (int i = 0; i < numSubmeshes; i++) {
+              uint8_t flag;
+              READ_CODE(afpsVdmcExt.getProjectionTextcoordPresentFlag(i), 1);
+              if (afpsVdmcExt.getProjectionTextcoordPresentFlag(i)) {
+                  uint32_t val;
+                  READ_UVLC(afpsVdmcExt.getProjectionTextcoordWidth(i));
+                  READ_UVLC(afpsVdmcExt.getProjectionTextcoordHeight(i));
+                  READ_UVLC(afpsVdmcExt.getProjectionTextcoordGutter(i));
+  }
+  }
+      }
+  }
+  if (afps.getExtension6Bits()) {
     while (moreRbspData(bitstream)) { READ_CODE(zero, 1); }  // u(1)
   }
   rbspTrailingBits(bitstream);
@@ -1174,6 +1221,26 @@ V3CReader::atlasFrameTileInformation(AtlasFrameTileInformation&     afti,
     }
   }
   TRACE_BITSTREAM_OUT("%s", __func__);
+}
+
+// 8.3.6.2.5 Atlas frame mesh information syntax
+void
+V3CReader::atlasFrameMeshInformation(AtlasFrameMeshInformation& afmi,
+    Bitstream& bitstream) {
+    TRACE_BITSTREAM_IN("%s", __func__);
+    READ_CODE(afmi.getSingleMeshInAtlasFrameFlag(), 1);  // u(1)
+    if (!afmi.getSingleMeshInAtlasFrameFlag()) {
+        READ_CODE(afmi.getNumSubmeshesInAtlasFrameMinus1(), 8);  // u(8)
+    }
+    READ_CODE(afmi.getSignalledSubmeshIdFlag(), 1);  // u(1)
+    if (afmi.getSignalledSubmeshIdFlag()) {
+        READ_UVLC(afmi.getSignalledSubmeshIdLengthMinus1());  // ue(v)
+        for (size_t i = 0; i <= afmi.getNumSubmeshesInAtlasFrameMinus1(); i++) {
+            uint8_t bitCount = afmi.getNumSubmeshesInAtlasFrameMinus1() + 1;
+            READ_CODE(afmi.getSubmeshId(i), bitCount);  // u(v)
+        }
+    }
+    TRACE_BITSTREAM_OUT("%s", __func__);
 }
 
 // 8.3.6.3 Atlas adaptation parameter set RBSP syntax
@@ -1418,15 +1485,15 @@ V3CReader::atlasTileDataUnit(AtlasTileDataUnit& atdu,
     prevPatchSizeU_   = 0;
     prevPatchSizeV_   = 0;
     predPatchIndex_   = 0;
-    uint8_t patchMode = 0;
-    READ_UVLC(patchMode);  // ue(v)
-    while ((patchMode != I_END) && (patchMode != P_END)) {
-      auto& pid           = atdu.addPatchInformationData(patchMode);
+    uint8_t PatchMode = 0;
+    READ_UVLC(PatchMode);  // ue(v)
+    while ((PatchMode != I_END) && (PatchMode != P_END)) {
+      auto& pid           = atdu.addPatchInformationData(PatchMode);
       pid.getTileOrder()  = atdu.getTileOrder();
       pid.getPatchIndex() = patchIndex;
       patchIndex++;
-      patchInformationData(pid, patchMode, ath, syntax, bitstream);
-      READ_UVLC(patchMode);  // ue(v)
+      patchInformationData(pid, PatchMode, ath, syntax, bitstream);
+      READ_UVLC(PatchMode);  // ue(v)
     }
     prevFrameIndex_ = atdu.getTileOrder();
   }
@@ -1490,6 +1557,11 @@ V3CReader::patchInformationData(PatchInformationData& pid,
       epdu.getTileIndex()  = pid.getTileOrder();
       epdu.getPatchIndex() = pid.getPatchIndex();
       eomPatchDataUnit(epdu, ath, syntax, bitstream);
+    } else if (patchMode == I_MESH) {
+        auto& mpdu = pid.getMeshPatchDataUnit();
+        mpdu.getTileOrder() = pid.getTileOrder();
+        mpdu.getPatchIndex() = pid.getPatchIndex();
+        meshPatchDataUnit(mpdu, ath, syntax, bitstream);
     }
   }
 }
@@ -1737,6 +1809,60 @@ V3CReader::eomPatchDataUnit(EOMPatchDataUnit& epdu,
   }
   TRACE_BITSTREAM_OUT("%s", __func__);
 }
+
+// 8.3.6.x Mesh patch data unit syntax
+void
+V3CReader::meshPatchDataUnit(MeshPatchDataUnit& mpdu,
+    AtlasTileHeader& ath,
+    V3cBitstream& syntax,
+    Bitstream& bitstream) {
+    TRACE_BITSTREAM_IN("%s", __func__);
+    auto& atlas = syntax.getAtlas();
+    size_t  afpsId = ath.getAtlasFrameParameterSetId();
+    auto& afps = atlas.getAtlasFrameParameterSet(afpsId);
+    auto& afpsVdmcExt = afps.getAfpsVdmcExtension();
+    auto& afmi = afpsVdmcExt.getAtlasFrameMeshInformation();
+    size_t  aspsId = afps.getAtlasSequenceParameterSetId();
+    auto& asps = atlas.getAtlasSequenceParameterSet(aspsId);
+    auto& aspsVdmcExt = asps.getAspsVdmcExtension();
+    // sub-mesh ID
+    if (afmi.getSignalledSubmeshIdFlag()) {
+        READ_CODE(mpdu.getSubmeshId(), afmi.getSignalledSubmeshIdLengthMinus1() + 1);  // u(v)
+    }
+    else {
+        if (afmi.getNumSubmeshesInAtlasFrameMinus1() != 0) {
+            READ_CODE(mpdu.getSubmeshId(),
+                ceilLog2(afmi.getNumSubmeshesInAtlasFrameMinus1() + 1));  // u(v)
+        }
+        else {
+            mpdu.getSubmeshId() = 0;
+        }
+    }
+
+    //orthoAtlas HLS
+    if (aspsVdmcExt.getProjectionTextCoordEnableFlag()) {
+        if (afpsVdmcExt.getProjectionTextcoordPresentFlag()[mpdu.getSubmeshId()])
+        {
+            READ_DOUBLE(mpdu.getProjectionTextcoordFrameScale());                                                         // fl(64)
+            uint32_t numSubpatchMinus1;
+            READ_UVLC(numSubpatchMinus1);                                                                                 // ue(v)
+            mpdu.allocateSubPatches(numSubpatchMinus1 + 1);
+            for (int idx = 0; idx < mpdu.getProjectionTextcoordSubpatchCountMinus1() + 1; idx++) {
+                READ_CODE(mpdu.getProjectionTextcoordProjectionId(idx), asps.getExtendedProjectionEnabledFlag() ? 5 : 3); // u(v)
+                READ_CODE(mpdu.getProjectionTextcoordOrientationId(idx), 2);                                              // u(2)
+                READ_UVLC(mpdu.getProjectionTextcoord2dPosX(idx));                                                        // ue(v)
+                READ_UVLC(mpdu.getProjectionTextcoord2dPosY(idx));                                                        // ue(v)
+                READ_UVLC(mpdu.getProjectionTextcoord2dSizeXMinus1(idx));                                                 // ue(v)
+                READ_UVLC(mpdu.getProjectionTextcoord2dSizeYMinus1(idx));                                                 // ue(v)
+                READ_CODE(mpdu.getProjectionTextcoordScalePresentFlag(idx), 1);                                           // u(1)
+                if (mpdu.getProjectionTextcoordScalePresentFlag(idx)) {
+                    READ_UVLC(mpdu.getProjectionTextcoordSubpatchScale(idx));                                             // ue(v)
+                }
+            }
+        }
+    }
+}
+
 
 // 8.3.7.9 Point local reconstruction data syntax
 void
@@ -2637,10 +2763,7 @@ V3CReader::decodedAtlasInformationHash(Bitstream& bitstream,
       for (size_t t = 0; t <= sei.getNumTilesMinus1(); t++) {
         READ_CODE(sei.getTileId(t), sei.getTileIdLenMinus1() + 1);  // u(v)
       }
-      while (!bitstream.byteAligned()) {
-        uint32_t one = 1;
-        READ_CODE(one, 1);  // f(1): equal to 1
-      }
+      byteAlignment(bitstream);
       for (size_t t = 0; t <= sei.getNumTilesMinus1(); t++) {
         size_t j = sei.getTileId(t);
         if (sei.getDecodedAtlasTilesHashPresentFlag()) {
@@ -3044,7 +3167,7 @@ V3CReader::aspsVpccExtension(Bitstream&                     bitstream,
   TRACE_BITSTREAM_IN("%s", __func__);
   READ_CODE(ext.getRemoveDuplicatePointEnableFlag(), 1);
   if (asps.getPixelDeinterleavingFlag() || asps.getPLREnabledFlag()) {
-    READ_CODE(ext.getSurfaceThicknessMinus1(), 7);
+    READ_UVLC(ext.getSurfaceThicknessMinus1());
   }
   TRACE_BITSTREAM_OUT("%s", __func__);
 }

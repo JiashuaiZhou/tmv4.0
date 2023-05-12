@@ -75,10 +75,9 @@ public:
   }
 
 private:
-  bool decodeSequenceHeader(const V3cBitstream& syntax);
-  bool decodeFrameHeader(const V3cBitstream& syntax, VMCFrameInfo& frameInfo);
   bool decompressBaseMesh(const V3cBitstream&         syntax,
                           const BaseMeshTileLayer&    bmtl,
+                          const AtlasTileLayerRbsp& atl,
                           const VMCGroupOfFrames&     gof,
                           VMCFrameInfo&               frameInfo,
                           VMCFrame&                   frame,

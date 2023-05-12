@@ -419,8 +419,8 @@ while [[ $# -gt 0 ]] ; do
     --tmmMetric  ) TMMMETRIC=1;;
     --render     ) RENDER=1;;
     --video      ) VIDEO=1;;
-    --encParams  ) ENCPARAMS+=( $V );;
-    --decParams  ) DECPARAMS+=( $V );;
+    --encParams* ) ENCPARAMS+=( $V );;
+    --decParams* ) DECPARAMS+=( $V );;
     --csv        ) CSV=$V;;
     --ffmpeg     ) FFMPEG=$V;;
     *            ) print_usage "unsupported arguments: $C ";;

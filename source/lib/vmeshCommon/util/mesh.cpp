@@ -40,6 +40,41 @@
 namespace vmesh {
 
 //============================================================================
+Vec3<double> PROJDIRECTION6[6] = {
+        Vec3<double>(1.0, 0.0, 0.0),                        // 0 (x)*
+        Vec3<double>(0.0, 1.0, 0.0),                        // 1 (y)
+        Vec3<double>(0.0, 0.0, 1.0),                        // 2 (z)
+        Vec3<double>(-1.0, 0.0, 0.0),                       // 3 (-x)
+        Vec3<double>(0.0, -1.0, 0.0),                       // 4 (-y)*
+        Vec3<double>(0.0, 0.0, -1.0),                       // 5 (-z)*
+        //* indicates that the winding of the triangle must be inverted
+    };
+
+Vec3<double> PROJDIRECTION18[18] = {
+        //no rotation, 
+        Vec3<double>(1.0, 0.0, 0.0),                        // 0  (x)*
+        Vec3<double>(0.0, 1.0, 0.0),                        // 1  (y)
+        Vec3<double>(0.0, 0.0, 1.0),                        // 2  (z)
+        Vec3<double>(-1.0, 0.0, 0.0),                       // 3 (-x)
+        Vec3<double>(0.0, -1.0, 0.0),                       // 4 (-y)*
+        Vec3<double>(0.0, 0.0, -1.0),                       // 5 (-z)*
+        //45-degree rotation around Y axis
+        Vec3<double>(sqrt(2) / 2, 0.0, sqrt(2) / 2),   // 6  (x') -> 0  (x)*
+        Vec3<double>(-sqrt(2) / 2, 0.0, sqrt(2) / 2),  // 7  (z') -> 2  (z)
+        Vec3<double>(-sqrt(2) / 2, 0.0, -sqrt(2) / 2), // 8 (-x') -> 3 (-x)
+        Vec3<double>(sqrt(2) / 2, 0.0, -sqrt(2) / 2),  // 9 (-z') -> 5 (-z)*
+        //45-degree rotation around X axis
+        Vec3<double>(0.0, sqrt(2) / 2, sqrt(2) / 2),   // 10  (y') -> 1  (y)
+        Vec3<double>(0.0, sqrt(2) / 2, -sqrt(2) / 2),  // 11 (-z') -> 5 (-z)*
+        Vec3<double>(0.0, -sqrt(2) / 2, -sqrt(2) / 2), // 12 (-y') -> 4 (-y)*
+        Vec3<double>(0.0, -sqrt(2) / 2, sqrt(2) / 2),  // 13  (z') -> 2  (z)
+        //45-degree rotation around Z axis
+        Vec3<double>(sqrt(2) / 2, sqrt(2) / 2, 0.0),   // 14  (x') -> 0  (x)* 
+        Vec3<double>(sqrt(2) / 2, -sqrt(2) / 2, 0.0),  // 15 (-y') -> 4 (-y)*
+        Vec3<double>(-sqrt(2) / 2, -sqrt(2) / 2, 0.0), // 16 (-x') -> 3 (-x)
+        Vec3<double>(-sqrt(2) / 2, sqrt(2) / 2, 0.0),  // 17  (y') -> 1  (y)
+        //* indicates that the winding of the triangle must be inverted
+    };
 
 //============================================================================
 
@@ -78,6 +113,39 @@ set(std::shared_ptr<tinyply::PlyData> src,
       break;
     }
   }
+}
+//============================================================================
+template<typename T>
+T
+TriangleMesh<T>::perimeter() const
+{
+    T perimeter = T(0);
+    StaticAdjacencyInformation<int32_t> vertexToTriangle;
+    ComputeVertexToTriangle(_coordIndex, _coord.size(), vertexToTriangle);
+    std::vector<int8_t> vtags(_coord.size());
+    std::vector<int8_t> ttags(_coordIndex.size());
+    std::vector<int8_t> isBoundaryVertex;
+    const auto vertexCount = int32_t(vertexToTriangle.size());
+    if (vertexCount == 0) {
+        return T(0);
+    }
+    isBoundaryVertex.resize(vertexCount);
+    std::fill(isBoundaryVertex.begin(), isBoundaryVertex.end(), int8_t(0));
+    std::vector<int32_t> vadj;
+    for (int32_t vindex0 = 0; vindex0 < vertexCount; ++vindex0) {
+        ComputeAdjacentVertices(vindex0, _coordIndex, vertexToTriangle, vtags, vadj);
+        for (int vindex1 : vadj) {
+            if (vindex1 <= vindex0) {
+                continue;
+            }
+            if (ComputeEdgeAdjacentTriangleCount(vindex0, vindex1, vertexToTriangle, ttags) == 1) {
+                isBoundaryVertex[vindex0] = int8_t(1);
+                isBoundaryVertex[vindex1] = int8_t(1);
+                perimeter += (_coord[vindex0] - _coord[vindex1]).norm();
+            }
+        }
+    }
+    return perimeter;
 }
 
 //============================================================================
@@ -300,6 +368,62 @@ TriangleMesh<T>::saveToOBJ(const std::string& fileName) const {
     return true;
   }
   return false;
+}
+
+//----------------------------------------------------------------------------
+
+template<typename T>
+bool
+TriangleMesh<T>::saveToOBJUsingFidAsColor(const std::string& fileName) {
+    reserveTexCoords(triangleCount() * 3);
+    reserveTexCoordTriangles(triangleCount());
+    int side = 100;
+    float numIndPerRow = 50.0;
+    auto maxNumFaceId = *std::max_element(faceIds().begin(), faceIds().end()) + 1;
+    float totalRows = std::ceil((float)maxNumFaceId / numIndPerRow);
+    for (int idx = 0; idx < faceIds().size(); idx++) {
+        float x = ((faceId(idx) % (int)numIndPerRow) + 0.5) / (numIndPerRow);
+        float y = 1 - ((faceId(idx) / numIndPerRow) + 0.5) / (totalRows);
+        texCoords().push_back(Vec2<float>(x, y));
+        texCoords().push_back(Vec2<float>(x, y));
+        texCoords().push_back(Vec2<float>(x, y));
+        texCoordTriangles().push_back(vmesh::Triangle(3 * idx, 3 * idx + 1, 3 * idx + 2));
+    }
+    vmesh::Frame<uint8_t> outputTexture;
+    outputTexture.resize(numIndPerRow * side, totalRows * side, vmesh::ColourSpace::BGR444p);
+    auto& R = outputTexture.plane(0);
+    auto& G = outputTexture.plane(1);
+    auto& B = outputTexture.plane(2);
+    std::vector<uint8_t> RedChannel;
+    std::vector<uint8_t> GreenChannel;
+    std::vector<uint8_t> BlueChannel;
+    for (int i = 0; i < totalRows * numIndPerRow; i++) {
+        RedChannel.push_back(rand() % 255);
+        GreenChannel.push_back(rand() % 255);
+        BlueChannel.push_back(rand() % 255);
+    }
+    for (int h = 0; h < totalRows; h++) {
+        for (int w = 0; w < numIndPerRow; w++) {
+            for (int i = 0; i < side; i++) {
+                for (int j = 0; j < side; j++) {
+                    R.set(i + h * side, j + w * side, RedChannel[h * numIndPerRow + w]);
+                    G.set(i + h * side, j + w * side, GreenChannel[h * numIndPerRow + w]);
+                    B.set(i + h * side, j + w * side, BlueChannel[h * numIndPerRow + w]);
+                }
+            }
+        }
+    }
+    outputTexture.save(fileName + ".png");
+    vmesh::Material<double> material;
+    material.texture = vmesh::basename(fileName + ".png");
+    material.save(fileName + ".mtl");
+    setMaterialLibrary(vmesh::basename(fileName + ".mtl"));
+    save(fileName + ".obj");
+    //now remove the texture coordinates
+    texCoords().clear();
+    texCoordTriangles().clear();
+    setMaterialLibrary("");
+    return true;
 }
 
 //----------------------------------------------------------------------------
@@ -717,6 +841,7 @@ TriangleMesh<T>::append(const TriangleMesh<T>& mesh) {
   const auto offsetTriangles         = triangleCount();
   const auto offsetTexCoordTriangles = texCoordTriangleCount();
   const auto offsetNormalTriangles   = normalTriangleCount();
+  const auto offsetFaceId            = faceIdCount();
 
   const auto posCount         = mesh.pointCount();
   const auto tcCount          = mesh.texCoordCount();
@@ -724,6 +849,8 @@ TriangleMesh<T>::append(const TriangleMesh<T>& mesh) {
   const auto triCount         = mesh.triangleCount();
   const auto texCoordTriCount = mesh.texCoordTriangleCount();
   const auto normalTriCount   = mesh.normalTriangleCount();
+  const auto faceIdCount      = mesh.faceIdCount();
+
 
   resizePoints(offsetPositions + posCount);
   for (int v = 0; v < posCount; ++v) {
@@ -738,6 +865,13 @@ TriangleMesh<T>::append(const TriangleMesh<T>& mesh) {
   resizeNormals(offsetNormal + nCount);
   for (int v = 0; v < nCount; ++v) {
     setNormal(offsetNormal + v, mesh.normal(v));
+  }
+  resizeFaceIds(offsetFaceId + faceIdCount);
+  int maxValFaceId = 0;
+  if (faceIdCount > 0)
+      maxValFaceId = *std::max_element(mesh.faceIds().begin(),mesh.faceIds().end());
+  for (int v = 0; v < faceIdCount; ++v) {
+      setFaceId(offsetFaceId + v, mesh.faceId(v) + maxValFaceId + 1);
   }
 
   resizeTriangles(offsetTriangles + triCount);

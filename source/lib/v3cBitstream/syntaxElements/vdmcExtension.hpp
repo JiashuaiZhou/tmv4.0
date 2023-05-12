@@ -33,6 +33,7 @@
 #pragma once
 
 #include "v3cCommon.hpp"
+#include "atlasFrameMeshInformation.hpp"
 #include "vmc.hpp"
 
 namespace vmesh {
@@ -125,6 +126,14 @@ public:
   auto& getLiftingUpdateWeight() const { return liftingUpdateWeight; }
   auto& getLiftingPredictionWeight() const { return liftingPredictionWeight; }
 
+  //orthoAtlas
+  auto& getProjectionTextCoordEnableFlag() const { return   projectionTextCoordEnableFlag; }
+  auto& getProjectionTextCoordMappingMethod() const { return projectionTextCoordMappingMethod; }
+  auto& getProjectionTextCoordScaleFactor() const { return projectionTextCoordScaleFactor; }
+  auto& getProjectionTextCoordEnableFlag() { return   projectionTextCoordEnableFlag; }
+  auto& getProjectionTextCoordMappingMethod() { return projectionTextCoordMappingMethod; }
+  auto& getProjectionTextCoordScaleFactor() { return projectionTextCoordScaleFactor; }
+
 private:
   // Displacement
   uint8_t  encodeDisplacements        = 0;
@@ -139,7 +148,7 @@ private:
   // Motion
   int32_t maxNumNeighborsMotion       = 3;
 
-  // Subdivition
+  // Subdivision
   uint8_t subdivisionIterationCount      = 0;
   bool    interpolateDisplacementNormals = false;
   int32_t liftingQPs[3]                  = {0, 0, 0};
@@ -156,16 +165,71 @@ private:
   bool              liftingSkipUpdate                   = false;
   DisplacementCoordinateSystem displacementCoordinateSystem =
     DisplacementCoordinateSystem::LOCAL;
+
+  // orthoAtlas
+  bool    projectionTextCoordEnableFlag = false;
+  uint8_t projectionTextCoordMappingMethod = 0;
+  double  projectionTextCoordScaleFactor = 0.0;
+
 };
 
 // AFPS V-DMC extension syntax
 class AfpsVdmcExtension {
 public:
   AfpsVdmcExtension() {}
-  ~AfpsVdmcExtension() {}
+  ~AfpsVdmcExtension() {
+      projectionTextcoordPresentFlag_.clear();
+      projectionTextcoordWidth_.clear();
+      projectionTextcoordHeight_.clear();
+      projectionTextcoordGutter_.clear();
+  }
   AfpsVdmcExtension& operator=(const AfpsVdmcExtension&) = default;
 
+  auto& getAtlasFrameMeshInformation() { return atlasFrameMeshInformation_; }
+  auto& getProjectionTextcoordPresentFlag() { return projectionTextcoordPresentFlag_; }
+  auto& getProjectionTextcoordWidth() { return projectionTextcoordWidth_; }
+  auto& getProjectionTextcoordHeight() { return projectionTextcoordHeight_; }
+  auto& getProjectionTextcoordGutter() { return projectionTextcoordGutter_; }
+
+  auto& getProjectionTextcoordPresentFlag(int index) { 
+      if (index >= projectionTextcoordPresentFlag_.size()) projectionTextcoordPresentFlag_.resize(projectionTextcoordPresentFlag_.size() + 1);
+      return projectionTextcoordPresentFlag_[index]; }
+  auto& getProjectionTextcoordWidth(int index) { 
+      if (index >= projectionTextcoordWidth_.size()) projectionTextcoordWidth_.resize(projectionTextcoordWidth_.size() + 1);
+      return projectionTextcoordWidth_[index]; }
+  auto& getProjectionTextcoordHeight(int index) { 
+      if (index >= projectionTextcoordHeight_.size()) projectionTextcoordHeight_.resize(projectionTextcoordHeight_.size() + 1);
+      return projectionTextcoordHeight_[index]; }
+  auto& getProjectionTextcoordGutter(int index) { 
+      if (index >= projectionTextcoordGutter_.size()) projectionTextcoordGutter_.resize(projectionTextcoordGutter_.size() + 1);
+      return projectionTextcoordGutter_[index]; }
+  const auto& getProjectionTextcoordPresentFlag(int index) const {
+      return projectionTextcoordPresentFlag_[index];
+  }
+  const auto& getProjectionTextcoordWidth(int index) const {
+      return projectionTextcoordWidth_[index];
+  }
+  const auto& getProjectionTextcoordHeight(int index) const {
+      return projectionTextcoordHeight_[index];
+  }
+  const auto& getProjectionTextcoordGutter(int index) const {
+      return projectionTextcoordGutter_[index];
+  }
+  void allocateStructures(int size) {
+      projectionTextcoordPresentFlag_.resize(size);
+      projectionTextcoordWidth_.resize(size);
+      projectionTextcoordHeight_.resize(size);
+      projectionTextcoordGutter_.resize(size);
+  }
+
 private:
+
+    //orthoAtlas
+    AtlasFrameMeshInformation atlasFrameMeshInformation_;
+    std::vector<uint8_t> projectionTextcoordPresentFlag_;
+    std::vector<uint32_t> projectionTextcoordWidth_;
+    std::vector<uint32_t> projectionTextcoordHeight_;
+    std::vector<uint32_t> projectionTextcoordGutter_;
 };
 
 // AAPS V-DMC extension syntax

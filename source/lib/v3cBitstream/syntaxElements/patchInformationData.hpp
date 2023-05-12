@@ -40,6 +40,7 @@
 #include "skipPatchDataUnit.hpp"
 #include "rawPatchDataUnit.hpp"
 #include "eomPatchDataUnit.hpp"
+#include "meshPatchDataUnit.hpp"
 
 namespace vmesh {
 
@@ -59,6 +60,7 @@ public:
   auto& getSkipPatchDataUnit() const { return skipPatchDataUnit_; }
   auto& getRawPatchDataUnit() const { return rawPatchyDataUnit_; }
   auto& getEomPatchDataUnit() const { return eomPatchDataUnit_; }
+  auto& getMeshPatchDataUnit() const { return meshPatchDataUnit_; }
 
   auto& getTileOrder() { return tileOrder_; }
   auto& getPatchIndex() { return patchIndex_; }
@@ -69,6 +71,7 @@ public:
   auto& getSkipPatchDataUnit() { return skipPatchDataUnit_; }
   auto& getRawPatchDataUnit() { return rawPatchyDataUnit_; }
   auto& getEomPatchDataUnit() { return eomPatchDataUnit_; }
+  auto& getMeshPatchDataUnit() { return meshPatchDataUnit_; }
 
 private:
   size_t             tileOrder_  = 0;
@@ -80,6 +83,7 @@ private:
   SkipPatchDataUnit  skipPatchDataUnit_;
   RawPatchDataUnit   rawPatchyDataUnit_;
   EOMPatchDataUnit   eomPatchDataUnit_;
+  MeshPatchDataUnit   meshPatchDataUnit_;
 };
 
 };  // namespace vmesh

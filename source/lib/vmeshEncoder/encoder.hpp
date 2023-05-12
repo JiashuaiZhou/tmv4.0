@@ -87,8 +87,8 @@ operator>>(std::istream& in, CachingPoint& val) {
   in >> str;
   if (str == "simplify" || str == "1") {
     val = CachingPoint::SIMPLIFY;
-  } else if (str == "uvaltas" || str == "2") {
-    val = CachingPoint::UVATLAS;
+  } else if (str == "texgen" || str == "2") {
+    val = CachingPoint::TEXGEN;
   } else if (str == "subdiv" || str == "3") {
     val = CachingPoint::SUBDIV;
   } else {
@@ -104,7 +104,7 @@ operator<<(std::ostream& out, CachingPoint val) {
   switch (val) {
   case CachingPoint::NONE: out << "none"; break;
   case CachingPoint::SIMPLIFY: out << "simplify"; break;
-  case CachingPoint::UVATLAS: out << "uvaltas"; break;
+  case CachingPoint::TEXGEN: out << "texgen"; break;
   case CachingPoint::SUBDIV: out << "subdiv"; break;
   default: out << int(val) << " (unknown)";
   }
@@ -305,6 +305,25 @@ struct VMCEncoderParameters {
   double  trackedPointNormalFlipThreshold = 0.5;
 
   // TextureParametrization
+  int              textureParameterizationType = 0; // 0: UVAtlas, 1: ortho 
+  //ortho parameters
+  bool             useVertexCriteria = false;
+  bool             bUseSeedHistogram = true;
+  double           strongGradientThreshold = 180;
+  double           maxCCAreaRatio = 1;
+  int              maxNumFaces = std::numeric_limits<int>::max();
+  bool             bFaceClusterMerge = true;
+  double           lambdaRDMerge = 1.0;
+  bool             check2DConnectivity = true;
+  bool             adjustNormalDirection = false;
+  bool             bPatchScaling = false;
+  bool             bTemporalStabilization = false;
+  int              iDeriveTextCoordFromPos = 1;
+  bool             use45DegreeProjection = false;
+  double           packingScaling = 0.95;
+  bool             packSmallPatchesOnTop = false;
+  int              packingType = 0;
+  //UV atlas parameters
   size_t           maxCharts  = size_t();
   float            maxStretch = 0.16667F;
   float            gutter     = 2.F;
@@ -372,7 +391,8 @@ private:
 
   void textureParametrization(VMCFrame&                   frame,
                               TriangleMesh<MeshType>&     decimate,
-                              const VMCEncoderParameters& params);
+                              const VMCEncoderParameters& params,
+                              VMCFrame& previousFrame);
 
   void geometryParametrization(VMCGroupOfFrames&             gof,
                                VMCGroupOfFramesInfo&         gofInfo,
@@ -384,10 +404,11 @@ private:
   void        unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
                             VMCGroupOfFrames&           gof,
                             const VMCEncoderParameters& params);
-  bool        computeDracoMapping(TriangleMesh<MeshType>      base,
-                                  std::vector<int32_t>&       mapping,
-                                  int32_t                     frameIndex,
-                                  const VMCEncoderParameters& params) const;
+  bool        computeDracoMapping(TriangleMesh<MeshType>      origBase,
+                                  TriangleMesh<MeshType>      modifiedBase,
+                                  VMCFrame& frame,
+                                  const VMCEncoderParameters& params,
+                                  bool                        removeDuplicateVerticesFlag) const;
   static BaseMeshType
   chooseSkipOrInter(const std::vector<Vec3<int32_t>>& current,
                               const std::vector<Vec3<int32_t>>& reference);
@@ -402,6 +423,7 @@ private:
                         VMCFrame&                   frame,
                         TriangleMesh<MeshType>&     rec,
                         BaseMeshTileLayer&          mfdu,
+                        AtlasTileLayerRbsp& atl,
                         const VMCEncoderParameters& params);
   bool
   compressMotion(const std::vector<Vec3<int32_t>>& triangles,
@@ -429,19 +451,6 @@ private:
   bool compressTextureVideo(Sequence&                   reconstruct,
                             V3cBitstream&               syntax,
                             const VMCEncoderParameters& params);
-
-  static bool transferTexture(const TriangleMesh<MeshType>& input,
-                              const Frame<uint8_t>&         inputTexture,
-                              TriangleMesh<MeshType>&       rec,
-                              Frame<uint8_t>&               outputTexture,
-                              const VMCEncoderParameters&   params);
-
-  static bool transferTexture(TriangleMesh<MeshType>&     targetMesh,
-                              TriangleMesh<MeshType>&     sourceMesh,
-                              const Frame<uint8_t>&       targetTexture,
-                              Frame<uint8_t>&             outputTexture,
-                              const std::vector<int32_t>& srcTri2tgtTri,
-                              const VMCEncoderParameters& params);
 
   std::string _keepFilesPathPrefix = {};
   int32_t     _gofIndex            = 0;

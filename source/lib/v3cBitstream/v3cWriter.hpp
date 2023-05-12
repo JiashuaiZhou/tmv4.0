@@ -216,7 +216,7 @@ private:
                          AspsVdmcExtension&             ext);
 
   // AFPS V-DMC extension syntax
-  void afpsVdmcExtension(Bitstream& bitstream, AfpsVdmcExtension& ext);
+  void afpsVdmcExtension(Bitstream& bitstream, AtlasSequenceParameterSetRbsp& asps, AfpsVdmcExtension& ext);
 
   // AAPS V-DMC extension syntax
   void aapsVdmcExtension(Bitstream& bitstream, AapsVdmcExtension& ext);
@@ -294,6 +294,9 @@ private:
   void atlasFrameTileInformation(AtlasFrameTileInformation&     afti,
                                  AtlasSequenceParameterSetRbsp& asps,
                                  Bitstream&                     bitstream);
+
+  // 8.3.6.2.5 Atlas frame mesh information syntax
+  void atlasFrameMeshInformation(AtlasFrameMeshInformation& afmi, Bitstream& bitstream);
 
   // 8.3.6.2 Atlas adaptation parameter set RBSP syntax
   // 8.3.6.2.1 General atlas adaptation parameter set RBSP syntax
@@ -393,6 +396,11 @@ private:
                         V3cBitstream&     syntax,
                         Bitstream&        bitstream);
 
+  // 8.3.6.x Mesh patch data unit syntax
+  void meshPatchDataUnit(MeshPatchDataUnit& mpdu,
+          AtlasTileHeader& ath,
+          V3cBitstream& syntax,
+          Bitstream& bitstream);
   // 8.3.7.9  Point local reconstruction data syntax
   void plrData(PLRData&                       plrd,
                V3cBitstream&                  syntax,

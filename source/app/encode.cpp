@@ -83,7 +83,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
   (po::Section("Common"))
     ("help",      print_help,          false, "This help text")
     ("config,c",  po::parseConfigFile, "Configuration file name")
-    ("verbose,v", metParams.verbose,   false, "Verbose output")
+    ("verbose,v", params.verbose,   false, "Verbose output")
 
   (po::Section("Input"))
     ("srcMesh", 
@@ -180,6 +180,76 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Max position")
 
   (po::Section("Texture parametrization"))
+    ("textureParametrizationType",
+      encParams.textureParameterizationType,
+      encParams.textureParameterizationType,
+      "Texture Parameterization Type of UVATLAS (0) or ORTHO (1)")
+    //ortho parameters
+    ("orthoAtlasUseVertexCriteria",
+      encParams.useVertexCriteria,
+      encParams.useVertexCriteria,
+      "Use Vertex Criteria (DEFAULT=1)")
+    ("orthoAtlasUseSeedHistogram",
+      encParams.bUseSeedHistogram,
+      encParams.bUseSeedHistogram,
+      "Determine CC seed using histogram (DEFAULT=1)")
+    ("orthoAtlasStrongGradientThreshold",
+      encParams.strongGradientThreshold,
+      encParams.strongGradientThreshold,
+      "Strong Gradient Threshold (DEFAULT=180)")
+    ("orthoAtlasMaxCCAreaRatio",
+      encParams.maxCCAreaRatio,
+      encParams.maxCCAreaRatio,
+      "Minimum Connected Components Area Ratio (DEFAULT=1)")
+    ("orthoAtlasMaxNumFaces",
+      encParams.maxNumFaces,
+      encParams.maxNumFaces,
+      "Max Num Faces (DEFAULT=inf)")
+    ("orthoAtlasEnableFaceClusterMerge",
+      encParams.bFaceClusterMerge,
+      encParams.bFaceClusterMerge,
+      "Face Cluster Merge (DEFAULT=0)")
+    ("orthoAtlasLambdaRDMerge",
+      encParams.lambdaRDMerge,
+      encParams.lambdaRDMerge,
+      "Lambda RD for merging (DEFAULT=1.0)")
+    ("orthoAtlasCheck2DConnectivity",
+      encParams.check2DConnectivity,
+      encParams.check2DConnectivity,
+      "Enforce 2D connectivity (DEFAULT=1)")
+    ("orthoAtlasAdjustNormalDirection",
+      encParams.adjustNormalDirection,
+      encParams.adjustNormalDirection,
+      "Adjust normal for projected patches (DEFAULT=1)")
+    ("orthoAtlasEnablePatchScaling",
+      encParams.bPatchScaling,
+      encParams.bPatchScaling,
+      "Enable patch scaling (DEFAULT=0)")
+    ("orthoAtlasEnablePatchTemporalStabilization",
+      encParams.bTemporalStabilization,
+      encParams.bTemporalStabilization,
+      "Enable patch temporal stabilization (DEFAULT=1)")
+    ("orthoAtlasDeriveTextCoordFromPos",
+      encParams.iDeriveTextCoordFromPos,
+      encParams.iDeriveTextCoordFromPos,
+      "Derivation of text. coords. from position: 0 (disabled), 1 (using UV coords,DEFAULT), 2 (using FaceId), 3 (using Connected Components)")
+    ("orthoAtlasUse45DegreeProjection",
+      encParams.use45DegreeProjection,
+      encParams.use45DegreeProjection,
+      "Use 45 degree projection (DEFAULT=1)")
+    ("orthoAtlasPackingScaling",
+      encParams.packingScaling,
+      encParams.packingScaling,
+      "Packing scaling adjustment (DEFAULT=0.9)")
+    ("orthoAtlasPackSmallPatchesOnTop",
+      encParams.packSmallPatchesOnTop,
+      encParams.packSmallPatchesOnTop,
+      "Pack small patches on top (DEFAULT=1)")
+    ("orthoAtlasPackingType",
+      encParams.packingType,
+      encParams.packingType,
+      "Default Packing (0), Tetris Packing (1), Projection Packing (2)")
+    //uvatlas parameters
     ("textureParametrizationQuality", 
       encParams.uvOptions, 
       encParams.uvOptions,       
@@ -688,7 +758,7 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       "Caching points: \n"
       "  - 0/none    : off \n"
       "  - 1/simplify: symplify\n"
-      "  - 2/uvatlas : uvatlas\n"
+      "  - 2/textgen : textgen\n"
       "  - 3/subdiv  : subdiv \n"
       "  - 255/create: create caching files")
   ;
@@ -744,6 +814,19 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
           {liftingQP2[i + 0], liftingQP2[i + 1], liftingQP2[i + 2]});
       }
     }
+  }
+  if ((encParams.textureParameterizationType == 0) || (encParams.baseIsSrc && encParams.subdivIsBase)) {
+      //Either no texture parameterization was selected or UV Atlas was chosen, so disable the texture derivation
+      encParams.iDeriveTextCoordFromPos = 0;
+  }
+
+  if (encParams.packingScaling >= 1.0) {
+      err.error() << "Packing scaling adjustment should be less than 1.0\n";
+  }
+
+  if ((encParams.iDeriveTextCoordFromPos == 2) || (encParams.iDeriveTextCoordFromPos == 3)) {
+      //Currently MPEG codec does not work without UV coordinates, so switching to DRACO codec
+      encParams.meshCodecId = vmesh::GeometryCodecId::DRACO;
   }
 
   if (err.is_errored) { return false; }

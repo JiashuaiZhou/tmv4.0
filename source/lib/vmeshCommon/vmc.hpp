@@ -68,7 +68,7 @@ enum class PaddingMethod {
 enum class CachingPoint {
   NONE     = 0,
   SIMPLIFY = 1,
-  UVATLAS  = 2,
+  TEXGEN   = 2,
   SUBDIV   = 3
 };
 
@@ -139,6 +139,9 @@ struct VMCFrame {
   std::vector<SubdivisionLevelInfo> subdivInfoLevelOfDetails;
   TriangleMesh<int32_t>             baseClean;
   std::vector<Vec2<int32_t>>        baseIntegrateIndices;
+
+  // texture mapping variables
+  std::vector<ConnectedComponent<double>> packedCCList;
 };
 
 //============================================================================

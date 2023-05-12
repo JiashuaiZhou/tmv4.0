@@ -326,6 +326,7 @@ public:
 
   T norm() const { return static_cast<T>(std::sqrt(norm2())); }
   T norm2() const { return (*this) * (*this); }
+  T normInf() const { return std::max(_vec[0], std::max(_vec[1], _vec[2])); }
 
   void normalize() {
     const T n2 = norm2();

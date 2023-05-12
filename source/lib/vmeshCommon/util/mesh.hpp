@@ -244,6 +244,7 @@ public:
     _normal        = src._normal;
     _normalIndex   = src._normalIndex;
     _mtllib        = src._mtllib;
+    _faceId        = src._faceId;
     return *this;
   }
 
@@ -267,6 +268,8 @@ public:
 
   int32_t normalCount() const { return int32_t(_normal.size()); }
   int32_t normalTriangleCount() const { return int32_t(_normalIndex.size()); }
+
+  int32_t faceIdCount() const { return int32_t(_faceId.size()); }
 
   const Vec3<T>& displacement(const int32_t dispIndex) const {
     assert(dispIndex >= 0 && dispIndex < displacementCount());
@@ -318,6 +321,16 @@ public:
     return _normal[normalIndex];
   }
 
+  const int& faceId(const int32_t faceIdIndex) const {
+      assert(faceIdIndex >= 0 && faceIdIndex < faceIdCount());
+      return _faceId[faceIdIndex];
+  }
+
+  int& faceId(const int32_t faceIdIndex) {
+      assert(faceIdIndex >= 0 && faceIdIndex < faceIdCount());
+      return _faceId[faceIdIndex];
+  }
+  
   T area() const {
     T area = T(0);
     for (const auto& tri : _coordIndex) {
@@ -333,6 +346,67 @@ public:
     return area;
   }
 
+
+  T projectedArea(int projIdx) const
+  {
+      T projectedArea = T(0);
+      int tangentAxis, biTangentAxis, projAxis;
+      int tangentAxisDir, biTangentAxisDir, projAxisDir;
+      getProjectedAxis(projIdx, tangentAxis, biTangentAxis, projAxis, tangentAxisDir, biTangentAxisDir, projAxisDir);
+      for (const auto& tri : _coordIndex) {
+          const auto i = tri[0];
+          const auto j = tri[1];
+          const auto k = tri[2];
+          auto a = _coord[i];
+          auto b = _coord[j];
+          auto c = _coord[k];
+          auto aP = projectPoint(a, projIdx);
+          auto bP = projectPoint(b, projIdx);
+          auto cP = projectPoint(c, projIdx);
+          projectedArea += (aP[0] * (bP[1] - cP[1]) + bP[0] * (cP[1] - aP[1]) + cP[0] * (aP[1] - bP[1])) / 2;
+      }
+      return projectedArea;
+  }
+
+  T perimeter() const;
+
+  T stretchL2(int projIdx) const {
+      int tangentAxis, biTangentAxis, projAxis;
+      int tangentAxisDir, biTangentAxisDir, projAxisDir;
+      getProjectedAxis(projIdx, tangentAxis, biTangentAxis, projAxis, tangentAxisDir, biTangentAxisDir, projAxisDir);
+      T strechL2 = T(0);
+      T areaTotal = T(0);
+      for (const auto& tri : _coordIndex) {
+          const auto i = tri[0];
+          const auto j = tri[1];
+          const auto k = tri[2];
+          auto a = _coord[i];
+          auto b = _coord[j];
+          auto c = _coord[k];
+          Vec3<T> normalTriangle = computeTriangleNormal(a, b, c, false);
+          T areaTriangle = 0.5 * normalTriangle.norm();
+          areaTotal += areaTriangle;
+          if (areaTriangle == T(0.0)) {
+              // degenerate 3D triangle, projection will not affect the projected area
+              continue;
+          }
+          if ((normalTriangle * PROJDIRECTION18[projIdx]) > 0.0) {
+              auto aP = projectPoint(a, projIdx);
+              auto bP = projectPoint(b, projIdx);
+              auto cP = projectPoint(c, projIdx);
+              T areaProjectedTriangle = (aP[0] * (bP[1] - cP[1]) + bP[0] * (cP[1] - aP[1]) + cP[0] * (aP[1] - bP[1])) / 2;
+              strechL2 += (0.5 + 0.5 * (areaTriangle / areaProjectedTriangle) * (areaTriangle / areaProjectedTriangle)) * areaTriangle;
+          }
+          else {
+              return std::numeric_limits<T>::max();
+          }
+      }
+      if (areaTotal == T(0.0))
+          return 0.0;
+      else
+          return std::sqrt(strechL2 / areaTotal);
+  }
+
   void computeTriangleNormals(std::vector<Vec3<T>>& normals,
                               const bool            normalize = true) const {
     const auto triCount = triangleCount();
@@ -342,6 +416,32 @@ public:
       normals[t]      = computeTriangleNormal(
         _coord[tri[0]], _coord[tri[1]], _coord[tri[2]], normalize);
     }
+  }
+
+  void computeTriangleAreas(
+      std::vector<double>& areas) const
+  {
+      const auto triCount = triangleCount();
+      areas.resize(triCount);
+      for (int32_t t = 0; t < triCount; ++t) {
+          const auto& tri = triangle(t);
+          areas[t] = computeTriangleArea(_coord[tri[0]], _coord[tri[1]], _coord[tri[2]]);
+      }
+  }
+
+  void computeProjectedTriangleAreas(
+      std::vector<double>& areas, int projIdx) const
+  {
+      const auto triCount = triangleCount();
+      areas.resize(triCount);
+      for (int32_t t = 0; t < triCount; ++t) {
+          const auto& tri = triangle(t);
+          Vec3<T> vert[3] = { _coord[tri[0]], _coord[tri[1]], _coord[tri[2]] };
+          auto aP = projectPoint(vert[0], projIdx);
+          auto bP = projectPoint(vert[1], projIdx);
+          auto cP = projectPoint(vert[2], projIdx);
+          areas[t] = (aP[0] * (bP[1] - cP[1]) + bP[0] * (cP[1] - aP[1]) + cP[0] * (aP[1] - bP[1])) / 2;
+      }
   }
 
   void computeNormals(const bool normalize = true) {
@@ -394,6 +494,20 @@ public:
     return bbox;
   }
 
+  Box2<double> boundingBoxProjected(int projIdx) const {
+      Box2<double> bbox;
+      bbox.min = std::numeric_limits<double>::max();
+      bbox.max = std::numeric_limits<double>::min();
+      for (const auto& pt : _coord) {
+          auto projPt = projectPoint(pt, projIdx);
+          for (int32_t k = 0; k < 2; ++k) {
+              bbox.min[k] = std::min(bbox.min[k], projPt[k]);
+              bbox.max[k] = std::max(bbox.max[k], projPt[k]);
+          }
+      }
+      return bbox;
+  }
+
   Box2<T> texCoordBoundingBox() const {
     Box2<T> bbox;
     bbox.min = std::numeric_limits<T>::max();
@@ -435,6 +549,8 @@ public:
   const std::vector<Vec3<int>>& normalTriangles() const {
     return _normalIndex;
   }
+
+  const std::vector<int>& faceIds() const { return _faceId; }
 
   std::vector<Vec3<T>>&   displacements() { return _disp; }
   std::vector<Vec3<T>>&   points() { return _coord; }
@@ -529,6 +645,11 @@ public:
     _normal[normalIndex] = pt;
   }
 
+  void setFaceId(const int32_t faceIdIndex, const T val) {
+      assert(faceIdIndex >= 0 && faceIdIndex < faceIdCount());
+      _faceId[faceIdIndex] = val;
+  }
+
   void addDisplacement(const Vec3<T>& disp) { _disp.push_back(disp); }
   void addDisplacement(const T dx, const T dy, const T dz) {
     _disp.push_back(Vec3<T>(dx, dy, dz));
@@ -553,6 +674,8 @@ public:
   void addNormal(const T x, const T y, const T z) {
     _normal.push_back(Vec3<T>(x, y, z));
   }
+
+  void addFaceId(const int32_t val) { _faceId.push_back(val); }
 
   void addTriangle(const Triangle& tri) { _coordIndex.push_back(tri); }
   void addTriangle(const int32_t i, const int32_t j, const int32_t k) {
@@ -638,6 +761,10 @@ public:
     _normal.resize(normalCount, 0.0);
   }
 
+  void resizeFaceIds(const int32_t faceIdCount) {
+      _faceId.resize(faceIdCount, -1);
+  }
+
   void resizeTriangles(const int32_t triCount) {
     _coordIndex.resize(triCount, -1);
   }
@@ -675,6 +802,10 @@ public:
     _normalIndex.reserve(normalTriangleCount);
   }
 
+  void reserveFaceIds(const int32_t faceIdCount) {
+      _faceId.reserve(faceIdCount);
+  }
+
   void clear() {
     _disp.clear();
     _coord.clear();
@@ -684,6 +815,7 @@ public:
     _texCoordIndex.clear();
     _normal.clear();
     _normalIndex.clear();
+    _faceId.clear();
   }
 
   void append(const TriangleMesh<T>& mesh);
@@ -751,6 +883,11 @@ public:
     for (int i = 0; i < src.normals().size(); i++) {
       _normal[i] = (Vec3<T>)src.normal(i);
     }
+
+    _faceId.resize(src.faceIds().size());
+    for (int i = 0; i < src.faceIds().size(); i++) {
+        _faceId[i] = src.faceId(i);
+    }
   }
 
   inline void print(std::string str, const int32_t logFaces = 0) const {
@@ -761,6 +898,7 @@ public:
     printf("## Normals:      %-6d \n", normalCount());
     printf("## TexCoord:     %-6d \n", texCoordCount());
     printf("## Disp:         %-6d \n", displacementCount());
+    printf("## FaceId:       %-6d \n", faceIdCount());
     printf("## Triangles:    %-6d \n", triangleCount());
     printf("## TexTriangles: %-6d \n", texCoordTriangleCount());
     printf("## NrmTriangles: %-6d \n", normalTriangleCount());
@@ -771,7 +909,8 @@ public:
         printf(
           "## Tri %6zu: "
           "XYZ: (%9.5f %9.5f %9.5f)(%9.5f %9.5f %9.5f)(%9.5f %9.5f %9.5f) "
-          "UV: (%9.5f %9.5f)(%9.5f %9.5f)(%9.5f %9.5f)\n",
+          "UV: (%9.5f %9.5f)(%9.5f %9.5f)(%9.5f %9.5f) ",
+          "FaceId: (%d)\n",
           i,
           (float)_coord[_coordIndex[i][0]][0],
           (float)_coord[_coordIndex[i][0]][1],
@@ -787,7 +926,8 @@ public:
           (float)_texCoord[_texCoordIndex[i][1]][0],
           (float)_texCoord[_texCoordIndex[i][1]][1],
           (float)_texCoord[_texCoordIndex[i][2]][0],
-          (float)_texCoord[_texCoordIndex[i][2]][1]);
+          (float)_texCoord[_texCoordIndex[i][2]][1],
+          _faceId[i]);
       }
     }
     printf("#####\n");
@@ -796,6 +936,7 @@ public:
   bool load(const std::string& fileName, const int32_t frameIndex);
   bool load(const std::string& fileName);
   bool save(const std::string& fileName, const bool binary = true) const;
+  bool saveToOBJUsingFidAsColor(const std::string& fileName);
 
 private:
   bool loadFromOBJ(const std::string& fileName);
@@ -813,7 +954,97 @@ private:
   std::vector<Vec3<int>> _texCoordIndex;
   std::vector<Vec3<T>>   _normal;
   std::vector<Vec3<int>> _normalIndex;
+  std::vector<int>       _faceId;
   std::string            _mtllib;
+};
+
+//============================================================================
+
+template<typename T>
+class ConnectedComponent : public TriangleMesh<T> {
+public:
+    void setProjection(int val) { projection = val; }
+    int getProjection() { return projection; }
+    void setOrientation(int val) { orientation = val; }
+    int getOrientation() { return orientation; }
+    void setU0(int val) { U0 = val; }
+    int getU0() { return U0; }
+    void setV0(int val) { V0 = val; }
+    int getV0() { return V0; }
+    void setSizeU(int val) { sizeU = val; }
+    int getSizeU() { return sizeU; }
+    void setSizeV(int val) { sizeV = val; }
+    int getSizeV() { return sizeV; }
+    void setScale(double val) { scale = val; }
+    double getScale() { return scale; }
+    void setFrameScale(double val) { frameScale = val; }
+    double getFrameScale() { return frameScale; }
+    void setIdxPatch(int val) { idxPatch = val; }
+    int getIdxPatch() { return idxPatch; }
+    void setRefPatch(int val) { refPatch = val; }
+    int getRefPatch() { return refPatch; }
+    Vec2<double> convert(const Vec3<double>& coord, const vmesh::Box2<double>& bbBox, int width, int height, double gutter, int occupancyResolution) {
+        Vec2<double> retVal(0.0);
+        Vec2<double> bias(0.0);
+        double maxU(0.0);
+        // projection matrix
+        int tangentAxis, biTangentAxis, projAxis;
+        int tangentAxisDir, biTangentAxisDir, projAxisDir;
+        getProjectedAxis(projection, tangentAxis, biTangentAxis, projAxis, tangentAxisDir, biTangentAxisDir, projAxisDir);
+        retVal = projectPoint(coord, projection);
+        //remove bbox bias
+        retVal -= bbBox.min;
+        // invert u-axis to keep same winding
+        if ((projection == 0) || (projection == 4) || (projection == 5) || (projection == 6) || (projection == 9) || (projection == 11) || (projection == 12) || (projection == 14) || (projection == 15)) {
+            retVal[0] = (bbBox.max - bbBox.min)[0] - retVal[0];
+        }
+        // scale
+        retVal *= scale;
+        // gutter
+        retVal += Vec2<double>(gutter, gutter);
+        // rotation
+        double uu = retVal[0];
+        double vv = retVal[1];
+        switch (orientation) {
+        case 0: // no rotation
+            break;
+        case 1: // 90 degree
+            retVal[1] = uu;
+            retVal[0] = (sizeV * occupancyResolution - vv);
+            break;
+        case 2: // 180 degrees
+            retVal[1] = (sizeV * occupancyResolution - vv);
+            retVal[0] = (sizeU * occupancyResolution - uu);
+            break;
+        case 3: // 270 degrees
+            retVal[1] = (sizeU * occupancyResolution - uu);
+            retVal[0] = vv;
+            break;
+        default: // no rotation
+            retVal[1] = vv;
+            retVal[0] = uu;
+            break;
+        }
+        // translation
+        retVal += Vec2<double>(U0 * occupancyResolution, V0 * occupancyResolution);
+        // now turn the coordinates into the [0,1] range
+        retVal[0] /= width;
+        retVal[1] /= height;
+        return retVal;
+    }
+private:
+    // variable related to orthographic texture mapping
+    int projection;
+    int orientation;
+    int U0;
+    int V0;
+    int sizeU;
+    int sizeV;
+    double patchScale;
+    double frameScale;
+    double scale;
+    int idxPatch;
+    int refPatch;
 };
 
 //============================================================================
@@ -1038,6 +1269,35 @@ ComputeAdjacentVertices(
       }
     }
   }
+}
+
+//----------------------------------------------------------------------------
+
+inline int32_t
+ComputeAdjacentTrianglesCount(
+    const Triangle& triangle,
+    const StaticAdjacencyInformation<int32_t>& vertexToTriangle,
+    std::vector<int8_t>& ttags)
+{
+    int32_t tcount = 0;
+    TagAdjacentTriangles(triangle[0], 0, vertexToTriangle, ttags);
+    TagAdjacentTriangles(triangle[1], 0, vertexToTriangle, ttags);
+    TagAdjacentTriangles(triangle[2], 0, vertexToTriangle, ttags);
+    const auto& tadj = vertexToTriangle.neighbours();
+    for (int32_t k = 0; k < 3; ++k) {
+        const auto vindex = triangle[k];
+        assert(vindex < vertexToTriangle.size());
+        const auto start = vertexToTriangle.neighboursStartIndex(vindex);
+        const auto end = vertexToTriangle.neighboursEndIndex(vindex);
+        for (int i = start; i < end; ++i) {
+            const auto tindex = tadj[i];
+            if (ttags[tindex] == 0) {
+                ttags[tindex] = int8_t(1);
+                tcount++;
+            }
+        }
+    }
+    return tcount;
 }
 
 //----------------------------------------------------------------------------
@@ -1360,6 +1620,8 @@ UnifyVertices(const std::vector<Vec3<T>>&  pointsInput,
   return pointCounter;
 }
 
+//----------------------------------------------------------------------------
+
 template<typename T>
 int32_t
 UnifyVerticesInter(const std::vector<Vec3<T>>& pointsInput,
@@ -1557,6 +1819,1237 @@ ExtractConnectedComponents(const std::vector<Triangle>& triangles,
 }
 
 //----------------------------------------------------------------------------
+
+template<typename T>
+int32_t
+ExtractConnectedComponentsByEdge(const std::vector<Triangle>& triangles,
+    const int32_t                vertexCount,
+    const TriangleMesh<T>& mesh,
+    std::vector<int32_t>& partition,
+    bool useVertexCriteria = false,
+    std::vector<std::shared_ptr<TriangleMesh<T>>>*
+    connectedComponents = nullptr) {
+    if (connectedComponents) { connectedComponents->clear(); }
+
+    if (triangles.empty()) { return 0; }
+
+    const auto pointCount = mesh.pointCount();
+    const auto texCoordCount = mesh.texCoordCount();
+    const auto normalCount = mesh.normalCount();
+    const auto triangleCount = int32_t(triangles.size());
+    assert(mesh.triangleCount() == 0 || mesh.triangleCount() == triangleCount);
+    assert(mesh.texCoordTriangleCount() == 0
+        || mesh.texCoordTriangleCount() == triangleCount);
+    assert(mesh.normalTriangleCount() == 0
+        || mesh.normalTriangleCount() == triangleCount);
+    partition.resize(0);
+    partition.resize(triangleCount, -1);
+
+    // creating the triangle to triangle structure 
+    // sharing either a vertex or an edge
+    vmesh::StaticAdjacencyInformation<int32_t> triangleToTriangle;
+    triangleToTriangle.resize(triangleCount);
+    vmesh::StaticAdjacencyInformation<int32_t> vertexToTriangle;
+    ComputeVertexToTriangle(triangles, vertexCount, vertexToTriangle);
+    if (useVertexCriteria) {
+        std::vector<int8_t> ttags;
+        ttags.resize(triangleCount);
+        for (int32_t triIdx = 0; triIdx < triangleCount; ++triIdx) {
+            const auto ncount = ComputeAdjacentTrianglesCount(triangles[triIdx], vertexToTriangle, ttags);
+            triangleToTriangle.incrementNeighbourCount(triIdx, ncount);
+        }
+        triangleToTriangle.updateShift();
+        std::vector<int32_t> tadj;
+        for (int32_t triIdx = 0; triIdx < triangleCount; ++triIdx) {
+            ComputeAdjacentTriangles(triangles[triIdx], vertexToTriangle, ttags, tadj);
+            for (const auto triIdxNeighbor : tadj) {
+                triangleToTriangle.addNeighbour(triIdx, triIdxNeighbor);
+            }
+        }
+    }
+    else {
+        std::vector<int8_t> ttags;
+        ttags.resize(triangleCount);
+        for (int32_t triIdx = 0; triIdx < triangleCount; ++triIdx) {
+            auto ncount = ComputeEdgeAdjacentTriangleCount(triangles[triIdx][0], triangles[triIdx][1], vertexToTriangle, ttags);
+            ncount += ComputeEdgeAdjacentTriangleCount(triangles[triIdx][1], triangles[triIdx][2], vertexToTriangle, ttags);
+            ncount += ComputeEdgeAdjacentTriangleCount(triangles[triIdx][2], triangles[triIdx][0], vertexToTriangle, ttags);
+            triangleToTriangle.incrementNeighbourCount(triIdx, ncount);
+        }
+        triangleToTriangle.updateShift();
+        std::vector<int32_t> tadj;
+        for (int32_t triIdx = 0; triIdx < triangleCount; ++triIdx) {
+            ComputeEdgeAdjacentTriangles(triangles[triIdx][0], triangles[triIdx][1], vertexToTriangle, ttags, tadj);
+            for (const auto triIdxNeighbor : tadj) {
+                triangleToTriangle.addNeighbour(triIdx, triIdxNeighbor);
+            }
+            ComputeEdgeAdjacentTriangles(triangles[triIdx][1], triangles[triIdx][2], vertexToTriangle, ttags, tadj);
+            for (const auto triIdxNeighbor : tadj) {
+                triangleToTriangle.addNeighbour(triIdx, triIdxNeighbor);
+            }
+            ComputeEdgeAdjacentTriangles(triangles[triIdx][2], triangles[triIdx][0], vertexToTriangle, ttags, tadj);
+            for (const auto triIdxNeighbor : tadj) {
+                triangleToTriangle.addNeighbour(triIdx, triIdxNeighbor);
+            }
+        }
+    }
+
+    std::vector<int32_t> posMapping;
+    std::vector<int32_t> texCoordMapping;
+    std::vector<int32_t> normalMapping;
+    std::vector<int32_t> triangleList;
+    if (connectedComponents) {
+        if (mesh.triangleCount()) { posMapping.resize(pointCount, -1); }
+        if (mesh.texCoordTriangleCount()) {
+            texCoordMapping.resize(texCoordCount, -1);
+        }
+        if (mesh.normalTriangleCount()) { normalMapping.resize(normalCount, -1); }
+    }
+
+    const auto* neighbours = triangleToTriangle.neighbours();
+    std::vector<int32_t> lifo;
+    lifo.reserve(triangleCount);
+    int32_t ccCount = 0;
+    for (int32_t triangleIndex = 0; triangleIndex < triangleCount;
+        ++triangleIndex) {
+        if (partition[triangleIndex] == -1) {
+            const auto ccIndex = ccCount++;
+            partition[triangleIndex] = ccIndex;
+            lifo.push_back(triangleIndex);
+
+            std::shared_ptr<TriangleMesh<T>> ccMesh;
+            if (connectedComponents) {
+                ccMesh.reset(new TriangleMesh<T>);
+                connectedComponents->push_back(ccMesh);
+                ccMesh->setMaterialLibrary(mesh.materialLibrary());
+                triangleList.resize(0);
+            }
+
+            int32_t ccPosCount = 0;
+            int32_t ccTexCoordCount = 0;
+            int32_t ccNormalCount = 0;
+            while (!lifo.empty()) {
+                const auto tIndex = lifo.back();
+                lifo.pop_back();
+
+                if (connectedComponents) {
+                    triangleList.push_back(tIndex);
+
+                    if (mesh.triangleCount()) {
+                        const auto& tri = mesh.triangle(tIndex);
+                        for (int32_t k = 0; k < 3; ++k) {
+                            const auto v = tri[k];
+                            if (posMapping[v] == -1) {
+                                posMapping[v] = ccPosCount++;
+                                ccMesh->addPoint(mesh.point(v));
+                            }
+                        }
+                        ccMesh->addTriangle(
+                            posMapping[tri[0]], posMapping[tri[1]], posMapping[tri[2]]);
+                    }
+
+                    if (mesh.texCoordTriangleCount()) {
+                        const auto& texCoordTri = mesh.texCoordTriangle(tIndex);
+                        for (int32_t k = 0; k < 3; ++k) {
+                            const auto v = texCoordTri[k];
+                            if (texCoordMapping[v] == -1) {
+                                texCoordMapping[v] = ccTexCoordCount++;
+                                ccMesh->addTexCoord(mesh.texCoord(v));
+                            }
+                        }
+                        ccMesh->addTexCoordTriangle(texCoordMapping[texCoordTri[0]],
+                            texCoordMapping[texCoordTri[1]],
+                            texCoordMapping[texCoordTri[2]]);
+                    }
+
+                    if (mesh.normalTriangleCount()) {
+                        const auto& normalTri = mesh.normalTriangle(tIndex);
+                        for (int32_t k = 0; k < 3; ++k) {
+                            const auto v = normalTri[k];
+                            if (normalMapping[v] == -1) {
+                                normalMapping[v] = ccNormalCount++;
+                                ccMesh->addNormal(mesh.normal(v));
+                            }
+                        }
+
+                        ccMesh->addNormalTriangle(normalMapping[normalTri[0]],
+                            normalMapping[normalTri[1]],
+                            normalMapping[normalTri[2]]);
+                    }
+                }
+
+                const auto start = triangleToTriangle.neighboursStartIndex(tIndex);
+                const auto end = triangleToTriangle.neighboursEndIndex(tIndex);
+                for (int32_t n = start; n < end; ++n) {
+                    const auto nIndex = neighbours[n];
+                    if (partition[nIndex] == -1) {
+                        partition[nIndex] = ccIndex;
+                        lifo.push_back(nIndex);
+                    }
+                }
+            }
+
+            if (connectedComponents) {
+                for (const auto tIndex : triangleList) {
+                    if (mesh.triangleCount()) {
+                        const auto& tri = mesh.triangle(tIndex);
+                        for (int32_t k = 0; k < 3; ++k) { posMapping[tri[k]] = -1; }
+                    }
+
+                    if (mesh.texCoordTriangleCount()) {
+                        const auto& texCoordTri = mesh.texCoordTriangle(tIndex);
+                        for (int32_t k = 0; k < 3; ++k) {
+                            texCoordMapping[texCoordTri[k]] = -1;
+                        }
+                    }
+
+                    if (mesh.normalTriangleCount()) {
+                        const auto& normalTri = mesh.normalTriangle(tIndex);
+                        for (int32_t k = 0; k < 3; ++k) {
+                            normalMapping[normalTri[k]] = -1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return ccCount;
+}
+
+//----------------------------------------------------------------------------
+#define DEBUG_ORTHO_TRIANGLE_CATEGORY 0
+#define DEBUG_ORTHO_TRIANGLE_CATEGORY_VERBOSE 0
+#define DEBUG_ORTHO_CONNECTED_COMPONENT 0
+#define DEBUG_ORTHO_CONNECTED_COMPONENT_VERBOSE 0
+#define DEBUG_ORTHO_MERGE 0
+#define DEBUG_ORTHO_MERGE_VERBOSE 0
+template<typename T>
+int32_t
+ExtractConnectedComponentsByNormal(
+    const TriangleMesh<T>& mesh,
+    Vec3<double>* orientations,
+    int orientationCount,
+    std::vector<int32_t>& category,
+    std::vector<std::shared_ptr<TriangleMesh<T>>>* connectedComponents = nullptr,
+    bool useVertexCriteria = false,
+    bool bUseSeedHistogram = true,
+    double strongGradientThreshold = 180,
+    double maxCCAreaRatio = 1,
+    int maxNumFaces = std::numeric_limits<int>::max(),
+    bool bFaceClusterMerge = false,
+    double lambda = 1.0,
+    bool check2DConnectivity = true,
+    bool keepIntermediateResults = false,
+    std::string keepFilesPathPrefix = {})
+{
+
+    if (connectedComponents) {
+        connectedComponents->clear();
+    }
+
+    const std::vector<Triangle>& triangles = mesh.triangles();
+    if (triangles.empty()) {
+        return 0;
+    }
+
+    const auto pointCount = mesh.pointCount();
+    const int32_t vertexCount = pointCount;
+    const auto texCoordCount = mesh.texCoordCount();
+    const auto normalCount = mesh.normalCount();
+    const auto triangleCount = int32_t(triangles.size());
+    assert(mesh.triangleCount() == triangleCount);
+    assert(mesh.texCoordTriangleCount() == 0 || mesh.texCoordTriangleCount() == triangleCount);
+    assert(mesh.normalTriangleCount() == 0 || mesh.normalTriangleCount() == triangleCount);
+    // initializing partition
+    std::vector<int32_t> partition;
+    partition.resize(0);
+    partition.resize(triangleCount, -1);
+    // creating the triangle to triangle structure 
+    // sharing either a vertex or an edge
+    vmesh::StaticAdjacencyInformation<int32_t> triangleToTriangle;
+    triangleToTriangle.resize(triangleCount);
+    vmesh::StaticAdjacencyInformation<int32_t> vertexToTriangle;
+    ComputeVertexToTriangle(triangles, vertexCount, vertexToTriangle);
+    if (useVertexCriteria) {
+        std::vector<int8_t> ttags;
+        ttags.resize(triangleCount);
+        for (int32_t triIdx = 0; triIdx < triangleCount; ++triIdx) {
+            const auto ncount = ComputeAdjacentTrianglesCount(triangles[triIdx], vertexToTriangle, ttags);
+            triangleToTriangle.incrementNeighbourCount(triIdx, ncount);
+        }
+        triangleToTriangle.updateShift();
+        std::vector<int32_t> tadj;
+        for (int32_t triIdx = 0; triIdx < triangleCount; ++triIdx) {
+            ComputeAdjacentTriangles(triangles[triIdx], vertexToTriangle, ttags, tadj);
+            for (const auto triIdxNeighbor : tadj) {
+                triangleToTriangle.addNeighbour(triIdx, triIdxNeighbor);
+            }
+        }
+    }
+    else {
+        std::vector<int8_t> ttags;
+        ttags.resize(triangleCount);
+        for (int32_t triIdx = 0; triIdx < triangleCount; ++triIdx) {
+            auto ncount = ComputeEdgeAdjacentTriangleCount(triangles[triIdx][0], triangles[triIdx][1], vertexToTriangle, ttags);
+            ncount += ComputeEdgeAdjacentTriangleCount(triangles[triIdx][1], triangles[triIdx][2], vertexToTriangle, ttags);
+            ncount += ComputeEdgeAdjacentTriangleCount(triangles[triIdx][2], triangles[triIdx][0], vertexToTriangle, ttags);
+            triangleToTriangle.incrementNeighbourCount(triIdx, ncount);
+        }
+        triangleToTriangle.updateShift();
+        std::vector<int32_t> tadj;
+        for (int32_t triIdx = 0; triIdx < triangleCount; ++triIdx) {
+            ComputeEdgeAdjacentTriangles(triangles[triIdx][0], triangles[triIdx][1], vertexToTriangle, ttags, tadj);
+            for (const auto triIdxNeighbor : tadj) {
+                triangleToTriangle.addNeighbour(triIdx, triIdxNeighbor);
+            }
+            ComputeEdgeAdjacentTriangles(triangles[triIdx][1], triangles[triIdx][2], vertexToTriangle, ttags, tadj);
+            for (const auto triIdxNeighbor : tadj) {
+                triangleToTriangle.addNeighbour(triIdx, triIdxNeighbor);
+            }
+            ComputeEdgeAdjacentTriangles(triangles[triIdx][2], triangles[triIdx][0], vertexToTriangle, ttags, tadj);
+            for (const auto triIdxNeighbor : tadj) {
+                triangleToTriangle.addNeighbour(triIdx, triIdxNeighbor);
+            }
+        }
+    }
+    const auto* neighbours = triangleToTriangle.neighbours();
+
+    // initializing mapping lists for conected components
+    std::vector<int32_t> posMapping;
+    std::vector<int32_t> texCoordMapping;
+    std::vector<int32_t> normalMapping;
+    std::vector<int32_t> triangleList;
+    if (connectedComponents) {
+        if (mesh.triangleCount()) {
+            posMapping.resize(pointCount, -1);
+        }
+        if (mesh.texCoordTriangleCount()) {
+            texCoordMapping.resize(texCoordCount, -1);
+        }
+        if (mesh.normalTriangleCount()) {
+            normalMapping.resize(normalCount, -1);
+        }
+    }
+
+    //get triangle normal direction and 3D area
+    std::vector<Vec3<double>> triangleNormals;
+    mesh.computeTriangleNormals(triangleNormals, true);
+    std::vector<double> triangleAreas;
+    mesh.computeTriangleAreas(triangleAreas);
+    double totalArea = mesh.area();
+    //categorize triangles according to their normals
+    std::vector<int32_t> triangleNormalCategories;
+    triangleNormalCategories.resize(triangleNormals.size());
+    for (size_t tri = 0; tri < triangleNormals.size(); tri++) {
+        auto& triNormal = triangleNormals[tri];
+        if (triNormal == Vec3<double>(0.0))
+        {
+            triangleNormalCategories[tri] = -1;
+            continue;
+        }
+        size_t            clusterIndex = 0;
+        double            bestScore = triNormal * orientations[0];
+        for (size_t j = 1; j < orientationCount; ++j) {
+            const double score = triNormal * orientations[j];
+            if (score > bestScore) {
+                bestScore = score;
+                clusterIndex = j;
+            }
+        }
+        triangleNormalCategories[tri] = clusterIndex;
+    }
+#if DEBUG_ORTHO_TRIANGLE_CATEGORY
+    {
+        TriangleMesh<double> meshDebug;
+        double totalPerimeter = 0;
+        double totalStretchL2 = 0;
+        double minStretchL2 = std::numeric_limits<double>::max();
+        double maxStretchL2 = std::numeric_limits<double>::min();
+        int ccIdx = 0;
+        for (auto& tri : mesh.triangles()) {
+            TriangleMesh<double> singleTriangle;
+            singleTriangle.addPoint(mesh.point(tri[0]));
+            singleTriangle.addPoint(mesh.point(tri[1]));
+            singleTriangle.addPoint(mesh.point(tri[2]));
+            singleTriangle.addTriangle(0, 1, 2);
+            meshDebug.append(singleTriangle);
+#if DEBUG_ORTHO_TRIANGLE_CATEGORY_VERBOSE
+            std::cout << "CC[" << ccIdx << "] -> perimeter(" << singleTriangle.perimeter() << "), stretchL2(" << singleTriangle.stretchL2(triangleNormalCategories[ccIdx]) << ")" << std::endl;
+#endif
+            totalPerimeter += singleTriangle.perimeter();
+            auto l2 = singleTriangle.stretchL2(triangleNormalCategories[ccIdx]);
+            totalStretchL2 += l2;
+            if (l2 > maxStretchL2)
+                maxStretchL2 = l2;
+            if (l2 < minStretchL2)
+                minStretchL2 = l2;
+            ccIdx++;
+        }
+        std::cout << "(" << ccIdx << " CC)TOTAL PERIMETER: " << totalPerimeter <<
+            ", TOTAL STRETCH L2: " << totalStretchL2 <<
+            ", AVG. STRETCH L2: " << totalStretchL2 / (double)ccIdx <<
+            ", MIN. STRETCH L2: " << minStretchL2 <<
+            ", MAX. STRETCH L2: " << maxStretchL2 << std::endl;
+        if (keepIntermediateResults) {
+            meshDebug.reserveTexCoords(mesh.triangleCount() * 3);
+            meshDebug.reserveTexCoordTriangles(mesh.triangleCount());
+            int side = 100;
+            for (int idx = 0; idx < triangleNormals.size(); idx++) {
+                float x = ((triangleNormalCategories[idx] % 9) + 0.5) / (9.0);
+                float y = 1 - ((triangleNormalCategories[idx] / 9) + 0.5) / (2.0);
+                meshDebug.texCoords().push_back(Vec2<float>(x, y));
+                meshDebug.texCoords().push_back(Vec2<float>(x, y));
+                meshDebug.texCoords().push_back(Vec2<float>(x, y));
+                meshDebug.texCoordTriangles().push_back(vmesh::Triangle(3 * idx, 3 * idx + 1, 3 * idx + 2));
+            }
+            vmesh::Frame<uint8_t> outputTexture;
+            outputTexture.resize(9 * side, 2 * side, vmesh::ColourSpace::BGR444p);
+            int RedChannel[18] = { 255,  0,  0,  0,255,255,  0,100,200,255,  0,100,200,200,  0,100,200,100 };
+            int GreenChannel[18] = { 0,255,  0,255,  0,255,  0,100,200,255,200,200,100,  0,  0,100,200,100 };
+            int BlueChannel[18] = { 0,  0,255,255,255,  0,  0,100,200,255,  0,100,200,200,100,200,100,  0 };
+            for (int h = 0; h < 2; h++) {
+                for (int w = 0; w < 9; w++) {
+                    auto& R = outputTexture.plane(0);
+                    auto& G = outputTexture.plane(1);
+                    auto& B = outputTexture.plane(2);
+                    for (int i = 0; i < side; i++) {
+                        for (int j = 0; j < side; j++) {
+                            R.set(i + h * side, j + w * side, RedChannel[h * 9 + w]);
+                            G.set(i + h * side, j + w * side, GreenChannel[h * 9 + w]);
+                            B.set(i + h * side, j + w * side, BlueChannel[h * 9 + w]);
+                        }
+                    }
+                }
+            }
+            outputTexture.save(keepFilesPathPrefix + "_debug_categories.png");
+            vmesh::Material<double> material;
+            material.texture = vmesh::basename(keepFilesPathPrefix + "_debug_categories.png");
+            material.save(keepFilesPathPrefix + "_debug_categories.mtl");
+            meshDebug.setMaterialLibrary(vmesh::basename(keepFilesPathPrefix + "_debug_categories.mtl"));
+            meshDebug.save(keepFilesPathPrefix + "_debug_categories_INITIAL.obj");
+        }
+    }
+#endif
+
+    std::vector<int32_t> lifo;
+    lifo.reserve(triangleCount);
+    int32_t ccCount = 0;
+    std::vector<double> ccArea;
+    ccArea.reserve(triangleCount);
+    std::vector<double> ccNumTriangles;
+    ccNumTriangles.reserve(triangleCount);
+    std::vector<Vec3<double>> ccAvgNormal;
+    ccAvgNormal.reserve(triangleCount);
+    std::vector<std::vector<int>> ccTriangleList;
+    ccTriangleList.reserve(triangleCount);
+    std::vector<std::vector<int>> ccVertexList;
+    ccVertexList.reserve(triangleCount);
+    std::vector<double> ccPerimeter;
+    ccPerimeter.reserve(triangleCount);
+    std::vector<double> ccStretchL2;
+    ccStretchL2.reserve(triangleCount);
+    //create connected component by triangle edge/vertex sharing
+    int numTriInConnectedComponents = 0;
+    while (numTriInConnectedComponents < triangleCount) {
+        //choose the triangle index that has the most occurances
+        int32_t triangleIndex = 0;
+        if (bUseSeedHistogram) {
+            std::vector<int> histogram;
+            std::vector<int32_t> firstOccurance;
+            std::vector<double> maxDotProduct;
+            histogram.resize(orientationCount, 0);
+            firstOccurance.resize(orientationCount, -1);
+            maxDotProduct.resize(orientationCount, -1000000);
+            for (int32_t triIndex = 0; triIndex < triangleCount; ++triIndex) {
+                if (partition[triIndex] == -1) {
+                    if (triangleNormalCategories[triIndex] == -1) {
+                        //degenerate triangle, all the categories are valid
+                        for (int32_t idx = 0; idx < orientationCount; ++idx) {
+                            histogram[idx]++;
+                            if (maxDotProduct[idx] < (triangleNormals[triIndex] * orientations[idx])) {
+                                maxDotProduct[idx] = (triangleNormals[triIndex] * orientations[idx]);
+                                firstOccurance[idx] = triIndex;
+                            }
+                        }
+                        continue;
+                    }
+                    histogram[triangleNormalCategories[triIndex]]++;
+                    if (maxDotProduct[triangleNormalCategories[triIndex]] < (triangleNormals[triIndex] * orientations[triangleNormalCategories[triIndex]])) {
+                        maxDotProduct[triangleNormalCategories[triIndex]] = (triangleNormals[triIndex] * orientations[triangleNormalCategories[triIndex]]);
+                        firstOccurance[triangleNormalCategories[triIndex]] = triIndex;
+                    }
+                }
+            }
+            triangleIndex = firstOccurance[0];
+            int maxVal = histogram[0];
+            for (int i = 1; i < orientationCount; i++)
+                if (histogram[i] > maxVal) {
+                    maxVal = histogram[i];
+                    triangleIndex = firstOccurance[i];
+                }
+        }
+        else {
+            bool found = false;
+            for (int32_t triIndex = 0; triIndex < triangleCount && !found; ++triIndex) {
+                if (partition[triIndex] == -1) {
+                    triangleIndex = triIndex;
+                    found = true;
+                }
+            }
+        }
+        //now add all the triangles connected to the seed
+        const auto ccIndex = ccCount++;
+        partition[triangleIndex] = ccIndex;
+        numTriInConnectedComponents++;
+        int32_t ccCategory = triangleNormalCategories[triangleIndex];
+        category.push_back(ccCategory);
+        lifo.push_back(triangleIndex);
+        ccArea.push_back(triangleAreas[triangleIndex]);
+        ccNumTriangles.push_back(1);
+        ccAvgNormal.push_back(triangleAreas[triangleIndex] * triangleNormals[triangleIndex]);
+        std::vector<int> triangleList;
+        ccTriangleList.push_back(triangleList);
+        std::vector<int> vertexList;
+        ccVertexList.push_back(vertexList);
+        ccTriangleList[ccIndex].push_back(triangleIndex);
+        for (int idx = 0; idx < 3; idx++) {
+            auto& vIdx = mesh.triangles()[triangleIndex][idx];
+            auto  findIndex = std::find(ccVertexList[ccIndex].begin(), ccVertexList[ccIndex].end(), vIdx);
+            if (findIndex == ccVertexList[ccIndex].end())
+                ccVertexList[ccIndex].push_back(vIdx);
+        }
+        ccPerimeter.push_back(0);
+        ccStretchL2.push_back(0);
+        std::shared_ptr<TriangleMesh<T>> ccMesh;
+        if (connectedComponents) {
+            ccMesh.reset(new TriangleMesh<T>);
+            connectedComponents->push_back(ccMesh);
+            ccMesh->setMaterialLibrary(mesh.materialLibrary());
+            triangleList.resize(0);
+        }
+        int32_t ccPosCount = 0;
+        int32_t ccTexCoordCount = 0;
+        int32_t ccNormalCount = 0;
+        while (!lifo.empty()) {
+            const auto tIndex = lifo.back();
+            auto& lastInsertedNormal = triangleNormals[tIndex];
+            lifo.pop_back();
+
+            if (connectedComponents) {
+                triangleList.push_back(tIndex);
+
+                if (mesh.triangleCount()) {
+                    const auto& tri = mesh.triangle(tIndex);
+                    for (int32_t k = 0; k < 3; ++k) {
+                        const auto v = tri[k];
+                        if (posMapping[v] == -1) {
+                            posMapping[v] = ccPosCount++;
+                            ccMesh->addPoint(mesh.point(v));
+                        }
+                    }
+                    ccMesh->addTriangle(posMapping[tri[0]], posMapping[tri[1]], posMapping[tri[2]]);
+                }
+
+                if (mesh.texCoordTriangleCount()) {
+                    const auto& texCoordTri = mesh.texCoordTriangle(tIndex);
+                    for (int32_t k = 0; k < 3; ++k) {
+                        const auto v = texCoordTri[k];
+                        if (texCoordMapping[v] == -1) {
+                            texCoordMapping[v] = ccTexCoordCount++;
+                            ccMesh->addTexCoord(mesh.texCoord(v));
+                        }
+                    }
+                    ccMesh->addTexCoordTriangle(texCoordMapping[texCoordTri[0]], texCoordMapping[texCoordTri[1]], texCoordMapping[texCoordTri[2]]);
+                }
+
+                if (mesh.normalTriangleCount()) {
+                    const auto& normalTri = mesh.normalTriangle(tIndex);
+                    for (int32_t k = 0; k < 3; ++k) {
+                        const auto v = normalTri[k];
+                        if (normalMapping[v] == -1) {
+                            normalMapping[v] = ccNormalCount++;
+                            ccMesh->addNormal(mesh.normal(v));
+                        }
+                    }
+
+                    ccMesh->addNormalTriangle(
+                        normalMapping[normalTri[0]], normalMapping[normalTri[1]],
+                        normalMapping[normalTri[2]]);
+                }
+            }
+
+            const auto start = triangleToTriangle.neighboursStartIndex(tIndex);
+            const auto end = triangleToTriangle.neighboursEndIndex(tIndex);
+            for (int32_t n = start; n < end; ++n) {
+                const auto nIndex = neighbours[n];
+                if (partition[nIndex] == -1) {
+                    //neighbor does not belong to any CC, let's check the face criteria
+                    bool addNeighbor = true;
+                    //If the connected face’s normal is closer to n (in terms of inter-vector angle) than to any other projection plane normal
+                    //category -1 indicates degenerate triangle, and is always allowed to be included at any projection direction
+                    if ((triangleNormalCategories[nIndex] != ccCategory) && (triangleNormalCategories[nIndex] != -1)) {
+                        addNeighbor = false;
+                    }
+                    //strong gradient avoidance
+                    auto& currentNormal = triangleNormals[nIndex];
+                    double angle = std::acos(currentNormal * lastInsertedNormal / (std::sqrt(currentNormal.norm2()) * std::sqrt(lastInsertedNormal.norm2()))); //TODO: calculater the angle between two normals
+                    angle *= (180.0 / M_PI);
+                    if (angle > std::abs(strongGradientThreshold)) {
+                        addNeighbor = false;
+                    }
+                    //cluster cumulated area criterion
+                    double triArea = triangleAreas[nIndex];
+                    if ((triArea + ccArea[ccIndex]) > (totalArea * maxCCAreaRatio)) {
+                        addNeighbor = false;
+                    }
+                    //maximal face number
+                    if (ccNumTriangles[ccIndex] > maxNumFaces) {
+                        addNeighbor = false;
+                    }
+                    if (addNeighbor) {
+                        partition[nIndex] = ccIndex;
+                        numTriInConnectedComponents++;
+                        lifo.push_back(nIndex);
+                        ccArea[ccIndex] += triArea;
+                        ccNumTriangles[ccIndex]++;
+                        ccAvgNormal[ccIndex] += triArea * currentNormal;
+                        ccTriangleList[ccIndex].push_back(nIndex);
+                        for (int idx = 0; idx < 3; idx++) {
+                            auto& vIdx = mesh.triangles()[nIndex][idx];
+                            auto  findIndex = std::find(ccVertexList[ccIndex].begin(), ccVertexList[ccIndex].end(), vIdx);
+                            if (findIndex == ccVertexList[ccIndex].end())
+                                ccVertexList[ccIndex].push_back(vIdx);
+                        }
+                    }
+                }
+            }
+        }
+        if (ccArea[ccIndex] != 0.0)
+            ccAvgNormal[ccIndex] /= ccArea[ccIndex];
+        ccPerimeter[ccIndex] = ccMesh->perimeter();
+        ccStretchL2[ccIndex] = ccMesh->stretchL2(category[ccIndex]);
+        if (connectedComponents) {
+            for (const auto tIndex : triangleList) {
+                if (mesh.triangleCount()) {
+                    const auto& tri = mesh.triangle(tIndex);
+                    for (int32_t k = 0; k < 3; ++k) {
+                        posMapping[tri[k]] = -1;
+                    }
+                }
+
+                if (mesh.texCoordTriangleCount()) {
+                    const auto& texCoordTri = mesh.texCoordTriangle(tIndex);
+                    for (int32_t k = 0; k < 3; ++k) {
+                        texCoordMapping[texCoordTri[k]] = -1;
+                    }
+                }
+
+                if (mesh.normalTriangleCount()) {
+                    const auto& normalTri = mesh.normalTriangle(tIndex);
+                    for (int32_t k = 0; k < 3; ++k) {
+                        normalMapping[normalTri[k]] = -1;
+                    }
+                }
+            }
+        }
+    }
+#if DEBUG_ORTHO_CONNECTED_COMPONENT
+    {
+        int ccIdx = 0;
+        TriangleMesh<double> meshDebug;
+        double totalPerimeter = 0;
+        double totalStretchL2 = 0;
+        double minStretchL2 = std::numeric_limits<double>::max();
+        double maxStretchL2 = std::numeric_limits<double>::min();
+        for (auto cc : (*connectedComponents)) {
+            meshDebug.append(*cc);
+#if DEBUG_ORTHO_CONNECTED_COMPONENT_VERBOSE
+            if (keepIntermediateResults) {
+                auto prefix = keepFilesPathPrefix + "_init_CC#" + std::to_string(ccIdx);
+                cc->save(prefix + ".obj");
+            }
+            std::cout << "CC[" << ccIdx << "] -> perimeter(" << cc->perimeter() << "), stretchL2(" << cc->stretchL2(category[ccIdx]) << ")" << std::endl;
+#endif            
+            totalPerimeter += cc->perimeter();
+            auto l2 = cc->stretchL2(category[ccIdx]);
+            totalStretchL2 += l2;
+            if (l2 > maxStretchL2)
+                maxStretchL2 = l2;
+            if (l2 < minStretchL2)
+                minStretchL2 = l2;
+            ccIdx++;
+        }
+        std::cout << "(" << ccIdx << " CC)TOTAL PERIMETER: " << totalPerimeter <<
+            ", TOTAL STRETCH L2: " << totalStretchL2 <<
+            ", AVG. STRETCH L2: " << totalStretchL2 / (double)ccIdx <<
+            ", MIN. STRETCH L2: " << minStretchL2 <<
+            ", MAX. STRETCH L2: " << maxStretchL2 << std::endl;
+        if (keepIntermediateResults) {
+            meshDebug.texCoords().clear();
+            meshDebug.texCoordTriangles().clear();
+            meshDebug.reserveTexCoords(meshDebug.triangleCount() * 3);
+            meshDebug.reserveTexCoordTriangles(meshDebug.triangleCount());
+            int idxCC = 0;
+            int idxTriangle = 0;
+            int side = 100;
+            for (auto cc : (*connectedComponents)) {
+                float x = ((category[idxCC] % 9) + 0.5) / (9.0);
+                float y = 1 - ((category[idxCC] / 9) + 0.5) / (2.0);
+                for (int idx = 0; idx < cc->triangles().size(); idx++) {
+                    meshDebug.texCoords().push_back(Vec2<float>(x, y));
+                    meshDebug.texCoords().push_back(Vec2<float>(x, y));
+                    meshDebug.texCoords().push_back(Vec2<float>(x, y));
+                    meshDebug.texCoordTriangles().push_back(vmesh::Triangle(3 * idxTriangle, 3 * idxTriangle + 1, 3 * idxTriangle + 2));
+                    idxTriangle++;
+                }
+                idxCC++;
+            }
+            meshDebug.setMaterialLibrary(vmesh::basename(keepFilesPathPrefix + "_debug_categories.mtl"));
+            meshDebug.save(keepFilesPathPrefix + "_debug_categories_before_merge.obj");
+        }
+    }
+#endif
+
+    //FACE CLUSTER MERGE
+    if (bFaceClusterMerge) {
+#if DEBUG_ORTHO_MERGE_VERBOSE
+        std::cout << "Number of connected components BEFORE merge:" << ccCount << std::endl;
+#endif
+        unsigned int* apActiveVertexIndexFlag = new unsigned int[mesh.pointCount()];
+        std::vector<int> removeVertexList;
+        std::vector<int> ccMerge;
+        ccMerge.resize(ccCount, -1);
+        std::vector<int> ccIndexSortedList;
+        ccIndexSortedList.resize(ccCount);
+        for (int ccIndexSorted = 0; ccIndexSorted < ccCount; ccIndexSorted++)
+            ccIndexSortedList[ccIndexSorted] = ccIndexSorted;
+        std::sort(ccIndexSortedList.begin(), ccIndexSortedList.end(), [&](int A, int B) -> bool {
+            if (ccNumTriangles[A] == ccNumTriangles[B]) {
+                double maxDotA = ccAvgNormal[A] * orientations[0];
+                double maxDotB = ccAvgNormal[B] * orientations[0];
+                for (int i = 1; i < orientationCount; i++) {
+                    double dotA = ccAvgNormal[A] * orientations[i];
+                    double dotB = ccAvgNormal[B] * orientations[i];
+                    if (dotA > maxDotA)
+                        maxDotA = dotA;
+                    if (dotB > maxDotB)
+                        maxDotB = dotB;
+                }
+                return (maxDotA < maxDotB);
+
+            }
+            else {
+                return (ccNumTriangles[A] > ccNumTriangles[B]);
+            };
+            });
+        while (ccIndexSortedList.size() > 0) {
+
+            memset(apActiveVertexIndexFlag, 0, sizeof(int) * mesh.pointCount());
+            removeVertexList.clear();
+
+            int ccIndex = ccIndexSortedList.back();
+            ccIndexSortedList.pop_back();
+            //get the possible candidates for merging (connected components that share vertices/triangles)
+            std::vector<int> ccCandidates;
+            for (auto triIdx : ccTriangleList[ccIndex]) {
+                const auto start = triangleToTriangle.neighboursStartIndex(triIdx);
+                const auto end = triangleToTriangle.neighboursEndIndex(triIdx);
+                for (int32_t n = start; n < end; ++n) {
+                    const auto nIndex = partition[neighbours[n]];
+                    if (nIndex != ccIndex) {
+                        //add to the list of candidates
+                        if (std::find(ccCandidates.begin(), ccCandidates.end(), nIndex) == ccCandidates.end()) {
+                            if ((ccNumTriangles[nIndex] < (maxNumFaces - ccNumTriangles[ccIndex]))
+                                && (ccArea[nIndex] < (totalArea * maxCCAreaRatio - ccArea[ccIndex])))
+                            {
+                                ccCandidates.push_back(nIndex);
+                            }
+                        }
+                    }
+                }
+            }
+            // merge with the candidate that reduces the cost variable initialization
+            double minCost = std::numeric_limits<double>::max();
+            int mergeIdx = -1;
+            int mergeOrientation = -1;
+            double bestMergePerimeter = 0;
+            double bestMergeStretchL2 = 0;
+            Vec3<double> bestNormal(0.0);
+            // current connected component
+            double noMergePerimeter = ccPerimeter[ccIndex];
+            double noMergeStretchL2 = ccStretchL2[ccIndex];
+            double noMergeCost = noMergeStretchL2 + lambda * noMergePerimeter;
+            TriangleMesh<double> mergeCCBase;
+            std::vector<int64_t> mergeCCBaseEdgeList;
+            mergeCCBase.reserveTriangles(ccTriangleList[ccIndex].size());
+            mergeCCBase.reservePoints(3 * ccTriangleList[ccIndex].size());
+            mergeCCBaseEdgeList.reserve(3 * ccTriangleList[ccIndex].size());
+            for (auto& tri : ccTriangleList[ccIndex]) {
+                int vIndex[3];
+                for (int32_t k = 0; k < 3; ++k) {
+                    const auto v = mesh.triangle(tri)[k];
+                    auto posVertex = std::find(mergeCCBase.points().begin(),
+                        mergeCCBase.points().end(),
+                        mesh.point(v));
+                    if (posVertex == mergeCCBase.points().end()) {
+                        vIndex[k] = mergeCCBase.points().size();
+                        mergeCCBase.addPoint(mesh.point(v));
+                        apActiveVertexIndexFlag[v] = vIndex[k] + 1;
+                    }
+                    else {
+                        vIndex[k] = posVertex - mergeCCBase.points().begin();
+                    }
+                }
+                mergeCCBase.addTriangle(vIndex[0], vIndex[1], vIndex[2]);
+                mergeCCBaseEdgeList.push_back(EdgeIndex(vIndex[0], vIndex[1]));
+                mergeCCBaseEdgeList.push_back(EdgeIndex(vIndex[1], vIndex[2]));
+                mergeCCBaseEdgeList.push_back(EdgeIndex(vIndex[2], vIndex[0]));
+            }
+            // now choose to merge with the neighbor that reduces the cost the most, 
+            for (auto& ccNeighborIndex : ccCandidates) {
+                // neighboring cc (candidate for merge)
+                double candPerimeter = ccPerimeter[ccNeighborIndex];
+                double candStretchL2 = ccStretchL2[ccNeighborIndex];
+                double candCost = candStretchL2 + lambda * candPerimeter;
+                // merged connected component
+                TriangleMesh<double> mergeCC;
+                mergeCC.reserveTriangles(ccTriangleList[ccIndex].size() + ccTriangleList[ccNeighborIndex].size());
+                mergeCC.reservePoints(3 * ccTriangleList[ccIndex].size() + 3 * ccTriangleList[ccNeighborIndex].size());
+
+                // remove the previous result.
+                for (auto v : removeVertexList) {
+                    apActiveVertexIndexFlag[v] = 0;
+                }
+                removeVertexList.clear();
+
+                mergeCC = mergeCCBase;
+                double commonPerimeter = 0.0;
+                for (auto& tri : ccTriangleList[ccNeighborIndex]) {
+                    int vIndex[3];
+                    int commonVertex = 0;
+                    for (int32_t k = 0; k < 3; ++k) {
+                        const auto v = mesh.triangle(tri)[k];
+                        if (apActiveVertexIndexFlag[v] == 0) {
+                            vIndex[k] = mergeCC.points().size();
+                            mergeCC.addPoint(mesh.point(v));
+                            apActiveVertexIndexFlag[v] = vIndex[k] + 1;
+                            removeVertexList.push_back(v);
+                        }
+                        else {
+                            vIndex[k] = apActiveVertexIndexFlag[v] - 1;
+                            if (vIndex[k] < mergeCCBase.points().size())
+                                commonVertex += 1 << k; // vertex in common with Base CC
+                        }
+                    }
+                    mergeCC.addTriangle(vIndex[0], vIndex[1], vIndex[2]);
+                    if (commonVertex == 3) {
+                        // add edge 01
+                        auto edgeIndexA = EdgeIndex(vIndex[0], vIndex[1]);
+                        for (auto& baseCCEdgeIndex : mergeCCBaseEdgeList) {
+                            if (baseCCEdgeIndex == edgeIndexA) {
+                                commonPerimeter += (mergeCC.points()[vIndex[0]] - mergeCC.points()[vIndex[1]]).norm();
+                                break;
+                            }
+                        }
+                    }
+                    else if (commonVertex == 5) {
+                        //add edge 20
+                        auto edgeIndexC = EdgeIndex(vIndex[2], vIndex[0]);
+                        for (auto& baseCCEdgeIndex : mergeCCBaseEdgeList) {
+                            if (baseCCEdgeIndex == edgeIndexC) {
+                                commonPerimeter += (mergeCC.points()[vIndex[2]] - mergeCC.points()[vIndex[0]]).norm();
+                                break;
+                            }
+                        }
+                    }
+                    else if (commonVertex == 6) {
+                        //add edge 12
+                        auto edgeIndexB = EdgeIndex(vIndex[1], vIndex[2]);
+                        for (auto& baseCCEdgeIndex : mergeCCBaseEdgeList) {
+                            if (baseCCEdgeIndex == edgeIndexB) {
+                                commonPerimeter += (mergeCC.points()[vIndex[1]] - mergeCC.points()[vIndex[2]]).norm();
+                                break;
+                            }
+                        }
+                    }
+                    else if (commonVertex == 7) {
+                        //this could be a combination of two or more edges, check which ones exist in the baseCC
+                        auto edgeIndexA = EdgeIndex(vIndex[0], vIndex[1]);
+                        auto edgeIndexB = EdgeIndex(vIndex[1], vIndex[2]);
+                        auto edgeIndexC = EdgeIndex(vIndex[2], vIndex[0]);
+                        for (auto& baseCCEdgeIndex : mergeCCBaseEdgeList) {
+                            if (baseCCEdgeIndex == edgeIndexA) {
+                                commonPerimeter += (mergeCC.points()[vIndex[0]] - mergeCC.points()[vIndex[1]]).norm();
+                            }
+                            else if (baseCCEdgeIndex == edgeIndexB) {
+                                commonPerimeter += (mergeCC.points()[vIndex[1]] - mergeCC.points()[vIndex[2]]).norm();
+                            }
+                            else if (baseCCEdgeIndex == edgeIndexC) {
+                                commonPerimeter += (mergeCC.points()[vIndex[2]] - mergeCC.points()[vIndex[0]]).norm();
+                            }
+                        }
+                    }
+                }
+                //check the merge orientation by looking at the average normals
+                Vec3<double> averageNormal = ccAvgNormal[ccIndex] * ccArea[ccIndex] + ccAvgNormal[ccNeighborIndex] * ccArea[ccNeighborIndex];
+                double mergedArea = ccArea[ccIndex] + ccArea[ccNeighborIndex];
+                averageNormal /= mergedArea;
+                size_t            clusterIndex = 0;
+                double            bestScore = averageNormal * orientations[0];
+                for (size_t j = 1; j < orientationCount; ++j) {
+                    const double score = averageNormal * orientations[j];
+                    if (score > bestScore) {
+                        bestScore = score;
+                        clusterIndex = j;
+                    }
+                }
+                double mergePerimeter = noMergePerimeter + candPerimeter - 2 * commonPerimeter;
+                double mergeStretchL2 = mergeCC.stretchL2(clusterIndex);
+                double mergeCost = mergeStretchL2 + lambda * mergePerimeter;
+
+                // allows merge only if the merge cost is smaller then the separate cost
+                if (noMergeCost + candCost > mergeCost) {
+                    if (mergeCost < minCost) {
+                        minCost = mergeCost;
+                        mergeIdx = ccNeighborIndex;
+                        mergeOrientation = clusterIndex;
+                        bestMergePerimeter = mergePerimeter;
+                        bestMergeStretchL2 = mergeStretchL2;
+                        bestNormal = averageNormal;
+                    }
+                }
+            }
+            if (mergeIdx != -1) {
+#if DEBUG_ORTHO_MERGE_VERBOSE
+                std::cout << ccIndex << "->" << mergeIdx << "[";
+                for (auto& ccNeighborIndex : ccCandidates)
+                    std::cout << ccNeighborIndex << ",";
+                std::cout << "]" <<
+                    "(p:" << bestMergePerimeter <<
+                    ",s:" << bestMergeStretchL2 <<
+                    ",o:" << mergeOrientation <<
+                    ",n:[" << bestNormal[0] << "," << bestNormal[1] << "," << bestNormal[2] << "])" << std::endl;
+#endif
+                // indicating that this index will be merged by updating merge list 
+                // and respective category
+                ccMerge[ccIndex] = mergeIdx;
+                category[mergeIdx] = mergeOrientation;
+                for (int i = 0; i < ccMerge.size(); i++)
+                    if ((ccMerge[i] == ccIndex) || (ccMerge[i] == mergeIdx)) {
+                        ccMerge[i] = mergeIdx;
+                        category[i] = mergeOrientation;
+                    }
+                //updating cc number of triangles
+                ccNumTriangles[mergeIdx] += ccNumTriangles[ccIndex];
+                ccNumTriangles[ccIndex] = 0;
+                //updating area
+                ccArea[mergeIdx] += ccArea[ccIndex];
+                ccArea[ccIndex] = 0;
+                //updating cc normal
+                ccAvgNormal[mergeIdx] = bestNormal;
+                ccAvgNormal[ccIndex] = Vec3<double>(0.0);
+                //updating cc perimeter
+                ccPerimeter[ccIndex] = 0;
+                ccPerimeter[mergeIdx] = bestMergePerimeter;
+                //updating cc stretchL2
+                ccStretchL2[ccIndex] = 0;
+                ccStretchL2[mergeIdx] = bestMergeStretchL2;
+                //updating triangle list
+                for (auto tIdx : ccTriangleList[ccIndex])
+                    ccTriangleList[mergeIdx].push_back(tIdx);
+                ccTriangleList[ccIndex].clear();
+                //updating vertex list
+                for (auto vIdx : ccVertexList[ccIndex]) {
+                    auto findIndex = std::find(ccVertexList[mergeIdx].begin(), ccVertexList[mergeIdx].end(), vIdx);
+                    if (findIndex == ccVertexList[mergeIdx].end())
+                        ccVertexList[mergeIdx].push_back(vIdx);
+                }
+                ccVertexList[ccIndex].clear();
+                //updating partition structure
+                for (int idx = 0; idx < triangleCount; idx++) {
+                    if (partition[idx] == ccIndex) {
+                        partition[idx] = mergeIdx;
+                    }
+                }
+            }
+            else {
+#if DEBUG_ORTHO_MERGE_VERBOSE
+                std::cout << ccIndex << "->" << mergeIdx << "[";
+                for (auto& ccNeighborIndex : /*ccNeighbour[ccIndex]*/ccCandidates)
+                    std::cout << ccNeighborIndex << ",";
+                std::cout << "]" <<
+                    "(p:" << bestMergePerimeter <<
+                    ",s:" << bestMergeStretchL2 <<
+                    ",o:" << mergeOrientation <<
+                    ",n:[" << bestNormal[0] << "," << bestNormal[1] << "," << bestNormal[2] << "])" << std::endl;
+#endif
+            }
+            //resort the list
+            std::sort(ccIndexSortedList.begin(), ccIndexSortedList.end(), [&](int A, int B) -> bool {
+                if (ccNumTriangles[A] == ccNumTriangles[B]) {
+                    double maxDotA = ccAvgNormal[A] * orientations[0];
+                    double maxDotB = ccAvgNormal[B] * orientations[0];
+                    for (int i = 1; i < orientationCount; i++) {
+                        double dotA = ccAvgNormal[A] * orientations[i];
+                        double dotB = ccAvgNormal[B] * orientations[i];
+                        if (dotA > maxDotA)
+                            maxDotA = dotA;
+                        if (dotB > maxDotB)
+                            maxDotB = dotB;
+                    }
+                    return (maxDotA < maxDotB);
+
+                }
+                else {
+                    return (ccNumTriangles[A] > ccNumTriangles[B]);
+                };
+                });
+        }
+        if (connectedComponents) {
+            for (int idx = 0; idx < ccCount; idx++) {
+                if (ccMerge[idx] != -1) {
+                    //move all the triangles from cc[idx] to cc[ccMerge[idx]]
+                    auto& ccMeshDest = (*connectedComponents)[ccMerge[idx]];
+                    auto& ccMeshOrig = (*connectedComponents)[idx];
+                    for (auto tri : ccMeshOrig->triangles()) {
+                        int vIndex[3];
+                        for (int32_t k = 0; k < 3; ++k) {
+                            const auto v = tri[k];
+                            vIndex[k] = ccMeshDest->points().size();
+                            ccMeshDest->addPoint(ccMeshOrig->point(v));
+                        }
+                        ccMeshDest->addTriangle(vIndex[0], vIndex[1], vIndex[2]);
+                    }
+                    for (auto texCoordTri : ccMeshOrig->texCoordTriangles()) {
+                        int tIndex[3];
+                        for (int32_t k = 0; k < 3; ++k) {
+                            const auto v = texCoordTri[k];
+                            tIndex[k] = ccMeshDest->texCoords().size();
+                            ccMeshDest->addTexCoord(ccMeshOrig->texCoord(v));
+                        }
+                        ccMeshDest->addTexCoordTriangle(tIndex[0], tIndex[1], tIndex[2]);
+                    }
+                    for (auto normalTri : ccMeshOrig->normalTriangles()) {
+                        int nIndex[3];
+                        for (int32_t k = 0; k < 3; ++k) {
+                            const auto v = normalTri[k];
+                            nIndex[k] = ccMeshDest->normals().size();
+                            ccMeshDest->addNormal(ccMeshOrig->normal(v));
+                        }
+                        ccMeshDest->addNormalTriangle(nIndex[0], nIndex[1], nIndex[2]);
+                    }
+                    ccMeshOrig->triangles().clear();
+                }
+            }
+            int idxCC = 0;
+            while (idxCC < connectedComponents->size()) {
+                auto& cc = (*connectedComponents)[idxCC];
+                if (cc->triangleCount() == 0) {
+                    std::swap((*connectedComponents)[idxCC], (*connectedComponents)[connectedComponents->size() - 1]);
+                    connectedComponents->pop_back();
+                    std::swap(category[idxCC], category[category.size() - 1]);
+                    category.pop_back();
+                    ccCount--;
+                }
+                if (idxCC < connectedComponents->size()) {
+                    auto& ccSwapped = (*connectedComponents)[idxCC];
+                    if (ccSwapped->triangleCount() > 0)
+                        idxCC++;
+                }
+            }
+        }
+#if DEBUG_ORTHO_MERGE_VERBOSE
+        std::cout << "Number of connected components AFTER merge:" << ccCount << std::endl;
+#endif
+        delete[] apActiveVertexIndexFlag;
+    }
+#if DEBUG_ORTHO_MERGE
+    {
+        int ccIdx = 0;
+        TriangleMesh<double> meshDebug;
+        double totalPerimeter = 0;
+        double totalStretchL2 = 0;
+        double minStretchL2 = std::numeric_limits<double>::max();
+        double maxStretchL2 = std::numeric_limits<double>::min();
+        for (auto cc : (*connectedComponents)) {
+            meshDebug.append(*cc);
+#if DEBUG_ORTHO_MERGE_VERBOSE
+            if (keepIntermediateResults) {
+                auto prefix = keepFilesPathPrefix + "_merge_CC#" + std::to_string(ccIdx);
+                cc->save(prefix + ".obj");
+            }
+            std::cout << "CC[" << ccIdx << "] -> perimeter(" << cc->perimeter() << "), stretchL2(" << cc->stretchL2(category[ccIdx]) << ")" << std::endl;
+#endif
+            totalPerimeter += cc->perimeter();
+            auto l2 = cc->stretchL2(category[ccIdx]);
+            totalStretchL2 += l2;
+            if (l2 > maxStretchL2)
+                maxStretchL2 = l2;
+            if (l2 < minStretchL2)
+                minStretchL2 = l2;
+            ccIdx++;
+        }
+        std::cout << "(" << ccIdx << " CC after merge) TOTAL PERIMETER: " << totalPerimeter <<
+            ", TOTAL STRETCH L2: " << totalStretchL2 <<
+            ", AVG. STRETCH L2: " << totalStretchL2 / (double)ccIdx <<
+            ", MIN. STRETCH L2: " << minStretchL2 <<
+            ", MAX. STRETCH L2: " << maxStretchL2 << std::endl;
+        if (keepIntermediateResults) {
+            meshDebug.texCoords().clear();
+            meshDebug.texCoordTriangles().clear();
+            meshDebug.reserveTexCoords(meshDebug.triangleCount() * 3);
+            meshDebug.reserveTexCoordTriangles(meshDebug.triangleCount());
+            int idxCC = 0;
+            int idxTriangle = 0;
+            int side = 100;
+            for (auto cc : (*connectedComponents)) {
+                float x = ((category[idxCC] % 9) + 0.5) / (9.0);
+                float y = 1 - ((category[idxCC] / 9) + 0.5) / (2.0);
+                for (int idx = 0; idx < cc->triangles().size(); idx++) {
+                    meshDebug.texCoords().push_back(Vec2<float>(x, y));
+                    meshDebug.texCoords().push_back(Vec2<float>(x, y));
+                    meshDebug.texCoords().push_back(Vec2<float>(x, y));
+                    meshDebug.texCoordTriangles().push_back(vmesh::Triangle(3 * idxTriangle, 3 * idxTriangle + 1, 3 * idxTriangle + 2));
+                    idxTriangle++;
+                }
+                idxCC++;
+            }
+            meshDebug.setMaterialLibrary(vmesh::basename(keepFilesPathPrefix + "_debug_categories.mtl"));
+            meshDebug.save(keepFilesPathPrefix + "_debug_categories_after_merge.obj");
+        }
+    }
+#endif
+
+    return ccCount;
+}
+
+//----------------------------------------------------------------------------
+
+template<typename T>
+float
+edgeFunction(const Vec2<T>& a, const Vec2<T>& b, const Vec2<T>& c) {
+    return (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0]);
+}
+
+//----------------------------------------------------------------------------
+
+template<typename T>
+bool
+isInsideTriangle(const Vec2<T> V0, const Vec2<T> V1, const Vec2<T> V2,
+    Vec2<T>       P,
+    float& w0, float& w1, float& w2) {
+    // check of if current pixel lies in triangle
+    // checking the V0-V1 edge
+    float w0_edge = edgeFunction(V1, V2, P);
+    // checking the V1-V2 edge
+    float w1_edge = edgeFunction(V2, V0, P);
+    // checking the V2-V0 edge
+    float w2_edge = edgeFunction(V0, V1, P);
+    if ((w0_edge >= 0 && w1_edge >= 0 && w2_edge >= 0) || (w0_edge <= 0 && w1_edge <= 0 && w2_edge <= 0)) {
+        // barycentric coordinates are the areas of the sub-triangles divided by the area of the main triangle
+        float area = edgeFunction(V0, V1, V2);
+        if (area == 0) {
+            return false;
+        }
+        else {
+            w0 = w0_edge / area;
+            w1 = w1_edge / area;
+            w2 = w2_edge / area;
+        }
+        return true;
+    }
+    else
+        return false;
+}
+
+//----------------------------------------------------------------------------
+
+template<typename T>
+bool
+isInsideTriangleUsingArea(const Vec2<T> A, const Vec2<T> B, const Vec2<T> C, const Vec2<T> P) {
+    float A1 = edgeFunction(B, C, P);
+    float A2 = edgeFunction(C, A, P);
+    float A3 = edgeFunction(A, B, P);
+    if ((A1 >= 0 && A2 >= 0 && A3 >= 0) || (A1 <= 0 && A2 <= 0 && A3 <= 0)) {
+        // barycentric coordinates are the areas of the sub-triangles divided by the area of the main triangle
+        float AT = edgeFunction(A, B, C);
+        if (AT == 0) {
+            return false;
+        }
+        return true;
+    }
+    else
+        return false;
+}
+
+//----------------------------------------------------------------------------
+
+// Given three collinear points p, q, r, the function checks if
+// point q lies on line segment 'pr'
+template<typename T>
+bool
+onSegment(const Vec2<T> p, const Vec2<T> q, const Vec2<T> r)
+{
+    if (q[0] <= std::max<T>(p[0], r[0]) && q[0] >= std::min<T>(p[0], r[0]) &&
+        q[1] <= std::max<T>(p[1], r[1]) && q[1] >= std::min<T>(p[1], r[1]))
+        return true;
+
+    return false;
+}
+
+// To find orientation of ordered triplet (p, q, r).
+// The function returns following values
+// 0 --> p, q and r are collinear
+// 1 --> Clockwise
+// 2 --> Counterclockwise
+template<typename T>
+int
+orientation(const Vec2<T> p, const Vec2<T> q, const Vec2<T> r)
+{
+    // See https://www.geeksforgeeks.org/orientation-3-ordered-points/
+    // for details of below formula.
+    int val = (q[1] - p[1]) * (r[0] - q[0]) -
+        (q[0] - p[0]) * (r[1] - q[1]);
+
+    if (val == 0) return 0;  // collinear
+
+    return (val > 0) ? 1 : 2; // clock or counterclock wise
+}
+
+// The main function that returns true if line segment 'p1q1'
+// and 'p2q2' intersect.
+template<typename T>
+bool
+edgesCross(const Vec2<T> p1, const Vec2<T> q1, const Vec2<T> p2, const Vec2<T> q2) {
+    // Find the four orientations needed for general and
+    // special cases
+    int o1 = orientation(p1, q1, p2);
+    int o2 = orientation(p1, q1, q2);
+    int o3 = orientation(p2, q2, p1);
+    int o4 = orientation(p2, q2, q1);
+
+    // General case
+    if (o1 != o2 && o3 != o4)
+        return true;
+
+    // Special Cases
+    // p1, q1 and p2 are collinear and p2 lies on segment p1q1
+    if (o1 == 0 && onSegment(p1, p2, q1)) return true;
+
+    // p1, q1 and q2 are collinear and q2 lies on segment p1q1
+    if (o2 == 0 && onSegment(p1, q2, q1)) return true;
+
+    // p2, q2 and p1 are collinear and p1 lies on segment p2q2
+    if (o3 == 0 && onSegment(p2, p1, q2)) return true;
+
+    // p2, q2 and q1 are collinear and q1 lies on segment p2q2
+    if (o4 == 0 && onSegment(p2, q1, q2)) return true;
+
+    return false; // Doesn't fall in any of the above cases}
+}
+//----------------------------------------------------------------------------
+
 
 template<typename T>
 void

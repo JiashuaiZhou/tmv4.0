@@ -47,9 +47,9 @@ struct Box2 {
   Vec2<T> max;
 
   Box2() {
-    min = Vec2<T>(std::numeric_limits<T>::lowest(),
+    max = Vec2<T>(std::numeric_limits<T>::lowest(),
                   std::numeric_limits<T>::lowest());
-    max =
+    min =
       Vec2<T>(std::numeric_limits<T>::max(), std::numeric_limits<T>::max());
   }
 
@@ -148,6 +148,22 @@ struct Box3 {
       >> box.max[2];
     return is;
   }
+
+  Box3 operator&(const Box3& rhs) {
+      Box3 c;
+      for (int i = 0; i < 3; i++) {
+          c.min[i] = (min[i] > rhs.min[i]) ? min[i] : rhs.min[i];
+          c.max[i] = (((min[i] + max[i]) < (rhs.min[i] + rhs.max[i])) ? (min[i] + max[i]) : (rhs.min[i] + rhs.max[i])) - c.min[i];
+      }
+      for (int i = 0; i < 3; i++) {
+          if (c.max[i] <= 0) { c.min = c.max = Vec3<T>(T(0)); }
+      }
+      return Box3(c);
+  }
+  T volume() {
+      return ((max[0] - min[0]) * (max[1] - min[1]) * (max[2] - min[2]));
+  }
+
 };
 
 //============================================================================

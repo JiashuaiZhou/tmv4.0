@@ -62,9 +62,10 @@ public:
     return raw3doffsetBitCountExplicitModeFlag_;
   }
   auto getExtensionFlag() const { return extensionFlag_; }
-  auto getExtension8Bits() const { return extension8Bits_; }
+  auto getExtension6Bits() const { return extension6Bits_; }
   auto getVpccExtensionFlag() const { return vpccExtensionFlag_; }
   auto getVmcExtensionFlag() const { return vdmcExtensionFlag_; }
+  auto getMivExtensionFlag() const { return mivExtensionFlag_; }
   auto getLodModeEnableFlag() const { return lodModeEnableFlag_; }
 
   auto& getAtlasFrameParameterSetId() { return atlasFrameParameterSetId_; }
@@ -80,14 +81,16 @@ public:
     return raw3doffsetBitCountExplicitModeFlag_;
   }
   auto& getExtensionFlag() { return extensionFlag_; }
-  auto& getExtension8Bits() { return extension8Bits_; }
+  auto& getExtension6Bits() { return extension6Bits_; }
   auto& getVpccExtensionFlag() { return vpccExtensionFlag_; }
   auto& getVmcExtensionFlag() { return vdmcExtensionFlag_; }
+  auto& getMivExtensionFlag() { return mivExtensionFlag_; }
   auto& getLodModeEnableFlag() { return lodModeEnableFlag_; }
 
   auto& getAtlasFrameTileInformation() { return atlasFrameTileInformation_; }
   auto& getAfpsVpccExtension() { return afpsVpccExtension_; }
   auto& getAfpsVdmcExtension() { return afpsVdmcExtension_; }
+  const auto& getAfpsVdmcExtension() const { return afpsVdmcExtension_; }
 
   void copyFrom(AtlasFrameParameterSetRbsp& refAfps) {
     atlasSequenceParameterSetId_  = refAfps.getAtlasSequenceParameterSetId();
@@ -101,7 +104,7 @@ public:
     vdmcExtensionFlag_         = refAfps.getVmcExtensionFlag();
     afpsVpccExtension_         = refAfps.getAfpsVpccExtension();
     afpsVdmcExtension_         = refAfps.getAfpsVdmcExtension();
-    extension8Bits_            = refAfps.getExtension8Bits();
+    extension6Bits_            = refAfps.getExtension6Bits();
     atlasFrameTileInformation_ = refAfps.getAtlasFrameTileInformation();
   }
 
@@ -114,8 +117,9 @@ private:
   bool                      lodModeEnableFlag_                   = false;
   bool                      raw3doffsetBitCountExplicitModeFlag_ = false;
   bool                      extensionFlag_                       = false;
-  uint8_t                   extension8Bits_                      = 0;
+  uint8_t                   extension6Bits_                      = 0;
   bool                      vpccExtensionFlag_                   = false;
+  bool                      mivExtensionFlag_                    = false;
   bool                      vdmcExtensionFlag_                   = false;
   AtlasFrameTileInformation atlasFrameTileInformation_;
   AfpsVpccExtension         afpsVpccExtension_;

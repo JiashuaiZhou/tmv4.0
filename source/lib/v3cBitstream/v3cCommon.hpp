@@ -168,7 +168,7 @@ enum PatchModeITile {
   I_INTRA = 0,    //  0: Non-predicted patch mode
   I_RAW,          //  1: RAW Point Patch mode
   I_EOM,          //  2: EOM Point Patch mode
-  I_RESERVED_3,   //  3: I_RESERVED Reserved modes
+  I_MESH,         //  3: MESH Patch mode --> will we need any other mesh patch type? Need to check this ....
   I_RESERVED_4,   //  4: I_RESERVED Reserved modes
   I_RESERVED_5,   //  5: I_RESERVED Reserved modes
   I_RESERVED_6,   //  6: I_RESERVED Reserved modes
@@ -189,7 +189,7 @@ enum PatchModePTile {
   P_INTRA,        //  3: Non-predicted Patch mode
   P_RAW,          //  4: RAW Point Patch mode
   P_EOM,          //  5: EOM Point Patch mode
-  P_RESERVED_6,   //  6: Reserved modes
+  P_MESH,         //  6: Non-predicted MESH Patch mode --> will we need any other mesh patch type? Need to check this
   P_RESERVED_7,   //  7: Reserved modes
   P_RESERVED_8,   //  8: Reserved modes
   P_RESERVED_9,   //  9: Reserved modes

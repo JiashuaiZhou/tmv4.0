@@ -10,7 +10,7 @@ categories:
       - analyzeGof: 0
       - subdivIsBase: 1
       - baseIsSrc: 1
-      - encodeGeometryVideo: 0     
+      - encodeDisplacements: 0     
       - ai_fitSubdiv: 0
       - liftingIterationCount: 0
       - textureTransferEnable: 0

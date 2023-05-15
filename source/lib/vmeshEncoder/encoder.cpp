@@ -1085,8 +1085,9 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      origBase,
           origBase.setTexCoord(tc, Round(origBase.texCoord(tc) * scaleTexCoord));
       }
   }
+  // shift added to cope with potential negative base.point values
   for (int32_t v = 0, vcount = modifiedBase.pointCount(); v < vcount; ++v) {
-      modifiedBase.setPoint(v, Round(modifiedBase.point(v) * scalePosition));
+      modifiedBase.setPoint(v, (1 << 18) + Round(modifiedBase.point(v) * scalePosition));
   }
   if (modifiedBase.texCoordCount() > 0 && (params.iDeriveTextCoordFromPos == 0)) {
       for (int32_t tc = 0, tccount = modifiedBase.texCoordCount(); tc < tccount; ++tc) {
@@ -1105,8 +1106,8 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      origBase,
   GeometryEncoderParameters encoderParams;
   // remove this one ??
   encoderParams.cl_ = 10; // this is the default for draco
-  // were not specified before, using scale
-  encoderParams.qp_ = 18;
+  // were not specified before, using scale, extend to 20bits as base values may extend beyond the original scale 
+  encoderParams.qp_ = 20;
   // in practice 19 bits are used for texcoords as 1.0 is scaled as 0x4000
   // this only has incidence when qp-bits packing is used in the encoder
   encoderParams.qt_ = 19;

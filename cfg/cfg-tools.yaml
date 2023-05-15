@@ -12,8 +12,6 @@ tools:
       - texCoordBitDepth: ${src-texcoord-bits}
 
       # Geometry decimate   
-      - target:             ${pp}
-      - minCCTriangleCount: 0
       - minPosition:        ${src-min-pos}
       - maxPosition:        ${src-max-pos}
 
@@ -24,7 +22,7 @@ tools:
       - textureParametrizationQuality: QUALITY
 
       # Intra geometry parametrization
-      - ai_subdivIt: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
+      - ai_subdivIt: 3
       - ai_sdeform: 1
       - ai_forceNormalDisp: 0
       - ai_unifyVertices: 1
@@ -38,8 +36,8 @@ tools:
         - ai_deformNormalThres: 0.8660254
 
       # Inter geometry parametrization
-      - - !conditional 'defined ${pp} and ${pp} < 1.0 and ( defined ${fitsubdiv_inter} and ${fitsubdiv_inter})'
-        - ld_subdivIt: '$eval{ ${pp} < 0.09 ? 3 : ${pp} < 0.42 ? 2 : 0 }'
+      - - !conditional '${fitsubdiv_inter}'
+        - ld_subdivIt: 3
         - ld_sdeform: 1
         - ld_forceNormalDisp: 0
         - ld_deformFlipThres: -0.5

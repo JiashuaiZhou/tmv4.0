@@ -34,9 +34,9 @@ do for [cond=1:2] {
 
     # draw bitrate/psnr graphs
     set xrange [*:*]
-    do for [index in '6 7 11 12 8 9 10' ] {
+    do for [index in '11 12 16 17 13 14 15' ] {
       colnum = index + 0
-      set ylabel word( labels, int( colnum ) - 5 )
+      set ylabel word( labels, int( colnum ) - 10 )
       set yrange [*:*]
       do for [ name in csvFiles ] {
         stats name using colnum index 0 every ::(1+8+(seq-1)*5+(cond-1)*40)::(5+8+(seq-1)*5+(cond-1)*40) prefix "PSNR" nooutput
@@ -70,9 +70,9 @@ do for [cond=1:2] {
     set style fill solid 5 border -1
     set boxwidth 0.5
     set yrange [0:*]
-    do for [index in '13 14 15 16' ] {
+    do for [index in '18 19 20 21' ] {
       colnum = index + 0
-      set ylabel word( labels, int( colnum ) - 5 )
+      set ylabel word( labels, int( colnum ) - 10 )
       plot for [ name in csvFiles ] \
         name \
         every::(1+8+(seq-1)*5+(cond-1)*40)::(5+8+(seq-1)*5+(cond-1)*40) \
@@ -82,4 +82,3 @@ do for [cond=1:2] {
   }
 }
 
-print "Create: ", output

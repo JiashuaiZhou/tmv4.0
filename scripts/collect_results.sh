@@ -75,6 +75,13 @@ NBOUTPUTFACES=$( cat ${LOGENC} | grep "Sequence face count" | awk '{print $4}' )
 # Get bitstream total size in bits as reported by the encoding process
 TOTALSIZEBITS=$( stat -c%s ${VDMC} | awk '{printf "%d\n", $1 * 8 }' )
 
+# Get partial sizes of substreams
+BASEMESHINTRASIZEBITS=$( cat ${LOGENC} | grep V3C_BMD | awk '{print $16 * 8}' )
+BASEMESHINTERSIZEBITS=$( cat ${LOGENC} | grep V3C_BMD | awk '{print $21 * 8}' )
+DISPLACEMENTSIZEBITS=$( cat ${LOGENC} | grep "Displacement:" | awk '{print $2 * 8}' )
+ATTRVIDEOSIZEBITS=$( cat ${LOGENC} | grep "Attribute:" | awk '{print $2 * 8}' )
+METADATASIZEBITS=$( cat ${LOGENC} | grep "Metadata:" | awk '{print $2 * 8}' )
+
 # Get user encoder and decoder runtimes
 ENCTIME=$( cat ${LOGENC} | grep "Sequence processing time" | awk '{print $4}' )
 DECTIME=$( cat ${LOGDEC} | grep "Sequence processing time" | awk '{print $4}' )
@@ -112,11 +119,13 @@ fi
 if [ "${CSV}" != "" ]; then
   SEQLINE=( 0 1 2 3 6 7 4 5 )
   if [ ! -f ${CSV} ] ; then
-    HEADER="SeqId,CondId,RateId,NbOutputFaces,TotalBitstreamBits,GridD1,GridD2,GridLuma,GridChromaCb,GridChromaCr,"
-    HEADER+="IbsmGeom,IbsmLuma,UserEncoderRuntime,UserDecoderRuntime,PeakEncoderMemory,PeakDecoderMemory"
+    HEADER="SeqId,CondId,RateId,NbOutputFaces,TotalBitstreamBits,BaseMeshIntraBits,BaseMeshInterBits,DisplacementBits,AttrVideoBits,MetaDataBits,"
+    HEADER+="GridD1,GridD2,GridLuma,GridChromaCb,GridChromaCr,IbsmGeom,IbsmLuma,"
+    HEADER+="UserEncoderRuntime,UserDecoderRuntime,PeakEncoderMemory,PeakDecoderMemory"
     echo $HEADER > ${CSV}
   fi
   STR="${SEQID},${CONDID},${RATEID},${NBOUTPUTFACES},${TOTALSIZEBITS},"
+  STR+="${BASEMESHINTRASIZEBITS},${BASEMESHINTERSIZEBITS},${DISPLACEMENTSIZEBITS},${ATTRVIDEOSIZEBITS},${METADATASIZEBITS},"
   STR+="${RESULTS[0]},${RESULTS[1]},${RESULTS[2]},${RESULTS[3]},${RESULTS[4]},${RESULTS[5]},${RESULTS[6]},"
   STR+="${ENCTIME},${DECTIME},${ENCMEMO},${DECMEMO}"
   echo $STR >> ${CSV}

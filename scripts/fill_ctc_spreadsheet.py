@@ -22,12 +22,13 @@ except ImportError as error:
 # Set configurations
 seqOrder = [0, 1, 2, 3, 6, 7, 4, 5]
 maxFrames = [300, 300, 300, 300, 300, 150, 300, 300]
-strCond = [{'name': 'C0 lossless AI', 'dataColumn': [10, 16], 'frameColumn': 5},
-           {'name': 'C1 lossy AI',    'dataColumn': [12, 26], 'frameColumn': 6},
-           {'name': 'C2 lossy RA',    'dataColumn': [12, 26], 'frameColumn': 6}]
-losslessColumn = ['TotalBitstreamBits', 'UserEncoderRuntime', 'UserDecoderRuntime']
-lossyColumn = ['NbOutputFaces', 'TotalBitstreamBits', 'GridD1', 'GridD2', 'GridLuma', 'GridChromaCb', \
-               'GridChromaCr', 'IbsmGeom', 'IbsmLuma', 'UserEncoderRuntime', 'UserDecoderRuntime']
+strCond = [{'name': 'C0 lossless AI', 'dataColumn': [10, 17], 'frameColumn': 5},
+           {'name': 'C1 lossy AI',    'dataColumn': [14, 35], 'frameColumn': 6},
+           {'name': 'C2 lossy RA',    'dataColumn': [14, 35], 'frameColumn': 6}]
+losslessColumn = ['TotalBitstreamBits', 'BaseMeshIntraBits', 'UserEncoderRuntime', 'UserDecoderRuntime']
+lossyColumn = ['NbOutputFaces', 'TotalBitstreamBits', 'BaseMeshIntraBits', 'BaseMeshInterBits', 'DisplacementBits', \
+              'AttrVideoBits','MetaDataBits','GridD1', 'GridD2', 'GridLuma', 'GridChromaCb', 'GridChromaCr', \
+              'IbsmGeom', 'IbsmLuma', 'UserEncoderRuntime', 'UserDecoderRuntime']
 
 def parseArgs():
   global parser

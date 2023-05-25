@@ -42,7 +42,7 @@ categories:
           - textureVideoWidth        : { r1: 2048,       r2: 2048,       r3: 2048,       r4: 2048,       r5: 2048       }
           - textureVideoHeight       : { r1: 2048,       r2: 2048,       r3: 2048,       r4: 2048,       r5: 2048       }
           - textureVideoQP           : { r1: 32,         r2: 30,         r3: 28,         r4: 26,         r5: 26         }
-          - liftingQP                : { r1: "37,69,69", r2: "27,59,59", r3: "22,54,54", r4: "22,54,54", r5: "21,53,53" }
+          - liftingQP                : { r1: "24,56,56", r2: "23,55,55", r3: "22,54,54", r4: "22,54,54", r5: "22,54,54" }
           - target                   : { r1: 0.03,       r2: 0.06,       r3: 0.06,       r4: 0.06,       r5: 0.12       }
       basketball_player:
         seq-id                       : 3 
@@ -82,7 +82,7 @@ categories:
           - textureVideoWidth        : { r1: 4096,       r2: 4096,       r3: 4096,       r4: 2048,       r5: 2048       }
           - textureVideoHeight       : { r1: 4096,       r2: 4096,       r3: 4096,       r4: 2048,       r5: 2048       }
           - textureVideoQP           : { r1: 40,         r2: 39,         r3: 37,         r4: 30,         r5: 28         }
-          - liftingQP                : { r1: "30,55,55", r2: "28,53,53", r3: "22,47,47", r4: "34,59,59", r5: "34,59,59" }
+          - liftingQP                : { r1: "30,55,55", r2: "29,54,54", r3: "30,55,55", r4: "26,51,51", r5: "26,51,51" }
           - target                   : { r1: 0.06,       r2: 0.12,       r3: 0.24,       r4: 0.24,       r5: 0.36       }
       football:
         seq-id                       : 7 

@@ -52,86 +52,103 @@ public:
   TextureParametrization()  = default;
   ~TextureParametrization() = default;
 
-  bool generate(const TriangleMesh<MeshType>& decimate, 
-      TriangleMesh<MeshType>& decimateTexture, 
-      const VMCEncoderParameters& params, 
-      std::vector<ConnectedComponent<MeshType>>& curCC, 
-      std::vector<ConnectedComponent<MeshType>>& previousCC, 
-      std::string keepFilesPathPrefix);
+  bool generate(const TriangleMesh<MeshType>&              decimate,
+                TriangleMesh<MeshType>&                    decimateTexture,
+                const VMCEncoderParameters&                params,
+                std::vector<ConnectedComponent<MeshType>>& curCC,
+                std::vector<ConnectedComponent<MeshType>>& previousCC,
+                std::string keepFilesPathPrefix);
 
   static bool generate_UVAtlas(const TriangleMesh<MeshType>& decimate,
-      TriangleMesh<MeshType>& decimateTexture,
-      const VMCEncoderParameters& params, std::string keepFilesPathPrefix);
+                               TriangleMesh<MeshType>&       decimateTexture,
+                               const VMCEncoderParameters&   params,
+                               std::string keepFilesPathPrefix);
 
-  static bool generate_orthoAtlas(const TriangleMesh<MeshType>& decimate,
-      TriangleMesh<MeshType>& decimateTexture,
-      std::vector<ConnectedComponent<MeshType>>& curCC,
-      std::vector<ConnectedComponent<MeshType>>& previousCC,
-      const VMCEncoderParameters& params, std::string keepFilesPathPrefix);
+  static bool
+  generate_orthoAtlas(const TriangleMesh<MeshType>& decimate,
+                      TriangleMesh<MeshType>&       decimateTexture,
+                      std::vector<ConnectedComponent<MeshType>>& curCC,
+                      std::vector<ConnectedComponent<MeshType>>& previousCC,
+                      const VMCEncoderParameters&                params,
+                      std::string keepFilesPathPrefix);
 
-  static bool create_patches(TriangleMesh<MeshType>& mesh,
-      std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
-      std::vector<int32_t>& projectedConnectedComponentsCategories,
-      const VMCEncoderParameters& params, std::string keepFilesPathPrefix);
+  static bool create_patches(
+    TriangleMesh<MeshType>&                               mesh,
+    std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
+    std::vector<int32_t>&       projectedConnectedComponentsCategories,
+    const VMCEncoderParameters& params,
+    std::string                 keepFilesPathPrefix);
 
-  static void patch_rasterization(vmesh::Plane<uint8_t>& occupancyCC,
-      ConnectedComponent<MeshType>& packedCC,
-                       const VMCEncoderParameters& params);
+  static void patch_rasterization(vmesh::Plane<uint8_t>&        occupancyCC,
+                                  ConnectedComponent<MeshType>& packedCC,
+                                  const VMCEncoderParameters&   params);
   static void patch_horizons(vmesh::Plane<uint8_t>& occupancyCC,
-      std::vector<int>& topHorizon,
-      std::vector<int>& bottomHorizon,
-      std::vector<int>& rightHorizon,
-      std::vector<int>& leftHorizon);
-  static bool pack_patch_flexible(vmesh::Plane<uint8_t>& occupancy,
-      vmesh::Plane<uint8_t>& occupancyCC,
-      ConnectedComponent<MeshType>& packedCC,
-      const VMCEncoderParameters& params, std::string keepFilesPathPrefix, bool invertDirection);
+                             std::vector<int>&      topHorizon,
+                             std::vector<int>&      bottomHorizon,
+                             std::vector<int>&      rightHorizon,
+                             std::vector<int>&      leftHorizon);
+  static bool pack_patch_flexible(vmesh::Plane<uint8_t>&        occupancy,
+                                  vmesh::Plane<uint8_t>&        occupancyCC,
+                                  ConnectedComponent<MeshType>& packedCC,
+                                  const VMCEncoderParameters&   params,
+                                  std::string keepFilesPathPrefix,
+                                  bool        invertDirection);
 
-  static bool pack_patch_flexible_tetris(vmesh::Plane<uint8_t>& occupancy,
-      vmesh::Plane<uint8_t>& occupancyCC,
-      ConnectedComponent<MeshType>& packedCC,
-      const VMCEncoderParameters& params,
-      std::string keepFilesPathPrefix,
-      std::vector<int>& horizon,
-      std::vector<int>& topHorizon,
-      std::vector<int>& bottomHorizon,
-      std::vector<int>& rightHorizon,
-      std::vector<int>& leftHorizon);
+  static bool
+  pack_patch_flexible_tetris(vmesh::Plane<uint8_t>&        occupancy,
+                             vmesh::Plane<uint8_t>&        occupancyCC,
+                             ConnectedComponent<MeshType>& packedCC,
+                             const VMCEncoderParameters&   params,
+                             std::string                   keepFilesPathPrefix,
+                             std::vector<int>&             horizon,
+                             std::vector<int>&             topHorizon,
+                             std::vector<int>&             bottomHorizon,
+                             std::vector<int>&             rightHorizon,
+                             std::vector<int>&             leftHorizon);
 
-  static bool pack_patch_flexible_with_temporal_stability(vmesh::Plane<uint8_t>& occupancy,
-      vmesh::Plane<uint8_t>& occupancyCC,
-      ConnectedComponent<MeshType>& packedCC,
-      ConnectedComponent<MeshType>& matchedCC,
-      const VMCEncoderParameters& params, std::string keepFilesPathPrefix);
+  static bool pack_patch_flexible_with_temporal_stability(
+    vmesh::Plane<uint8_t>&        occupancy,
+    vmesh::Plane<uint8_t>&        occupancyCC,
+    ConnectedComponent<MeshType>& packedCC,
+    ConnectedComponent<MeshType>& matchedCC,
+    const VMCEncoderParameters&   params,
+    std::string                   keepFilesPathPrefix);
 
-  static bool pack_patches_with_patch_scale_and_rotation(TriangleMesh<MeshType>& mesh,
-      std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
-      std::vector<int32_t>& projectedConnectedComponentsCategories,
-      std::vector<ConnectedComponent<MeshType>>& packedCCList,
-      const VMCEncoderParameters& params,
-      double scalingAdjustment, std::string keepFilesPathPrefix);
+  static bool pack_patches_with_patch_scale_and_rotation(
+    TriangleMesh<MeshType>&                               mesh,
+    std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
+    std::vector<int32_t>& projectedConnectedComponentsCategories,
+    std::vector<ConnectedComponent<MeshType>>& packedCCList,
+    const VMCEncoderParameters&                params,
+    double                                     scalingAdjustment,
+    std::string                                keepFilesPathPrefix);
 
-  static bool pack_patches_with_patch_scale_and_rotation_and_temporal_stabilization(TriangleMesh<MeshType>& mesh,
-      std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
-      std::vector<int32_t>& projectedConnectedComponentsCategories,
-      std::vector<ConnectedComponent<MeshType>>& packedCCList,
-      std::vector<ConnectedComponent<MeshType>>& previousFramePackedCCList,
-      const VMCEncoderParameters& params,
-      double scalingAdjustment, std::string keepFilesPathPrefix);
-  static bool tetris_packing_patches_with_patch_scale_and_rotation(TriangleMesh<MeshType>& mesh,
-      std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
-      std::vector<int32_t>& projectedConnectedComponentsCategories,
-      std::vector<ConnectedComponent<MeshType>>& packedCCList,
-      const VMCEncoderParameters& params,
-      double scalingAdjustment,
-      std::string keepFilesPathPrefix);
-  static bool projection_packing_patches_with_patch_scale_and_rotation(TriangleMesh<MeshType>& mesh,
-      std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
-      std::vector<int32_t>& projectedConnectedComponentsCategories,
-      std::vector<ConnectedComponent<MeshType>>& packedCCList,
-      const VMCEncoderParameters& params,
-      double scalingAdjustment,
-      std::string keepFilesPathPrefix);
+  static bool
+  pack_patches_with_patch_scale_and_rotation_and_temporal_stabilization(
+    TriangleMesh<MeshType>&                               mesh,
+    std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
+    std::vector<int32_t>& projectedConnectedComponentsCategories,
+    std::vector<ConnectedComponent<MeshType>>& packedCCList,
+    std::vector<ConnectedComponent<MeshType>>& previousFramePackedCCList,
+    const VMCEncoderParameters&                params,
+    double                                     scalingAdjustment,
+    std::string                                keepFilesPathPrefix);
+  static bool tetris_packing_patches_with_patch_scale_and_rotation(
+    TriangleMesh<MeshType>&                               mesh,
+    std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
+    std::vector<int32_t>& projectedConnectedComponentsCategories,
+    std::vector<ConnectedComponent<MeshType>>& packedCCList,
+    const VMCEncoderParameters&                params,
+    double                                     scalingAdjustment,
+    std::string                                keepFilesPathPrefix);
+  static bool projection_packing_patches_with_patch_scale_and_rotation(
+    TriangleMesh<MeshType>&                               mesh,
+    std::vector<std::shared_ptr<TriangleMesh<MeshType>>>& projectedCCList,
+    std::vector<int32_t>& projectedConnectedComponentsCategories,
+    std::vector<ConnectedComponent<MeshType>>& packedCCList,
+    const VMCEncoderParameters&                params,
+    double                                     scalingAdjustment,
+    std::string                                keepFilesPathPrefix);
 };
 
 }  // namespace vmesh

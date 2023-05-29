@@ -73,7 +73,8 @@ if [ ! -f "$LOGMET" ] ; then print_usage "logmet = \"$LOGMET\" not exists"; exit
 NBOUTPUTFACES=$( cat ${LOGENC} | grep "Sequence face count" | awk '{print $4}' )
 
 # Get bitstream total size in bits as reported by the encoding process
-TOTALSIZEBITS=$( stat -c%s ${VDMC} | awk '{printf "%d\n", $1 * 8 }' )
+TOTALSIZEBITS=$(stat -c '%s' "${VDMC}")
+TOTALSIZEBITS=$((TOTALSIZEBITS * 8))
 
 # Get partial sizes of substreams
 BASEMESHINTRASIZEBITS=$( cat ${LOGENC} | grep V3C_BMD | awk '{print $16 * 8}' )

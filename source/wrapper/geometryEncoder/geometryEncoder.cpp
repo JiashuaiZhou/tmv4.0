@@ -74,8 +74,8 @@ GeometryEncoder<T>::create(GeometryCodecId codecId) {
     break;
 #endif
   case GeometryCodecId::MPEG:
-      return std::make_shared<MpegGeometryEncoder<T>>();
-      break;
+    return std::make_shared<MpegGeometryEncoder<T>>();
+    break;
   default:
     printf("Error GeometryEncoder: codec id not supported ( %d ) \n",
            (int)codecId);

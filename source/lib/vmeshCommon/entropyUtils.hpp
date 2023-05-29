@@ -154,9 +154,7 @@ EntropyEncoderWrapper<Base>::encodeExpGolomb(
   }
   encode(0, ctxPrefix[std::min(maxPrefixIdx, k - k0)]);
 
-  while (k--) {
-    encode((symbol >> k) & 1);
-  }
+  while (k--) { encode((symbol >> k) & 1); }
 }
 
 //----------------------------------------------------------------------------
@@ -178,9 +176,7 @@ EntropyEncoderWrapper<Base>::encodeExpGolomb(
   }
   encode(0, ctxPrefix[std::min(maxPrefixIdx, k - k0)]);
 
-  while (k--) {
-    encode((symbol >> k) & 1);
-  }
+  while (k--) { encode((symbol >> k) & 1); }
 }
 
 //----------------------------------------------------------------------------
@@ -227,9 +223,7 @@ EntropyDecoderWrapper<Base>::decodeExpGolomb(
     }
   } while (l != 0);
 
-  while (k--) {
-    binary_symbol |= decode() << k;
-  }
+  while (k--) { binary_symbol |= decode() << k; }
 
   return static_cast<unsigned int>(symbol + binary_symbol);
 }
@@ -256,9 +250,7 @@ EntropyDecoderWrapper<Base>::decodeExpGolomb(
     }
   } while (l != 0);
 
-  while (k--) {
-    binary_symbol |= decode() << k;
-  }
+  while (k--) { binary_symbol |= decode() << k; }
 
   return static_cast<unsigned int>(symbol + binary_symbol);
 }

@@ -2,24 +2,24 @@
 // Licence, included below.  This software may be subject to other third
 // party and contributor rights, including patent rights, and no such
 // rights are granted under this licence.
-// 
+//
 // Copyright (c) 2022, InterDigital
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // * Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // * Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the distribution.
-//  
+//
 // * Neither the name of the InterDigital nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-//  
+//
 //  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 //  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 //  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -45,77 +45,76 @@
 #include "ebModel.h"
 #include "ebDecoder.h"
 
-int main(int argc, char* argv[]) {
+int
+main(int argc, char* argv[]) {
+  const char* name  = "ebdecode";
+  const char* brief = "MPEG Mesh decompression using edge breaker.";
 
-    const char* name = "ebdecode";
-    const char* brief = "MPEG Mesh decompression using edge breaker.";
+  std::string inputModelFilename;
+  std::string outputModelFilename;
 
-    std::string inputModelFilename;
-    std::string outputModelFilename;
+  // command line parameters
+  try {
+    cxxopts::Options options(name, brief);
+    options.add_options()("h,help", "Print usage")(
+      "i,inputModel",
+      "path to output encoded file (.eb)",
+      cxxopts::value<std::string>())("o,outputModel",
+                                     "path to input model (obj or ply file)",
+                                     cxxopts::value<std::string>());
 
-    // command line parameters
-    try {
-        cxxopts::Options options(name, brief);
-        options.add_options()
-            ("h,help", "Print usage")
-            ("i,inputModel", "path to output encoded file (.eb)",
-                cxxopts::value<std::string>())
-            ("o,outputModel", "path to input model (obj or ply file)",
-                cxxopts::value<std::string>())
-            ;
+    auto result = options.parse(argc, argv);
 
-        auto result = options.parse(argc, argv);
-
-        // Analyse the options
-        if (result.count("help") || result.arguments().size() == 0) {
-            std::cout << options.help() << std::endl;
-            return -1;
-        }
-
-        if (result.count("inputModel"))
-            inputModelFilename = result["inputModel"].as<std::string>();
-        else {
-            std::cerr << "Error: missing inputModel parameter" << std::endl;
-            std::cout << options.help() << std::endl;
-            return -1;
-        }
-
-        //
-        if (result.count("outputModel"))
-            outputModelFilename = result["outputModel"].as<std::string>();
-        else {
-            std::cerr << "Warning: missing outputModel parameter, compressed model will not be saved" << std::endl;
-            // std::cout << options.help() << std::endl;
-            // return -1;
-        }
-
+    // Analyse the options
+    if (result.count("help") || result.arguments().size() == 0) {
+      std::cout << options.help() << std::endl;
+      return -1;
     }
-    catch (const cxxopts::OptionException& e) {
-        std::cout << "error parsing options: " << e.what() << std::endl;
-        return -1;
+
+    if (result.count("inputModel"))
+      inputModelFilename = result["inputModel"].as<std::string>();
+    else {
+      std::cerr << "Error: missing inputModel parameter" << std::endl;
+      std::cout << options.help() << std::endl;
+      return -1;
     }
 
     //
-    eb::EBDecoder eb;
+    if (result.count("outputModel"))
+      outputModelFilename = result["outputModel"].as<std::string>();
+    else {
+      std::cerr << "Warning: missing outputModel parameter, compressed model "
+                   "will not be saved"
+                << std::endl;
+      // std::cout << options.help() << std::endl;
+      // return -1;
+    }
 
-    // load the bitstream
-    if (!eb.load(inputModelFilename))
-        return -1;
+  } catch (const cxxopts::OptionException& e) {
+    std::cout << "error parsing options: " << e.what() << std::endl;
+    return -1;
+  }
 
-    // the output
-    eb::Model outputModel;
+  //
+  eb::EBDecoder eb;
 
-    // Perform the processings
-    clock_t t1 = clock();
+  // load the bitstream
+  if (!eb.load(inputModelFilename)) return -1;
 
-    std::cout << "Starting decompression of the model" << std::endl;
+  // the output
+  eb::Model outputModel;
 
-    eb.decode(outputModel);
+  // Perform the processings
+  clock_t t1 = clock();
 
-    clock_t t2 = clock();
-    std::cout << "Time on processing: " << ((float)(t2 - t1)) / CLOCKS_PER_SEC << " sec." << std::endl;
+  std::cout << "Starting decompression of the model" << std::endl;
 
-    // save the result, if success memory is handled by model store
-    return eb::IO::saveModel(outputModelFilename, outputModel) ? 0 : -1;
+  eb.decode(outputModel);
 
+  clock_t t2 = clock();
+  std::cout << "Time on processing: " << ((float)(t2 - t1)) / CLOCKS_PER_SEC
+            << " sec." << std::endl;
+
+  // save the result, if success memory is handled by model store
+  return eb::IO::saveModel(outputModelFilename, outputModel) ? 0 : -1;
 }

@@ -82,9 +82,9 @@ private:
   void dilateTexture(Frame<uint8_t>&             reconstructedTexture,
                      Plane<uint8_t>&             occupancy,
                      const VMCEncoderParameters& params);
-  void dilateTexture(Frame<uint8_t>& reconstructedTexture, 
-                     Plane<uint8_t>& occupancy, 
-                     Frame<uint8_t>& pastReconstructedTexture, 
+  void dilateTexture(Frame<uint8_t>&             reconstructedTexture,
+                     Plane<uint8_t>&             occupancy,
+                     Frame<uint8_t>&             pastReconstructedTexture,
                      const VMCEncoderParameters& params);
 };
 

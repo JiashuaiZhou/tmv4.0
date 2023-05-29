@@ -104,7 +104,7 @@ protected:
   int      m_iFrameRate;  ///< source frame-rates (Hz)
   uint32_t m_FrameSkip;   ///< number of skipped frames from the beginning
   uint32_t
-    m_temporalSubsampleRatio;  ///< temporal subsample ratio, 2 means code every two frames
+      m_temporalSubsampleRatio;  ///< temporal subsample ratio, 2 means code every two frames
   int m_sourceWidth;  ///< source width in pixel
   int
     m_sourceHeight;  ///< source height in pixel (when interlaced = field height)
@@ -252,7 +252,7 @@ protected:
   int m_iGOPSize;              ///< GOP size of hierarchical structure
   int m_drapPeriod;            ///< period of dependent RAP pictures
   bool
-    m_rewriteParamSets;  ///< Flag to enable rewriting of parameter sets at random access points
+           m_rewriteParamSets;  ///< Flag to enable rewriting of parameter sets at random access points
   RPLEntry m_RPLList0[MAX_GOP];  ///< the RPL entries from the config file
   RPLEntry m_RPLList1[MAX_GOP];  ///< the RPL entries from the config file
   bool
@@ -283,7 +283,7 @@ protected:
                                    ///< for RRC
 #  endif
   bool
-    m_persistentRiceAdaptationEnabledFlag;  ///< control flag for Golomb-Rice parameter adaptation over each slice
+       m_persistentRiceAdaptationEnabledFlag;  ///< control flag for Golomb-Rice parameter adaptation over each slice
   bool m_cabacBypassAlignmentEnabledFlag;
   bool m_ISP;
   bool m_useFastISP;  ///< flag for enabling fast methods for ISP
@@ -315,15 +315,15 @@ protected:
   std::vector<ChromaQpAdj>
     m_cuChromaQpOffsetList;  ///< Local chroma QP offsets list (to be signalled in PPS)
   bool
-    m_cuChromaQpOffsetEnabled;  ///< Enable local chroma QP offsets (slice level flag)
-  bool m_bFastDeltaQP;          ///< Fast Delta QP (false:default)
+       m_cuChromaQpOffsetEnabled;  ///< Enable local chroma QP offsets (slice level flag)
+  bool m_bFastDeltaQP;             ///< Fast Delta QP (false:default)
 
   int m_cbQpOffset;  ///< Chroma Cb QP Offset (0:default)
   int m_crQpOffset;  ///< Chroma Cr QP Offset (0:default)
   int
     m_cbQpOffsetDualTree;  ///< Chroma Cb QP Offset for dual tree (overwrite m_cbQpOffset for dual tree)
   int
-    m_crQpOffsetDualTree;  ///< Chroma Cr QP Offset for dual tree (overwrite m_crQpOffset for dual tree)
+      m_crQpOffsetDualTree;  ///< Chroma Cr QP Offset for dual tree (overwrite m_crQpOffset for dual tree)
   int m_cbCrQpOffset;  ///< QP Offset for joint Cb-Cr mode
   int
     m_cbCrQpOffsetDualTree;  ///< QP Offset for joint Cb-Cr mode (overwrite m_cbCrQpOffset for dual tree)
@@ -354,7 +354,7 @@ protected:
 #  endif
 
   bool
-    m_bUseAdaptiveQP;  ///< Flag for enabling QP adaptation based on a psycho-visual model
+      m_bUseAdaptiveQP;  ///< Flag for enabling QP adaptation based on a psycho-visual model
   int m_iQPAdaptationRange;  ///< dQP range by QP adaptation
 #  if ENABLE_QPA
   bool
@@ -506,7 +506,7 @@ protected:
   // coding tools (loop filter)
   bool m_deblockingFilterDisable;  ///< flag for using deblocking filter
   bool
-    m_deblockingFilterOffsetInPPS;  ///< offset for deblocking filter in 0 = slice header, 1 = PPS
+      m_deblockingFilterOffsetInPPS;  ///< offset for deblocking filter in 0 = slice header, 1 = PPS
   int m_deblockingFilterBetaOffsetDiv2;  ///< beta offset for deblocking filter
   int m_deblockingFilterTcOffsetDiv2;    ///< tc offset for deblocking filter
   int
@@ -538,13 +538,13 @@ protected:
     m_rdPenalty;  ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2:
                   ///< maximum RD-penalty)
   bool
-    m_bDisableIntraPUsInInterSlices;  ///< Flag for disabling intra predicted PUs in inter slices.
+                 m_bDisableIntraPUsInInterSlices;  ///< Flag for disabling intra predicted PUs in inter slices.
   MESearchMethod m_motionEstimationSearchMethod;
   bool m_bRestrictMESampling;  ///< Restrict sampling for the Selective ME
   int  m_iSearchRange;         ///< ME search range
   int  m_bipredSearchRange;    ///< ME search range for bipred refinement
   int
-    m_minSearchWindow;  ///< ME minimum search window size for the Adaptive Window ME
+       m_minSearchWindow;  ///< ME minimum search window size for the Adaptive Window ME
   bool m_bClipForBiPredMeEnabled;  ///< Enables clipping for Bi-Pred ME.
   bool
     m_bFastMEAssumingSmootherMVEnabled;  ///< Enables fast ME assuming a smoother MV.
@@ -601,7 +601,7 @@ protected:
   bool m_bUseBLambdaForNonKeyLowDelayPictures;
 
   HashType
-    m_decodedPictureHashSEIType;  ///< Checksum mode for decoded picture hash SEI message
+           m_decodedPictureHashSEIType;  ///< Checksum mode for decoded picture hash SEI message
   HashType m_subpicDecodedPictureHashType;
   bool     m_bufferingPeriodSEIEnabled;
   bool     m_pictureTimingSEIEnabled;
@@ -734,7 +734,7 @@ protected:
   // weighted prediction
   bool m_useWeightedPred;  ///< Use of weighted prediction in P slices
   bool
-    m_useWeightedBiPred;  ///< Use of bi-directional weighted prediction in B slices
+                           m_useWeightedBiPred;  ///< Use of bi-directional weighted prediction in B slices
   WeightedPredictionMethod m_weightedPredictionMethod;
 
   uint32_t m_log2ParallelMergeLevel;  ///< Parallel merge estimation region
@@ -774,7 +774,7 @@ protected:
   bool m_RCForceIntraQP;  ///< force all intra picture to use initial QP or not
 #  if U0132_TARGET_BITS_SATURATION
   bool
-    m_RCCpbSaturationEnabled;  ///< enable target bits saturation to avoid CPB overflow and underflow
+           m_RCCpbSaturationEnabled;  ///< enable target bits saturation to avoid CPB overflow and underflow
   uint32_t m_RCCpbSize;             ///< CPB size
   double   m_RCInitialCpbFullness;  ///< initial CPB fullness
 #  endif
@@ -807,7 +807,7 @@ protected:
   int
     m_transferCharacteristics;  ///< Indicates the opto-electronic transfer characteristics of the source
   int
-    m_matrixCoefficients;  ///< Describes the matrix coefficients used in deriving luma and chroma from RGB primaries
+       m_matrixCoefficients;  ///< Describes the matrix coefficients used in deriving luma and chroma from RGB primaries
   bool m_progressiveSourceFlag;  ///< Indicates if the content is progressive
   bool m_interlacedSourceFlag;   ///< Indicates if the content is interlaced
   bool
@@ -825,7 +825,7 @@ protected:
     m_overscanAppropriateFlag;  ///< Indicates whether conformant decoded pictures are suitable for display using
                                 ///< overscan
   bool
-    m_videoFullRangeFlag;  ///< Indicates the black level and range of luma and chroma signals
+      m_videoFullRangeFlag;  ///< Indicates the black level and range of luma and chroma signals
   int m_ImvMode;      ///< imv mode
   int m_Imv4PelFast;  ///< imv 4-Pel fast mode
 
@@ -869,7 +869,7 @@ protected:
   double m_scalingRatioVer;
   bool   m_resChangeInClvsEnabled;
   double
-    m_fractionOfFrames;  ///< encode a fraction of the frames as specified in FramesToBeEncoded
+      m_fractionOfFrames;  ///< encode a fraction of the frames as specified in FramesToBeEncoded
   int m_switchPocPeriod;
   int
     m_upscaledOutput;  ////< Output upscaled (2), decoded cropped but in full resolution buffer (1) or decoded cropped

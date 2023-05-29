@@ -188,47 +188,47 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("orthoAtlasUseVertexCriteria",
       encParams.useVertexCriteria,
       encParams.useVertexCriteria,
-      "Use Vertex Criteria (DEFAULT=1)")
+      "Use Vertex Criteria (DEFAULT:1)")
     ("orthoAtlasUseSeedHistogram",
       encParams.bUseSeedHistogram,
       encParams.bUseSeedHistogram,
-      "Determine CC seed using histogram (DEFAULT=1)")
+      "Determine CC seed using histogram (DEFAULT:1)")
     ("orthoAtlasStrongGradientThreshold",
       encParams.strongGradientThreshold,
       encParams.strongGradientThreshold,
-      "Strong Gradient Threshold (DEFAULT=180)")
+      "Strong Gradient Threshold (DEFAULT:180)")
     ("orthoAtlasMaxCCAreaRatio",
       encParams.maxCCAreaRatio,
       encParams.maxCCAreaRatio,
-      "Minimum Connected Components Area Ratio (DEFAULT=1)")
+      "Minimum Connected Components Area Ratio (DEFAULT:1)")
     ("orthoAtlasMaxNumFaces",
       encParams.maxNumFaces,
       encParams.maxNumFaces,
-      "Max Num Faces (DEFAULT=inf)")
+      "Max Num Faces (DEFAULT:inf)")
     ("orthoAtlasEnableFaceClusterMerge",
       encParams.bFaceClusterMerge,
       encParams.bFaceClusterMerge,
-      "Face Cluster Merge (DEFAULT=0)")
+      "Face Cluster Merge (DEFAULT:0)")
     ("orthoAtlasLambdaRDMerge",
       encParams.lambdaRDMerge,
       encParams.lambdaRDMerge,
-      "Lambda RD for merging (DEFAULT=1.0)")
+      "Lambda RD for merging (DEFAULT:1.0)")
     ("orthoAtlasCheck2DConnectivity",
       encParams.check2DConnectivity,
       encParams.check2DConnectivity,
-      "Enforce 2D connectivity (DEFAULT=1)")
+      "Enforce 2D connectivity (DEFAULT:1)")
     ("orthoAtlasAdjustNormalDirection",
       encParams.adjustNormalDirection,
       encParams.adjustNormalDirection,
-      "Adjust normal for projected patches (DEFAULT=1)")
+      "Adjust normal for projected patches (DEFAULT:1)")
     ("orthoAtlasEnablePatchScaling",
       encParams.bPatchScaling,
       encParams.bPatchScaling,
-      "Enable patch scaling (DEFAULT=0)")
+      "Enable patch scaling (DEFAULT:0)")
     ("orthoAtlasEnablePatchTemporalStabilization",
       encParams.bTemporalStabilization,
       encParams.bTemporalStabilization,
-      "Enable patch temporal stabilization (DEFAULT=1)")
+      "Enable patch temporal stabilization (DEFAULT:1)")
     ("orthoAtlasDeriveTextCoordFromPos",
       encParams.iDeriveTextCoordFromPos,
       encParams.iDeriveTextCoordFromPos,
@@ -236,15 +236,15 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
     ("orthoAtlasUse45DegreeProjection",
       encParams.use45DegreeProjection,
       encParams.use45DegreeProjection,
-      "Use 45 degree projection (DEFAULT=1)")
+      "Use 45 degree projection (DEFAULT:1)")
     ("orthoAtlasPackingScaling",
       encParams.packingScaling,
       encParams.packingScaling,
-      "Packing scaling adjustment (DEFAULT=0.9)")
+      "Packing scaling adjustment (DEFAULT:0.9)")
     ("orthoAtlasPackSmallPatchesOnTop",
       encParams.packSmallPatchesOnTop,
       encParams.packSmallPatchesOnTop,
-      "Pack small patches on top (DEFAULT=1)")
+      "Pack small patches on top (DEFAULT:1)")
     ("orthoAtlasPackingType",
       encParams.packingType,
       encParams.packingType,
@@ -815,18 +815,20 @@ parseParameters(int argc, char* argv[], Parameters& params) try {
       }
     }
   }
-  if ((encParams.textureParameterizationType == 0) || (encParams.baseIsSrc && encParams.subdivIsBase)) {
-      //Either no texture parameterization was selected or UV Atlas was chosen, so disable the texture derivation
-      encParams.iDeriveTextCoordFromPos = 0;
+  if ((encParams.textureParameterizationType == 0)
+      || (encParams.baseIsSrc && encParams.subdivIsBase)) {
+    //Either no texture parameterization was selected or UV Atlas was chosen, so disable the texture derivation
+    encParams.iDeriveTextCoordFromPos = 0;
   }
 
   if (encParams.packingScaling >= 1.0) {
-      err.error() << "Packing scaling adjustment should be less than 1.0\n";
+    err.error() << "Packing scaling adjustment should be less than 1.0\n";
   }
 
-  if ((encParams.iDeriveTextCoordFromPos == 2) || (encParams.iDeriveTextCoordFromPos == 3)) {
-      //Currently MPEG codec does not work without UV coordinates, so switching to DRACO codec
-      encParams.meshCodecId = vmesh::GeometryCodecId::DRACO;
+  if ((encParams.iDeriveTextCoordFromPos == 2)
+      || (encParams.iDeriveTextCoordFromPos == 3)) {
+    //Currently MPEG codec does not work without UV coordinates, so switching to DRACO codec
+    encParams.meshCodecId = vmesh::GeometryCodecId::DRACO;
   }
 
   if (err.is_errored) { return false; }
@@ -887,7 +889,7 @@ compress(const Parameters& params) {
     syntax.setBitstreamStat(bitstreamStat);
     encoder.setKeepFilesPathPrefix(basePath + "_GOF_"
                                    + std::to_string(gofInfo.index_) + "_");
-    
+
     // Load source sequence
     if (!source.load(params.inputMeshPath,
                      params.inputTexturePath,
@@ -898,23 +900,23 @@ compress(const Parameters& params) {
     }
 
     // Compress meshes
-    vmesh::tic( "compress" );
+    vmesh::tic("compress");
     if (!encoder.compress(
           gofInfo, source, syntax, reconstruct, params.encParams)) {
       std::cerr << "Error: can't compress group of frames!\n";
       return false;
     }
-    auto end                       = std::chrono::steady_clock::now();
-    vmesh::toc( "compress" );
+    auto end = std::chrono::steady_clock::now();
+    vmesh::toc("compress");
 
     // Create V3C sample stream units
-    vmesh::V3CWriter writer;    
+    vmesh::V3CWriter writer;
 #if defined(BITSTREAM_TRACE)
     writer.setLogger(loggerHls);
 #endif
-    vmesh::tic( "writer" );
+    vmesh::tic("writer");
     writer.encode(syntax, ssvu);
-    vmesh::toc( "writer" );
+    vmesh::toc("writer");
 
     // Save reconstructed models
     if (!reconstruct.save(params.reconstructedMeshPath,
@@ -960,7 +962,7 @@ compress(const Parameters& params) {
   if (computeMetrics) {
     printf("\n------- All frames metrics -----------\n");
     metrics.display();
-    printf("---------------------------------------\n");    
+    printf("---------------------------------------\n");
   }
   bitstreamStat.trace();
   printf("\nAll frames have been encoded. \n");

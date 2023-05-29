@@ -65,19 +65,19 @@ public:
   void clear() { _elements.resize(0); }
   T*   top() { return _elements.empty() ? nullptr : _elements[0]; }
   T*   remove(T& e) {
-    if (e.heapPosition() < 0) { return nullptr; }
-    const auto i = e.heapPosition();
-    assert(i >= 0 && i < size());
-    this->swap(i, size() - 1);
-    _elements.pop_back();
-    e.setHeapPosition(-1);  // not in heap
-    if (i == size()) upheap(i);
+      if (e.heapPosition() < 0) { return nullptr; }
+      const auto i = e.heapPosition();
+      assert(i >= 0 && i < size());
+      this->swap(i, size() - 1);
+      _elements.pop_back();
+      e.setHeapPosition(-1);  // not in heap
+      if (i == size()) upheap(i);
     else if (_elements[i]->heapKey() < e.heapKey()) {
-      downheap(i);
+        downheap(i);
     } else {
-      upheap(i);
+        upheap(i);
     }
-    return &e;
+      return &e;
   }
   T* extract() {
     if (size() == 0) { return nullptr; }

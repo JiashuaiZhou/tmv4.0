@@ -224,9 +224,9 @@ struct Plane {
 
   int size() const { return (int)_buffer.size(); }
   T   get(int i, int j) const {
-    assert(i >= 0 && i < _height);
-    assert(j >= 0 && j < _width);
-    return _buffer[i * _width + j];
+      assert(i >= 0 && i < _height);
+      assert(j >= 0 && j < _width);
+      return _buffer[i * _width + j];
   }
   T& get(int i, int j) {
     assert(i >= 0 && i < _height);
@@ -446,14 +446,13 @@ public:
     }
   }
 
-  bool append(const std::string& fout) const
-  {
-      std::ofstream os(fout, std::ios::binary | std::ios::app);
-      if (!os.is_open()) { return false; }
-      save(os);
-      return true;
+  bool append(const std::string& fout) const {
+    std::ofstream os(fout, std::ios::binary | std::ios::app);
+    if (!os.is_open()) { return false; }
+    save(os);
+    return true;
   }
-  
+
   bool load(const std::string& fileName, const int32_t frameIndex);
   bool save(const std::string& fileName, const int32_t frameIndex) const;
   bool load(const std::string& fileName);
@@ -872,9 +871,9 @@ PullPushPadding(Frame<T1>& input, const Plane<T2>& occupancy) {
   const int32_t K            = 3;
   const int32_t K2           = 1;
   const float   kernel[K][K] = {
-    {0.0625, 0.1250, 0.0625},
-    {0.1250, 0.2500, 0.1250},
-    {0.0625, 0.1250, 0.0625},
+      {0.0625, 0.1250, 0.0625},
+      {0.1250, 0.2500, 0.1250},
+      {0.0625, 0.1250, 0.0625},
   };
 
   std::vector<float> v(planeCount);
@@ -1109,226 +1108,233 @@ SparseLinearPadding(Frame<T1>&       input,
 /* harmonic background filling algorithm */
 // interpolate using 5-point laplacian inpainting
 template<typename T1, typename T2>
-void 
+void
 CreateCoarseLayer(Frame<T1>& image,
                   Frame<T1>& mip,
                   Plane<T2>& occupancyMap,
                   Plane<T2>& mipOccupancyMap) {
-    int dyadicWidth = 1;
-    while (dyadicWidth < image.width()) { dyadicWidth *= 2; }
-    int dyadicHeight = 1;
-    while (dyadicHeight < image.height()) { dyadicHeight *= 2; }
-    // allocate the mipmap with half the resolution
-    mip.resize((dyadicWidth / 2), (dyadicHeight / 2), image.colourSpace() );
-    mipOccupancyMap.resize((dyadicWidth / 2), (dyadicHeight / 2));
-    mipOccupancyMap.fill(T2(0));
-    for (size_t y = 0; y < mip.height(); y++) {
-        for (size_t x = 0; x < mip.width(); x++) {
-            double num[3] = { 0.0, 0.0, 0.0 };
-            double den = 0;
-            for (size_t i = 0; i < 2; i++) {
-                for (size_t j = 0; j < 2; j++) {
-                    int row = (2 * y + i) < 0 ? 0 : (2 * y + i) >= image.height() ? image.height() - 1 : (2 * y + i);
-                    int column = (2 * x + j) < 0 ? 0 : (2 * x + j) >= image.width() ? image.width() - 1 : (2 * x + j);
-                    if (occupancyMap.get(column,row) != T2(0)) {
-                        den++;
-                        for (int cc = 0; cc < 3; cc++) { num[cc] += image.plane(cc).get(column, row); }
-                    }
-                }
+  int dyadicWidth = 1;
+  while (dyadicWidth < image.width()) { dyadicWidth *= 2; }
+  int dyadicHeight = 1;
+  while (dyadicHeight < image.height()) { dyadicHeight *= 2; }
+  // allocate the mipmap with half the resolution
+  mip.resize((dyadicWidth / 2), (dyadicHeight / 2), image.colourSpace());
+  mipOccupancyMap.resize((dyadicWidth / 2), (dyadicHeight / 2));
+  mipOccupancyMap.fill(T2(0));
+  for (size_t y = 0; y < mip.height(); y++) {
+    for (size_t x = 0; x < mip.width(); x++) {
+      double num[3] = {0.0, 0.0, 0.0};
+      double den    = 0;
+      for (size_t i = 0; i < 2; i++) {
+        for (size_t j = 0; j < 2; j++) {
+          int row    = (2 * y + i) < 0                 ? 0
+                       : (2 * y + i) >= image.height() ? image.height() - 1
+                                                       : (2 * y + i);
+          int column = (2 * x + j) < 0                ? 0
+                       : (2 * x + j) >= image.width() ? image.width() - 1
+                                                      : (2 * x + j);
+          if (occupancyMap.get(column, row) != T2(0)) {
+            den++;
+            for (int cc = 0; cc < 3; cc++) {
+              num[cc] += image.plane(cc).get(column, row);
             }
-            if (den > 0) {
-                mipOccupancyMap.get(x,y) = T2(1);
-                for (int cc = 0; cc < 3; cc++) { mip.plane(cc).set(x, y, T1(std::round(num[cc] / den))); }
-            }
+          }
         }
+      }
+      if (den > 0) {
+        mipOccupancyMap.get(x, y) = T2(1);
+        for (int cc = 0; cc < 3; cc++) {
+          mip.plane(cc).set(x, y, T1(std::round(num[cc] / den)));
+        }
+      }
     }
+  }
 }
 
 template<typename T1, typename T2>
-void 
-RegionFill(Frame<T1>& image, 
-           Plane<T2>& occupancyMap,
-           Frame<T1>& imageLowRes) {
-    int                   stride = image.width();
-    int                   numElem = 0;
-    int                   numSparseElem = 0;
-    std::vector<uint32_t> indexing;
-    indexing.resize(occupancyMap.size());
-    for (int i = 0; i < occupancyMap.height(); i++) {
-        for (int j = 0; j < occupancyMap.width(); j++) {
-            if (occupancyMap.get(j,i) == T2(0)) {
-                indexing[i * stride + j] = numElem;
-                numElem++;
-            }
-        }
+void
+RegionFill(Frame<T1>& image, Plane<T2>& occupancyMap, Frame<T1>& imageLowRes) {
+  int                   stride        = image.width();
+  int                   numElem       = 0;
+  int                   numSparseElem = 0;
+  std::vector<uint32_t> indexing;
+  indexing.resize(occupancyMap.size());
+  for (int i = 0; i < occupancyMap.height(); i++) {
+    for (int j = 0; j < occupancyMap.width(); j++) {
+      if (occupancyMap.get(j, i) == T2(0)) {
+        indexing[i * stride + j] = numElem;
+        numElem++;
+      }
     }
-    if (numElem == 0)
-        return;
-    // create a sparse matrix with the coefficients
-    std::vector<uint32_t> iSparse;
-    std::vector<uint32_t> jSparse;
-    std::vector<double>   valSparse;
-    iSparse.resize(numElem * 5);
-    jSparse.resize(numElem * 5);
-    valSparse.resize(numElem * 5);
-    // create an initial solution using the low-resolution
-    std::vector<double> b[3];
-    b[0].resize(numElem);
-    b[1].resize(numElem);
-    b[2].resize(numElem);
-    // fill in the system
-    int idx = 0;
-    int idxSparse = 0;
+  }
+  if (numElem == 0) return;
+  // create a sparse matrix with the coefficients
+  std::vector<uint32_t> iSparse;
+  std::vector<uint32_t> jSparse;
+  std::vector<double>   valSparse;
+  iSparse.resize(numElem * 5);
+  jSparse.resize(numElem * 5);
+  valSparse.resize(numElem * 5);
+  // create an initial solution using the low-resolution
+  std::vector<double> b[3];
+  b[0].resize(numElem);
+  b[1].resize(numElem);
+  b[2].resize(numElem);
+  // fill in the system
+  int idx       = 0;
+  int idxSparse = 0;
+  for (int row = 0; row < image.height(); row++) {
+    for (int column = 0; column < image.width(); column++) {
+      if (occupancyMap.get(column, row) == T2(0)) {
+        int count = 0;
+        b[0][idx] = 0;
+        b[1][idx] = 0;
+        b[2][idx] = 0;
+        for (int i = -1; i < 2; i++) {
+          for (int j = -1; j < 2; j++) {
+            if ((i == j) || (i == -j)) { continue; }
+            if ((column + j < 0) || (column + j > image.width() - 1)) {
+              continue;
+            }
+            if ((row + i < 0) || (row + i > image.height() - 1)) { continue; }
+            count++;
+            if (occupancyMap.get(column + j, row + i) != T2(0)) {
+              b[0][idx] += image.plane(0).get(column + j, row + i);
+              b[1][idx] += image.plane(1).get(column + j, row + i);
+              b[2][idx] += image.plane(2).get(column + j, row + i);
+            } else {
+              iSparse[idxSparse]   = idx;
+              jSparse[idxSparse]   = indexing[column + j + stride * (row + i)];
+              valSparse[idxSparse] = -1;
+              idxSparse++;
+            }
+          }
+        }
+        // now insert the weight of the center pixel
+        iSparse[idxSparse]   = idx;
+        jSparse[idxSparse]   = idx;
+        valSparse[idxSparse] = count;
+        idx++;
+        idxSparse++;
+      }
+    }
+  }
+  numSparseElem = idxSparse;
+  // now solve the linear system Ax=b using Gauss-Siedel relaxation, with initial guess coming from the lower resolution
+  std::vector<double> x[3];
+  x[0].resize(numElem);
+  x[1].resize(numElem);
+  x[2].resize(numElem);
+  if (imageLowRes.width() == image.width()) {
+    // low resolution image not provided, let's use for the initialization the mean value of the active pixels
+    double mean[3] = {0.0, 0.0, 0.0};
+    idx            = 0;
     for (int row = 0; row < image.height(); row++) {
-        for (int column = 0; column < image.width(); column++) {
-            if (occupancyMap.get(column,row) == T2(0)) {
-                int count = 0;
-                b[0][idx] = 0;
-                b[1][idx] = 0;
-                b[2][idx] = 0;
-                for (int i = -1; i < 2; i++) {
-                    for (int j = -1; j < 2; j++) {
-                        if ((i == j) || (i == -j)) { continue; }
-                        if ((column + j < 0) || (column + j > image.width() - 1)) { continue; }
-                        if ((row + i < 0) || (row + i > image.height() - 1)) { continue; }
-                        count++;
-                        if (occupancyMap.get(column + j, row + i) != T2(0)) {
-                            b[0][idx] += image.plane(0).get(column + j, row + i);
-                            b[1][idx] += image.plane(1).get(column + j, row + i);
-                            b[2][idx] += image.plane(2).get(column + j, row + i);
-                        }
-                        else {
-                            iSparse[idxSparse] = idx;
-                            jSparse[idxSparse] = indexing[column + j + stride * (row + i)];
-                            valSparse[idxSparse] = -1;
-                            idxSparse++;
-                        }
-                    }
-                }
-                // now insert the weight of the center pixel
-                iSparse[idxSparse] = idx;
-                jSparse[idxSparse] = idx;
-                valSparse[idxSparse] = count;
-                idx++;
-                idxSparse++;
-            }
+      for (int column = 0; column < image.width(); column++) {
+        if (occupancyMap.get(column, row) != T2(0)) {
+          mean[0] += double(image.plane(0).get(column, row));
+          mean[1] += double(image.plane(1).get(column, row));
+          mean[2] += double(image.plane(2).get(column, row));
+          idx++;
         }
+      }
     }
-    numSparseElem = idxSparse;
-    // now solve the linear system Ax=b using Gauss-Siedel relaxation, with initial guess coming from the lower resolution
-    std::vector<double> x[3];
-    x[0].resize(numElem);
-    x[1].resize(numElem);
-    x[2].resize(numElem);
-    if (imageLowRes.width() == image.width()) {
-        // low resolution image not provided, let's use for the initialization the mean value of the active pixels
-        double mean[3] = { 0.0, 0.0, 0.0 };
-        idx = 0;
-        for (int row = 0; row < image.height(); row++) {
-            for (int column = 0; column < image.width(); column++) {
-                if (occupancyMap.get(column,row) != T2(0)) {
-                    mean[0] += double(image.plane(0).get(column, row));
-                    mean[1] += double(image.plane(1).get(column, row));
-                    mean[2] += double(image.plane(2).get(column, row));
-                    idx++;
-                }
-            }
-        }
-        mean[0] /= idx;
-        mean[1] /= idx;
-        mean[2] /= idx;
-        idx = 0;
-        for (int row = 0; row < image.height(); row++) {
-            for (int column = 0; column < image.width(); column++) {
-                if (occupancyMap.get(column,row) == T2(0)) {
-                    x[0][idx] = mean[0];
-                    x[1][idx] = mean[1];
-                    x[2][idx] = mean[2];
-                    idx++;
-                }
-            }
-        }
-    }
-    else {
-        idx = 0;
-        for (int row = 0; row < image.height(); row++) {
-            for (int column = 0; column < image.width(); column++) {
-                if (occupancyMap.get(column,row) == T2(0)) {
-                    x[0][idx] = imageLowRes.plane(0).get(column / 2, row / 2);
-                    x[1][idx] = imageLowRes.plane(1).get(column / 2, row / 2);
-                    x[2][idx] = imageLowRes.plane(2).get(column / 2, row / 2);
-                    idx++;
-                }
-            }
-        }
-    }
-    int    maxIteration = 1024;
-    double maxError = 0.00001;
-    for (int cc = 0; cc < 3; cc++) {
-        int it = 0;
-        for (; it < maxIteration; it++) {
-            int    idxSparse = 0;
-            double error = 0;
-            for (int centerIdx = 0; centerIdx < numElem; centerIdx++) {
-                // add the b result
-                double val = b[cc][centerIdx];
-                while ((idxSparse < numSparseElem) && (iSparse[idxSparse] == centerIdx)) {
-                    if (valSparse[idxSparse] < 0) {
-                        val += x[cc][jSparse[idxSparse]];
-                        idxSparse++;
-                    }
-                    else {
-                        // final value
-                        val /= valSparse[idxSparse];
-                        // accumulate the error
-                        error += (val - x[cc][centerIdx]) * (val - x[cc][centerIdx]);
-                        // update the value
-                        x[cc][centerIdx] = val;
-                        idxSparse++;
-                    }
-                }
-            }
-            error = error / numElem;
-            if (error < maxError) { break; }
-        }
-    }
-    // put the value back in the image
+    mean[0] /= idx;
+    mean[1] /= idx;
+    mean[2] /= idx;
     idx = 0;
     for (int row = 0; row < image.height(); row++) {
-        for (int column = 0; column < image.width(); column++) {
-            if (occupancyMap.get(column,row) == T2(0)) {
-                image.plane(0).set(column, row, T1(x[0][idx]));
-                image.plane(1).set(column, row, T1(x[1][idx]));
-                image.plane(2).set(column, row, T1(x[2][idx]));
-                idx++;
-            }
+      for (int column = 0; column < image.width(); column++) {
+        if (occupancyMap.get(column, row) == T2(0)) {
+          x[0][idx] = mean[0];
+          x[1][idx] = mean[1];
+          x[2][idx] = mean[2];
+          idx++;
         }
+      }
     }
+  } else {
+    idx = 0;
+    for (int row = 0; row < image.height(); row++) {
+      for (int column = 0; column < image.width(); column++) {
+        if (occupancyMap.get(column, row) == T2(0)) {
+          x[0][idx] = imageLowRes.plane(0).get(column / 2, row / 2);
+          x[1][idx] = imageLowRes.plane(1).get(column / 2, row / 2);
+          x[2][idx] = imageLowRes.plane(2).get(column / 2, row / 2);
+          idx++;
+        }
+      }
+    }
+  }
+  int    maxIteration = 1024;
+  double maxError     = 0.00001;
+  for (int cc = 0; cc < 3; cc++) {
+    int it = 0;
+    for (; it < maxIteration; it++) {
+      int    idxSparse = 0;
+      double error     = 0;
+      for (int centerIdx = 0; centerIdx < numElem; centerIdx++) {
+        // add the b result
+        double val = b[cc][centerIdx];
+        while ((idxSparse < numSparseElem)
+               && (iSparse[idxSparse] == centerIdx)) {
+          if (valSparse[idxSparse] < 0) {
+            val += x[cc][jSparse[idxSparse]];
+            idxSparse++;
+          } else {
+            // final value
+            val /= valSparse[idxSparse];
+            // accumulate the error
+            error += (val - x[cc][centerIdx]) * (val - x[cc][centerIdx]);
+            // update the value
+            x[cc][centerIdx] = val;
+            idxSparse++;
+          }
+        }
+      }
+      error = error / numElem;
+      if (error < maxError) { break; }
+    }
+  }
+  // put the value back in the image
+  idx = 0;
+  for (int row = 0; row < image.height(); row++) {
+    for (int column = 0; column < image.width(); column++) {
+      if (occupancyMap.get(column, row) == T2(0)) {
+        image.plane(0).set(column, row, T1(x[0][idx]));
+        image.plane(1).set(column, row, T1(x[1][idx]));
+        image.plane(2).set(column, row, T1(x[2][idx]));
+        idx++;
+      }
+    }
+  }
 }
 
 template<typename T1, typename T2>
-void 
-HarmonicBackgroundFill(Frame<T1>& input, 
-                       const Plane<T2>& occupancy) {
-    auto                   occupancyMapTemp = occupancy;
-    std::vector<Frame<T1>> mipVec;
-    std::vector<Plane<T2>> mipOccupancyMapVec;
+void
+HarmonicBackgroundFill(Frame<T1>& input, const Plane<T2>& occupancy) {
+  auto                   occupancyMapTemp = occupancy;
+  std::vector<Frame<T1>> mipVec;
+  std::vector<Plane<T2>> mipOccupancyMapVec;
 
-    // create coarse image by dyadic sampling
-    int miplev = 0;
-    while (true) {
-        mipVec.resize(mipVec.size() + 1);
-        mipOccupancyMapVec.resize(mipOccupancyMapVec.size() + 1);
-        if (miplev > 0) {
-            CreateCoarseLayer(mipVec[miplev - 1], mipVec[miplev], mipOccupancyMapVec[miplev - 1], mipOccupancyMapVec[miplev]);
-        }
-        else {
-            CreateCoarseLayer(input, mipVec[miplev], occupancyMapTemp, mipOccupancyMapVec[miplev]);
-        }
-        if (mipVec[miplev].width() <= 4 || mipVec[miplev].height() <= 4) { break; }
-        ++miplev;
+  // create coarse image by dyadic sampling
+  int miplev = 0;
+  while (true) {
+    mipVec.resize(mipVec.size() + 1);
+    mipOccupancyMapVec.resize(mipOccupancyMapVec.size() + 1);
+    if (miplev > 0) {
+      CreateCoarseLayer(mipVec[miplev - 1],
+                        mipVec[miplev],
+                        mipOccupancyMapVec[miplev - 1],
+                        mipOccupancyMapVec[miplev]);
+    } else {
+      CreateCoarseLayer(
+        input, mipVec[miplev], occupancyMapTemp, mipOccupancyMapVec[miplev]);
     }
-    miplev++;
+    if (mipVec[miplev].width() <= 4 || mipVec[miplev].height() <= 4) { break; }
+    ++miplev;
+  }
+  miplev++;
 #if 0
     for (int k = 0; k < miplev; k++) {
         char buf[100];
@@ -1337,16 +1343,16 @@ HarmonicBackgroundFill(Frame<T1>& input,
         mipVec[k].save(filename);
     }
 #endif
-    // push phase: inpaint laplacian
-    RegionFill(mipVec[miplev - 1], mipOccupancyMapVec[miplev - 1], mipVec[miplev - 1]);
-    for (int i = miplev - 1; i >= 0; --i) {
-        if (i > 0) {
-            RegionFill(mipVec[i - 1], mipOccupancyMapVec[i - 1], mipVec[i]);
-        }
-        else {
-            RegionFill(input, occupancyMapTemp, mipVec[i]);
-        }
+  // push phase: inpaint laplacian
+  RegionFill(
+    mipVec[miplev - 1], mipOccupancyMapVec[miplev - 1], mipVec[miplev - 1]);
+  for (int i = miplev - 1; i >= 0; --i) {
+    if (i > 0) {
+      RegionFill(mipVec[i - 1], mipOccupancyMapVec[i - 1], mipVec[i]);
+    } else {
+      RegionFill(input, occupancyMapTemp, mipVec[i]);
     }
+  }
 #if 0
     for (int k = 0; k < miplev; k++) {
         char buf[100];
@@ -1358,230 +1364,244 @@ HarmonicBackgroundFill(Frame<T1>& input,
 }
 
 /* pull push filling algorithm */
-template <typename T>
-int mean4w(T             p1,
-           unsigned char w1,
-           T             p2,
-           unsigned char w2,
-           T             p3,
-           unsigned char w3,
-           T             p4,
-           unsigned char w4) {
-    int result = (p1 * int(w1) + p2 * int(w2) + p3 * int(w3) + p4 * int(w4)) /
-        (int(w1) + int(w2) + int(w3) + int(w4));
-    return result;
+template<typename T>
+int
+mean4w(T             p1,
+       unsigned char w1,
+       T             p2,
+       unsigned char w2,
+       T             p3,
+       unsigned char w3,
+       T             p4,
+       unsigned char w4) {
+  int result = (p1 * int(w1) + p2 * int(w2) + p3 * int(w3) + p4 * int(w4))
+               / (int(w1) + int(w2) + int(w3) + int(w4));
+  return result;
 }
 
 // Generates a weighted mipmap
 template<typename T1, typename T2>
-void 
+void
 PushPullMip(const Frame<T1>& image,
-            Frame<T1>& mip,
+            Frame<T1>&       mip,
             const Plane<T2>& occupancyMap,
-            Plane<T2>& mipOccupancyMap) {
-    unsigned char w1;
-    unsigned char w2;
-    unsigned char w3;
-    unsigned char w4;
-    T1 val1;
-    T1 val2;
-    T1 val3;
-    T1 val4;
-    const size_t  width = image.width();
-    const size_t  height = image.height();
-    const size_t  newWidth = ((width + 1) >> 1);
-    const size_t  newHeight = ((height + 1) >> 1);
-    // allocate the mipmap with half the resolution
-    mip.resize(newWidth, newHeight, image.colourSpace());
-    mipOccupancyMap.resize(newWidth , newHeight);
-    mipOccupancyMap.fill(T2(0));
-    for (size_t y = 0; y < newHeight; ++y) {
-        const size_t yUp = y << 1;
-        for (size_t x = 0; x < newWidth; ++x) {
-            const size_t xUp = x << 1;
-            if (occupancyMap.get(xUp,yUp) == T2(0)) {
-                w1 = 0;
-            }
-            else {
-                w1 = 255;
-            }
-            if ((xUp + 1 >= width) || (occupancyMap.get(xUp + 1,yUp) == T2(0))) {
-                w2 = 0;
-            }
-            else {
-                w2 = 255;
-            }
-            if ((yUp + 1 >= height) || (occupancyMap.get(xUp,yUp + 1) == T2(0))) {
-                w3 = 0;
-            }
-            else {
-                w3 = 255;
-            }
-            if ((xUp + 1 >= width) || (yUp + 1 >= height) || (occupancyMap.get(xUp + 1,yUp + 1) == T2(0))) {
-                w4 = 0;
-            }
-            else {
-                w4 = 255;
-            }
-            if (w1 + w2 + w3 + w4 > 0) {
-                for (int cc = 0; cc < 3; cc++) {
-                    val1 = image.plane(cc).get(xUp, yUp);
-                    if (xUp + 1 >= width) {
-                        val2 = 0;
-                    }
-                    else {
-                        val2 = image.plane(cc).get(xUp + 1, yUp);
-                    }
-                    if (yUp + 1 >= height) {
-                        val3 = 0;
-                    }
-                    else {
-                        val3 = image.plane(cc).get(xUp, yUp + 1);
-                    }
-                    if ((xUp + 1 >= width) || (yUp + 1 >= height)) {
-                        val4 = 0;
-                    }
-                    else {
-                        val4 = image.plane(cc).get(xUp + 1, yUp + 1);
-                    }
-                    T1 newVal = mean4w(val1, w1, val2, w2, val3, w3, val4, w4);
-                    mip.plane(cc).set(x, y, newVal);
-                }
-                mipOccupancyMap.set(x,y,T2(1));
-            }
+            Plane<T2>&       mipOccupancyMap) {
+  unsigned char w1;
+  unsigned char w2;
+  unsigned char w3;
+  unsigned char w4;
+  T1            val1;
+  T1            val2;
+  T1            val3;
+  T1            val4;
+  const size_t  width     = image.width();
+  const size_t  height    = image.height();
+  const size_t  newWidth  = ((width + 1) >> 1);
+  const size_t  newHeight = ((height + 1) >> 1);
+  // allocate the mipmap with half the resolution
+  mip.resize(newWidth, newHeight, image.colourSpace());
+  mipOccupancyMap.resize(newWidth, newHeight);
+  mipOccupancyMap.fill(T2(0));
+  for (size_t y = 0; y < newHeight; ++y) {
+    const size_t yUp = y << 1;
+    for (size_t x = 0; x < newWidth; ++x) {
+      const size_t xUp = x << 1;
+      if (occupancyMap.get(xUp, yUp) == T2(0)) {
+        w1 = 0;
+      } else {
+        w1 = 255;
+      }
+      if ((xUp + 1 >= width) || (occupancyMap.get(xUp + 1, yUp) == T2(0))) {
+        w2 = 0;
+      } else {
+        w2 = 255;
+      }
+      if ((yUp + 1 >= height) || (occupancyMap.get(xUp, yUp + 1) == T2(0))) {
+        w3 = 0;
+      } else {
+        w3 = 255;
+      }
+      if ((xUp + 1 >= width) || (yUp + 1 >= height)
+          || (occupancyMap.get(xUp + 1, yUp + 1) == T2(0))) {
+        w4 = 0;
+      } else {
+        w4 = 255;
+      }
+      if (w1 + w2 + w3 + w4 > 0) {
+        for (int cc = 0; cc < 3; cc++) {
+          val1 = image.plane(cc).get(xUp, yUp);
+          if (xUp + 1 >= width) {
+            val2 = 0;
+          } else {
+            val2 = image.plane(cc).get(xUp + 1, yUp);
+          }
+          if (yUp + 1 >= height) {
+            val3 = 0;
+          } else {
+            val3 = image.plane(cc).get(xUp, yUp + 1);
+          }
+          if ((xUp + 1 >= width) || (yUp + 1 >= height)) {
+            val4 = 0;
+          } else {
+            val4 = image.plane(cc).get(xUp + 1, yUp + 1);
+          }
+          T1 newVal = mean4w(val1, w1, val2, w2, val3, w3, val4, w4);
+          mip.plane(cc).set(x, y, newVal);
         }
+        mipOccupancyMap.set(x, y, T2(1));
+      }
     }
+  }
 }
 
 // interpolate using mipmap
 template<typename T1, typename T2>
-void 
+void
 PushPullFill(Frame<T1>&       image,
              const Frame<T1>& mip,
              const Plane<T2>& occupancyMap,
              int              numIters) {
-    const size_t width = mip.width();
-    const size_t height = mip.height();
-    const size_t widthUp = image.width();
-    const size_t heightUp = image.height();
-    assert(((widthUp + 1) >> 1) == width);
-    assert(((heightUp + 1) >> 1) == height);
-    unsigned char w1;
-    unsigned char w2;
-    unsigned char w3;
-    unsigned char w4;
-    for (int yUp = 0; yUp < heightUp; ++yUp) {
-        int y = yUp >> 1;
-        for (int xUp = 0; xUp < widthUp; ++xUp) {
-            int x = xUp >> 1;
-            if (occupancyMap.get(xUp,yUp) == T2(0)) {
-                if ((xUp % 2 == 0) && (yUp % 2 == 0)) {
-                    w1 = 144;
-                    w2 = (x > 0 ? static_cast<unsigned char>(48) : 0);
-                    w3 = (y > 0 ? static_cast<unsigned char>(48) : 0);
-                    w4 = (((x > 0) && (y > 0)) ? static_cast<unsigned char>(16) : 0);
-                    for (int cc = 0; cc < 3; cc++) {
-                        T1 val = mip.plane(cc).get(x, y);
-                        T1 valLeft = (x > 0 ? mip.plane(cc).get(x - 1, y) : T1(0));
-                        T1 valUp = (y > 0 ? mip.plane(cc).get(x, y - 1) : T1(0));
-                        T1 valUpLeft = ((x > 0 && y > 0) ? mip.plane(cc).get(x - 1, y - 1) : T1(0));
-                        T1 newVal = mean4w(val, w1, valLeft, w2, valUp, w3, valUpLeft, w4);
-                        image.plane(cc).set(xUp, yUp, newVal);
-                    }
-                }
-                else if ((xUp % 2 == 1) && (yUp % 2 == 0)) {
-                    w1 = 144;
-                    w2 = (x < width - 1 ? static_cast<unsigned char>(48) : 0);
-                    w3 = (y > 0 ? static_cast<unsigned char>(48) : 0);
-                    w4 = (((x < width - 1) && (y > 0)) ? static_cast<unsigned char>(16) : 0);
-                    for (int cc = 0; cc < 3; cc++) {
-                        T1 val = mip.plane(cc).get(x, y);
-                        T1 valRight = (x < width - 1 ? mip.plane(cc).get(x + 1, y) : T1(0));
-                        T1 valUp = (y > 0 ? mip.plane(cc).get(x, y - 1) : T1(0));
-                        T1 valUpRight = (((x < width - 1) && (y > 0)) ? mip.plane(cc).get(x + 1, y - 1) : T1(0));
-                        T1 newVal = mean4w(val, w1, valRight, w2, valUp, w3, valUpRight, w4);
-                        image.plane(cc).set(xUp, yUp, newVal);
-                    }
-                }
-                else if ((xUp % 2 == 0) && (yUp % 2 == 1)) {
-                    w1 = 144;
-                    w2 = (x > 0 ? static_cast<unsigned char>(48) : 0);
-                    w3 = (y < height - 1 ? static_cast<unsigned char>(48) : 0);
-                    w4 = (((x > 0) && (y < height - 1)) ? static_cast<unsigned char>(16) : 0);
-                    for (int cc = 0; cc < 3; cc++) {
-                        T1 val = mip.plane(cc).get(x, y);
-                        T1 valLeft = (x > 0 ? mip.plane(cc).get(x - 1, y) : T1(0));
-                        T1 valDown = ((y < height - 1) ? mip.plane(cc).get(x, y + 1) : T1(0));
-                        T1 valDownLeft = ((x > 0 && (y < height - 1)) ? mip.plane(cc).get(x - 1, y + 1) : T1(0));
-                        T1 newVal = mean4w(val, w1, valLeft, w2, valDown, w3, valDownLeft, w4);
-                        image.plane(cc).set(xUp, yUp, newVal);
-                    }
-                }
-                else {
-                    w1 = 144;
-                    w2 = (x < width - 1 ? static_cast<unsigned char>(48) : 0);
-                    w3 = (y < height - 1 ? static_cast<unsigned char>(48) : 0);
-                    w4 = (((x < width - 1) && (y < height - 1)) ? static_cast<unsigned char>(16) : 0);
-                    for (int cc = 0; cc < 3; cc++) {
-                        T1 val = mip.plane(cc).get(x, y);
-                        T1 valRight = (x < width - 1 ? mip.plane(cc).get(x + 1, y) : T1(0));
-                        T1 valDown = ((y < height - 1) ? mip.plane(cc).get(x, y + 1) : T1(0));
-                        T1 valDownRight = (((x < width - 1) && (y < height - 1)) ? mip.plane(cc).get(x + 1, y + 1) : T1(0));
-                        T1 newVal = mean4w(val, w1, valRight, w2, valDown, w3, valDownRight, w4);
-                        image.plane(cc).set(xUp, yUp, newVal);
-                    }
-                }
-            }
+  const size_t width    = mip.width();
+  const size_t height   = mip.height();
+  const size_t widthUp  = image.width();
+  const size_t heightUp = image.height();
+  assert(((widthUp + 1) >> 1) == width);
+  assert(((heightUp + 1) >> 1) == height);
+  unsigned char w1;
+  unsigned char w2;
+  unsigned char w3;
+  unsigned char w4;
+  for (int yUp = 0; yUp < heightUp; ++yUp) {
+    int y = yUp >> 1;
+    for (int xUp = 0; xUp < widthUp; ++xUp) {
+      int x = xUp >> 1;
+      if (occupancyMap.get(xUp, yUp) == T2(0)) {
+        if ((xUp % 2 == 0) && (yUp % 2 == 0)) {
+          w1 = 144;
+          w2 = (x > 0 ? static_cast<unsigned char>(48) : 0);
+          w3 = (y > 0 ? static_cast<unsigned char>(48) : 0);
+          w4 = (((x > 0) && (y > 0)) ? static_cast<unsigned char>(16) : 0);
+          for (int cc = 0; cc < 3; cc++) {
+            T1 val     = mip.plane(cc).get(x, y);
+            T1 valLeft = (x > 0 ? mip.plane(cc).get(x - 1, y) : T1(0));
+            T1 valUp   = (y > 0 ? mip.plane(cc).get(x, y - 1) : T1(0));
+            T1 valUpLeft =
+              ((x > 0 && y > 0) ? mip.plane(cc).get(x - 1, y - 1) : T1(0));
+            T1 newVal = mean4w(val, w1, valLeft, w2, valUp, w3, valUpLeft, w4);
+            image.plane(cc).set(xUp, yUp, newVal);
+          }
+        } else if ((xUp % 2 == 1) && (yUp % 2 == 0)) {
+          w1 = 144;
+          w2 = (x < width - 1 ? static_cast<unsigned char>(48) : 0);
+          w3 = (y > 0 ? static_cast<unsigned char>(48) : 0);
+          w4 = (((x < width - 1) && (y > 0)) ? static_cast<unsigned char>(16)
+                                             : 0);
+          for (int cc = 0; cc < 3; cc++) {
+            T1 val = mip.plane(cc).get(x, y);
+            T1 valRight =
+              (x < width - 1 ? mip.plane(cc).get(x + 1, y) : T1(0));
+            T1 valUp = (y > 0 ? mip.plane(cc).get(x, y - 1) : T1(0));
+            T1 valUpRight =
+              (((x < width - 1) && (y > 0)) ? mip.plane(cc).get(x + 1, y - 1)
+                                            : T1(0));
+            T1 newVal =
+              mean4w(val, w1, valRight, w2, valUp, w3, valUpRight, w4);
+            image.plane(cc).set(xUp, yUp, newVal);
+          }
+        } else if ((xUp % 2 == 0) && (yUp % 2 == 1)) {
+          w1 = 144;
+          w2 = (x > 0 ? static_cast<unsigned char>(48) : 0);
+          w3 = (y < height - 1 ? static_cast<unsigned char>(48) : 0);
+          w4 = (((x > 0) && (y < height - 1)) ? static_cast<unsigned char>(16)
+                                              : 0);
+          for (int cc = 0; cc < 3; cc++) {
+            T1 val     = mip.plane(cc).get(x, y);
+            T1 valLeft = (x > 0 ? mip.plane(cc).get(x - 1, y) : T1(0));
+            T1 valDown =
+              ((y < height - 1) ? mip.plane(cc).get(x, y + 1) : T1(0));
+            T1 valDownLeft =
+              ((x > 0 && (y < height - 1)) ? mip.plane(cc).get(x - 1, y + 1)
+                                           : T1(0));
+            T1 newVal =
+              mean4w(val, w1, valLeft, w2, valDown, w3, valDownLeft, w4);
+            image.plane(cc).set(xUp, yUp, newVal);
+          }
+        } else {
+          w1 = 144;
+          w2 = (x < width - 1 ? static_cast<unsigned char>(48) : 0);
+          w3 = (y < height - 1 ? static_cast<unsigned char>(48) : 0);
+          w4 = (((x < width - 1) && (y < height - 1))
+                  ? static_cast<unsigned char>(16)
+                  : 0);
+          for (int cc = 0; cc < 3; cc++) {
+            T1 val = mip.plane(cc).get(x, y);
+            T1 valRight =
+              (x < width - 1 ? mip.plane(cc).get(x + 1, y) : T1(0));
+            T1 valDown =
+              ((y < height - 1) ? mip.plane(cc).get(x, y + 1) : T1(0));
+            T1 valDownRight = (((x < width - 1) && (y < height - 1))
+                                 ? mip.plane(cc).get(x + 1, y + 1)
+                                 : T1(0));
+            T1 newVal =
+              mean4w(val, w1, valRight, w2, valDown, w3, valDownRight, w4);
+            image.plane(cc).set(xUp, yUp, newVal);
+          }
         }
+      }
     }
-    auto tmpImage(image);
-    for (size_t n = 0; n < numIters; n++) {
-        for (int y = 0; y < heightUp; y++) {
-            for (int x = 0; x < widthUp; x++) {
-                if (occupancyMap.get(x,y) == T2(0)) {
-                    int x1 = (x > 0) ? x - 1 : x;
-                    int y1 = (y > 0) ? y - 1 : y;
-                    int x2 = (x < widthUp - 1) ? x + 1 : x;
-                    int y2 = (y < heightUp - 1) ? y + 1 : y;
-                    for (size_t cc = 0; cc < 3; cc++) {
-                        int val = image.plane(cc).get(x1, y1) + image.plane(cc).get(x2, y1) + image.plane(cc).get(x1, y2) +
-                            image.plane(cc).get(x2, y2) + image.plane(cc).get(x1, y) + image.plane(cc).get(x2, y) +
-                            image.plane(cc).get(x, y1) + image.plane(cc).get(x, y2);
-                        tmpImage.plane(cc).set(x, y, (val + 4) >> 3);
-                    }
-                }
-            }
+  }
+  auto tmpImage(image);
+  for (size_t n = 0; n < numIters; n++) {
+    for (int y = 0; y < heightUp; y++) {
+      for (int x = 0; x < widthUp; x++) {
+        if (occupancyMap.get(x, y) == T2(0)) {
+          int x1 = (x > 0) ? x - 1 : x;
+          int y1 = (y > 0) ? y - 1 : y;
+          int x2 = (x < widthUp - 1) ? x + 1 : x;
+          int y2 = (y < heightUp - 1) ? y + 1 : y;
+          for (size_t cc = 0; cc < 3; cc++) {
+            int val =
+              image.plane(cc).get(x1, y1) + image.plane(cc).get(x2, y1)
+              + image.plane(cc).get(x1, y2) + image.plane(cc).get(x2, y2)
+              + image.plane(cc).get(x1, y) + image.plane(cc).get(x2, y)
+              + image.plane(cc).get(x, y1) + image.plane(cc).get(x, y2);
+            tmpImage.plane(cc).set(x, y, (val + 4) >> 3);
+          }
         }
-        image.swap(tmpImage);
+      }
     }
+    image.swap(tmpImage);
+  }
 }
 
 template<typename T1, typename T2>
-void 
-SmoothedPushPull(Frame<T1>&       input,
-                 const Plane<T2>& occupancy) {
-    auto                   occupancyMapTemp = occupancy;
-    int                    i = 0;
-    std::vector<Frame<T1>> mipVec;
-    std::vector<Plane<T2>> mipOccupancyMapVec;
-    int                    div = 2;
-    int                    miplev = 0;
+void
+SmoothedPushPull(Frame<T1>& input, const Plane<T2>& occupancy) {
+  auto                   occupancyMapTemp = occupancy;
+  int                    i                = 0;
+  std::vector<Frame<T1>> mipVec;
+  std::vector<Plane<T2>> mipOccupancyMapVec;
+  int                    div    = 2;
+  int                    miplev = 0;
 
-    // pull phase create the mipmap
-    while (true) {
-        mipVec.resize(mipVec.size() + 1);
-        mipOccupancyMapVec.resize(mipOccupancyMapVec.size() + 1);
-        div *= 2;
-        if (miplev > 0) {
-            PushPullMip(mipVec[miplev - 1], mipVec[miplev], mipOccupancyMapVec[miplev - 1], mipOccupancyMapVec[miplev]);
-        }
-        else {
-            PushPullMip(input, mipVec[miplev], occupancyMapTemp, mipOccupancyMapVec[miplev]);
-        }
-        if (mipVec[miplev].width() <= 4 || mipVec[miplev].height() <= 4) { break; }
-        ++miplev;
+  // pull phase create the mipmap
+  while (true) {
+    mipVec.resize(mipVec.size() + 1);
+    mipOccupancyMapVec.resize(mipOccupancyMapVec.size() + 1);
+    div *= 2;
+    if (miplev > 0) {
+      PushPullMip(mipVec[miplev - 1],
+                  mipVec[miplev],
+                  mipOccupancyMapVec[miplev - 1],
+                  mipOccupancyMapVec[miplev]);
+    } else {
+      PushPullMip(
+        input, mipVec[miplev], occupancyMapTemp, mipOccupancyMapVec[miplev]);
     }
-    miplev++;
+    if (mipVec[miplev].width() <= 4 || mipVec[miplev].height() <= 4) { break; }
+    ++miplev;
+  }
+  miplev++;
 #if 0
     for (int k = 0; k < miplev; k++) {
         char buf[100];
@@ -1590,17 +1610,17 @@ SmoothedPushPull(Frame<T1>&       input,
         mipVec[k].save(filename);
     }
 #endif
-    // push phase: refill
-    int numIters = 4;
-    for (i = miplev - 1; i >= 0; --i) {
-        if (i > 0) {
-            PushPullFill(mipVec[i - 1], mipVec[i], mipOccupancyMapVec[i - 1], numIters);
-        }
-        else {
-            PushPullFill(input, mipVec[i], occupancyMapTemp, numIters);
-        }
-        numIters = (std::min)(numIters + 1, 16);
+  // push phase: refill
+  int numIters = 4;
+  for (i = miplev - 1; i >= 0; --i) {
+    if (i > 0) {
+      PushPullFill(
+        mipVec[i - 1], mipVec[i], mipOccupancyMapVec[i - 1], numIters);
+    } else {
+      PushPullFill(input, mipVec[i], occupancyMapTemp, numIters);
     }
+    numIters = (std::min)(numIters + 1, 16);
+  }
 #if 0
     for (int k = 0; k < miplev; k++) {
         char buf[100];
@@ -1609,33 +1629,31 @@ SmoothedPushPull(Frame<T1>&       input,
         mipVec[k].save(filename);
     }
 #endif
-
 }
 
 template<typename T1, typename T2>
 void
-CopyBackground(Frame<T1>& input, const Plane<T2>& occupancy, Frame<T1>& reference) {
-    const auto width = input.width();
-    const auto height = input.height();
-    const auto colourSpace = input.colourSpace();
-    const auto planeCount = input.planeCount();
+CopyBackground(Frame<T1>&       input,
+               const Plane<T2>& occupancy,
+               Frame<T1>&       reference) {
+  const auto width       = input.width();
+  const auto height      = input.height();
+  const auto colourSpace = input.colourSpace();
+  const auto planeCount  = input.planeCount();
 
-    assert(occupancy.width() == width && occupancy.height() == height);
-    assert(reference.width() == width && reference.height() == height);
+  assert(occupancy.width() == width && occupancy.height() == height);
+  assert(reference.width() == width && reference.height() == height);
 
-    for (int32_t p = 0; p < planeCount; ++p) {
-        auto& iplane = input.plane(p);
-        const auto& rplane = reference.plane(p);
-        for (int32_t i = 0; i < height; ++i) {
-            for (int32_t j = 0; j < width; ++j) { 
-                if (occupancy(i, j) == 0) {
-                    iplane.set(i, j, rplane(i, j));
-                }
-            }
-        }
+  for (int32_t p = 0; p < planeCount; ++p) {
+    auto&       iplane = input.plane(p);
+    const auto& rplane = reference.plane(p);
+    for (int32_t i = 0; i < height; ++i) {
+      for (int32_t j = 0; j < width; ++j) {
+        if (occupancy(i, j) == 0) { iplane.set(i, j, rplane(i, j)); }
+      }
     }
+  }
 }
-
 
 //============================================================================
 

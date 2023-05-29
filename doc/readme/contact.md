@@ -49,7 +49,9 @@ A pdf version of the user manual of the TMM can be found in the mpeg-vmesh-tm re
 
 For any issues or questions don't hesitate to open issues in V-Mesh git repository or to contact us:
 
-- Julien Ricard (julien.ricard@interdigital.com)
 - Wenjie Zou (wjzou@xidian.edu.cn)
+- Jungsun Kim (jungsun_kim@apple.com)
+- Julien Ricard (jricard@tencent.com)
+
 
 Bugs should be reported on the issue tracker at: (http://mpegx.int-evry.fr/software/MPEG/dmc/mpeg-vmesh-tm/-/issues).

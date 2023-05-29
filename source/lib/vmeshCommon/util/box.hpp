@@ -97,7 +97,7 @@ struct Box3 {
   Vec3<T> min;
   Vec3<T> max;
   bool    contains(const Vec3<T> point) const {
-    return !(point.x() < min.x() || point.x() > max.x() || point.y() < min.y()
+       return !(point.x() < min.x() || point.x() > max.x() || point.y() < min.y()
              || point.y() > max.y() || point.z() < min.z()
              || point.z() > max.z());
   }
@@ -150,20 +150,22 @@ struct Box3 {
   }
 
   Box3 operator&(const Box3& rhs) {
-      Box3 c;
-      for (int i = 0; i < 3; i++) {
-          c.min[i] = (min[i] > rhs.min[i]) ? min[i] : rhs.min[i];
-          c.max[i] = (((min[i] + max[i]) < (rhs.min[i] + rhs.max[i])) ? (min[i] + max[i]) : (rhs.min[i] + rhs.max[i])) - c.min[i];
-      }
-      for (int i = 0; i < 3; i++) {
-          if (c.max[i] <= 0) { c.min = c.max = Vec3<T>(T(0)); }
-      }
-      return Box3(c);
+    Box3 c;
+    for (int i = 0; i < 3; i++) {
+      c.min[i] = (min[i] > rhs.min[i]) ? min[i] : rhs.min[i];
+      c.max[i] = (((min[i] + max[i]) < (rhs.min[i] + rhs.max[i]))
+                    ? (min[i] + max[i])
+                    : (rhs.min[i] + rhs.max[i]))
+                 - c.min[i];
+    }
+    for (int i = 0; i < 3; i++) {
+      if (c.max[i] <= 0) { c.min = c.max = Vec3<T>(T(0)); }
+    }
+    return Box3(c);
   }
   T volume() {
-      return ((max[0] - min[0]) * (max[1] - min[1]) * (max[2] - min[2]));
+    return ((max[0] - min[0]) * (max[1] - min[1]) * (max[2] - min[2]));
   }
-
 };
 
 //============================================================================

@@ -58,12 +58,12 @@ convert(TriangleMesh<T>& src, const bool deduplicateAttribute) {
   const int32_t texCoordCount = src.texCoordCount();
   const int32_t normalCount   = src.normalCount();
   const int32_t colourCount   = src.colourCount();
-    const int32_t faceIdCount = src.faceIdCount();
+  const int32_t faceIdCount   = src.faceIdCount();
   int           posAtt        = -1;
   int           nrmAtt        = -1;
   int           colAtt        = -1;
   int           texAtt        = -1;
-    int           fidAtt = -1;
+  int           fidAtt        = -1;
 
   // Add attributes if they are present in the input data.
   const bool use_identity_mapping = false;
@@ -108,24 +108,25 @@ convert(TriangleMesh<T>& src, const bool deduplicateAttribute) {
             0);
     texAtt = mesh->AddAttribute(va, use_identity_mapping, texCoordCount);
   }
-    if (faceIdCount > 0) {
-        draco::GeometryAttribute va;
-        va.Init(draco::GeometryAttribute::GENERIC,
+  if (faceIdCount > 0) {
+    draco::GeometryAttribute va;
+    va.Init(draco::GeometryAttribute::GENERIC,
             nullptr,
             1,
             draco::DT_INT32,
             false,
             sizeof(int32_t),
             0);
-        auto maxFaceId = *max_element(std::begin(src.faceIds()), std::end(src.faceIds()));
-        fidAtt = mesh->AddAttribute(va, use_identity_mapping, maxFaceId + 1);
-    }
+    auto maxFaceId =
+      *max_element(std::begin(src.faceIds()), std::end(src.faceIds()));
+    fidAtt = mesh->AddAttribute(va, use_identity_mapping, maxFaceId + 1);
+  }
 
   draco::AttributeValueIndex posIndex(0);
   draco::AttributeValueIndex colIndex(0);
   draco::AttributeValueIndex nrmIndex(0);
   draco::AttributeValueIndex texIndex(0);
-    draco::AttributeValueIndex fidIndex(0);
+  draco::AttributeValueIndex fidIndex(0);
   for (int32_t i = 0; i < pointCount; i++) {
     Vec3<int32_t> pos(src.point(i));
     mesh->attribute(posAtt)->SetAttributeValue(posIndex++, pos.data());
@@ -148,12 +149,13 @@ convert(TriangleMesh<T>& src, const bool deduplicateAttribute) {
       mesh->attribute(texAtt)->SetAttributeValue(texIndex++, tex.data());
     }
   }
-    if (faceIdCount > 0) {
-        auto maxFaceId = *max_element(std::begin(src.faceIds()), std::end(src.faceIds()));
-        for (int32_t i = 0; i < maxFaceId + 1; i++) {
-            mesh->attribute(fidAtt)->SetAttributeValue(fidIndex++, &i);
-        }
+  if (faceIdCount > 0) {
+    auto maxFaceId =
+      *max_element(std::begin(src.faceIds()), std::end(src.faceIds()));
+    for (int32_t i = 0; i < maxFaceId + 1; i++) {
+      mesh->attribute(fidAtt)->SetAttributeValue(fidIndex++, &i);
     }
+  }
   for (int32_t i = 0; i < triCount; i++) {
     draco::Mesh::Face face;
     Vec3<int32_t>     tri(src.triangle(i));
@@ -176,13 +178,13 @@ convert(TriangleMesh<T>& src, const bool deduplicateAttribute) {
           face[c], draco::AttributeValueIndex(nrm[c]));
       }
     }
-        if (faceIdCount > 0) {
-            auto faceId = src.faceId(i);
-            for (int c = 0; c < 3; ++c) {
-                mesh->attribute(fidAtt)->SetPointMapEntry(
-                    face[c], draco::AttributeValueIndex(faceId));
-            }
-        }
+    if (faceIdCount > 0) {
+      auto faceId = src.faceId(i);
+      for (int c = 0; c < 3; ++c) {
+        mesh->attribute(fidAtt)->SetPointMapEntry(
+          face[c], draco::AttributeValueIndex(faceId));
+      }
+    }
     mesh->SetFace(draco::FaceIndex(i), face);
   }
   if (deduplicateAttribute) mesh->DeduplicateAttributeValues();
@@ -203,8 +205,8 @@ convert(std::unique_ptr<draco::Mesh>& src,
   const auto* colAtt = mesh.GetNamedAttribute(draco::GeometryAttribute::COLOR);
   const auto* texAtt =
     mesh.GetNamedAttribute(draco::GeometryAttribute::TEX_COORD);
-    const auto* fidAtt =
-        mesh.GetNamedAttribute(draco::GeometryAttribute::GENERIC);
+  const auto* fidAtt =
+    mesh.GetNamedAttribute(draco::GeometryAttribute::GENERIC);
   // position
   if (posAtt) {
     if (!mesh_lossless) {
@@ -215,8 +217,7 @@ convert(std::unique_ptr<draco::Mesh>& src,
         if (!posAtt->ConvertValue<int32_t, 3>(i, value.data())) { return; }
         dst.addPoint(value[0], value[1], value[2]);
       }
-        }
-        else {
+    } else {
       typedef std::array<float, 3> AttributeHashableValue;
       std::unordered_map<AttributeHashableValue,
                          std::set<int>,
@@ -314,12 +315,15 @@ convert(std::unique_ptr<draco::Mesh>& src,
       const int32_t nrm2 = nrmAtt->mapped_index(face[2]).value();
       dst.addNormalTriangle(nrm0, nrm1, nrm2);
     }
-        if (fidAtt) {
-            const uint32_t fIdx = fidAtt->mapped_index(face[0]).value();
-            std::array<int32_t, 1> value{};
-            if (!fidAtt->ConvertValue<int32_t, 1>(draco::AttributeValueIndex(fIdx), value.data())) { return; }
-            dst.addFaceId(value[0]);
-        }
+    if (fidAtt) {
+      const uint32_t         fIdx = fidAtt->mapped_index(face[0]).value();
+      std::array<int32_t, 1> value{};
+      if (!fidAtt->ConvertValue<int32_t, 1>(draco::AttributeValueIndex(fIdx),
+                                            value.data())) {
+        return;
+      }
+      dst.addFaceId(value[0]);
+    }
   }
 }
 

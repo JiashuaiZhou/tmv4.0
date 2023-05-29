@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17)
 project(vmesh CXX C )
 
 # Options:
-set(VDMC_VERSION_MAJOR 3 )
+set(VDMC_VERSION_MAJOR 4 )
 set(VDMC_VERSION_MINOR 0 )
 
 # Video encoder and decoder:

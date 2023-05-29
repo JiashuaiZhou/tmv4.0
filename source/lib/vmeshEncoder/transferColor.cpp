@@ -134,9 +134,9 @@ struct KDTreeModelAdaptor {
                                    IndexType*   out_indices,
                                    num_t*       out_distances_sq,
                                    const int    nChecks_IGNORED = 10) const {
-    nanoflann::KNNResultSet<num_t, IndexType> resultSet(num_closest);
-    resultSet.init(out_indices, out_distances_sq);
-    index->findNeighbors(resultSet, query_point, nanoflann::SearchParams());
+                   nanoflann::KNNResultSet<num_t, IndexType> resultSet(num_closest);
+                   resultSet.init(out_indices, out_distances_sq);
+                   index->findNeighbors(resultSet, query_point, nanoflann::SearchParams());
   }
   const self_t& derived() const { return *this; }
   self_t&       derived() { return *this; }
@@ -222,8 +222,8 @@ public:
   inline size_t* indices() { return indices_.data(); }
   inline double* dist() { return dist_.data(); }
   inline void    pushBack(const std::pair<size_t, double>& value) {
-    indices_.push_back(value.first);
-    dist_.push_back(value.second);
+       indices_.push_back(value.first);
+       dist_.push_back(value.second);
   }
   inline void popBack() {
     indices_.pop_back();
@@ -2092,14 +2092,12 @@ TransferColor::dilateTexture(Frame<uint8_t>&             reconstructedTexture,
     SparseLinearPadding(reconstructedTexture,
                         occupancy,
                         params.textureTransferPaddingSparseLinearThreshold);
-  }
-  else if (params.textureTransferPaddingMethod
-      == PaddingMethod::SMOOTHED_PUSH_PULL) {
-      SmoothedPushPull(reconstructedTexture, occupancy);
-  }
-  else if (params.textureTransferPaddingMethod
-      == PaddingMethod::HARMONIC_FILL) {
-      HarmonicBackgroundFill(reconstructedTexture, occupancy);
+  } else if (params.textureTransferPaddingMethod
+             == PaddingMethod::SMOOTHED_PUSH_PULL) {
+    SmoothedPushPull(reconstructedTexture, occupancy);
+  } else if (params.textureTransferPaddingMethod
+             == PaddingMethod::HARMONIC_FILL) {
+    HarmonicBackgroundFill(reconstructedTexture, occupancy);
   }
 }
 
@@ -2107,21 +2105,21 @@ TransferColor::dilateTexture(Frame<uint8_t>&             reconstructedTexture,
 
 void
 TransferColor::dilateTexture(Frame<uint8_t>& reconstructedTexture,
-    Plane<uint8_t>& occupancy,
-    Frame<uint8_t>& pastReconstructedTexture,
-    const VMCEncoderParameters& params) {
-    if (params.textureTransferPaddingDilateIterationCount != 0) {
-        Frame<uint8_t> tmpTexture;
-        Plane<uint8_t> tmpOccupancy;
-        for (int32_t it = 0;
-            it < params.textureTransferPaddingDilateIterationCount;
-            ++it) {
-            DilatePadding(reconstructedTexture, occupancy, tmpTexture, tmpOccupancy);
-            DilatePadding(tmpTexture, tmpOccupancy, reconstructedTexture, occupancy);
-        }
+                             Plane<uint8_t>& occupancy,
+                             Frame<uint8_t>& pastReconstructedTexture,
+                             const VMCEncoderParameters& params) {
+  if (params.textureTransferPaddingDilateIterationCount != 0) {
+    Frame<uint8_t> tmpTexture;
+    Plane<uint8_t> tmpOccupancy;
+    for (int32_t it = 0;
+         it < params.textureTransferPaddingDilateIterationCount;
+         ++it) {
+      DilatePadding(reconstructedTexture, occupancy, tmpTexture, tmpOccupancy);
+      DilatePadding(tmpTexture, tmpOccupancy, reconstructedTexture, occupancy);
     }
-    //now copy the background from the previous frame
-    CopyBackground(reconstructedTexture, occupancy, pastReconstructedTexture);
+  }
+  //now copy the background from the previous frame
+  CopyBackground(reconstructedTexture, occupancy, pastReconstructedTexture);
 }
 
 //----------------------------------------------------------------------------
@@ -2131,8 +2129,8 @@ TransferColor::transfer(const TriangleMesh<MeshType>& sourceMesh,
                         const Frame<uint8_t>&         sourceTexture,
                         TriangleMesh<MeshType>&       reconstructedMesh,
                         Frame<uint8_t>&               reconstructedTexture,
-                        bool usePastTexture,
-                        Frame<uint8_t>& pastReconstructedTexture,
+                        bool                          usePastTexture,
+                        Frame<uint8_t>&               pastReconstructedTexture,
                         const VMCEncoderParameters&   params) {
   auto targetMesh   = sourceMesh;
   auto targetMeshPC = sourceMesh;
@@ -2183,10 +2181,10 @@ TransferColor::transfer(const TriangleMesh<MeshType>& sourceMesh,
                           params);
   }
   if (usePastTexture) {
-      dilateTexture(reconstructedTexture, occupancy, pastReconstructedTexture, params);
-  }
-  else {
-  dilateTexture(reconstructedTexture, occupancy, params);
+    dilateTexture(
+      reconstructedTexture, occupancy, pastReconstructedTexture, params);
+  } else {
+    dilateTexture(reconstructedTexture, occupancy, params);
   }
 
   if (params.invertOrientation) { reconstructedMesh.invertOrientation(); }

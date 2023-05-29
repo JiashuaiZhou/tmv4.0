@@ -56,11 +56,11 @@ enum class DisplacementCoordinateSystem {
 //============================================================================
 
 enum class PaddingMethod {
-  NONE          = 0,
-  PUSH_PULL     = 1,
-  SPARSE_LINEAR = 2,
+  NONE               = 0,
+  PUSH_PULL          = 1,
+  SPARSE_LINEAR      = 2,
   SMOOTHED_PUSH_PULL = 3,
-  HARMONIC_FILL = 4
+  HARMONIC_FILL      = 4
 };
 
 //============================================================================
@@ -246,32 +246,32 @@ private:
 };
 
 static int32_t
-reconstructDisplacementFromVideoFrame(
-  const Frame<uint16_t>&        dispVideoFrame,
-  VMCFrame&                     frame,
-  const TriangleMesh<MeshType>& rec,
-  const int32_t                 displacementVideoBlockSize,
-  const int32_t                 geometryVideoBitDepth,
-  const bool                    oneDimensionalDisplacement,
-  const int32_t                 displacementReversePacking,
-  const bool                    is420=true ) {
+reconstructDisplacementFromVideoFrame(const Frame<uint16_t>& dispVideoFrame,
+                                      VMCFrame&              frame,
+                                      const TriangleMesh<MeshType>& rec,
+                                      const int32_t displacementVideoBlockSize,
+                                      const int32_t geometryVideoBitDepth,
+                                      const bool    oneDimensionalDisplacement,
+                                      const int32_t displacementReversePacking,
+                                      const bool    is420 = true) {
   printf("Reconstruct displacements from video frame \n");
   fflush(stdout);
   const auto displacementVideoWidthInBlocks =
     dispVideoFrame.width() / displacementVideoBlockSize;
   const auto pixelsPerBlock =
     displacementVideoBlockSize * displacementVideoBlockSize;
-  const auto    shift      = uint16_t((1 << geometryVideoBitDepth) >> 1);
-  const auto    planeCount = dispVideoFrame.planeCount();
-  const auto    pointCount = rec.pointCount();
-  auto&         disp       = frame.disp;
-  const auto blockCount =
-    (pointCount + pixelsPerBlock - 1) / pixelsPerBlock;
+  const auto shift      = uint16_t((1 << geometryVideoBitDepth) >> 1);
+  const auto planeCount = dispVideoFrame.planeCount();
+  const auto pointCount = rec.pointCount();
+  auto&      disp       = frame.disp;
+  const auto blockCount = (pointCount + pixelsPerBlock - 1) / pixelsPerBlock;
   const auto displacementVideoHeightInBlocks =
-    (blockCount + displacementVideoWidthInBlocks - 1) / displacementVideoWidthInBlocks;
-  const auto origHeight = displacementVideoHeightInBlocks * displacementVideoBlockSize;
-  const int32_t start = dispVideoFrame.width() * origHeight - 1;
-  const int32_t dispDim = oneDimensionalDisplacement ? 1:3;
+    (blockCount + displacementVideoWidthInBlocks - 1)
+    / displacementVideoWidthInBlocks;
+  const auto origHeight =
+    displacementVideoHeightInBlocks * displacementVideoBlockSize;
+  const int32_t start   = dispVideoFrame.width() * origHeight - 1;
+  const int32_t dispDim = oneDimensionalDisplacement ? 1 : 3;
   disp.assign(pointCount, Vec3<double>(0));
   for (int32_t v = 0; v < pointCount; ++v) {
     // to do: optimize power of 2
@@ -293,11 +293,10 @@ reconstructDisplacementFromVideoFrame(
     for (int32_t p = 0; p < dispDim; ++p) {
       if (is420) {
         const auto& plane = dispVideoFrame.plane(0);
-        d[p] = double(plane.get(p * origHeight + y1, x1)) - shift;
-      }
-      else {
+        d[p]              = double(plane.get(p * origHeight + y1, x1)) - shift;
+      } else {
         const auto& plane = dispVideoFrame.plane(p);
-        d[p] = double(plane.get(y1, x1)) - shift;
+        d[p]              = double(plane.get(y1, x1)) - shift;
       }
     }
   }
@@ -340,7 +339,7 @@ subdivideBaseMesh(VMCFrame&               frame,
 static int32_t
 applyDisplacements(
   VMCFrame&                           frame,
-  const int32_t bitDepthPosition,
+  const int32_t                       bitDepthPosition,
   TriangleMesh<MeshType>&             rec,
   const DisplacementCoordinateSystem& displacementCoordinateSystem) {
   printf("apply displacements \n");
@@ -358,8 +357,9 @@ applyDisplacements(
       rec.point(v) += d;
     }
 
-    for(int32_t i = 0; i < 3; ++i) {
-      assert(rec.point(v)[i] >= 0 && rec.point(v)[i] < (1 << bitDepthPosition));
+    for (int32_t i = 0; i < 3; ++i) {
+      assert(rec.point(v)[i] >= 0
+             && rec.point(v)[i] < (1 << bitDepthPosition));
     }
   }
   return 0;
@@ -433,19 +433,26 @@ inverseQuantizeDisplacements(
 
 //============================================================================
 static int32_t
-removeDuplicatedVertices(VMCFrame& frame, std::vector<int32_t>& umapping, bool isIntra) {
+removeDuplicatedVertices(VMCFrame&             frame,
+                         std::vector<int32_t>& umapping,
+                         bool                  isIntra) {
   auto& base                 = frame.base;
   auto& qpositions           = frame.qpositions;
   auto& baseClean            = frame.baseClean;
   auto& baseIntegrateIndices = frame.baseIntegrateIndices;
   baseClean.clear();
   if (isIntra) {
-    UnifyVertices(qpositions, base.triangles(), baseClean.points(),
-                  baseClean.triangles(), umapping);
-  }
-  else {
-    UnifyVerticesInter(qpositions, base.triangles(), baseClean.points(),
-                       baseClean.triangles(), umapping);
+    UnifyVertices(qpositions,
+                  base.triangles(),
+                  baseClean.points(),
+                  baseClean.triangles(),
+                  umapping);
+  } else {
+    UnifyVerticesInter(qpositions,
+                       base.triangles(),
+                       baseClean.points(),
+                       baseClean.triangles(),
+                       umapping);
   }
   // generate baseIntegrateIndices
   baseIntegrateIndices.clear();
@@ -530,7 +537,7 @@ resetTime(const std::string& name) {
     });
   if (it != g_ticTocList.end()) {
     std::get<2>(*it) = (std::chrono::nanoseconds::max)();
-  } 
+  }
 }
 
 //============================================================================
@@ -558,8 +565,9 @@ traceTime() {
     std::cout << "  " << std::left << std::setw(25) << std::get<0>(el)
               << ": time = " << std::right << std::setw(15)
               << (std::get<2>(el) == (std::chrono::nanoseconds::max)()
-      ? -1.0
-      : std::chrono::duration<double>(std::get<2>(el)).count() ) << " s \n";
+                    ? -1.0
+                    : std::chrono::duration<double>(std::get<2>(el)).count())
+              << " s \n";
   }
 }
 

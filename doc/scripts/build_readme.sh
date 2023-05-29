@@ -11,15 +11,15 @@ if [ ! -f ${CURDIR}/readme/dependencies.md ]; then
 	echo "create readme/dependencies.md"
 fi
 if [ ! -f ${CURDIR}/readme/enc_params.md ]; then 
-	${CURDIR}/scripts/build_input_parameters.sh ${MAINDIR}/build/Release/bin/encode > ${CURDIR}/readme/enc_params.md
+	${CURDIR}/scripts/build_input_parameters.sh ${MAINDIR}/build/Release/bin/Release/encode.exe > ${CURDIR}/readme/enc_params.md
 	echo "create readme/enc_params.md"
 fi
 if [ ! -f ${CURDIR}/readme/dec_params.md ]; then 
-	${CURDIR}/scripts/build_input_parameters.sh ${MAINDIR}/build/Release/bin/decode > ${CURDIR}/readme/dec_params.md
+	${CURDIR}/scripts/build_input_parameters.sh ${MAINDIR}/build/Release/bin/Release/decode.exe > ${CURDIR}/readme/dec_params.md
 	echo "create readme/dec_params.md"
 fi
 if [ ! -f ${CURDIR}/readme/met_params.md ]; then 
-	${CURDIR}/scripts/build_input_parameters.sh ${MAINDIR}/build/Release/bin/metrics > ${CURDIR}/readme/met_params.md
+	${CURDIR}/scripts/build_input_parameters.sh ${MAINDIR}/build/Release/bin/Release/metrics.exe > ${CURDIR}/readme/met_params.md
 	echo "create readme/met_params.md"
 fi
 

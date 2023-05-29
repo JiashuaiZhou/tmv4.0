@@ -142,14 +142,11 @@ operator>>(std::istream& in, PaddingMethod& val) {
     val = PaddingMethod::PUSH_PULL;
   } else if (str == "sparse_linear" || str == "2") {
     val = PaddingMethod::SPARSE_LINEAR;
-  }
-  else if (str == "smoothed_push_pull" || str == "3") {
-      val = PaddingMethod::SMOOTHED_PUSH_PULL;
-  }
-  else if (str == "harmonic" || str == "4") {
-      val = PaddingMethod::HARMONIC_FILL;
-  }
-  else {
+  } else if (str == "smoothed_push_pull" || str == "3") {
+    val = PaddingMethod::SMOOTHED_PUSH_PULL;
+  } else if (str == "harmonic" || str == "4") {
+    val = PaddingMethod::HARMONIC_FILL;
+  } else {
     val = PaddingMethod::NONE;
   }
   return in;
@@ -233,25 +230,25 @@ struct VMCEncoderParameters {
   bool            dracoMeshLossless               = false;
   int32_t         motionGroupSize                 = 16;
   bool            motionWithoutDuplicatedVertices = true;
-  std::string     predCoder                       = { "dirac" };
-  std::string     topoCoder                       = { "dirac" };
+  std::string     predCoder                       = {"dirac"};
+  std::string     topoCoder                       = {"dirac"};
   bool            baseMeshDeduplicatePositions    = false;
 
   // Displacements
   DisplacementCoordinateSystem displacementCoordinateSystem =
     DisplacementCoordinateSystem::LOCAL;
-  int32_t encodeDisplacements          = 1;
-  bool encodeTextureVideo              = true;
-  bool applyOneDimensionalDisplacement = true;
-  bool interpolateDisplacementNormals  = false;
-  bool addReconstructedNormals         = true;
-  bool displacementReversePacking      = true;
-  bool displacementUse420              = true;
-  bool lodDisplacementQuantizationFlag = false;
-  int32_t subBlockSize                 = 100;
+  int32_t encodeDisplacements             = 1;
+  bool    encodeTextureVideo              = true;
+  bool    applyOneDimensionalDisplacement = true;
+  bool    interpolateDisplacementNormals  = false;
+  bool    addReconstructedNormals         = true;
+  bool    displacementReversePacking      = true;
+  bool    displacementUse420              = true;
+  bool    lodDisplacementQuantizationFlag = false;
+  int32_t subBlockSize                    = 100;
 
   // Motion
-  int32_t maxNumNeighborsMotion        = 3;
+  int32_t maxNumNeighborsMotion = 3;
 
   // Lifting
   int32_t liftingSubdivisionIterationCount    = 2;
@@ -273,19 +270,20 @@ struct VMCEncoderParameters {
   int32_t       textureTransferSamplingSubdivisionIterationCount = 3;
   int32_t       textureTransferPaddingBoundaryIterationCount     = 2;
   int32_t       textureTransferPaddingDilateIterationCount       = 2;
-  PaddingMethod textureTransferPaddingMethod = PaddingMethod::SMOOTHED_PUSH_PULL;
-  double        textureTransferPaddingSparseLinearThreshold = 0.05;  //0.005
-  double        textureTransferBasedPointcloud              = true;
-  double        textureTransferPreferUV                     = false;
-  bool          textureTransferWithMap                      = false;
-  bool          textureTransferWithMapSource                = false;
-  int32_t       textureTransferMapSamplingParam             = 1;
-  int32_t       textureTransferGridSize                     = 0;
-  int32_t       textureTransferMapProjDim                   = 0;
-  int32_t       textureTransferMapNumPoints                 = 8;
-  int32_t       textureTransferMethod                       = 0;
-  float         textureTransferSigma                        = 0.2f;
-  bool          textureTransferCopyBackground               = true;
+  PaddingMethod textureTransferPaddingMethod =
+    PaddingMethod::SMOOTHED_PUSH_PULL;
+  double  textureTransferPaddingSparseLinearThreshold = 0.05;  //0.005
+  double  textureTransferBasedPointcloud              = true;
+  double  textureTransferPreferUV                     = false;
+  bool    textureTransferWithMap                      = false;
+  bool    textureTransferWithMapSource                = false;
+  int32_t textureTransferMapSamplingParam             = 1;
+  int32_t textureTransferGridSize                     = 0;
+  int32_t textureTransferMapProjDim                   = 0;
+  int32_t textureTransferMapNumPoints                 = 8;
+  int32_t textureTransferMethod                       = 0;
+  float   textureTransferSigma                        = 0.2f;
+  bool    textureTransferCopyBackground               = true;
 
   // Input
   bool unifyVertices     = false;
@@ -305,24 +303,24 @@ struct VMCEncoderParameters {
   double  trackedPointNormalFlipThreshold = 0.5;
 
   // TextureParametrization
-  int              textureParameterizationType = 0; // 0: UVAtlas, 1: ortho 
+  int textureParameterizationType = 0;  // 0: UVAtlas, 1: ortho
   //ortho parameters
-  bool             useVertexCriteria = false;
-  bool             bUseSeedHistogram = true;
-  double           strongGradientThreshold = 180;
-  double           maxCCAreaRatio = 1;
-  int              maxNumFaces = std::numeric_limits<int>::max();
-  bool             bFaceClusterMerge = true;
-  double           lambdaRDMerge = 1.0;
-  bool             check2DConnectivity = true;
-  bool             adjustNormalDirection = false;
-  bool             bPatchScaling = false;
-  bool             bTemporalStabilization = false;
-  int              iDeriveTextCoordFromPos = 1;
-  bool             use45DegreeProjection = false;
-  double           packingScaling = 0.95;
-  bool             packSmallPatchesOnTop = false;
-  int              packingType = 0;
+  bool   useVertexCriteria       = false;
+  bool   bUseSeedHistogram       = true;
+  double strongGradientThreshold = 180;
+  double maxCCAreaRatio          = 1;
+  int    maxNumFaces             = std::numeric_limits<int>::max();
+  bool   bFaceClusterMerge       = true;
+  double lambdaRDMerge           = 1.0;
+  bool   check2DConnectivity     = true;
+  bool   adjustNormalDirection   = false;
+  bool   bPatchScaling           = false;
+  bool   bTemporalStabilization  = false;
+  int    iDeriveTextCoordFromPos = 1;
+  bool   use45DegreeProjection   = false;
+  double packingScaling          = 0.95;
+  bool   packSmallPatchesOnTop   = false;
+  int    packingType             = 0;
   //UV atlas parameters
   size_t           maxCharts  = size_t();
   float            maxStretch = 0.16667F;
@@ -392,7 +390,7 @@ private:
   void textureParametrization(VMCFrame&                   frame,
                               TriangleMesh<MeshType>&     decimate,
                               const VMCEncoderParameters& params,
-                              VMCFrame& previousFrame);
+                              VMCFrame&                   previousFrame);
 
   void geometryParametrization(VMCGroupOfFrames&             gof,
                                VMCGroupOfFramesInfo&         gofInfo,
@@ -401,17 +399,17 @@ private:
                                const VMCEncoderParameters&   params,
                                int32_t& lastIntraFrameIndex);
 
-  void        unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
-                            VMCGroupOfFrames&           gof,
-                            const VMCEncoderParameters& params);
-  bool        computeDracoMapping(TriangleMesh<MeshType>      origBase,
-                                  TriangleMesh<MeshType>      modifiedBase,
-                                  VMCFrame& frame,
-                                  const VMCEncoderParameters& params,
-                                  bool                        removeDuplicateVerticesFlag) const;
+  void unifyVertices(const VMCGroupOfFramesInfo& gofInfo,
+                     VMCGroupOfFrames&           gof,
+                     const VMCEncoderParameters& params);
+  bool computeDracoMapping(TriangleMesh<MeshType>      origBase,
+                           TriangleMesh<MeshType>      modifiedBase,
+                           VMCFrame&                   frame,
+                           const VMCEncoderParameters& params,
+                           bool removeDuplicateVerticesFlag) const;
   static BaseMeshType
-  chooseSkipOrInter(const std::vector<Vec3<int32_t>>& current,
-                              const std::vector<Vec3<int32_t>>& reference);
+              chooseSkipOrInter(const std::vector<Vec3<int32_t>>& current,
+                                const std::vector<Vec3<int32_t>>& reference);
   static bool computeDisplacements(VMCFrame&                     frame,
                                    const TriangleMesh<MeshType>& rec,
                                    const VMCEncoderParameters&   params);
@@ -423,19 +421,19 @@ private:
                         VMCFrame&                   frame,
                         TriangleMesh<MeshType>&     rec,
                         BaseMeshTileLayer&          mfdu,
-                        AtlasTileLayerRbsp& atl,
+                        AtlasTileLayerRbsp&         atl,
                         const VMCEncoderParameters& params);
-  bool
-  compressMotion(const std::vector<Vec3<int32_t>>& triangles,
-                 const std::vector<Vec3<int32_t>>& reference,
-                 const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
-                 const std::vector<Vec3<int32_t>>& current,
-                 BaseMeshTileLayer&                mfdu,
-                 const VMCEncoderParameters&       params);
+  bool compressMotion(const std::vector<Vec3<int32_t>>& triangles,
+                      const std::vector<Vec3<int32_t>>& reference,
+                      const std::vector<Vec2<int32_t>>& baseIntegrateIndices,
+                      const std::vector<Vec3<int32_t>>& current,
+                      BaseMeshTileLayer&                mfdu,
+                      const VMCEncoderParameters&       params);
   bool computeVertexAdjTableMotion(const std::vector<Vec3<int32_t>>& triangles,
                                    int32_t vertexCount,
                                    int32_t maxNumNeighborsMotion);
-  bool addNeighbor(int32_t vertex, int32_t vertexNeighbor,
+  bool addNeighbor(int32_t vertex,
+                   int32_t vertexNeighbor,
                    int32_t maxNumNeighborsMotion);
   static bool
        computeDisplacementVideoFrame(const VMCFrame&             frame,
@@ -444,7 +442,7 @@ private:
   bool compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
                                   V3cBitstream&               syntax,
                                   const VMCEncoderParameters& params);
-  bool compressDisplacementsAC(V3cBitstream&               syntax, 
+  bool compressDisplacementsAC(V3cBitstream&               syntax,
                                VMCGroupOfFrames&           gof,
                                const VMCGroupOfFramesInfo& gofInfo,
                                const VMCEncoderParameters& params);
@@ -452,10 +450,10 @@ private:
                             V3cBitstream&               syntax,
                             const VMCEncoderParameters& params);
 
-  std::string _keepFilesPathPrefix = {};
-  int32_t     _gofIndex            = 0;
-  std::vector<int32_t>  vertexAdjTableMotion;
-  bool createVertexAdjTableMotion  = true;
+  std::string          _keepFilesPathPrefix = {};
+  int32_t              _gofIndex            = 0;
+  std::vector<int32_t> vertexAdjTableMotion;
+  bool                 createVertexAdjTableMotion = true;
   std::vector<int32_t> numNeighborsMotion;
   std::vector<int32_t> umapping;
 };

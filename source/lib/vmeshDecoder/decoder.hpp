@@ -77,7 +77,7 @@ public:
 private:
   bool decompressBaseMesh(const V3cBitstream&         syntax,
                           const BaseMeshTileLayer&    bmtl,
-                          const AtlasTileLayerRbsp& atl,
+                          const AtlasTileLayerRbsp&   atl,
                           const VMCGroupOfFrames&     gof,
                           VMCFrameInfo&               frameInfo,
                           VMCFrame&                   frame,
@@ -96,11 +96,13 @@ private:
   bool computeVertexAdjTableMotion(const std::vector<Vec3<int32_t>>& triangles,
                                    int32_t vertexCount,
                                    int32_t maxNumNeighborsMotion);
-  bool addNeighbor(int32_t vertex, int32_t vertexNeighbor, int32_t maxNumNeighborsMotion);
+  bool addNeighbor(int32_t vertex,
+                   int32_t vertexNeighbor,
+                   int32_t maxNumNeighborsMotion);
   bool decompressDisplacementsVideo(const V3cBitstream&         syntax,
                                     FrameSequence<uint16_t>&    dispVideo,
                                     const VMCDecoderParameters& params);
-  bool decompressDisplacementsAC(const V3cBitstream&   syntax, 
+  bool decompressDisplacementsAC(const V3cBitstream&   syntax,
                                  VMCGroupOfFrames&     gof,
                                  VMCGroupOfFramesInfo& gofInfo,
                                  int32_t               subBlockSize);
@@ -108,9 +110,9 @@ private:
                               Sequence&                   reconsctruct,
                               const VMCDecoderParameters& params);
 
-  std::string _keepFilesPathPrefix = {};
-  std::vector<int32_t>  vertexAdjTableMotion;
-  bool createVertexAdjTableMotion = true;
+  std::string          _keepFilesPathPrefix = {};
+  std::vector<int32_t> vertexAdjTableMotion;
+  bool                 createVertexAdjTableMotion = true;
   std::vector<int32_t> numNeighborsMotion;
   std::vector<int32_t> umapping;
 };

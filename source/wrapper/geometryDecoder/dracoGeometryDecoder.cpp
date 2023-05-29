@@ -60,7 +60,7 @@ convert(std::unique_ptr<draco::Mesh>& src,
   const auto* texAtt =
     mesh.GetNamedAttribute(draco::GeometryAttribute::TEX_COORD);
   const auto* fidAtt =
-      mesh.GetNamedAttribute(draco::GeometryAttribute::GENERIC);
+    mesh.GetNamedAttribute(draco::GeometryAttribute::GENERIC);
   // position
   if (posAtt) {
     if (!mesh_lossless) {
@@ -170,10 +170,13 @@ convert(std::unique_ptr<draco::Mesh>& src,
       dst.addNormalTriangle(nrm0, nrm1, nrm2);
     }
     if (fidAtt) {
-        const uint32_t fIdx = fidAtt->mapped_index(face[0]).value();
-        std::array<int32_t, 1> value{};
-        if (!fidAtt->ConvertValue<int32_t, 1>(draco::AttributeValueIndex(fIdx), value.data())) { return; }
-        dst.addFaceId(value[0]);
+      const uint32_t         fIdx = fidAtt->mapped_index(face[0]).value();
+      std::array<int32_t, 1> value{};
+      if (!fidAtt->ConvertValue<int32_t, 1>(draco::AttributeValueIndex(fIdx),
+                                            value.data())) {
+        return;
+      }
+      dst.addFaceId(value[0]);
     }
   }
 }

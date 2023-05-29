@@ -244,205 +244,215 @@ extern Vec3<double> PROJDIRECTION18[18];
 
 //============================================================================
 inline void
-getProjectedAxis(int category, int& tangentAxis, int& biTangentAxis, int& normalAxis, int& tangentAxisDir, int& biTangentAxisDir, int& normalAxisDir) {
-    switch (category) {
-    case -1: //will be maped to same axis as option 0
-        normalAxis = 0;
-        tangentAxis = 2;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    case 0:
-        normalAxis = 0;
-        tangentAxis = 2;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    case 1:
-        normalAxis = 1;
-        tangentAxis = 2;
-        biTangentAxis = 0;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    case 2:
-        normalAxis = 2;
-        tangentAxis = 0;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    case 3:
-        normalAxis = 0;
-        tangentAxis = 2;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 1;
-        break;
-    case 4:
-        normalAxis = 1;
-        tangentAxis = 2;
-        biTangentAxis = 0;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 1;
-        break;
-    case 5:
-        normalAxis = 2;
-        tangentAxis = 0;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 1;
-        break;
-    case 6:
-        normalAxis = 0;
-        tangentAxis = 2;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    case 7:
-        normalAxis = 2;
-        tangentAxis = 0;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    case 8:
-        normalAxis = 0;
-        tangentAxis = 2;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 1;
-        break;
-    case 9:
-        normalAxis = 2;
-        tangentAxis = 0;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 1;
-        break;
-    case 10:
-        normalAxis = 1;
-        tangentAxis = 2;
-        biTangentAxis = 0;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    case 11:
-        normalAxis = 2;
-        tangentAxis = 0;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 1;
-        break;
-    case 12:
-        normalAxis = 1;
-        tangentAxis = 2;
-        biTangentAxis = 0;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 1;
-        break;
-    case 13:
-        normalAxis = 2;
-        tangentAxis = 0;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    case 14:
-        normalAxis = 0;
-        tangentAxis = 2;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    case 15:
-        normalAxis = 1;
-        tangentAxis = 2;
-        biTangentAxis = 0;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 1;
-        break;
-    case 16:
-        normalAxis = 0;
-        tangentAxis = 2;
-        biTangentAxis = 1;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 1;
-        break;
-    case 17:
-        normalAxis = 1;
-        tangentAxis = 2;
-        biTangentAxis = 0;
-        tangentAxisDir = 0;
-        biTangentAxisDir = 0;
-        normalAxisDir = 0;
-        break;
-    default:
-        exit(-1);
-        break;
-    }
+getProjectedAxis(int  category,
+                 int& tangentAxis,
+                 int& biTangentAxis,
+                 int& normalAxis,
+                 int& tangentAxisDir,
+                 int& biTangentAxisDir,
+                 int& normalAxisDir) {
+  switch (category) {
+  case -1:  //will be maped to same axis as option 0
+    normalAxis       = 0;
+    tangentAxis      = 2;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  case 0:
+    normalAxis       = 0;
+    tangentAxis      = 2;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  case 1:
+    normalAxis       = 1;
+    tangentAxis      = 2;
+    biTangentAxis    = 0;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  case 2:
+    normalAxis       = 2;
+    tangentAxis      = 0;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  case 3:
+    normalAxis       = 0;
+    tangentAxis      = 2;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 1;
+    break;
+  case 4:
+    normalAxis       = 1;
+    tangentAxis      = 2;
+    biTangentAxis    = 0;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 1;
+    break;
+  case 5:
+    normalAxis       = 2;
+    tangentAxis      = 0;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 1;
+    break;
+  case 6:
+    normalAxis       = 0;
+    tangentAxis      = 2;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  case 7:
+    normalAxis       = 2;
+    tangentAxis      = 0;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  case 8:
+    normalAxis       = 0;
+    tangentAxis      = 2;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 1;
+    break;
+  case 9:
+    normalAxis       = 2;
+    tangentAxis      = 0;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 1;
+    break;
+  case 10:
+    normalAxis       = 1;
+    tangentAxis      = 2;
+    biTangentAxis    = 0;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  case 11:
+    normalAxis       = 2;
+    tangentAxis      = 0;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 1;
+    break;
+  case 12:
+    normalAxis       = 1;
+    tangentAxis      = 2;
+    biTangentAxis    = 0;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 1;
+    break;
+  case 13:
+    normalAxis       = 2;
+    tangentAxis      = 0;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  case 14:
+    normalAxis       = 0;
+    tangentAxis      = 2;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  case 15:
+    normalAxis       = 1;
+    tangentAxis      = 2;
+    biTangentAxis    = 0;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 1;
+    break;
+  case 16:
+    normalAxis       = 0;
+    tangentAxis      = 2;
+    biTangentAxis    = 1;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 1;
+    break;
+  case 17:
+    normalAxis       = 1;
+    tangentAxis      = 2;
+    biTangentAxis    = 0;
+    tangentAxisDir   = 0;
+    biTangentAxisDir = 0;
+    normalAxisDir    = 0;
+    break;
+  default: exit(-1); break;
+  }
 }
 
 //============================================================================
 inline Vec2<double>
 projectPoint(const Vec3<double> point, const int category) {
-    Vec2<double> retVal;
-    int tangentAxis, biTangentAxis, normalAxis;
-    int tangentAxisDir, biTangentAxisDir, normalAxisDir;
-    getProjectedAxis(category, tangentAxis, biTangentAxis, normalAxis, tangentAxisDir, biTangentAxisDir, normalAxisDir);
-    auto delta = point;
-    switch (category) {
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-        // 45 degree rotation around the Y-axis
-        delta[0] = (sqrt(2) * point[0] / 2) + (sqrt(2) * point[2] / 2);
-        delta[2] = (-1 * sqrt(2) * point[0] / 2) + (sqrt(2) * point[2] / 2);
-        break;
-    case 10:
-    case 11:
-    case 12:
-    case 13:
-        // 45 degree rotation around the X-axis
-        delta[1] = (sqrt(2) * point[1] / 2) + (sqrt(2) * point[2] / 2);
-        delta[2] = (-1 * sqrt(2) * point[1] / 2) + (sqrt(2) * point[2] / 2);
-        break;
-    case 14:
-    case 15:
-    case 16:
-    case 17:
-        // 45 degree rotation around the Z-axis
-        delta[0] = (sqrt(2) * point[0] / 2) + (sqrt(2) * point[1] / 2);
-        delta[1] = (-1 * sqrt(2) * point[0] / 2) + (sqrt(2) * point[1] / 2);
-        break;
-    default:
-        //do nothing
-        break;
-    }
-    retVal = Vec2<double>(delta[tangentAxis], delta[biTangentAxis]);
-    return retVal;
+  Vec2<double> retVal;
+  int          tangentAxis, biTangentAxis, normalAxis;
+  int          tangentAxisDir, biTangentAxisDir, normalAxisDir;
+  getProjectedAxis(category,
+                   tangentAxis,
+                   biTangentAxis,
+                   normalAxis,
+                   tangentAxisDir,
+                   biTangentAxisDir,
+                   normalAxisDir);
+  auto delta = point;
+  switch (category) {
+  case 6:
+  case 7:
+  case 8:
+  case 9:
+    // 45 degree rotation around the Y-axis
+    delta[0] = (sqrt(2) * point[0] / 2) + (sqrt(2) * point[2] / 2);
+    delta[2] = (-1 * sqrt(2) * point[0] / 2) + (sqrt(2) * point[2] / 2);
+    break;
+  case 10:
+  case 11:
+  case 12:
+  case 13:
+    // 45 degree rotation around the X-axis
+    delta[1] = (sqrt(2) * point[1] / 2) + (sqrt(2) * point[2] / 2);
+    delta[2] = (-1 * sqrt(2) * point[1] / 2) + (sqrt(2) * point[2] / 2);
+    break;
+  case 14:
+  case 15:
+  case 16:
+  case 17:
+    // 45 degree rotation around the Z-axis
+    delta[0] = (sqrt(2) * point[0] / 2) + (sqrt(2) * point[1] / 2);
+    delta[1] = (-1 * sqrt(2) * point[0] / 2) + (sqrt(2) * point[1] / 2);
+    break;
+  default:
+    //do nothing
+    break;
+  }
+  retVal = Vec2<double>(delta[tangentAxis], delta[biTangentAxis]);
+  return retVal;
 }
 
 //============================================================================

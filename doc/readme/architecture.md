@@ -5,7 +5,7 @@
 V-Mesh test model software is organized as shows in figure 1.
 
 
-![Scheme of acrhitecture of V-Mesh test model.](images/architecture.png){width=520 height=400}
+![Scheme of acrhitecture of V-Mesh test model.](images/architecture.png)
 
 
 ## Core libraries
@@ -23,8 +23,8 @@ have been created:
 
 - `videoEncoder`: wrapper to HM encoder, VTM encoder;
 - `videoDecoder`: wrapper to HM decoder, VTM decoder;
-- `geometryEncoder`: wrapper to Draco encoder; 
-- `geometryDecoder`: wrapper to Draco decoder;
+- `geometryEncoder`: wrapper to MEB encoder; 
+- `geometryDecoder`: wrapper to MEB decoder;
 - `colourConverter`: wrapper to HDRTools.
 
 These libraries are based on a virtual object that can be derived to implement one specific interface with the external libraries. The source codes of the wrapper libraries are stored in the `source/wrapper/` sub-folder.
@@ -37,7 +37,7 @@ The source codes of V-Mesh applications are stored in the `source/app/` sub-fold
 
 The two main application of the V-Mesh test model are: 
 
-- `encode`: that can be used to encode mesh sequence fo a V-MEsh bitstream. 
+- `encode`: that can be used to encode mesh sequence fo a V-Mesh bitstream. 
 - `decode`: that decode V-Mesh bitstream.
 
 The following section shows examples of the usage of these softwares.
@@ -46,8 +46,8 @@ The following section shows examples of the usage of these softwares.
 
 To evaluate the wrapper libraries specific applications have been created. These applications can be used to crosscheck the usage of the external applications. The source code of these applications are in `source/app/wrapper/` sub-folder: 
 
-- `encodeDraco`;
-- `decodeDraco`;
+- `ebEncode`;
+- `ebDecode`;
 - `encodeVideo`;
 - `decodeVideo`;
 - `colourConverte`;

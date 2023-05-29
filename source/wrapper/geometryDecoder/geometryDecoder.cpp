@@ -48,8 +48,8 @@ GeometryDecoder<T>::create(GeometryCodecId codecId) {
     break;
 #endif
   case GeometryCodecId::MPEG:
-      return std::make_shared<MpegGeometryDecoder<T>>();
-      break;
+    return std::make_shared<MpegGeometryDecoder<T>>();
+    break;
   default:
     printf("Error virtualGeometryDecoder: codec id not supported ( %d ) \n",
            (int)codecId);

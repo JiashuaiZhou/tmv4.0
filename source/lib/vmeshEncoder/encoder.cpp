@@ -171,35 +171,38 @@ initialize(V3cBitstream&               syntax,
     params.lodDisplacementQuantizationFlag;
   ext.getLiftingQuantizationParametersPerLevelOfDetails() =
     params.liftingQuantizationParametersPerLevelOfDetails;
-  ext.getSubBlockSize() = params.subBlockSize;
+  ext.getSubBlockSize()          = params.subBlockSize;
   ext.getMaxNumNeighborsMotion() = params.maxNumNeighborsMotion;
   // orthoAtlas parameters
-  ext.getProjectionTextCoordEnableFlag() = (params.iDeriveTextCoordFromPos > 0);
+  ext.getProjectionTextCoordEnableFlag() =
+    (params.iDeriveTextCoordFromPos > 0);
   if (ext.getProjectionTextCoordEnableFlag()) {
-      ext.getProjectionTextCoordMappingMethod() = params.iDeriveTextCoordFromPos - 1;
-      ext.getProjectionTextCoordScaleFactor() = params.packingScaling;
+    ext.getProjectionTextCoordMappingMethod() =
+      params.iDeriveTextCoordFromPos - 1;
+    ext.getProjectionTextCoordScaleFactor() = params.packingScaling;
   }
 
   // Atlas frame parameter set
   auto& afps                            = atlas.addAtlasFrameParameterSet();
   afps.getAtlasSequenceParameterSetId() = aspsId;
   afps.getAtlasFrameParameterSetId()    = afpsId;
-  afps.getExtensionFlag() = true;
-  afps.getVmcExtensionFlag() = true;
-  auto& afpsVdmcExt = afps.getAfpsVdmcExtension();
+  afps.getExtensionFlag()               = true;
+  afps.getVmcExtensionFlag()            = true;
+  auto& afpsVdmcExt                     = afps.getAfpsVdmcExtension();
   auto& meshInfo = afpsVdmcExt.getAtlasFrameMeshInformation();
-  meshInfo.getSingleMeshInAtlasFrameFlag() = true;
+  meshInfo.getSingleMeshInAtlasFrameFlag()     = true;
   meshInfo.getNumSubmeshesInAtlasFrameMinus1() = 0;
-  meshInfo.getSignalledSubmeshIdFlag() = false;
+  meshInfo.getSignalledSubmeshIdFlag()         = false;
   if (ext.getProjectionTextCoordEnableFlag()) {
-      for (int i = 0; i < meshInfo.getNumSubmeshesInAtlasFrameMinus1() + 1; i++) {
-          afpsVdmcExt.getProjectionTextcoordPresentFlag(i) = true;
-          if (afpsVdmcExt.getProjectionTextcoordPresentFlag(i)) {
-              afpsVdmcExt.getProjectionTextcoordWidth(i) = params.width;
-              afpsVdmcExt.getProjectionTextcoordHeight(i) = params.height;
-              afpsVdmcExt.getProjectionTextcoordGutter(i) = params.gutter;
-          }
+    for (int i = 0; i < meshInfo.getNumSubmeshesInAtlasFrameMinus1() + 1;
+         i++) {
+      afpsVdmcExt.getProjectionTextcoordPresentFlag(i) = true;
+      if (afpsVdmcExt.getProjectionTextcoordPresentFlag(i)) {
+        afpsVdmcExt.getProjectionTextcoordWidth(i)  = params.width;
+        afpsVdmcExt.getProjectionTextcoordHeight(i) = params.height;
+        afpsVdmcExt.getProjectionTextcoordGutter(i) = params.gutter;
       }
+    }
   }
 
   // Atlas frame tile information
@@ -241,9 +244,7 @@ initialize(V3cBitstream&               syntax,
   bmsps.getQpPositionMinus1() = params.qpPosition - 1;
   bmsps.getQpTexCoordMinus1() = params.qpTexCoord - 1;
   // TODO - indicate the attribute that will be used for orthoAtlas (UV with QP=0 or FaceID/generic? or no attributest)
-  if (params.iDeriveTextCoordFromPos > 0) {
-      bmsps.getQpTexCoordMinus1() = 0;
-  }
+  if (params.iDeriveTextCoordFromPos > 0) { bmsps.getQpTexCoordMinus1() = 0; }
 
   // Base mesh frame parameter set
   auto& bmfps = baseMesh.addBaseMeshFrameParameterSet(bmfpsId);
@@ -498,7 +499,7 @@ void
 VMCEncoder::textureParametrization(VMCFrame&                   frame,
                                    TriangleMesh<MeshType>&     decimate,
                                    const VMCEncoderParameters& params,
-                                   VMCFrame& previousFrame) {
+                                   VMCFrame&                   previousFrame) {
   auto prefix =
     _keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex);
   std::cout << "Texture parametrization \n";
@@ -523,11 +524,11 @@ VMCEncoder::textureParametrization(VMCFrame&                   frame,
 
     TextureParametrization textureParametrization;
     textureParametrization.generate(decimate,
-        frame.decimateTexture,
-        params,
-        frame.packedCCList,
-        previousFrame.packedCCList,
-        prefix);
+                                    frame.decimateTexture,
+                                    params,
+                                    frame.packedCCList,
+                                    previousFrame.packedCCList,
+                                    prefix);
 
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -802,36 +803,37 @@ VMCEncoder::compressDisplacementsVideo(FrameSequence<uint16_t>&    dispVideo,
     rec.save(rec.createName(prefix + "_rec", 10));
     save(prefix + ".h265", displacement);
   }
-  dispVideo                     = rec;
+  dispVideo = rec;
   return true;
 }
 
 //----------------------------------------------------------------------------
 
 bool
-VMCEncoder::compressDisplacementsAC(V3cBitstream&               syntax, 
+VMCEncoder::compressDisplacementsAC(V3cBitstream&               syntax,
                                     VMCGroupOfFrames&           gof,
                                     const VMCGroupOfFramesInfo& gofInfo,
                                     const VMCEncoderParameters& params) {
   const auto dispDimensions = params.applyOneDimensionalDisplacement ? 1 : 3;
-  const auto subBlockSize = params.subBlockSize;
-  int32_t lodCount = int32_t(gof.frames[0].subdivInfoLevelOfDetails.size());
+  const auto subBlockSize   = params.subBlockSize;
+  int32_t    lodCount = int32_t(gof.frames[0].subdivInfoLevelOfDetails.size());
   std::vector<std::vector<VMCDispContext>> ctxDisp(2);
   ctxDisp[0].resize(lodCount);
   ctxDisp[1].resize(lodCount);
   std::vector<VMCDispContext> ctxNonzero(2);
-  VMCDispContext ctxBypass;
-  EntropyEncoder dispEncoder;
+  VMCDispContext              ctxBypass;
+  EntropyEncoder              dispEncoder;
   int32_t maxAcBufLen = gof.frames[0].disp.size() * gof.frames.size() * 3;
   dispEncoder.setBuffer(maxAcBufLen, nullptr);
   dispEncoder.start();
   std::vector<vmesh::Vec3<double>> disp;
-  for (int32_t frameIndex = 0; frameIndex < gofInfo.frameCount_; frameIndex++) {
-    auto& frame = gof.frames[frameIndex];
+  for (int32_t frameIndex = 0; frameIndex < gofInfo.frameCount_;
+       frameIndex++) {
+    auto&       frame     = gof.frames[frameIndex];
     const auto& frameInfo = gofInfo.frameInfo(frameIndex);
-    int32_t ctxIdx;
+    int32_t     ctxIdx;
     if (frameInfo.type == I_BASEMESH) {
-      disp = frame.disp;
+      disp   = frame.disp;
       ctxIdx = 0;
     } else {
       for (int32_t i = 0; i < disp.size(); i++) {
@@ -846,38 +848,35 @@ VMCEncoder::compressDisplacementsAC(V3cBitstream&               syntax,
 
     for (int32_t dim = 0; dim < 3; dim++) {
       if (dispDimensions != 3 && dim > 0) {
-        for (int32_t i = 0; i < disp.size(); i++) {
-          frame.disp[i][dim] = 0;
-        }
+        for (int32_t i = 0; i < disp.size(); i++) { frame.disp[i][dim] = 0; }
         dispEncoder.encode(0, ctxNonzero[ctxIdx].ctxCoeffGtN[0][dim]);
         continue;
       }
-      int32_t codedFlag = 0;
-      int32_t lastPos = -1;
-      int32_t lastPosS = -1;
-      int32_t lastPosT = -1;
-      int32_t lastPosV = -1;
-      int32_t codedBlockFlag[10] = {0};
+      int32_t codedFlag                   = 0;
+      int32_t lastPos                     = -1;
+      int32_t lastPosS                    = -1;
+      int32_t lastPosT                    = -1;
+      int32_t lastPosV                    = -1;
+      int32_t codedBlockFlag[10]          = {0};
       int32_t codedSubBlockFlag[10][1000] = {0};
       for (int32_t level = lodCount - 1; level >= 0; --level) {
         codedSubBlockFlag[lodCount][1000] = {0};
-        auto blockNum = (lod[level+1] - lod[level]) / subBlockSize + 1;
+        auto blockNum = (lod[level + 1] - lod[level]) / subBlockSize + 1;
         for (int32_t t = blockNum - 1; t >= 0; --t) {
           auto subBlockSize_ = subBlockSize;
           if (t == blockNum - 1) {
-            subBlockSize_ = (lod[level+1] - lod[level]) % subBlockSize;
+            subBlockSize_ = (lod[level + 1] - lod[level]) % subBlockSize;
           }
           for (int32_t v = subBlockSize_ - 1; v >= 0; --v) {
-            auto value = disp[lod[level] + t*subBlockSize + v][dim];
+            auto value = disp[lod[level] + t * subBlockSize + v][dim];
             if (value != 0) {
               if (lastPos == -1) {
                 lastPosS = level;
                 lastPosT = t;
                 lastPosV = v;
-                lastPos = lod[lastPosS] + subBlockSize*lastPosT + lastPosV;
-              }
-              else {
-                codedBlockFlag[level] = 1;
+                lastPos  = lod[lastPosS] + subBlockSize * lastPosT + lastPosV;
+              } else {
+                codedBlockFlag[level]       = 1;
                 codedSubBlockFlag[level][t] = 1;
               }
               break;
@@ -887,50 +886,43 @@ VMCEncoder::compressDisplacementsAC(V3cBitstream&               syntax,
       }
       codedFlag = (lastPos >= 0);
       dispEncoder.encode(codedFlag, ctxNonzero[ctxIdx].ctxCoeffGtN[0][dim]);
-      if (!codedFlag) {
-        continue;
-      }
-      dispEncoder.encodeExpGolomb(lastPos, 12, ctxNonzero[ctxIdx].ctxCoeffRemPrefix);
+      if (!codedFlag) { continue; }
+      dispEncoder.encodeExpGolomb(
+        lastPos, 12, ctxNonzero[ctxIdx].ctxCoeffRemPrefix);
       for (int32_t level = lodCount - 1; level >= 0; --level) {
         if (lastPosS < level) {
           continue;
+        } else if (level < lastPosS) {
+          dispEncoder.encode(codedBlockFlag[level],
+                             ctxDisp[ctxIdx][level].ctxCodedBlock[dim]);
+          if (codedBlockFlag[level] == 0) { continue; }
         }
-        else if (level < lastPosS) {
-          dispEncoder.encode(codedBlockFlag[level], ctxDisp[ctxIdx][level].ctxCodedBlock[dim]);
-          if (codedBlockFlag[level] == 0) {
-            continue;
-          }
-        }
-        auto blockNum = (lod[level+1] - lod[level]) / subBlockSize + 1;
+        auto blockNum = (lod[level + 1] - lod[level]) / subBlockSize + 1;
         for (int32_t t = blockNum - 1; t >= 0; --t) {
           if (level == lastPosS && lastPosT < t) {
             continue;
-          }
-          else if (level < lastPosS || (level == lastPosS && t < lastPosT)) {
-            dispEncoder.encode(codedSubBlockFlag[level][t], ctxDisp[ctxIdx][level].ctxCodedSubBlock[dim]);
-            if (codedSubBlockFlag[level][t] == 0) {
-              continue;
-            }
+          } else if (level < lastPosS || (level == lastPosS && t < lastPosT)) {
+            dispEncoder.encode(codedSubBlockFlag[level][t],
+                               ctxDisp[ctxIdx][level].ctxCodedSubBlock[dim]);
+            if (codedSubBlockFlag[level][t] == 0) { continue; }
           }
           auto subBlockSize_ = subBlockSize;
           if (t == blockNum - 1) {
-            subBlockSize_ = (lod[level+1] - lod[level]) % subBlockSize;
+            subBlockSize_ = (lod[level + 1] - lod[level]) % subBlockSize;
           }
           for (int32_t v = subBlockSize_ - 1; v >= 0; --v) {
             if (lastPosS == level && lastPosT == t && lastPosV < v) {
               continue;
             }
-            auto d = disp[lod[level] + t*subBlockSize + v][dim];
-            dispEncoder.encode(d != 0, ctxDisp[ctxIdx][level].ctxCoeffGtN[0][dim]);
-            if (!d) {
-              continue;
-            }
+            auto d = disp[lod[level] + t * subBlockSize + v][dim];
+            dispEncoder.encode(d != 0,
+                               ctxDisp[ctxIdx][level].ctxCoeffGtN[0][dim]);
+            if (!d) { continue; }
             dispEncoder.encode(d < 0, ctxBypass.ctxStatic);
             d = std::abs(d) - 1;
-            dispEncoder.encode(d != 0, ctxDisp[ctxIdx][level].ctxCoeffGtN[1][dim]);
-            if (!d) {
-              continue;
-            }
+            dispEncoder.encode(d != 0,
+                               ctxDisp[ctxIdx][level].ctxCoeffGtN[1][dim]);
+            if (!d) { continue; }
             assert(d > 0);
             dispEncoder.encodeExpGolomb(--d, 0, ctxBypass.ctxCoeffRemStatic);
           }
@@ -1061,63 +1053,73 @@ VMCEncoder::compressTextureVideo(Sequence&                   reconstruct,
 //----------------------------------------------------------------------------
 
 bool
-VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      origBase, 
+VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      origBase,
                                 TriangleMesh<MeshType>      modifiedBase,
                                 VMCFrame&                   frame,
                                 const VMCEncoderParameters& params,
                                 bool removeDuplicateVerticesFlag) const {
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-      origBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
-          + "_mapping_base_original.ply");
-      modifiedBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
-          + "_mapping_base_modified.ply");
+    origBase.save(_keepFilesPathPrefix + "fr_"
+                  + std::to_string(frame.frameIndex)
+                  + "_mapping_base_original.ply");
+    modifiedBase.save(_keepFilesPathPrefix + "fr_"
+                      + std::to_string(frame.frameIndex)
+                      + "_mapping_base_modified.ply");
   }
   auto compressBase = modifiedBase;
   // Scale
   const auto scalePosition = 1 << (18 - params.bitDepthPosition);
   const auto scaleTexCoord = 1 << 18;
   for (int32_t v = 0, vcount = origBase.pointCount(); v < vcount; ++v) {
-      origBase.setPoint(v, Round(origBase.point(v) * scalePosition));
+    origBase.setPoint(v, Round(origBase.point(v) * scalePosition));
   }
   if (origBase.texCoordCount() > 0) {
-      for (int32_t tc = 0, tccount = origBase.texCoordCount(); tc < tccount; ++tc) {
-          origBase.setTexCoord(tc, Round(origBase.texCoord(tc) * scaleTexCoord));
-      }
+    for (int32_t tc = 0, tccount = origBase.texCoordCount(); tc < tccount;
+         ++tc) {
+      origBase.setTexCoord(tc, Round(origBase.texCoord(tc) * scaleTexCoord));
+    }
   }
   // shift added to cope with potential negative base.point values
   for (int32_t v = 0, vcount = modifiedBase.pointCount(); v < vcount; ++v) {
-      modifiedBase.setPoint(v, (1 << 18) + Round(modifiedBase.point(v) * scalePosition));
+    modifiedBase.setPoint(
+      v, (1 << 18) + Round(modifiedBase.point(v) * scalePosition));
   }
-  if (modifiedBase.texCoordCount() > 0 && (params.iDeriveTextCoordFromPos == 0)) {
-      for (int32_t tc = 0, tccount = modifiedBase.texCoordCount(); tc < tccount; ++tc) {
-          modifiedBase.setTexCoord(tc, Round(modifiedBase.texCoord(tc) * scaleTexCoord));
-      }
+  if (modifiedBase.texCoordCount() > 0
+      && (params.iDeriveTextCoordFromPos == 0)) {
+    for (int32_t tc = 0, tccount = modifiedBase.texCoordCount(); tc < tccount;
+         ++tc) {
+      modifiedBase.setTexCoord(
+        tc, Round(modifiedBase.texCoord(tc) * scaleTexCoord));
+    }
   }
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-      origBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
-          + "_mapping_scale_original.ply");
-      modifiedBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
-          + "_mapping_scale_modified.ply");
+    origBase.save(_keepFilesPathPrefix + "fr_"
+                  + std::to_string(frame.frameIndex)
+                  + "_mapping_scale_original.ply");
+    modifiedBase.save(_keepFilesPathPrefix + "fr_"
+                      + std::to_string(frame.frameIndex)
+                      + "_mapping_scale_modified.ply");
   }
 
   // Encode
   GeometryEncoderParameters encoderParams;
   // remove this one ??
-  encoderParams.cl_ = 10; // this is the default for draco
-  // were not specified before, using scale, extend to 20bits as base values may extend beyond the original scale 
+  encoderParams.cl_ = 10;  // this is the default for draco
+  // were not specified before, using scale, extend to 20bits as base values may extend beyond the original scale
   encoderParams.qp_ = 20;
   // in practice 19 bits are used for texcoords as 1.0 is scaled as 0x4000
   // this only has incidence when qp-bits packing is used in the encoder
   encoderParams.qt_ = 19;
   // end remove those
-  encoderParams.dracoUsePosition_             = params.dracoUsePosition;
-  encoderParams.dracoUseUV_                   = params.dracoUseUV;
-  encoderParams.dracoMeshLossless_            = params.dracoMeshLossless;
-  encoderParams.predCoder_                    = params.predCoder;
-  encoderParams.topoCoder_                    = params.topoCoder;
-  encoderParams.baseMeshDeduplicatePositions_ = params.baseMeshDeduplicatePositions;
+  encoderParams.dracoUsePosition_  = params.dracoUsePosition;
+  encoderParams.dracoUseUV_        = params.dracoUseUV;
+  encoderParams.dracoMeshLossless_ = params.dracoMeshLossless;
+  encoderParams.predCoder_         = params.predCoder;
+  encoderParams.topoCoder_         = params.topoCoder;
+  encoderParams.baseMeshDeduplicatePositions_ =
+    params.baseMeshDeduplicatePositions;
 
   TriangleMesh<MeshType> rec;
   std::vector<uint8_t>   geometryBitstream;
@@ -1130,28 +1132,31 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      origBase,
 
   // Save intermediate files
   if (params.keepIntermediateFiles) {
-    auto prefix =
-      _keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex) + "_mapping";
+    auto prefix = _keepFilesPathPrefix + "fr_"
+                  + std::to_string(frame.frameIndex) + "_mapping";
     if (params.iDeriveTextCoordFromPos == 2) {
-        modifiedBase.saveToOBJUsingFidAsColor(prefix + "_mapping_enc");
-        rec.saveToOBJUsingFidAsColor(prefix + "_mapping_rec");
-    }
-    else {
-        modifiedBase.save(prefix + "_enc.ply");
-    rec.save(prefix + "_rec.ply");
+      modifiedBase.saveToOBJUsingFidAsColor(prefix + "_mapping_enc");
+      rec.saveToOBJUsingFidAsColor(prefix + "_mapping_rec");
+    } else {
+      modifiedBase.save(prefix + "_enc.ply");
+      rec.save(prefix + "_rec.ply");
     }
     save(prefix + ".drc", geometryBitstream);
   }
 
   // Geometry parametrisation base (before compression)
-  auto fsubdiv0 = (origBase.pointCount() != modifiedBase.pointCount()) ? origBase : modifiedBase;
+  auto fsubdiv0 = (origBase.pointCount() != modifiedBase.pointCount())
+                    ? origBase
+                    : modifiedBase;
   fsubdiv0.subdivideMidPoint(params.liftingSubdivisionIterationCount);
   if (params.keepIntermediateFiles) {
-      fsubdiv0.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
-          + "_mapping_fsubdiv0.ply");
+    fsubdiv0.save(_keepFilesPathPrefix + "fr_"
+                  + std::to_string(frame.frameIndex)
+                  + "_mapping_fsubdiv0.ply");
   }
   std::vector<int32_t> texCoordToPoint0;
-  if (fsubdiv0.texCoordCount() > 0) fsubdiv0.computeTexCoordToPointMapping(texCoordToPoint0);
+  if (fsubdiv0.texCoordCount() > 0)
+    fsubdiv0.computeTexCoordToPointMapping(texCoordToPoint0);
   struct ArrayHasher {
     std::size_t operator()(const std::array<double, 5>& a) const {
       std::size_t h = 0;
@@ -1163,11 +1168,14 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      origBase,
   };
   std::map<std::array<double, 5>, int32_t> map0;
   const auto texCoordCount0 = fsubdiv0.texCoordCount();
-  const auto coordCount0 = fsubdiv0.pointCount();
-  int32_t vCount = texCoordCount0 > 0 ? texCoordCount0 : coordCount0;
+  const auto coordCount0    = fsubdiv0.pointCount();
+  int32_t    vCount = texCoordCount0 > 0 ? texCoordCount0 : coordCount0;
   for (int32_t v = 0; v < vCount; ++v) {
-      const auto& point0 = texCoordCount0 > 0 ? fsubdiv0.point(std::max(0, texCoordToPoint0[v])) : fsubdiv0.point(v);
-      const auto& texCoord0 = texCoordCount0 > 0 ? fsubdiv0.texCoord(v) : Vec2<MeshType>(0.0);
+    const auto& point0 = texCoordCount0 > 0
+                           ? fsubdiv0.point(std::max(0, texCoordToPoint0[v]))
+                           : fsubdiv0.point(v);
+    const auto& texCoord0 =
+      texCoordCount0 > 0 ? fsubdiv0.texCoord(v) : Vec2<MeshType>(0.0);
     const std::array<double, 5> vertex0{
       point0[0], point0[1], point0[2], texCoord0[0], texCoord0[1]};
     map0[vertex0] = texCoordCount0 > 0 ? texCoordToPoint0[v] : v;
@@ -1176,210 +1184,233 @@ VMCEncoder::computeDracoMapping(TriangleMesh<MeshType>      origBase,
   // Geometry parametrisation rec (after compression)
   auto fsubdiv1 = rec;
   if (removeDuplicateVerticesFlag) {
-      TriangleMesh<MeshType> recCompress;
-      std::vector<uint8_t>   geometryBitstreamCompress;
-      // Scaling to QP/QT bits
-      const auto scalePositionCompress =
-          ((1 << params.qpPosition) - 1.0) / ((1 << params.bitDepthPosition) - 1.0);
-      const auto scaleTexCoordCompress = std::pow(2.0, params.qpTexCoord) - 1.0;
-      for (int32_t v = 0, vcount = compressBase.pointCount(); v < vcount; ++v) {
-          compressBase.setPoint(v, Round(compressBase.point(v) * scalePositionCompress));
+    TriangleMesh<MeshType> recCompress;
+    std::vector<uint8_t>   geometryBitstreamCompress;
+    // Scaling to QP/QT bits
+    const auto scalePositionCompress =
+      ((1 << params.qpPosition) - 1.0)
+      / ((1 << params.bitDepthPosition) - 1.0);
+    const auto scaleTexCoordCompress = std::pow(2.0, params.qpTexCoord) - 1.0;
+    for (int32_t v = 0, vcount = compressBase.pointCount(); v < vcount; ++v) {
+      compressBase.setPoint(
+        v, Round(compressBase.point(v) * scalePositionCompress));
+    }
+    if (compressBase.texCoordCount() > 0
+        && (params.iDeriveTextCoordFromPos == 0)) {
+      for (int32_t tc = 0, tccount = compressBase.texCoordCount();
+           tc < tccount;
+           ++tc) {
+        compressBase.setTexCoord(
+          tc, Round(compressBase.texCoord(tc) * scaleTexCoordCompress));
       }
-      if (compressBase.texCoordCount() > 0 && (params.iDeriveTextCoordFromPos == 0)) {
-          for (int32_t tc = 0, tccount = compressBase.texCoordCount(); tc < tccount; ++tc) {
-              compressBase.setTexCoord(tc, Round(compressBase.texCoord(tc) * scaleTexCoordCompress));
-          }
-      }
-      // Save intermediate files
-      if (params.keepIntermediateFiles) {
-          compressBase.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
-              + "_mapping_scale_base_compress.ply");
-      }
-      // Encode with QP/QT bits
-      // remove this one ??
-      encoderParams.cl_ = 10; // this is the default for draco
-      encoderParams.qp_ = params.qpPosition;
-      encoderParams.qt_ = params.qpTexCoord;
+    }
+    // Save intermediate files
+    if (params.keepIntermediateFiles) {
+      compressBase.save(_keepFilesPathPrefix + "fr_"
+                        + std::to_string(frame.frameIndex)
+                        + "_mapping_scale_base_compress.ply");
+    }
+    // Encode with QP/QT bits
+    // remove this one ??
+    encoderParams.cl_ = 10;  // this is the default for draco
+    encoderParams.qp_ = params.qpPosition;
+    encoderParams.qt_ = params.qpTexCoord;
+    encoderParams.qg_ = -1;
+    if (params.iDeriveTextCoordFromPos == 1) {
+      encoderParams.qt_ = std::ceil(std::log2(frame.packedCCList.size()));
       encoderParams.qg_ = -1;
-      if (params.iDeriveTextCoordFromPos == 1) {
-          encoderParams.qt_ = std::ceil(std::log2(frame.packedCCList.size()));
-          encoderParams.qg_ = -1;
+    } else if (params.iDeriveTextCoordFromPos == 2) {
+      encoderParams.qt_ = -1;
+      encoderParams.qg_ = std::ceil(std::log2(frame.packedCCList.size()));
+    }
+    encoderParams.dracoUsePosition_  = params.dracoUsePosition;
+    encoderParams.dracoUseUV_        = params.dracoUseUV;
+    encoderParams.dracoMeshLossless_ = params.dracoMeshLossless;
+    encoderParams.predCoder_         = params.predCoder;
+    encoderParams.topoCoder_         = params.topoCoder;
+    encoderParams.baseMeshDeduplicatePositions_ =
+      params.baseMeshDeduplicatePositions;
+    printf("DracoMapping: use_position = %d use_uv = %d mesh_lossless = %d \n",
+           encoderParams.dracoUsePosition_,
+           encoderParams.dracoUseUV_,
+           encoderParams.dracoMeshLossless_);
+    encoder->encode(
+      compressBase, encoderParams, geometryBitstreamCompress, recCompress);
+    // Save intermediate files
+    if (params.keepIntermediateFiles) {
+      auto prefix = _keepFilesPathPrefix + "fr_"
+                    + std::to_string(frame.frameIndex) + "_mapping";
+      if (params.iDeriveTextCoordFromPos == 2) {
+        compressBase.saveToOBJUsingFidAsColor(prefix
+                                              + "_mapping_enc_original");
+        recCompress.saveToOBJUsingFidAsColor(prefix + "_mapping_rec_original");
+      } else {
+        compressBase.save(prefix + "_enc_compress.ply");
+        recCompress.save(prefix + "_rec_compress.ply");
       }
-      else if (params.iDeriveTextCoordFromPos == 2) {
-          encoderParams.qt_ = -1;
-          encoderParams.qg_ = std::ceil(std::log2(frame.packedCCList.size()));
-      }
-      encoderParams.dracoUsePosition_ = params.dracoUsePosition;
-      encoderParams.dracoUseUV_ = params.dracoUseUV;
-      encoderParams.dracoMeshLossless_ = params.dracoMeshLossless;
-      encoderParams.predCoder_ = params.predCoder;
-      encoderParams.topoCoder_ = params.topoCoder;
-      encoderParams.baseMeshDeduplicatePositions_ = params.baseMeshDeduplicatePositions;
-      printf("DracoMapping: use_position = %d use_uv = %d mesh_lossless = %d \n",
-          encoderParams.dracoUsePosition_,
-          encoderParams.dracoUseUV_,
-          encoderParams.dracoMeshLossless_);
-      encoder->encode(compressBase, encoderParams, geometryBitstreamCompress, recCompress);
-      // Save intermediate files
-      if (params.keepIntermediateFiles) {
-          auto prefix =
-              _keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex) + "_mapping";
-          if (params.iDeriveTextCoordFromPos == 2) {
-              compressBase.saveToOBJUsingFidAsColor(prefix + "_mapping_enc_original");
-              recCompress.saveToOBJUsingFidAsColor(prefix + "_mapping_rec_original");
-          }
-          else {
-              compressBase.save(prefix + "_enc_compress.ply");
-              recCompress.save(prefix + "_rec_compress.ply");
-          }
-          save(prefix + "_compress.drc", geometryBitstreamCompress);
-      }
-      //unify vertices first
-      std::vector<Vec3<MeshType>> pointsOutput;
-      std::vector<Triangle> trianglesOutput;
-      std::vector<int32_t> mappingUnify;
-      UnifyVertices(recCompress.points(), recCompress.triangles(), pointsOutput, trianglesOutput, mappingUnify);
-      //now we unify the vertices for the mapping like in the compress function
-      for (int coordIdx = 0; coordIdx < fsubdiv1.pointCount(); coordIdx++) pointsOutput[mappingUnify[coordIdx]] = fsubdiv1.point(coordIdx);
-      for (int triIdx = 0; triIdx < fsubdiv1.triangleCount(); triIdx++)
-          for (int cornerIdx = 0; cornerIdx < 3; cornerIdx++) trianglesOutput[triIdx][cornerIdx] = mappingUnify[fsubdiv1.triangle(triIdx)[cornerIdx]];
-      swap(fsubdiv1.points(), pointsOutput);
-      swap(fsubdiv1.triangles(), trianglesOutput);
-      RemoveDegeneratedTriangles(fsubdiv1);
+      save(prefix + "_compress.drc", geometryBitstreamCompress);
+    }
+    //unify vertices first
+    std::vector<Vec3<MeshType>> pointsOutput;
+    std::vector<Triangle>       trianglesOutput;
+    std::vector<int32_t>        mappingUnify;
+    UnifyVertices(recCompress.points(),
+                  recCompress.triangles(),
+                  pointsOutput,
+                  trianglesOutput,
+                  mappingUnify);
+    //now we unify the vertices for the mapping like in the compress function
+    for (int coordIdx = 0; coordIdx < fsubdiv1.pointCount(); coordIdx++)
+      pointsOutput[mappingUnify[coordIdx]] = fsubdiv1.point(coordIdx);
+    for (int triIdx = 0; triIdx < fsubdiv1.triangleCount(); triIdx++)
+      for (int cornerIdx = 0; cornerIdx < 3; cornerIdx++)
+        trianglesOutput[triIdx][cornerIdx] =
+          mappingUnify[fsubdiv1.triangle(triIdx)[cornerIdx]];
+    swap(fsubdiv1.points(), pointsOutput);
+    swap(fsubdiv1.triangles(), trianglesOutput);
+    RemoveDegeneratedTriangles(fsubdiv1);
   }
   fsubdiv1.subdivideMidPoint(params.liftingSubdivisionIterationCount);
   if (params.keepIntermediateFiles) {
-      fsubdiv1.save(_keepFilesPathPrefix + "fr_" + std::to_string(frame.frameIndex)
-          + "_mapping_fsubdiv1.ply");
+    fsubdiv1.save(_keepFilesPathPrefix + "fr_"
+                  + std::to_string(frame.frameIndex)
+                  + "_mapping_fsubdiv1.ply");
   }
   const auto pointCount1 = fsubdiv1.pointCount();
   frame.mapping.resize(pointCount1, -1);
   std::vector<bool> tags(pointCount1, false);
   for (int32_t t = 0, tcount = fsubdiv1.triangleCount(); t < tcount; ++t) {
-    const auto& tri   = fsubdiv1.triangle(t);
-    const auto& triUV = fsubdiv1.texCoordCount() > 0 ? fsubdiv1.texCoordTriangle(t) : tri;
+    const auto& tri = fsubdiv1.triangle(t);
+    const auto& triUV =
+      fsubdiv1.texCoordCount() > 0 ? fsubdiv1.texCoordTriangle(t) : tri;
     for (int32_t k = 0; k < 3; ++k) {
       const auto indexPos = tri[k];
       if (tags[indexPos]) { continue; }
       tags[indexPos]                            = true;
       const auto                  indexTexCoord = triUV[k];
       const auto&                 point1        = fsubdiv1.point(indexPos);
-      const auto& texCoord1 = fsubdiv1.texCoordCount() > 0 ? fsubdiv1.texCoord(indexTexCoord) : Vec2<MeshType>(0.0);
-      const std::array<double, 5> vertex1   = {
-        point1[0], point1[1], point1[2], texCoord1[0], texCoord1[1]};
+      const auto&                 texCoord1     = fsubdiv1.texCoordCount() > 0
+                                                    ? fsubdiv1.texCoord(indexTexCoord)
+                                                    : Vec2<MeshType>(0.0);
+      const std::array<double, 5> vertex1       = {
+              point1[0], point1[1], point1[2], texCoord1[0], texCoord1[1]};
       const auto it = map0.find(vertex1);
       if (it != map0.end()) {
         frame.mapping[indexPos] = map0[vertex1];
-      }
-      else {
-          if (removeDuplicateVerticesFlag) {
-              if (fsubdiv1.texCoordCount() > 0) {
-                  //find all points with the same textCoord and select the closest one
-                  double dist = std::numeric_limits<double>::max();
-                  for (int32_t v = 0; v < texCoordCount0; ++v) {
-                      const auto& texCoord0 = fsubdiv0.texCoord(v);
-                      if (texCoord0 == texCoord1) {
-                          const auto& point0 = fsubdiv0.point(std::max(0, texCoordToPoint0[v]));
-                          if ((point0 - point1).norm2() < dist) {
-                              dist = (point0 - point1).norm2();
-                              frame.mapping[indexPos] = texCoordToPoint0[v];
-                          }
-                      }
-                  }
+      } else {
+        if (removeDuplicateVerticesFlag) {
+          if (fsubdiv1.texCoordCount() > 0) {
+            //find all points with the same textCoord and select the closest one
+            double dist = std::numeric_limits<double>::max();
+            for (int32_t v = 0; v < texCoordCount0; ++v) {
+              const auto& texCoord0 = fsubdiv0.texCoord(v);
+              if (texCoord0 == texCoord1) {
+                const auto& point0 =
+                  fsubdiv0.point(std::max(0, texCoordToPoint0[v]));
+                if ((point0 - point1).norm2() < dist) {
+                  dist                    = (point0 - point1).norm2();
+                  frame.mapping[indexPos] = texCoordToPoint0[v];
+                }
               }
-              else {
-                  //could not find matching index, because surface has changed due to quantization, so lets use the closest point
-                  KdTree<MeshType> kdtreeTarget(3, fsubdiv0.points(), 10);  // dim, cloud, max leaf
-                  std::vector<int32_t> indexes(1);
-                  std::vector<MeshType>       sqrDists(1);
-                  kdtreeTarget.query(point1.data(), 1, indexes.data(), sqrDists.data());
-                  frame.mapping[indexPos] = indexes[0];
-              }
+            }
+          } else {
+            //could not find matching index, because surface has changed due to quantization, so lets use the closest point
+            KdTree<MeshType> kdtreeTarget(
+              3, fsubdiv0.points(), 10);  // dim, cloud, max leaf
+            std::vector<int32_t>  indexes(1);
+            std::vector<MeshType> sqrDists(1);
+            kdtreeTarget.query(
+              point1.data(), 1, indexes.data(), sqrDists.data());
+            frame.mapping[indexPos] = indexes[0];
           }
-          else
-        assert(0);
+        } else assert(0);
       }
     }
   }
   return true;
 }
 
-bool VMCEncoder::addNeighbor(
-    int32_t vertex1,
-    int32_t vertex2,
-    int32_t maxNumNeighborsMotion) {
-    bool duplicate = false;
-    auto vertex = vertex1;
-    auto vertexNeighbor = vertex2;
-    auto predCount = numNeighborsMotion[vertex];
-    predCount = std::min(predCount, maxNumNeighborsMotion);
-    if (vertex > vertexNeighbor) { // Check if vertexNeighbor is available
-        for (int32_t n = 0; n < predCount; ++n) {
-            if (vertexAdjTableMotion[vertex * maxNumNeighborsMotion + n] == vertexNeighbor) {
-                duplicate = true;
-                break;
-            }
-        }
-        if (!duplicate) {
-            if (predCount == maxNumNeighborsMotion) {
-                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + maxNumNeighborsMotion - 1] = vertexNeighbor;
-            } else {
-                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + predCount] = vertexNeighbor;
-                numNeighborsMotion[vertex] = predCount + 1;
-            }
-        }
+bool
+VMCEncoder::addNeighbor(int32_t vertex1,
+                        int32_t vertex2,
+                        int32_t maxNumNeighborsMotion) {
+  bool duplicate      = false;
+  auto vertex         = vertex1;
+  auto vertexNeighbor = vertex2;
+  auto predCount      = numNeighborsMotion[vertex];
+  predCount           = std::min(predCount, maxNumNeighborsMotion);
+  if (vertex > vertexNeighbor) {  // Check if vertexNeighbor is available
+    for (int32_t n = 0; n < predCount; ++n) {
+      if (vertexAdjTableMotion[vertex * maxNumNeighborsMotion + n]
+          == vertexNeighbor) {
+        duplicate = true;
+        break;
+      }
     }
-    duplicate = false;
-    vertex = vertex2;
-    vertexNeighbor = vertex1;
-    predCount = numNeighborsMotion[vertex];
-    if (vertex > vertexNeighbor) { // Check if vertexNeighbor is available
-        for (int32_t n = 0; n < predCount; ++n) {
-            if (vertexAdjTableMotion[vertex * maxNumNeighborsMotion + n] == vertexNeighbor) {
-                duplicate = true;
-                break;
-            }
-        }
-        if (!duplicate) {
-            if (predCount == maxNumNeighborsMotion) {
-                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + maxNumNeighborsMotion - 1] = vertexNeighbor;
-            } else {
-                vertexAdjTableMotion[vertex * maxNumNeighborsMotion + predCount] = vertexNeighbor;
-                numNeighborsMotion[vertex] = predCount + 1;
-            }
-        }
+    if (!duplicate) {
+      if (predCount == maxNumNeighborsMotion) {
+        vertexAdjTableMotion[vertex * maxNumNeighborsMotion
+                             + maxNumNeighborsMotion - 1] = vertexNeighbor;
+      } else {
+        vertexAdjTableMotion[vertex * maxNumNeighborsMotion + predCount] =
+          vertexNeighbor;
+        numNeighborsMotion[vertex] = predCount + 1;
+      }
     }
-    return true;
+  }
+  duplicate      = false;
+  vertex         = vertex2;
+  vertexNeighbor = vertex1;
+  predCount      = numNeighborsMotion[vertex];
+  if (vertex > vertexNeighbor) {  // Check if vertexNeighbor is available
+    for (int32_t n = 0; n < predCount; ++n) {
+      if (vertexAdjTableMotion[vertex * maxNumNeighborsMotion + n]
+          == vertexNeighbor) {
+        duplicate = true;
+        break;
+      }
+    }
+    if (!duplicate) {
+      if (predCount == maxNumNeighborsMotion) {
+        vertexAdjTableMotion[vertex * maxNumNeighborsMotion
+                             + maxNumNeighborsMotion - 1] = vertexNeighbor;
+      } else {
+        vertexAdjTableMotion[vertex * maxNumNeighborsMotion + predCount] =
+          vertexNeighbor;
+        numNeighborsMotion[vertex] = predCount + 1;
+      }
+    }
+  }
+  return true;
 }
 
 bool
 VMCEncoder::computeVertexAdjTableMotion(
-    const std::vector<Vec3<int32_t>>& triangles,
-    int32_t vertexCount,
-    int32_t maxNumNeighborsMotion) {
-    const auto triangleCount = int32_t(triangles.size());
-    // const auto vertexCount = int32_t(reference.size());
-    if (vertexAdjTableMotion.size() < vertexCount * maxNumNeighborsMotion) {
-        vertexAdjTableMotion.resize(vertexCount * maxNumNeighborsMotion);
-    }
-    if (numNeighborsMotion.size() < vertexCount) {
-        numNeighborsMotion.resize(vertexCount);
-    }
-    for (int32_t v = 0; v < vertexCount; ++v) {
-        numNeighborsMotion[v] = 0;
-    }
+  const std::vector<Vec3<int32_t>>& triangles,
+  int32_t                           vertexCount,
+  int32_t                           maxNumNeighborsMotion) {
+  const auto triangleCount = int32_t(triangles.size());
+  // const auto vertexCount = int32_t(reference.size());
+  if (vertexAdjTableMotion.size() < vertexCount * maxNumNeighborsMotion) {
+    vertexAdjTableMotion.resize(vertexCount * maxNumNeighborsMotion);
+  }
+  if (numNeighborsMotion.size() < vertexCount) {
+    numNeighborsMotion.resize(vertexCount);
+  }
+  for (int32_t v = 0; v < vertexCount; ++v) { numNeighborsMotion[v] = 0; }
 
-    for (int32_t triangleIndex = 0; triangleIndex < triangleCount; ++triangleIndex) {
-        const auto& tri = triangles[triangleIndex];
-        assert(tri.i() >= 0 && tri.i() < vertexCount);
-        assert(tri.j() >= 0 && tri.j() < vertexCount);
-        assert(tri.k() >= 0 && tri.k() < vertexCount);
-        // Add Neighbors
-        addNeighbor(tri.i(), tri.j(), maxNumNeighborsMotion);
-        addNeighbor(tri.i(), tri.k(), maxNumNeighborsMotion);
-        addNeighbor(tri.j(), tri.k(), maxNumNeighborsMotion);
-}
-    return true;
+  for (int32_t triangleIndex = 0; triangleIndex < triangleCount;
+       ++triangleIndex) {
+    const auto& tri = triangles[triangleIndex];
+    assert(tri.i() >= 0 && tri.i() < vertexCount);
+    assert(tri.j() >= 0 && tri.j() < vertexCount);
+    assert(tri.k() >= 0 && tri.k() < vertexCount);
+    // Add Neighbors
+    addNeighbor(tri.i(), tri.j(), maxNumNeighborsMotion);
+    addNeighbor(tri.i(), tri.k(), maxNumNeighborsMotion);
+    addNeighbor(tri.j(), tri.k(), maxNumNeighborsMotion);
+  }
+  return true;
 }
 
 //----------------------------------------------------------------------------
@@ -1426,8 +1457,9 @@ VMCEncoder::compressMotion(
   arithmeticEncoder.setBuffer(maxAcBufLen, nullptr);
   arithmeticEncoder.start();
   if (createVertexAdjTableMotion) {
-      computeVertexAdjTableMotion(triangles, pointCount, params.maxNumNeighborsMotion);
-      createVertexAdjTableMotion = false;
+    computeVertexAdjTableMotion(
+      triangles, pointCount, params.maxNumNeighborsMotion);
+    createVertexAdjTableMotion = false;
   }
   std::vector<Vec3<int32_t>> motion;
   std::vector<Vec3<int32_t>> motion_no_skip;
@@ -1548,9 +1580,10 @@ VMCEncoder::compressMotion(
       Vec3<int32_t> pred(0);
       int32_t       predCount = numNeighborsMotion[vindex];
       for (int32_t i = 0; i < predCount; ++i) {
-          const auto vindex1 = vertexAdjTableMotion[vindex * params.maxNumNeighborsMotion + i];
-          const auto& mv1 = motion[vindex1];
-          for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
+        const auto vindex1 =
+          vertexAdjTableMotion[vindex * params.maxNumNeighborsMotion + i];
+        const auto& mv1 = motion[vindex1];
+        for (int32_t k = 0; k < 3; ++k) { pred[k] += mv1[k]; }
       }
       if (predCount > 1) {
         const auto bias = predCount >> 1;
@@ -1559,8 +1592,8 @@ VMCEncoder::compressMotion(
                                  : -(-pred[k] + bias) / predCount;
         }
       }
-      const auto res0    = motion[vindex0];
-      const auto res1    = motion[vindex0] - pred;
+      const auto res0 = motion[vindex0];
+      const auto res1 = motion[vindex0] - pred;
       ++vCount;
       resV0.push_back(res0);
       resV1.push_back(res1);
@@ -1591,8 +1624,7 @@ VMCEncoder::compressMotion(
                                  ctx.ctxCoeffGtN[1][k]);
         if (value == 0) { continue; }
         assert(value > 0);
-        arithmeticEncoder.encodeExpGolomb(
-          --value, 0, ctx.ctxCoeffRemPrefix);
+        arithmeticEncoder.encodeExpGolomb(--value, 0, ctx.ctxCoeffRemPrefix);
       }
     }
   }
@@ -1614,7 +1646,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
                              VMCFrame&                   frame,
                              TriangleMesh<MeshType>&     rec,
                              BaseMeshTileLayer&          bmtl,
-                             AtlasTileLayerRbsp& atl,
+                             AtlasTileLayerRbsp&         atl,
                              const VMCEncoderParameters& params) {
   // if (!encodeFrameHeader(frameInfo, bitstream)) { return false; }
   const auto scalePosition =
@@ -1626,9 +1658,9 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
   auto&      subdiv         = frame.subdiv;
   auto&      bmth           = bmtl.getHeader();
   auto&      bmtdu          = bmtl.getDataUnit();
-  if (frameInfo.type == I_BASEMESH) bmth.getBaseMeshType()    = frameInfo.type;
-  auto&      ath            = atl.getHeader();
-  auto&      atdu           = atl.getDataUnit();
+  if (frameInfo.type == I_BASEMESH) bmth.getBaseMeshType() = frameInfo.type;
+  auto& ath  = atl.getHeader();
+  auto& atdu = atl.getDataUnit();
 
   // Save intermediate files
   std::string prefix = "";
@@ -1649,68 +1681,68 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
         base.setTexCoord(tc, base.texCoord(tc) * scale);
       }
     }
-    auto oBase = base;
+    auto oBase                   = base;
     bool removeDuplicateVertices = (params.iDeriveTextCoordFromPos == 3);
     //alter the base mesh in case we are deriving text coordinates at decoder
     if (params.iDeriveTextCoordFromPos > 0) {
-        switch (params.iDeriveTextCoordFromPos) {
-        default:
-        case 1: // using UV coordinates
-        {
-            int idxCC = 0;
-            int idxTri = 0;
-            for (auto& cc : frame.packedCCList) {
-                for (int idxTriCC = 0; idxTriCC < cc.triangleCount(); idxTriCC++) {
-                    auto triTex = base.texCoordTriangle(idxTri + idxTriCC);
-                    for (int i = 0; i < 3; i++) {
-                        int32_t tc = triTex[i];
-                        base.setTexCoord(tc, Vec2<double>(idxCC, 0));
-                    }
-                }
-                idxTri += cc.triangleCount();
-                idxCC++;
+      switch (params.iDeriveTextCoordFromPos) {
+      default:
+      case 1:  // using UV coordinates
+      {
+        int idxCC  = 0;
+        int idxTri = 0;
+        for (auto& cc : frame.packedCCList) {
+          for (int idxTriCC = 0; idxTriCC < cc.triangleCount(); idxTriCC++) {
+            auto triTex = base.texCoordTriangle(idxTri + idxTriCC);
+            for (int i = 0; i < 3; i++) {
+              int32_t tc = triTex[i];
+              base.setTexCoord(tc, Vec2<double>(idxCC, 0));
             }
-            oBase = base;
-            break;
+          }
+          idxTri += cc.triangleCount();
+          idxCC++;
         }
-        case 2: // using FaceID
-        {
-            int idxCC = 0;
-            int idxTri = 0;
-            base.resizeFaceIds(base.triangleCount());
-            base.texCoords().clear();
-            base.texCoordTriangles().clear();
-            for (auto& cc : frame.packedCCList) {
-                for (int idxTriCC = 0; idxTriCC < cc.triangleCount(); idxTriCC++) {
-                    base.setFaceId(idxTri + idxTriCC, idxCC);
-                }
-                idxTri += cc.triangleCount();
-                idxCC++;
-            }
-            oBase = base;
-            break;
+        oBase = base;
+        break;
+      }
+      case 2:  // using FaceID
+      {
+        int idxCC  = 0;
+        int idxTri = 0;
+        base.resizeFaceIds(base.triangleCount());
+        base.texCoords().clear();
+        base.texCoordTriangles().clear();
+        for (auto& cc : frame.packedCCList) {
+          for (int idxTriCC = 0; idxTriCC < cc.triangleCount(); idxTriCC++) {
+            base.setFaceId(idxTri + idxTriCC, idxCC);
+          }
+          idxTri += cc.triangleCount();
+          idxCC++;
         }
-        case 3: // using connected components -> connectivity from texture coordinates
-        {
-            auto coordList = base.points();
-            base.points().clear();
-            base.points().resize(base.texCoords().size(), Vec3<double>(0));
-            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
-                auto triangle = base.triangle(triIdx);
-                auto texTriangle = base.texCoordTriangle(triIdx);
-                for (int i = 0; i < 3; i++) {
-                    base.points()[texTriangle[i]] = coordList[triangle[i]];
-                }
-            }
-            base.triangles().clear();
-            base.triangles() = base.texCoordTriangles();
-            base.texCoords().clear();
-            base.texCoordTriangles().clear();
-            oBase.texCoords().clear();
-            oBase.texCoordTriangles().clear();
-            break;
+        oBase = base;
+        break;
+      }
+      case 3:  // using connected components -> connectivity from texture coordinates
+      {
+        auto coordList = base.points();
+        base.points().clear();
+        base.points().resize(base.texCoords().size(), Vec3<double>(0));
+        for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+          auto triangle    = base.triangle(triIdx);
+          auto texTriangle = base.texCoordTriangle(triIdx);
+          for (int i = 0; i < 3; i++) {
+            base.points()[texTriangle[i]] = coordList[triangle[i]];
+          }
         }
-        }
+        base.triangles().clear();
+        base.triangles() = base.texCoordTriangles();
+        base.texCoords().clear();
+        base.texCoordTriangles().clear();
+        oBase.texCoords().clear();
+        oBase.texCoordTriangles().clear();
+        break;
+      }
+      }
     }
     //now do the mapping
     computeDracoMapping(oBase, base, frame, params, removeDuplicateVertices);
@@ -1722,9 +1754,10 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
       base.setPoint(v, Round(base.point(v) * scalePosition));
     }
     if (params.iDeriveTextCoordFromPos == 0) {
-        for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
-            base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
-        }
+      for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount;
+           ++tc) {
+        base.setTexCoord(tc, Round(base.texCoord(tc) * scaleTexCoord));
+      }
     }
     // Save intermediate files
     if (params.keepIntermediateFiles) {
@@ -1733,23 +1766,24 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
     // Encode
     GeometryEncoderParameters encoderParams;
-    encoderParams.qp_                           = params.qpPosition;
-    encoderParams.qt_                           = params.qpTexCoord;
+    encoderParams.qp_ = params.qpPosition;
+    encoderParams.qt_ = params.qpTexCoord;
     encoderParams.qg_ = -1;
     if (params.iDeriveTextCoordFromPos == 1) {
-        encoderParams.qt_ = std::ceil(std::log2(frame.packedCCList.size()));
-        encoderParams.qg_ = -1;
+      encoderParams.qt_ = std::ceil(std::log2(frame.packedCCList.size()));
+      encoderParams.qg_ = -1;
     } else if (params.iDeriveTextCoordFromPos == 2) {
-        encoderParams.qt_ = -1;
-        encoderParams.qg_ = std::ceil(std::log2(frame.packedCCList.size()));
+      encoderParams.qt_ = -1;
+      encoderParams.qg_ = std::ceil(std::log2(frame.packedCCList.size()));
     }
-    encoderParams.dracoUsePosition_             = params.dracoUsePosition;
-    encoderParams.dracoUseUV_                   = params.dracoUseUV;
-    encoderParams.dracoMeshLossless_            = params.dracoMeshLossless;
-    encoderParams.predCoder_                    = params.predCoder;
-    encoderParams.topoCoder_                    = params.topoCoder;
-    encoderParams.baseMeshDeduplicatePositions_ = params.baseMeshDeduplicatePositions;
-    encoderParams.logFileName_                  = (params.keepIntermediateFiles) ? prefix : "";
+    encoderParams.dracoUsePosition_  = params.dracoUsePosition;
+    encoderParams.dracoUseUV_        = params.dracoUseUV;
+    encoderParams.dracoMeshLossless_ = params.dracoMeshLossless;
+    encoderParams.predCoder_         = params.predCoder;
+    encoderParams.topoCoder_         = params.topoCoder;
+    encoderParams.baseMeshDeduplicatePositions_ =
+      params.baseMeshDeduplicatePositions;
+    encoderParams.logFileName_ = (params.keepIntermediateFiles) ? prefix : "";
     TriangleMesh<MeshType> rec;
     std::vector<uint8_t>   geometryBitstream;
     auto encoder = GeometryEncoder<MeshType>::create(params.meshCodecId);
@@ -1775,246 +1809,269 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     }
     // reconstruct UV coordinates
     if (params.iDeriveTextCoordFromPos > 0) {
-        // check the number of connected components
-        int numCC = frame.packedCCList.size();
-        // create the connected components
-        std::vector<vmesh::ConnectedComponent<MeshType>> decodedCC;
-        std::vector<vmesh::Box2<MeshType>> bbBoxes;
-        std::vector<int> trianglePartition;
-        decodedCC.resize(numCC);
-        bbBoxes.resize(numCC);
-        trianglePartition.resize(base.triangleCount(), -1);
-        switch (params.iDeriveTextCoordFromPos) {
-        default:
-        case 1: // using UV coordinates
-        {
-            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
-                auto tri = base.triangle(triIdx);
-                auto texTri = base.texCoordTriangle(triIdx);
-                int idxCC = base.texCoord(texTri[0])[0];
-                //now add the points
-                trianglePartition[triIdx] = idxCC;
-                for (int i = 0; i < 3; i++) {
-                    decodedCC[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
-                }
-                decodedCC[idxCC].addTriangle(decodedCC[idxCC].points().size() - 3, decodedCC[idxCC].points().size() - 2, decodedCC[idxCC].points().size() - 1);
-            }
-            base.texCoords().clear();
-            base.texCoordTriangles().clear();
-            break;
-        }
-        case 2: // using FaceID
-        {
-            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
-                auto tri = base.triangle(triIdx);
-                auto idxCC = base.faceId(triIdx);
-                //now add the points
-                trianglePartition[triIdx] = idxCC;
-                for (int i = 0; i < 3; i++) {
-                    decodedCC[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
-                }
-                decodedCC[idxCC].addTriangle(decodedCC[idxCC].points().size() - 3, decodedCC[idxCC].points().size() - 2, decodedCC[idxCC].points().size() - 1);
-            }
-            break;
-        }
-        case 3: // using connected components -> connectivity from texture coordinates
-        {
-            std::vector<int> partition;
-            numCC = ExtractConnectedComponents(base.triangles(), base.pointCount(), base, partition);
-            decodedCC.resize(numCC);
-            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
-                auto tri = base.triangle(triIdx);
-                int idxCC = partition[triIdx];
-                //now add the points
-                for (int i = 0; i < 3; i++) {
-                    decodedCC[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
-                }
-                decodedCC[idxCC].addTriangle(decodedCC[idxCC].points().size() - 3, decodedCC[idxCC].points().size() - 2, decodedCC[idxCC].points().size() - 1);
-            }
-            // index sorting
-            std::vector<int> sortedIndex(numCC);
-            for (int val = 0; val < numCC; val++) sortedIndex[val] = val;
-            std::sort(sortedIndex.begin(), sortedIndex.end(), [&](int a, int b) {
-                return (decodedCC[a].area() > decodedCC[b].area());
-                });
-            for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
-                int idxCC = partition[triIdx];
-                //now add the points
-                trianglePartition[triIdx] = std::find(sortedIndex.begin(), sortedIndex.end(), idxCC) - sortedIndex.begin();
-            }
-            // vector sorting
-            std::sort(decodedCC.begin(), decodedCC.end(), [&](ConnectedComponent<MeshType> a, ConnectedComponent<MeshType> b) {
-                return (a.area() > b.area());
-                });
-            //now search for the packedList that is corresponding to the decodedCC
-            std::vector<vmesh::ConnectedComponent<MeshType>> reorderedPackedCCList;
-            for (int idxCC = 0; idxCC < numCC; idxCC++) {
-                double bestIntersectVolume = 0.0;
-                double bestAreaDiff = std::numeric_limits<double>::max();
-                int foundIdx = -1;
-                int foundIdxByVolume = -1;
-                int foundIdxByArea = -1;
-                auto decBB = decodedCC[idxCC].boundingBox();
-                auto decArea = decodedCC[idxCC].area();
-                for (int idxPackedCCList = 0; idxPackedCCList < frame.packedCCList.size(); idxPackedCCList++) {
-                    //they have to have the same number of triangles
-                    if (frame.packedCCList[idxPackedCCList].triangleCount() != decodedCC[idxCC].triangleCount())
-                        continue;
-                    //bounding boxes should intersect
-                    auto packedListBB = frame.packedCCList[idxPackedCCList].boundingBox();
-                    if (decBB.intersects(packedListBB)) {
-                        //the match will be the one with the higher intersection volume
-                        auto intersectVolume = (decBB & packedListBB).volume();
-                        if (intersectVolume > bestIntersectVolume) {
-                            bestIntersectVolume = intersectVolume;
-                            foundIdxByVolume = idxPackedCCList;
-                        }
-                    }
-                    auto areaDiff = std::abs(frame.packedCCList[idxPackedCCList].area() - decArea);
-                    if (areaDiff < bestAreaDiff) {
-                        bestAreaDiff = areaDiff;
-                        foundIdxByArea = idxPackedCCList;
-                    }
-                }
-                if (foundIdxByVolume != foundIdxByArea) {
-                    if (foundIdxByVolume == -1) {
-                        //case of degenerate bounding box (plane), so we need to use the area
-                        foundIdx = foundIdxByArea;
-                    }
-                    else {
-                        //choose intersection of volume over area
-                        foundIdx = foundIdxByVolume;
-                    }
-                }
-                else {
-                    foundIdx = foundIdxByVolume;
-                }
-                reorderedPackedCCList.push_back(frame.packedCCList[foundIdx]);
-                frame.packedCCList.erase(frame.packedCCList.begin() + foundIdx);
-            }
-            //now save the reordered list in the frame structure 
-            frame.packedCCList = reorderedPackedCCList;
-            // now remove duplicate points for the base mesh to recover the correct normal
-            std::vector<Vec3<MeshType>> pointsOutput;
-            std::vector<Triangle> trianglesOutput;
-            std::vector<int32_t> mapping;
-            UnifyVertices(base.points(), base.triangles(), pointsOutput, trianglesOutput, mapping);
-            swap(base.points(), pointsOutput);
-            swap(base.triangles(), trianglesOutput);
-            RemoveDegeneratedTriangles(base);
-            //regenerate qpositions
-            auto& qpositions = frame.qpositions;
-            qpositions.resize(base.pointCount());
-            for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
-                qpositions[v] = base.point(v).round();
-            }
-            break;
-        }
-        }
-        // create the homography transform
-        for (int idxCC = 0; idxCC < numCC; idxCC++) {
-            // load the parameters from the bitstream (orientation, projection direction, etc.)
-            decodedCC[idxCC].setProjection(frame.packedCCList[idxCC].getProjection());
-            decodedCC[idxCC].setOrientation(frame.packedCCList[idxCC].getOrientation());
-            decodedCC[idxCC].setU0(frame.packedCCList[idxCC].getU0());
-            decodedCC[idxCC].setV0(frame.packedCCList[idxCC].getV0());
-            decodedCC[idxCC].setSizeU(frame.packedCCList[idxCC].getSizeU());
-            decodedCC[idxCC].setSizeV(frame.packedCCList[idxCC].getSizeV());
-            decodedCC[idxCC].setScale(frame.packedCCList[idxCC].getScale());
-            // calculate the bounding box
-            bbBoxes[idxCC] = decodedCC[idxCC].boundingBoxProjected(frame.packedCCList[idxCC].getProjection());
-#if DEBUG_ORTHO
-            if (params.keepIntermediateFiles) {
-                auto prefixDEBUG = prefix + "_transmitted_CC#" + std::to_string(idxCC);
-                decodedCC[idxCC].save(prefixDEBUG + "_ENC.obj");
-            }
-#endif
-        }
-        // create the (u,v) coordinate from (x,y,z) and the corresponding homography transform
-        base.texCoordTriangles().resize(base.triangleCount());
+      // check the number of connected components
+      int numCC = frame.packedCCList.size();
+      // create the connected components
+      std::vector<vmesh::ConnectedComponent<MeshType>> decodedCC;
+      std::vector<vmesh::Box2<MeshType>>               bbBoxes;
+      std::vector<int>                                 trianglePartition;
+      decodedCC.resize(numCC);
+      bbBoxes.resize(numCC);
+      trianglePartition.resize(base.triangleCount(), -1);
+      switch (params.iDeriveTextCoordFromPos) {
+      default:
+      case 1:  // using UV coordinates
+      {
         for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
-            auto tri = base.triangle(triIdx);
-            int idxCC = trianglePartition[triIdx];
-            int uvIdx[3];
-            int texParamWidth = params.width;
-            int texParamHeight = params.height;
-            for (int i = 0; i < 3; i++) {
-                auto newUV = decodedCC[idxCC].convert(base.point(tri[i]) * iscalePosition,
-                    bbBoxes[idxCC],
-                    texParamWidth,
-                    texParamHeight,
-                    params.gutter,
-                    params.displacementVideoBlockSize);
-                //check if the newUV already exist
-                auto pos = std::find(base.texCoords().begin(), base.texCoords().end(), newUV);
-                if (pos == base.texCoords().end()) {
-                    uvIdx[i] = base.texCoords().size();
-                    base.addTexCoord(newUV);
-                }
-                else {
-                    uvIdx[i] = pos - base.texCoords().begin();
-                }
-            }
-            //for degenerate triangles in 2D, since it can happen, but the saveOBJ function complains, we will create a new UV coordinate
-            if (uvIdx[0] == uvIdx[1] && uvIdx[0] == uvIdx[2]) {
-                uvIdx[1] = base.texCoords().size();
-                base.addTexCoord(base.texCoords()[uvIdx[0]]);
-                uvIdx[2] = base.texCoords().size();
-                base.addTexCoord(base.texCoords()[uvIdx[0]]);
-            }
-            else if (uvIdx[0] == uvIdx[1]) {
-                uvIdx[1] = base.texCoords().size();
-                base.addTexCoord(base.texCoords()[uvIdx[0]]);
-            }
-            else if (uvIdx[0] == uvIdx[2]) {
-                uvIdx[2] = base.texCoords().size();
-                base.addTexCoord(base.texCoords()[uvIdx[0]]);
-            }
-            else if (uvIdx[1] == uvIdx[2]) {
-                uvIdx[2] = base.texCoords().size();
-                base.addTexCoord(base.texCoords()[uvIdx[1]]);
-            }
-            base.setTexCoordTriangle(triIdx, vmesh::Triangle(uvIdx[0], uvIdx[1], uvIdx[2]));
+          auto tri    = base.triangle(triIdx);
+          auto texTri = base.texCoordTriangle(triIdx);
+          int  idxCC  = base.texCoord(texTri[0])[0];
+          //now add the points
+          trianglePartition[triIdx] = idxCC;
+          for (int i = 0; i < 3; i++) {
+            decodedCC[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+          }
+          decodedCC[idxCC].addTriangle(decodedCC[idxCC].points().size() - 3,
+                                       decodedCC[idxCC].points().size() - 2,
+                                       decodedCC[idxCC].points().size() - 1);
         }
-        // Save intermediate files
+        base.texCoords().clear();
+        base.texCoordTriangles().clear();
+        break;
+      }
+      case 2:  // using FaceID
+      {
+        for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+          auto tri   = base.triangle(triIdx);
+          auto idxCC = base.faceId(triIdx);
+          //now add the points
+          trianglePartition[triIdx] = idxCC;
+          for (int i = 0; i < 3; i++) {
+            decodedCC[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+          }
+          decodedCC[idxCC].addTriangle(decodedCC[idxCC].points().size() - 3,
+                                       decodedCC[idxCC].points().size() - 2,
+                                       decodedCC[idxCC].points().size() - 1);
+        }
+        break;
+      }
+      case 3:  // using connected components -> connectivity from texture coordinates
+      {
+        std::vector<int> partition;
+        numCC = ExtractConnectedComponents(
+          base.triangles(), base.pointCount(), base, partition);
+        decodedCC.resize(numCC);
+        for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+          auto tri   = base.triangle(triIdx);
+          int  idxCC = partition[triIdx];
+          //now add the points
+          for (int i = 0; i < 3; i++) {
+            decodedCC[idxCC].addPoint(base.point(tri[i]) * iscalePosition);
+          }
+          decodedCC[idxCC].addTriangle(decodedCC[idxCC].points().size() - 3,
+                                       decodedCC[idxCC].points().size() - 2,
+                                       decodedCC[idxCC].points().size() - 1);
+        }
+        // index sorting
+        std::vector<int> sortedIndex(numCC);
+        for (int val = 0; val < numCC; val++) sortedIndex[val] = val;
+        std::sort(sortedIndex.begin(), sortedIndex.end(), [&](int a, int b) {
+          return (decodedCC[a].area() > decodedCC[b].area());
+        });
+        for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+          int idxCC = partition[triIdx];
+          //now add the points
+          trianglePartition[triIdx] =
+            std::find(sortedIndex.begin(), sortedIndex.end(), idxCC)
+            - sortedIndex.begin();
+        }
+        // vector sorting
+        std::sort(
+          decodedCC.begin(),
+          decodedCC.end(),
+          [&](ConnectedComponent<MeshType> a, ConnectedComponent<MeshType> b) {
+            return (a.area() > b.area());
+          });
+        //now search for the packedList that is corresponding to the decodedCC
+        std::vector<vmesh::ConnectedComponent<MeshType>> reorderedPackedCCList;
+        for (int idxCC = 0; idxCC < numCC; idxCC++) {
+          double bestIntersectVolume = 0.0;
+          double bestAreaDiff        = std::numeric_limits<double>::max();
+          int    foundIdx            = -1;
+          int    foundIdxByVolume    = -1;
+          int    foundIdxByArea      = -1;
+          auto   decBB               = decodedCC[idxCC].boundingBox();
+          auto   decArea             = decodedCC[idxCC].area();
+          for (int idxPackedCCList = 0;
+               idxPackedCCList < frame.packedCCList.size();
+               idxPackedCCList++) {
+            //they have to have the same number of triangles
+            if (frame.packedCCList[idxPackedCCList].triangleCount()
+                != decodedCC[idxCC].triangleCount())
+              continue;
+            //bounding boxes should intersect
+            auto packedListBB =
+              frame.packedCCList[idxPackedCCList].boundingBox();
+            if (decBB.intersects(packedListBB)) {
+              //the match will be the one with the higher intersection volume
+              auto intersectVolume = (decBB & packedListBB).volume();
+              if (intersectVolume > bestIntersectVolume) {
+                bestIntersectVolume = intersectVolume;
+                foundIdxByVolume    = idxPackedCCList;
+              }
+            }
+            auto areaDiff =
+              std::abs(frame.packedCCList[idxPackedCCList].area() - decArea);
+            if (areaDiff < bestAreaDiff) {
+              bestAreaDiff   = areaDiff;
+              foundIdxByArea = idxPackedCCList;
+            }
+          }
+          if (foundIdxByVolume != foundIdxByArea) {
+            if (foundIdxByVolume == -1) {
+              //case of degenerate bounding box (plane), so we need to use the area
+              foundIdx = foundIdxByArea;
+            } else {
+              //choose intersection of volume over area
+              foundIdx = foundIdxByVolume;
+            }
+          } else {
+            foundIdx = foundIdxByVolume;
+          }
+          reorderedPackedCCList.push_back(frame.packedCCList[foundIdx]);
+          frame.packedCCList.erase(frame.packedCCList.begin() + foundIdx);
+        }
+        //now save the reordered list in the frame structure
+        frame.packedCCList = reorderedPackedCCList;
+        // now remove duplicate points for the base mesh to recover the correct normal
+        std::vector<Vec3<MeshType>> pointsOutput;
+        std::vector<Triangle>       trianglesOutput;
+        std::vector<int32_t>        mapping;
+        UnifyVertices(base.points(),
+                      base.triangles(),
+                      pointsOutput,
+                      trianglesOutput,
+                      mapping);
+        swap(base.points(), pointsOutput);
+        swap(base.triangles(), trianglesOutput);
+        RemoveDegeneratedTriangles(base);
+        //regenerate qpositions
+        auto& qpositions = frame.qpositions;
+        qpositions.resize(base.pointCount());
+        for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
+          qpositions[v] = base.point(v).round();
+        }
+        break;
+      }
+      }
+      // create the homography transform
+      for (int idxCC = 0; idxCC < numCC; idxCC++) {
+        // load the parameters from the bitstream (orientation, projection direction, etc.)
+        decodedCC[idxCC].setProjection(
+          frame.packedCCList[idxCC].getProjection());
+        decodedCC[idxCC].setOrientation(
+          frame.packedCCList[idxCC].getOrientation());
+        decodedCC[idxCC].setU0(frame.packedCCList[idxCC].getU0());
+        decodedCC[idxCC].setV0(frame.packedCCList[idxCC].getV0());
+        decodedCC[idxCC].setSizeU(frame.packedCCList[idxCC].getSizeU());
+        decodedCC[idxCC].setSizeV(frame.packedCCList[idxCC].getSizeV());
+        decodedCC[idxCC].setScale(frame.packedCCList[idxCC].getScale());
+        // calculate the bounding box
+        bbBoxes[idxCC] = decodedCC[idxCC].boundingBoxProjected(
+          frame.packedCCList[idxCC].getProjection());
+#if DEBUG_ORTHO
         if (params.keepIntermediateFiles) {
-            base.save(prefix + "_base_recon_uv.ply");
+          auto prefixDEBUG =
+            prefix + "_transmitted_CC#" + std::to_string(idxCC);
+          decodedCC[idxCC].save(prefixDEBUG + "_ENC.obj");
         }
-        // create atlas elements --> THIS COULD BE DONE SOMEWHERE ELSE
-        ath.getType() = I_TILE; // currently we only have one INTRA frame/tile
-        uint8_t patchType = static_cast<uint8_t>((ath.getType() == I_TILE) ? I_MESH : P_MESH);
-        auto& pid = atdu.addPatchInformationData(patchType);
-        auto& mpdu = pid.getMeshPatchDataUnit();
-        auto& subpatches = frame.packedCCList;
-        mpdu.getProjectionTextcoordFrameScale() = subpatches[0].getFrameScale();
-        mpdu.allocateSubPatches(subpatches.size());
-        for (int i = 0; i < subpatches.size(); i++) {
-            auto& subpatch = subpatches[i];
-            mpdu.getProjectionTextcoordProjectionId(i) = subpatch.getProjection();
-            mpdu.getProjectionTextcoordOrientationId(i) = subpatch.getOrientation();
-            mpdu.getProjectionTextcoord2dPosX(i) = subpatch.getU0();
-            mpdu.getProjectionTextcoord2dPosY(i) = subpatch.getV0();
-            mpdu.getProjectionTextcoord2dSizeXMinus1(i) = subpatch.getSizeU() - 1;
-            mpdu.getProjectionTextcoord2dSizeYMinus1(i) = subpatch.getSizeV() - 1;
-            if (subpatch.getScale() != subpatch.getFrameScale()) {
-                mpdu.getProjectionTextcoordScalePresentFlag(i) = true;
-                uint8_t n = 0;
-                auto ratio = subpatch.getScale() / subpatch.getFrameScale();
-                double num = log(ratio);
-                double den = log(params.packingScaling);
-                double nDbl = num / den;
-                n = round(nDbl) - 1;
-                mpdu.getProjectionTextcoordSubpatchScale(i) = n;
-            }
-            else
-                mpdu.getProjectionTextcoordScalePresentFlag(i) = false;
+#endif
+      }
+      // create the (u,v) coordinate from (x,y,z) and the corresponding homography transform
+      base.texCoordTriangles().resize(base.triangleCount());
+      for (int triIdx = 0; triIdx < base.triangleCount(); triIdx++) {
+        auto tri   = base.triangle(triIdx);
+        int  idxCC = trianglePartition[triIdx];
+        int  uvIdx[3];
+        int  texParamWidth  = params.width;
+        int  texParamHeight = params.height;
+        for (int i = 0; i < 3; i++) {
+          auto newUV =
+            decodedCC[idxCC].convert(base.point(tri[i]) * iscalePosition,
+                                     bbBoxes[idxCC],
+                                     texParamWidth,
+                                     texParamHeight,
+                                     params.gutter,
+                                     params.displacementVideoBlockSize);
+          //check if the newUV already exist
+          auto pos =
+            std::find(base.texCoords().begin(), base.texCoords().end(), newUV);
+          if (pos == base.texCoords().end()) {
+            uvIdx[i] = base.texCoords().size();
+            base.addTexCoord(newUV);
+          } else {
+            uvIdx[i] = pos - base.texCoords().begin();
+          }
         }
-        // only one single patch for the moment
-        patchType = static_cast<uint8_t>((ath.getType() == I_TILE) ? I_END : P_END);
-        atdu.addPatchInformationData(patchType);
-    }
-    else {
-      for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount; ++tc) {
+        //for degenerate triangles in 2D, since it can happen, but the saveOBJ function complains, we will create a new UV coordinate
+        if (uvIdx[0] == uvIdx[1] && uvIdx[0] == uvIdx[2]) {
+          uvIdx[1] = base.texCoords().size();
+          base.addTexCoord(base.texCoords()[uvIdx[0]]);
+          uvIdx[2] = base.texCoords().size();
+          base.addTexCoord(base.texCoords()[uvIdx[0]]);
+        } else if (uvIdx[0] == uvIdx[1]) {
+          uvIdx[1] = base.texCoords().size();
+          base.addTexCoord(base.texCoords()[uvIdx[0]]);
+        } else if (uvIdx[0] == uvIdx[2]) {
+          uvIdx[2] = base.texCoords().size();
+          base.addTexCoord(base.texCoords()[uvIdx[0]]);
+        } else if (uvIdx[1] == uvIdx[2]) {
+          uvIdx[2] = base.texCoords().size();
+          base.addTexCoord(base.texCoords()[uvIdx[1]]);
+        }
+        base.setTexCoordTriangle(
+          triIdx, vmesh::Triangle(uvIdx[0], uvIdx[1], uvIdx[2]));
+      }
+      // Save intermediate files
+      if (params.keepIntermediateFiles) {
+        base.save(prefix + "_base_recon_uv.ply");
+      }
+      // create atlas elements --> THIS COULD BE DONE SOMEWHERE ELSE
+      ath.getType() = I_TILE;  // currently we only have one INTRA frame/tile
+      uint8_t patchType =
+        static_cast<uint8_t>((ath.getType() == I_TILE) ? I_MESH : P_MESH);
+      auto& pid        = atdu.addPatchInformationData(patchType);
+      auto& mpdu       = pid.getMeshPatchDataUnit();
+      auto& subpatches = frame.packedCCList;
+      mpdu.getProjectionTextcoordFrameScale() = subpatches[0].getFrameScale();
+      mpdu.allocateSubPatches(subpatches.size());
+      for (int i = 0; i < subpatches.size(); i++) {
+        auto& subpatch                             = subpatches[i];
+        mpdu.getProjectionTextcoordProjectionId(i) = subpatch.getProjection();
+        mpdu.getProjectionTextcoordOrientationId(i) =
+          subpatch.getOrientation();
+        mpdu.getProjectionTextcoord2dPosX(i)        = subpatch.getU0();
+        mpdu.getProjectionTextcoord2dPosY(i)        = subpatch.getV0();
+        mpdu.getProjectionTextcoord2dSizeXMinus1(i) = subpatch.getSizeU() - 1;
+        mpdu.getProjectionTextcoord2dSizeYMinus1(i) = subpatch.getSizeV() - 1;
+        if (subpatch.getScale() != subpatch.getFrameScale()) {
+          mpdu.getProjectionTextcoordScalePresentFlag(i) = true;
+          uint8_t n                                      = 0;
+          auto    ratio = subpatch.getScale() / subpatch.getFrameScale();
+          double  num   = log(ratio);
+          double  den   = log(params.packingScaling);
+          double  nDbl  = num / den;
+          n             = round(nDbl) - 1;
+          mpdu.getProjectionTextcoordSubpatchScale(i) = n;
+        } else mpdu.getProjectionTextcoordScalePresentFlag(i) = false;
+      }
+      // only one single patch for the moment
+      patchType =
+        static_cast<uint8_t>((ath.getType() == I_TILE) ? I_END : P_END);
+      atdu.addPatchInformationData(patchType);
+    } else {
+      for (int32_t tc = 0, tccount = base.texCoordCount(); tc < tccount;
+           ++tc) {
         base.setTexCoord(tc, base.texCoord(tc) * iscaleTexCoord);
       }
     }
@@ -2037,7 +2094,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
     }
 
     // decide to use P_BASEMESH or SKIP_BASEMESH
-    auto        frameInfoInterOrSkip = frameInfo;
+    auto frameInfoInterOrSkip = frameInfo;
     frameInfoInterOrSkip.type =
       chooseSkipOrInter(qpositions, refFrame.qpositions);
     bmth.getBaseMeshType() = frameInfoInterOrSkip.type;
@@ -2076,7 +2133,7 @@ VMCEncoder::compressBaseMesh(const VMCGroupOfFrames&     gof,
 
       // copy and quantize base mesh
       qpositions = refFrame.qpositions;
-      base                   = refFrame.base;
+      base       = refFrame.base;
       for (int32_t v = 0, vcount = base.pointCount(); v < vcount; ++v) {
         base.point(v) = qpositions[v];
       }
@@ -2217,8 +2274,7 @@ VMCEncoder::computeDisplacementVideoFrame(
   int32_t start;
   if (params.displacementUse420 && (!params.applyOneDimensionalDisplacement)) {
     start = dispVideoFrame.width() * dispVideoFrame.height() / 3 - 1;
-  }
-  else {
+  } else {
     start = dispVideoFrame.width() * dispVideoFrame.height() - 1;
   }
   for (int32_t v = 0, vcount = int32_t(disp.size()); v < vcount; ++v) {
@@ -2232,8 +2288,8 @@ VMCEncoder::computeDisplacementVideoFrame(
     const auto y0 = (blockIndex / params.geometryVideoWidthInBlocks)
                     * params.displacementVideoBlockSize;
     const int32_t dispDim = params.applyOneDimensionalDisplacement ? 1 : 3;
-    int32_t x = 0;
-    int32_t y = 0;
+    int32_t       x       = 0;
+    int32_t       y       = 0;
     computeMorton2D(indexWithinBlock, x, y);
     assert(x < params.displacementVideoBlockSize);
     assert(y < params.displacementVideoBlockSize);
@@ -2244,9 +2300,9 @@ VMCEncoder::computeDisplacementVideoFrame(
       const auto dshift = int32_t(shift + d[p]);
       assert(dshift >= 0 && dshift < (1 << params.geometryVideoBitDepth));
       if (params.displacementUse420) {
-        dispVideoFrame.plane(0).set(p * dispVideoFrame.height() / 3 + y1, x1, uint16_t(dshift));
-      }
-      else {
+        dispVideoFrame.plane(0).set(
+          p * dispVideoFrame.height() / 3 + y1, x1, uint16_t(dshift));
+      } else {
         dispVideoFrame.plane(p).set(y1, x1, uint16_t(dshift));
       }
     }
@@ -2274,12 +2330,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   printf("Compress: frameCount = %d \n", frameCount);
   fflush(stdout);
   for (int32_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-    auto& frame = gof.frame(frameIndex);
+    auto&    frame = gof.frame(frameIndex);
     VMCFrame previousFrame;
     previousFrame.frameIndex = -1;
     if (params.bTemporalStabilization && (frameIndex > 0)) {
-        previousFrame = gof.frame(frameIndex - 1);
-        previousFrame.frameIndex = frameIndex - 1;
+      previousFrame            = gof.frame(frameIndex - 1);
+      previousFrame.frameIndex = frameIndex - 1;
     }
     if (params.baseIsSrc && params.subdivIsBase) {
       if (params.baseIsSrc) { frame.base = source.mesh(frameIndex); }
@@ -2337,10 +2393,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     params.displacementVideoBlockSize * params.displacementVideoBlockSize;
   const auto widthDispVideo =
     params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
-  auto       heightDispVideo      = 0;
+  auto heightDispVideo      = 0;
   auto colourSpaceDispVideo = ColourSpace::YUV420p;
   if (!params.displacementUse420) {
-    colourSpaceDispVideo = params.applyOneDimensionalDisplacement ? ColourSpace::YUV400p : ColourSpace::YUV444p;
+    colourSpaceDispVideo = params.applyOneDimensionalDisplacement
+                             ? ColourSpace::YUV400p
+                             : ColourSpace::YUV444p;
   }
   FrameSequence<uint16_t> dispVideo;
   dispVideo.resize(0, 0, colourSpaceDispVideo, frameCount);
@@ -2355,7 +2413,8 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     auto&       dispVideoFrame = dispVideo.frame(frameIndex);
     auto&       rec            = reconstruct.mesh(frameIndex);
     auto&       bmtl           = baseMesh.getBaseMeshTileLayer(frameIndex);
-    auto&       atl            = atlas.getAtlasTileLayer(frameIndex); // frameIndex and tileIndex are the same in this case, since we only have one tile per frame?
+    auto&       atl            = atlas.getAtlasTileLayer(
+      frameIndex);  // frameIndex and tileIndex are the same in this case, since we only have one tile per frame?
     printf("Frame %4d: type = %s ReferenceFrame = %4d \n",
            frameInfo.frameIndex,
            toString(frameInfo.type).c_str(),
@@ -2377,11 +2436,12 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
         const auto geometryVideoHeightInBlocks =
           (blockCount + params.geometryVideoWidthInBlocks - 1)
           / params.geometryVideoWidthInBlocks;
-        const auto width =
-          params.geometryVideoWidthInBlocks * params.displacementVideoBlockSize;
+        const auto width = params.geometryVideoWidthInBlocks
+                           * params.displacementVideoBlockSize;
         auto height =
           geometryVideoHeightInBlocks * params.displacementVideoBlockSize;
-        if (params.displacementUse420 && (!params.applyOneDimensionalDisplacement)) {
+        if (params.displacementUse420
+            && (!params.applyOneDimensionalDisplacement)) {
           height *= 3;
         }
         dispVideoFrame.resize(width, height, colourSpaceDispVideo);
@@ -2401,9 +2461,9 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
   }
   // Encode displacements
   if (params.encodeDisplacements == 1) {
-      compressDisplacementsAC(syntax, gof, gofInfo, params);
+    compressDisplacementsAC(syntax, gof, gofInfo, params);
   } else if (params.encodeDisplacements == 2) {
-      compressDisplacementsVideo(dispVideo, syntax, params);
+    compressDisplacementsVideo(dispVideo, syntax, params);
   }
 
   // Reconstruct
@@ -2419,13 +2479,14 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     printf("Reconstruct frame %2d / %d \n", frameIndex, frameCount);
     fflush(stdout);
     if (params.encodeDisplacements == 2) {
-      reconstructDisplacementFromVideoFrame(dispVideo.frame(frameIndex),
-                                            frame,
-                                            reconstruct.mesh(frameIndex),
-                                            params.displacementVideoBlockSize,
-                                            params.geometryVideoBitDepth,
-                                            params.applyOneDimensionalDisplacement,
-                                            params.displacementReversePacking);
+      reconstructDisplacementFromVideoFrame(
+        dispVideo.frame(frameIndex),
+        frame,
+        reconstruct.mesh(frameIndex),
+        params.displacementVideoBlockSize,
+        params.geometryVideoBitDepth,
+        params.applyOneDimensionalDisplacement,
+        params.displacementReversePacking);
     }
     if (params.encodeDisplacements) {
       if (params.lodDisplacementQuantizationFlag) {
@@ -2452,17 +2513,19 @@ VMCEncoder::compress(const VMCGroupOfFramesInfo& gofInfoSrc,
     }
     tic("ColorTransfer");
     if (params.encodeTextureVideo && params.textureTransferEnable) {
-      TransferColor transferColor;
-      auto& refMesh = source.mesh(frameIndex);
-      auto& refTexture = source.texture(frameIndex);
-      auto& targetMesh = reconstruct.mesh(frameIndex);
-      auto& targetTexture = reconstruct.texture(frameIndex);
+      TransferColor  transferColor;
+      auto&          refMesh       = source.mesh(frameIndex);
+      auto&          refTexture    = source.texture(frameIndex);
+      auto&          targetMesh    = reconstruct.mesh(frameIndex);
+      auto&          targetTexture = reconstruct.texture(frameIndex);
       Frame<uint8_t> pastTexture;
-      bool usePastTexture = false;
-      if (params.textureTransferCopyBackground && frameIndex > 0 && gofInfo.frameInfo(frameIndex).type == P_BASEMESH) {
-          //occupancy map will be the same as the reference, so use the background from reference as well
-          pastTexture = reconstruct.texture(gofInfo.frameInfo(frameIndex).referenceFrameIndex);
-          usePastTexture = true;
+      bool           usePastTexture = false;
+      if (params.textureTransferCopyBackground && frameIndex > 0
+          && gofInfo.frameInfo(frameIndex).type == P_BASEMESH) {
+        //occupancy map will be the same as the reference, so use the background from reference as well
+        pastTexture = reconstruct.texture(
+          gofInfo.frameInfo(frameIndex).referenceFrameIndex);
+        usePastTexture = true;
       }
       if (!transferColor.transfer(refMesh,
                                   refTexture,

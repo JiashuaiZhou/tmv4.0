@@ -30,8 +30,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#  include "util/mesh.hpp"
-#  include "geometryDecoder.hpp"
+#include "util/mesh.hpp"
+#include "geometryDecoder.hpp"
 
 namespace vmesh {
 
@@ -47,4 +47,3 @@ public:
 };
 
 }  // namespace vmesh
-

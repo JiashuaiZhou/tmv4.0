@@ -291,17 +291,17 @@ decompress(const Parameters& params) {
 #if defined(BITSTREAM_TRACE)
     reader.setLogger(loggerHls);
 #endif
-    vmesh::tic( "reader");
+    vmesh::tic("reader");
     if (reader.decode(ssvu, syntax) == 0) { return 0; }
-    vmesh::toc( "reader");
+    vmesh::toc("reader");
 
     // Decode and reconstruct meshes
-    vmesh::tic( "decompress");
+    vmesh::tic("decompress");
     if (!decoder.decompress(syntax, gofInfo, reconstruct, params.decParams)) {
       std::cerr << "Error: can't decompress group of frames!\n";
       return false;
     }
-    vmesh::toc( "decompress");
+    vmesh::toc("decompress");
 
     // Save reconstructed models
     if (!reconstruct.save(params.decodedMeshPath,
@@ -332,21 +332,20 @@ decompress(const Parameters& params) {
     gofInfo.startFrameIndex_ += gofInfo.frameCount_;
     ++gofInfo.index_;
   }
-  
+
   // Compare the checksums of the decoder with those of the encoder
   if (params.checksum) {
     vmesh::Checksum checksumEnc;
     checksumEnc.read(vmesh::removeFileExtension(params.compressedStreamPath)
                      + ".checksum");
-    if (checksum != checksumEnc)
-      vmesh::resetTime("decoding");
+    if (checksum != checksumEnc) vmesh::resetTime("decoding");
   }
 
   // Display stat: metrics, duractions, bitstreams, memory and face counts
   if (metParams.computePcc || metParams.computeIbsm || metParams.computePcqm) {
     printf("\n------- All frames metrics -----------\n");
     metrics.display();
-    printf("---------------------------------------\n");   
+    printf("---------------------------------------\n");
   }
   bitstreamStat.trace();
   printf("\nAll frames have been decoded. \n");

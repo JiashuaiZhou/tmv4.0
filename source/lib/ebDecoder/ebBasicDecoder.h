@@ -119,6 +119,7 @@ namespace eb {
         int posSkipNum = 0;     // the current number of skipped dummies
         int posSkipDup = 0;     // the current number of skipped dummies
         int uvSkipNum = 0;      // the current number of skipped dummies
+        int zipnum = 0;
 
         // Decompression methods
         void initDecompression();

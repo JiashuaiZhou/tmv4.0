@@ -245,6 +245,7 @@ void EBBasicDecoder::startDecompression()
         processedCorners.clear();
 
     } while (startCorner < _ovTable.V.size());
+    std::cout << "zipnum=" << zipnum << std::endl;
 }
 
 //
@@ -401,8 +402,10 @@ void EBBasicDecoder::Zip(int c)
     }
 
     //try to zip again
-    if (O[c] == -2)
+    if (O[c] == -2) {
+        zipnum++;
         Zip(c);
+    }
 }
 
 //

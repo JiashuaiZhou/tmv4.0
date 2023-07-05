@@ -90,13 +90,13 @@ namespace eb {
             return (c < 0 || c >= (signed)O.size()) ? -1 : O[c];
         }
 
-        // c.n = 3 · c.t + (c + 1) mod 3
+        // c.n = 3 ?c.t + (c + 1) mod 3
         inline int n(int c) const
         {
             return (c < 0) ? -1 : (3 * (c / 3) + (c + 1) % 3);
         }
 
-        // c.p = 3 · c.t + (c + 2) mod 3
+        // c.p = 3 ?c.t + (c + 2) mod 3
         inline int p(int c) const
         {
             return (c < 0) ? -1 : (3 * (c / 3) + (c + 2) % 3);

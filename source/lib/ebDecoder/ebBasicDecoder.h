@@ -134,9 +134,9 @@ namespace eb {
         void decodeSeparateIndexAttributes(void);
         void posDecodeWithPrediction(int c, int v);
         // use min stretch to predict uv
-        void predictUV(const int c, 
-            const int* indices, const int v, glm::vec2& uv, 
-            bool predWithDummies, bool prevIsDummy = false);
+        void predictUV(const int c, glm::vec2& predUV, glm::dvec2& firstpredUV,
+            const int* indices, const int v,
+            bool predWithDummies, bool first, bool prevIsDummy = false);
         // decode Uv using main index
         void uvDecodeWithPrediction(int c, int v);
         // decode Uv using separate index

@@ -116,8 +116,8 @@ namespace eb {
 
         void posEncodeWithPrediction(const int c, const int v);
         // use min stretch to predict uv
-        void predictUV(const int c, const std::vector<int>& indices, 
-            bool predWithDummies, bool prevIsDummy=false);
+        void predictUV(const int c, glm::vec2& predUV, glm::dvec2& firstpredUV, const std::vector<int>& indices,
+            bool predWithDummies, bool first, bool prevIsDummy = false);
         // encode Uv using main index
         void uvEncodeWithPrediction(const int c, const int v);
         // encode Uv using separate index

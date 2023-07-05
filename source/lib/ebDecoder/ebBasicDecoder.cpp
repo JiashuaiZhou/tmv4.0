@@ -588,14 +588,17 @@ void EBBasicDecoder::posDecodeWithPrediction(int c, int v)
 
 
 //
-void EBBasicDecoder::predictUV(const int c, const int* indices, const int v, glm::vec2& uv, bool predWithDummies, bool prevIsDummy)
-{
+void EBBasicDecoder::predictUV(const int c, glm::vec2& predUV, glm::dvec2& firstpredUV, const int* indices, const int v, bool predWithDummies, bool first, bool prevIsDummy){
 
     auto& ov = _ovTable;
     auto G = &(_ovTable.positions.data()[startVertex]);
     auto V = &(_ovTable.V.data()[startCorner]);
     auto UV = &(_ovTable.uvcoords.data()[hasSeparateUvIndex ? startUVCoord : startVertex]);
     const auto& IDX = indices;
+    auto O = &(_ovTable.O.data()[startCorner]);
+    auto M = &(_M.data()[startVertex]);
+    auto D = &(_D.data()[startVertex]);
+    auto MC = &(_MC.data()[startUVCoord]);
 
     // accumulate uv predictions 
     const glm::dvec2 uvPrev = UV[IDX[ov.p(c)]];
@@ -617,20 +620,69 @@ void EBBasicDecoder::predictUV(const int c, const int* indices, const int v, glm
         const glm::dvec2 uvProjuvCurr = glm::dvec2(uvNuvP.y, -uvNuvP.x) * std::sqrt(d2_gProj_gCurr / d2_gNgP);
         const glm::dvec2 predUV0(uvProj + uvProjuvCurr);
         const glm::dvec2 predUV1(uvProj - uvProjuvCurr);
-        glm::dvec2 predUVd = (iOrientations[orientationIdx++]) ? predUV0 : predUV1;
-        glm::vec2 predUV = glm::vec2(std::round(predUVd.x), std::round(predUVd.y));
-        UV[v] = predUV + uv;
+        if (first) {
+            //the first triangle
+            bool useOpp = false;
+            bool flag = false;
+            if (hasSeparateUvIndex) {
+                // if hasUV and separate table
+                if (IDX[O[c]] >= 0) {
+                    if (MC[IDX[O[c]]] > 0) {
+                        flag = true;
+                    }
+                }
+            }
+            else {
+                if (IDX[O[c]] >= 0) {
+                    if ((M[IDX[O[c]]] > 0) && (!D[IDX[O[c]]])) {
+                        flag = true;
+                    }
+                }
+            }
+            if (flag) {
+                glm::dvec2 uvOpp = UV[IDX[O[c]]];
+                float triangleArea_o = abs(0.5 * (uvNext[0] * uvPrev[1] + uvPrev[0] * uvOpp[1] + uvOpp[0] * uvNext[1] -
+                    uvNext[0] * uvOpp[1] - uvPrev[0] * uvNext[1] - uvOpp[0] * uvPrev[1]));
+                if (triangleArea_o < DBL_EPSILON) {
+                    //If the texture triangle is a degenerate triangle, do not use opposite corner
+                    useOpp = false;
+                }
+                else {
+                    useOpp = true;
+                }
+            }
+            if (useOpp) {
+                glm::dvec2 uvOpp = UV[IDX[O[c]]];
+                if (length(uvOpp - predUV0) < length(uvOpp - predUV1)) {
+                    predUV = predUV1;
+                }
+                else {
+                    predUV = predUV0;
+                }
+            }
+            else {
+                glm::dvec2 predUVd = (iOrientations[orientationIdx++]) ? predUV0 : predUV1;
+                predUV = glm::vec2(std::round(predUVd.x), std::round(predUVd.y));
+            }
+            firstpredUV = predUV;
+        }
+        else {
+            if (length(firstpredUV - predUV0) < length(firstpredUV - predUV1)) {
+                predUV = predUV0;
+            }
+            else {
+                predUV = predUV1;
+            }
+        }
     }
     else
     {
         if (predWithDummies) {
-            glm::vec2 predUV = prevIsDummy ? UV[IDX[ov.n(c)]] : UV[IDX[ov.p(c)]];
-            UV[v] = predUV + uv;
+            predUV = prevIsDummy ? UV[IDX[ov.n(c)]] : UV[IDX[ov.p(c)]];
         }
         else {
-            glm::vec2 predUV = (glm::vec2(UV[IDX[ov.n(c)]]) + glm::vec2(UV[IDX[ov.p(c)]])) / 2.0f;
+            predUV = (glm::vec2(UV[IDX[ov.n(c)]]) + glm::vec2(UV[IDX[ov.p(c)]])) / 2.0f;
             predUV = glm::vec2(std::round(predUV.x), std::round(predUV.y));
-            UV[v] = predUV + uv;
         }
     }
 }
@@ -699,7 +751,10 @@ void EBBasicDecoder::uvDecodeWithPrediction(int c, int v)
                     if (((!PaltCIsDummy) && (!NaltCIsDummy))
                         && ((M[V[ov.p(altC)]] > 0) && (M[V[ov.n(altC)]] > 0)))
                     {
-                        predictUV(altC, V, v, uv, true, prevIsDummy);
+                        glm::vec2 estUV(0, 0);
+                        glm::dvec2 firstestUV(0, 0);
+                        predictUV(altC, estUV, firstestUV, V, v, true, true, prevIsDummy);
+                        UV[v] = glm::round(estUV) + uv;
                         ++count;
                     }
                 }
@@ -714,8 +769,28 @@ void EBBasicDecoder::uvDecodeWithPrediction(int c, int v)
             }
         }
         else
-        {
-            predictUV(c, V, v, uv, false);
+        {//without dummy vertex
+            int  count = 0;
+            int  altC = c;
+            glm::vec2 predUV(0, 0);
+            bool first = true;
+            glm::dvec2 firstestUV(0, 0);
+            do {
+                glm::vec2 estUV(0, 0);
+                if (((!D[V[ov.p(altC)]]) && (!D[V[ov.n(altC)]])) &&
+                    ((M[V[ov.p(altC)]] > 0) && (M[V[ov.n(altC)]] > 0)))
+                {
+                    predictUV(altC, estUV, firstestUV, V, v, false, first);
+                    predUV += estUV;
+                    ++count;
+                }
+                altC = ov.p(O[ov.p(altC)]);
+                first = false;
+            } while (altC != c);
+            if (count > 0) {
+                predUV = glm::round(predUV / glm::vec2(count));
+                UV[v] = predUV + uv;
+            }
         }
         break;
     };
@@ -895,7 +970,59 @@ void EBBasicDecoder::uvSepDecodeWithPrediction(int c, int uvIdx)
     }
     else
     {
-        predictUV(predC, TC, TC[predC], uv, false);
+        int  count = 0;
+        int  altC = predC;
+        glm::vec2 predUV(0, 0);
+        bool first = true;
+        glm::dvec2 firstestUV(0, 0);
+        bool flag = false;
+        do {
+            glm::vec2 estUV(0, 0);
+            if ((TC[OV.p(altC)] >= 0) && (TC[OV.n(altC)] >= 0)) {
+                if ((MC[TC[OV.p(altC)]] > 0) && (MC[TC[OV.n(altC)]] > 0))
+                {
+                    predictUV(altC, estUV, firstestUV, TC, TC[predC], false, first);
+                    predUV += estUV;
+                    ++count;
+                }
+            }
+            if (OTC[OV.p(altC)] == -1) {
+                altC = OV.p(O[OV.p(altC)]);
+            }
+            else {
+                if (first) {
+                    first = false;
+                    flag = true;
+                }
+                break;
+            }
+            first = false;
+        } while (altC != c);
+        if ((altC != c) || flag) {
+            altC = predC;
+            do {
+                if (OTC[OV.n(altC)] == -1) {
+                    altC = OV.n(O[OV.n(altC)]);
+                }
+                else {
+                    break;
+                }
+                glm::vec2 estUV(0, 0);
+                if ((TC[OV.p(altC)] >= 0) && (TC[OV.n(altC)] >= 0)) {
+                    if ((MC[TC[OV.p(altC)]] > 0) && (MC[TC[OV.n(altC)]] > 0))
+                    {
+                        predictUV(altC, estUV, firstestUV, TC, TC[predC], false, first);
+                        predUV += estUV;
+                        ++count;
+                    }
+                }
+                first = false;
+            } while (altC != c);
+        }
+        if (count > 0) {
+            predUV = glm::round(predUV / glm::vec2(count));
+            UV[TC[predC]] = predUV + uv;
+        }
     }
 }
 

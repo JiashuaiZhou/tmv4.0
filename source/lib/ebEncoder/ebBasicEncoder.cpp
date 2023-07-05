@@ -454,13 +454,15 @@ void EBBasicEncoder::posEncodeWithPrediction(const int c, const int v)
 // c corner to use for the prediction, 
 // predWithDummies boolean to predict using the dummy branch
 // prevIsDummy set to true if previous corner is a dummy point (default to false)
-void EBBasicEncoder::predictUV(const int c, const std::vector<int>& indices, bool predWithDummies, bool prevIsDummy)
+void EBBasicEncoder::predictUV(const int c, glm::vec2& predUV, glm::dvec2& firstpredUV, const std::vector<int>& indices, bool predWithDummies, bool first, bool prevIsDummy)
 {
     const auto& OV = _ovTable;
     const auto& V = _ovTable.V;
     const auto& G = _ovTable.positions;
     const auto& UV = _ovTable.uvcoords;
     const auto& IDX = indices;
+    const auto& O = _ovTable.O;
+    const auto& ov = _ovTable;
 
     // we do not accumulate uv predictions, stop on first 
     glm::dvec2 uvPrev = UV[IDX[OV.p(c)]];
@@ -482,15 +484,65 @@ void EBBasicEncoder::predictUV(const int c, const std::vector<int>& indices, boo
         const glm::dvec2 uvProjuvCurr = glm::dvec2(uvNuvP.y, -uvNuvP.x) * std::sqrt(d2_gProj_gCurr / d2_gNgP);
         glm::dvec2 predUV0(uvProj + uvProjuvCurr);
         glm::dvec2 predUV1(uvProj - uvProjuvCurr);
-        bool orientation = length(uvCurr - predUV0) < length(uvCurr - predUV1); 
-        glm::vec2 predUV = round(orientation ? predUV0 : predUV1);
-        glm::vec2 resUV = UV[IDX[c]] - predUV;
-        oUVCoords.push_back(resUV);
-        orientations.push_back(orientation);
+        if (first) {
+            //the first triangle
+            bool useOpp = false;
+            bool flag = false;
+            if (ov.OTC.size()) {
+                // if hasUV and separate table
+                if (IDX[O[c]] >= 0) {
+                    if (MC[IDX[O[c]]] > 0) {
+                        flag = true;
+                    }
+                }
+            }
+            else {
+                if (IDX[O[c]] >= 0) {
+                    if ((M[IDX[O[c]]] > 0)&&(!isCornerVertexDummy(O[c]))) {
+                        flag = true;
+                    }
+                }
+            }
+            if (flag) {
+                glm::dvec2 uvOpp = UV[IDX[O[c]]];
+                float triangleArea_o = abs(0.5 * (uvNext[0] * uvPrev[1] + uvPrev[0] * uvOpp[1] + uvOpp[0] * uvNext[1] -
+                    uvNext[0] * uvOpp[1] - uvPrev[0] * uvNext[1] - uvOpp[0] * uvPrev[1]));
+                if (triangleArea_o < DBL_EPSILON) {
+                    //If the texture triangle is a degenerate triangle, do not use opposite corner
+                    useOpp = false;
+                }
+                else {
+                    useOpp = true;
+                }
+            }
+            if (useOpp) {
+                glm::dvec2 uvOpp = UV[IDX[O[c]]];
+                if (length(uvOpp - predUV0) < length(uvOpp - predUV1)) {
+                    predUV = predUV1;
+                }
+                else {
+                    predUV = predUV0;
+                }
+            }
+            else {
+                bool orientation = length(uvCurr - predUV0) < length(uvCurr - predUV1);
+                predUV = round(orientation ? predUV0 : predUV1);
+                glm::vec2 resUV = UV[IDX[c]] - predUV;
+                orientations.push_back(orientation);
+            }
+            firstpredUV = predUV;
+        }
+        else {
+            if (length(firstpredUV - predUV0) < length(firstpredUV - predUV1)) {
+                predUV = predUV0;
+            }
+            else {
+                predUV = predUV1;
+            }
+        }
     }
     else
     {
-        glm::vec2 predUV(0.0, 0.0);
         if (predWithDummies)                                    // if next or prev corner is a dummy point 
         {
             predUV = prevIsDummy ? UV[IDX[OV.n(c)]] : UV[IDX[OV.p(c)]];
@@ -500,7 +552,6 @@ void EBBasicEncoder::predictUV(const int c, const std::vector<int>& indices, boo
             predUV = round((UV[IDX[OV.n(c)]] + UV[IDX[OV.p(c)]]) / 2.0f);
         }
         glm::vec2 resUV = UV[IDX[c]] - predUV;
-        oUVCoords.push_back(resUV);
     }
 }
 
@@ -548,7 +599,10 @@ void EBBasicEncoder::uvEncodeWithPrediction(const int c, const int v) {
                 else if (((!isCornerVertexDummy(OV.p(altC))) && (!isCornerVertexDummy(OV.n(altC))))
                     && ((M[V[OV.p(altC)]] > 0) && (M[V[OV.n(altC)]] > 0)))
                 {
-                    predictUV(altC, V, true, prevIsDummy);
+                    glm::vec2 estUV(0, 0);
+                    glm::dvec2 firstestUV(0, 0);
+                    predictUV(altC, estUV, firstestUV, V, true, true, prevIsDummy);
+                    oUVCoords.push_back(UV[V[c]] - glm::round(estUV));
                     ++count;
                 }
                 altC = (!last) ? OV.p(O[OV.p(altC)]) : OV.n(O[OV.n(altC)]); // swing right or left
@@ -562,8 +616,29 @@ void EBBasicEncoder::uvEncodeWithPrediction(const int c, const int v) {
             }
         }
         else
-        {
-            predictUV(c, V, false);
+        {//without dummy vertex
+            int  count = 0;
+            int  altC = c;
+            glm::vec2 predUV(0, 0);
+            bool first = true;
+            glm::dvec2 firstestUV(0, 0);
+            do {
+                glm::vec2 estUV(0, 0);
+                if (((!isCornerVertexDummy(OV.p(altC))) &&
+                    (!isCornerVertexDummy(OV.n(altC)))) &&
+                    ((M[V[OV.p(altC)]] > 0) && (M[V[OV.n(altC)]] > 0)))
+                {
+                    predictUV(altC, estUV, firstestUV, V, false, first);
+                    predUV += estUV;
+                    ++count;
+                }
+                altC = OV.p(O[OV.p(altC)]);
+                first = false;
+            } while (altC != c);
+            if (count > 0) {
+                predUV = glm::round(predUV / glm::vec2(count));
+                oUVCoords.push_back(UV[V[c]] - predUV);
+            }
         }
         break;
     } // end of switch
@@ -682,8 +757,61 @@ void EBBasicEncoder::uvSepEncodeWithPrediction(const int c) {
         oUVCoords.push_back(UV[TC[predC]] - UV[TC[OV.p(predC)]]);
     else if (!hasUVp)                                               // cannot predict, use delta
         oUVCoords.push_back(UV[TC[predC]] - UV[TC[OV.n(predC)]]);
-    else
-        predictUV(predC, TC, false); // use corner for prediction and skip dummy branch (false)
+    else {
+        int  count = 0;
+        int  altC = predC;
+        glm::vec2 predUV(0, 0);
+        bool first = true;
+        glm::dvec2 firstestUV(0, 0);
+        bool flag = false;
+        do {
+            glm::vec2 estUV(0, 0);
+            if ((TC[OV.p(altC)] >= 0) && (TC[OV.n(altC)] >= 0)) {
+                if ((MC[TC[OV.p(altC)]] > 0) && (MC[TC[OV.n(altC)]] > 0))
+                {
+                    predictUV(altC, estUV, firstestUV, TC, false, first);
+                    predUV += estUV;
+                    ++count;
+                }
+            }
+            if (OTC[OV.p(altC)] == -4) {
+                altC = OV.p(O[OV.p(altC)]);
+            }
+            else {
+                if (first) {
+                    first = false;
+                    flag = true;
+                }
+                break;
+            }
+            first = false;
+        } while (altC != c);
+        if ((altC != c) || flag) {
+            altC = predC;
+            do {
+                if (OTC[OV.n(altC)] == -4) {
+                    altC = OV.n(O[OV.n(altC)]);
+                }
+                else {
+                    break;
+                }
+                glm::vec2 estUV(0, 0);
+                if ((TC[OV.p(altC)] >= 0) && (TC[OV.n(altC)] >= 0)) {
+                    if ((MC[TC[OV.p(altC)]] > 0) && (MC[TC[OV.n(altC)]] > 0))
+                    {
+                        predictUV(altC, estUV, firstestUV, TC, false, first);
+                        predUV += estUV;
+                        ++count;
+                    }
+                }
+                first = false;
+            } while (altC != c);
+        }
+        if (count > 0) {
+            predUV = glm::round(predUV / glm::vec2(count));
+            oUVCoords.push_back(UV[TC[predC]] - glm::round(predUV));
+        }
+    }
 
 }
 
